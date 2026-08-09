@@ -1,0 +1,11 @@
+{
+  "GPL-2.0": [
+    {
+      "name": "gifsicle",
+      "versions": ["5.3.0"],
+      "paths": ["node_modules/gifsicle"],
+      "license": "GPL-2.0",
+      "homepage": "https://github.com/imagemin/gifsicle-bin"
+    }
+  ]
+}

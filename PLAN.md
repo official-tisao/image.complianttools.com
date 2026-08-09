@@ -81,7 +81,7 @@ Update these counts as you go. They are the honest status of the project at a gl
 
 | Phase | Focus | Tasks | Done | Gate |
 | --- | --- | :-: | :-: | :-: |
-| 0 | Foundation, toolchain, IP clearance | 16 | 2 | ⬜ |
+| 0 | Foundation, toolchain, IP clearance | 16 | 4 | ⬜ |
 | 1 | Core loop — 3 tools end to end | 15 | 0 | ⬜ |
 | 2 | Format breadth + our own codecs | 18 | 0 | ⬜ |
 | 3 | Editing, batch, recipes | 15 | 0 | ⬜ |
@@ -126,24 +126,24 @@ any feature code exists. **Spec:** README §9, §23, §25.
 - **Spec:** README §16.6, §9 · **Done when:** each rule has a fixture that fails lint
 
 #### P0-03 · CI skeleton
-- [ ] `.github/workflows/ci.yml`: install (cached, frozen lockfile) → lint · typecheck · test → build
-- [ ] Branch protection: all checks required to merge
+- [x] `.github/workflows/ci.yml`: install (cached, frozen lockfile) → lint · typecheck · test → build
+- [!] Branch protection: all checks required to merge — workflow is ready, but GitHub CLI/API access is unavailable and the connected browser is not signed in
 - **Spec:** README §23.6 · **Done when:** a PR shows all checks and cannot merge while red
 
 ### IP clearance — before feature code
 
 #### P0-04 · Licence gate (`verify:licenses`)
-- [ ] Resolve full dependency graph from lockfile incl. transitive + optional, at **pinned** versions
-- [ ] Allowlist: MIT, Apache-2.0, BSD-2, BSD-3, ISC, Zlib, 0BSD, MPL-2.0, Unlicense, CC0
-- [ ] **Deny** on: GPL/LGPL/AGPL/SSPL/BUSL/CC-BY-NC/CC-BY-SA/research-only/non-commercial/unknown/missing
-- [ ] Dual licences pass if **any** option is allowlisted; `SEE LICENSE IN …` fails
-- [ ] Generate `docs/THIRD-PARTY-LICENSES.md`; fail if it differs from the committed copy
+- [x] Resolve full dependency graph from lockfile incl. transitive + optional, at **pinned** versions
+- [x] Allowlist: MIT, Apache-2.0, BSD-2, BSD-3, ISC, Zlib, 0BSD, MPL-2.0, Unlicense, CC0
+- [x] **Deny** on: GPL/LGPL/AGPL/SSPL/BUSL/CC-BY-NC/CC-BY-SA/research-only/non-commercial/unknown/missing
+- [x] Dual licences pass if **any** option is allowlisted; `SEE LICENSE IN …` fails
+- [x] Generate `docs/THIRD-PARTY-LICENSES.md`; fail if it differs from the committed copy
 - **Spec:** README §25.2, §25.6 · **Done when:** adding `gifsicle` to a branch fails CI with a named reason
 
 #### P0-05 · Static-asset register + gate
-- [ ] Walk `apps/web/static/**`; every asset needs a register row: source URL, licence, licence URL, sha256, date checked
-- [ ] **Fail on unregistered asset**, not merely on a bad licence
-- [ ] Covers `.onnx`, `.task`, `tessdata`, fonts, LUTs, ICC profiles, emoji, images
+- [x] Walk `apps/web/static/**`; every asset needs a register row: source URL, licence, licence URL, sha256, date checked
+- [x] **Fail on unregistered asset**, not merely on a bad licence
+- [x] Covers `.onnx`, `.task`, `tessdata`, fonts, LUTs, ICC profiles, emoji, images
 - **Spec:** README §25.5, §25.3.4 · **Done when:** dropping an unregistered `.onnx` into `static/` fails CI
 
 #### P0-06 · Trademark grep gate

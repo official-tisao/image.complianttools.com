@@ -1,0 +1,11 @@
+{
+  "GPL-2.0 OR MIT": [
+    {
+      "name": "dual-licensed-fixture",
+      "versions": ["1.0.0"],
+      "paths": ["node_modules/dual-licensed-fixture"],
+      "license": "GPL-2.0 OR MIT",
+      "homepage": "https://example.com/dual-licensed-fixture"
+    }
+  ]
+}
