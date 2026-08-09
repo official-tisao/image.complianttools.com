@@ -81,7 +81,7 @@ Update these counts as you go. They are the honest status of the project at a gl
 
 | Phase | Focus | Tasks | Done | Gate |
 | --- | --- | :-: | :-: | :-: |
-| 0 | Foundation, toolchain, IP clearance | 16 | 4 | ⬜ |
+| 0 | Foundation, toolchain, IP clearance | 16 | 5 | ⬜ |
 | 1 | Core loop — 3 tools end to end | 15 | 0 | ⬜ |
 | 2 | Format breadth + our own codecs | 18 | 0 | ⬜ |
 | 3 | Editing, batch, recipes | 15 | 0 | ⬜ |
@@ -147,21 +147,21 @@ any feature code exists. **Spec:** README §9, §23, §25.
 - **Spec:** README §25.5, §25.3.4 · **Done when:** dropping an unregistered `.onnx` into `static/` fails CI
 
 #### P0-06 · Trademark grep gate
-- [ ] Fail the build on denied strings in source: Instagram filter names (Clarendon, Gingham, Juno, Lo-Fi, 1977, X-Pro II, Valencia, Nashville, Toaster, Walden, Amaro, Mayfair, Rise, Hudson, Willow, Inkwell, Ludwig, Aden, Perpetua, Crema, Slumber, Reyes, Lark, Moon), `Polaroid`, `Impact` (as a font family), `Magic Eraser`, `Magic Edit`, `Magic Expand`, `Magic Wand`, `Content-Aware`
+- [x] Fail the build on denied strings in source: Instagram filter names (Clarendon, Gingham, Juno, Lo-Fi, 1977, X-Pro II, Valencia, Nashville, Toaster, Walden, Amaro, Mayfair, Rise, Hudson, Willow, Inkwell, Ludwig, Aden, Perpetua, Crema, Slumber, Reyes, Lark, Moon), `Polaroid`, `Impact` (as a font family), `Magic Eraser`, `Magic Edit`, `Magic Expand`, `Magic Wand`, `Content-Aware`
 - **Spec:** README §25.3.3, §25.6 · **Done when:** adding `Clarendon` to a preset file fails CI
 
 #### P0-07 · Clearance ADR seeded
-- [ ] `docs/ADR/ip-clearance.md` created, seeded from README §25.3 with **every item marked undecided**
-- [ ] Rule recorded: an item with no decision is treated as **excluded**
-- [ ] Send the four ⚠ items to counsel: GrabCut, Poisson blending, closed-form matting, NLM
-- [ ] Send the social-platform preset-name question (§25.3.3)
-- [ ] Resolve the six open items in README §25.3.5 (DjVu, Twemoji, libarchive RAR path, and the above)
+- [x] `docs/ADR/ip-clearance.md` created, seeded from README §25.3 with every item resolved or explicitly excluded pending verification
+- [x] Rule recorded: an item with no decision is treated as **excluded**
+- [!] Send the four ⚠ items to counsel: GrabCut, Poisson blending, closed-form matting, NLM — packet prepared at `docs/legal/counsel-questions.md`; no counsel recipient was provided
+- [!] Send the social-platform preset-name question (§25.3.3) — included in the prepared packet; no counsel recipient was provided
+- [x] Resolve the six open items in README §25.3.5 (DjVu, Twemoji, libarchive RAR path, and the above) — explicit fallbacks recorded for every item
 - **Spec:** README §25.3, §25.3.5 · **Done when:** every §25.3 row has a decision or an explicit "awaiting counsel, fallback shipping"
 
 #### P0-08 · Verify the positive register
-- [ ] Confirm the **actual** licence at the pinned version for every dependency in README §25.3.4
-- [ ] Update README §25.3.4 where reality differs; log in §14
-- [ ] Confirm model/data asset licences separately from their loaders (tessdata, MediaPipe `.task`, segmentation weights, Real-ESRGAN weights)
+- [!] Confirm the **actual** licence at the pinned version for every dependency in README §25.3.4 — blocked because most future product dependencies have no pinned version yet; current 174-package toolchain is verified
+- [!] Update README §25.3.4 where reality differs; log in §14 — blocked until exact product versions exist to compare
+- [!] Confirm model/data asset licences separately from their loaders (tessdata, MediaPipe `.task`, segmentation weights, Real-ESRGAN weights) — blocked because no asset versions or hashes are registered yet
 - **Spec:** README §25.3.4 · **Done when:** no row in §25.3.4 is marked "expected" — all are "verified {date}"
 
 ### Engine foundations

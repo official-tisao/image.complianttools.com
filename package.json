@@ -26,7 +26,8 @@
     "verify:licenses": "tsx scripts/verify-licenses.ts",
     "verify:licenses:write": "tsx scripts/verify-licenses.ts --write",
     "verify:assets": "tsx scripts/verify-static-assets.ts",
-    "test:gates": "tsx scripts/test-static-assets.ts && tsx scripts/test-license-gate.ts",
+    "verify:trademarks": "tsx scripts/verify-trademarks.ts",
+    "test:gates": "tsx scripts/test-static-assets.ts && tsx scripts/test-license-gate.ts && tsx scripts/test-trademark-gate.ts",
     "prepare": "lefthook install"
   },
   "devDependencies": {

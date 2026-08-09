@@ -42,6 +42,9 @@ jobs:
       - name: Verify static assets
         run: pnpm verify:assets
 
+      - name: Verify trademark substitutions
+        run: pnpm verify:trademarks
+
       - name: Lint
         run: pnpm lint
 
