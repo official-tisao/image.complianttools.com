@@ -865,7 +865,7 @@ transitive dependencies, and confirm worker-compatibility. Any package needing D
 wrapped to run on the main thread only, documented as a performance exception.
 
 **The licence rule that drives the table above:** `packages/engine` is Apache-2.0 (§25.2), so it can
-take MIT / BSD / Apache-2.0 / ISC / Zlib / MPL-2.0 / Unlicense / CC0 — and **cannot** take GPL, LGPL,
+take MIT / BSD / Apache-2.0 / ISC / Zlib / IJG / MPL-2.0 / Unlicense / CC0 — and **cannot** take GPL, LGPL,
 or AGPL. That single constraint is why `wasm-vips` (LGPL-2.1), `gifsicle` (GPL-2.0), `libheif`
 (LGPL-3.0), `LibRaw` (LGPL-2.1), `potrace` (GPL-2.0), `ffmpeg` (LGPL-2.1), and Ghostscript (AGPL-3.0)
 are all absent. Every one of them was in an earlier draft of this plan; every one is now replaced by a
@@ -3465,7 +3465,12 @@ The full policy expands each point and links to `docs/SECURITY.md`.
 - **Our code:** AGPL-3.0 for `apps/web` (so hosted forks stay open), Apache-2.0 for `packages/engine`
   and `packages/cli` (so the engine is freely embeddable, and because Apache-2.0 carries an express
   patent grant that MIT does not). Recorded as an ADR — dual licensing is a deliberate choice.
-- **Dependency allowlist:** MIT, Apache-2.0, BSD-2, BSD-3, ISC, Zlib, 0BSD, MPL-2.0, Unlicense, CC0.
+- **Dependency allowlist:** MIT, Apache-2.0, BSD-2, BSD-3, ISC, Zlib, **IJG, IJG-short**[^ijg], 0BSD,
+  MPL-2.0, Unlicense, CC0.
+
+[^ijg]: IJG approval is conditional on shipping its mandatory product-documentation attribution —
+    “the work of the Independent JPEG Group” — and is not advisory. Modified source distributions
+    must also retain notices and mark their modifications.
   `verify:licenses` fails the build on anything else, **including transitively**, and checks the
   licence at the pinned version rather than at `latest`.
 - **Denylist, enforced:** GPL (any version), LGPL (any version), AGPL, SSPL, BUSL, CC-BY-NC, CC-BY-SA,
@@ -3555,17 +3560,17 @@ this whole section exists to prevent.
 
 | Dependency | Expected licence | Role |
 | --- | --- | --- |
-| Svelte, SvelteKit, Vite | MIT | Framework and build |
-| TypeScript, Vitest, Playwright, ESLint, Prettier | Apache-2.0 / MIT | Toolchain |
-| Tailwind CSS | MIT | Styling |
+| Svelte 5.56.8 | **MIT — verified 2026-08-09** | UI runtime; SvelteKit and Vite remain excluded until pinned |
+| TypeScript 5.7.2, Vitest 4.1.10, Playwright 1.62.1, ESLint 9.39.5, Prettier 3.9.6 | **Apache-2.0 / MIT — verified 2026-08-09** | Toolchain and test runtime |
+| Tailwind CSS 4.3.3 | **MIT — verified 2026-08-09** | Styling |
 | `bits-ui` | MIT | Headless UI primitives |
 | `lucide-svelte` | ISC | Icons |
 | `zod` | MIT | Option schemas |
 | `fast-check` | MIT | Property testing |
 | `@inlang/paraglide-js` | MIT | i18n ⚠ verify |
-| `@jsquash/jpeg` → MozJPEG | BSD-3 + IJG | JPEG codec |
-| `@jsquash/png`, `@jsquash/oxipng` → libpng, zlib, oxipng | libpng licence, Zlib, MIT | PNG codec + optimizer |
-| `@jsquash/webp` → libwebp | BSD-3 | WebP codec |
+| `@jsquash/jpeg` 1.6.0 → MozJPEG | **Apache-2.0 wrapper + IJG, BSD-3, Zlib codec portions — verified 2026-08-09.** These licences apply to different portions; they are not an election. Mandatory IJG attribution is rendered at `/licenses` and build-enforced | JPEG codec |
+| `@jsquash/png` 3.1.1, `@jsquash/oxipng` 2.3.0 → libpng, zlib, oxipng | **Apache-2.0 wrappers + BSD-3/MIT codec portions — verified 2026-08-09** | PNG codec + optimizer |
+| `@jsquash/webp` 1.5.0 → libwebp | **Apache-2.0 wrapper + BSD-3 codec portion — verified 2026-08-09** | WebP codec |
 | `@jsquash/avif` → libavif + aom/dav1d | BSD-2 | AVIF codec |
 | `@jsquash/jxl` → libjxl | BSD-3 | JPEG XL codec + butteraugli |
 | `@jsquash/resize`, `pica` | Apache-2.0 / MIT | Resampling |

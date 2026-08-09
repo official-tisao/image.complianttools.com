@@ -1,0 +1,119 @@
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --c-bg: oklch(98.5% 0.004 80);
+    --c-surface: oklch(100% 0 0);
+    --c-surface-sunk: oklch(96.5% 0.005 80);
+    --c-border: oklch(90% 0.006 80);
+    --c-border-strong: oklch(80% 0.008 80);
+    --c-text: oklch(24% 0.012 80);
+    --c-text-muted: oklch(52% 0.01 80);
+    --c-text-subtle: oklch(65% 0.008 80);
+    --c-accent: oklch(58% 0.115 195);
+    --c-accent-hover: oklch(52% 0.12 195);
+    --c-accent-subtle: oklch(95% 0.03 195);
+    --c-on-accent: oklch(99% 0 0);
+    --c-success: oklch(60% 0.13 145);
+    --c-warning: oklch(72% 0.14 75);
+    --c-danger: oklch(56% 0.17 25);
+    --c-info: var(--c-accent);
+    --c-canvas: oklch(93% 0.003 80);
+    --c-checker-a: oklch(88% 0.003 80);
+    --c-checker-b: oklch(95% 0.003 80);
+    --font-sans: 'InterVariable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+    --fs-xs: 0.75rem;
+    --fs-sm: 0.8125rem;
+    --fs-base: 0.875rem;
+    --fs-md: 1rem;
+    --fs-lg: 1.125rem;
+    --fs-xl: 1.375rem;
+    --fs-2xl: 1.75rem;
+    --fs-3xl: 2.25rem;
+    --fs-4xl: 3rem;
+    --lh-tight: 1.15;
+    --lh-normal: 1.5;
+    --lh-relaxed: 1.65;
+    --sp-1: 0.25rem;
+    --sp-2: 0.5rem;
+    --sp-3: 0.75rem;
+    --sp-4: 1rem;
+    --sp-5: 1.25rem;
+    --sp-6: 1.5rem;
+    --sp-8: 2rem;
+    --sp-10: 2.5rem;
+    --sp-12: 3rem;
+    --sp-16: 4rem;
+    --sp-20: 5rem;
+    --sp-24: 6rem;
+    --r-sm: 3px;
+    --r-md: 5px;
+    --r-lg: 8px;
+    --r-xl: 12px;
+    --r-full: 999px;
+    --sh-sm: 0 1px 2px oklch(24% 0.012 80 / 0.06);
+    --sh-md: 0 2px 8px oklch(24% 0.012 80 / 0.08), 0 1px 2px oklch(24% 0.012 80 / 0.06);
+    --sh-lg: 0 8px 32px oklch(24% 0.012 80 / 0.12), 0 2px 8px oklch(24% 0.012 80 / 0.06);
+    --dur-instant: 80ms;
+    --dur-fast: 140ms;
+    --dur-base: 200ms;
+    --dur-slow: 320ms;
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+    --w-rail: 240px;
+    --w-panel: 320px;
+    --h-header: 56px;
+    --h-actionbar: 64px;
+    --z-canvas: 0;
+    --z-panel: 10;
+    --z-header: 20;
+    --z-sheet: 30;
+    --z-dialog: 40;
+    --z-toast: 50;
+    --z-dropzone: 60;
+  }
+
+  :root[data-theme='dark'] {
+    --c-bg: oklch(17% 0.008 250);
+    --c-surface: oklch(21% 0.01 250);
+    --c-surface-sunk: oklch(14% 0.008 250);
+    --c-border: oklch(29% 0.012 250);
+    --c-border-strong: oklch(40% 0.014 250);
+    --c-text: oklch(94% 0.004 250);
+    --c-text-muted: oklch(70% 0.008 250);
+    --c-text-subtle: oklch(56% 0.008 250);
+    --c-accent: oklch(72% 0.115 195);
+    --c-accent-hover: oklch(78% 0.115 195);
+    --c-accent-subtle: oklch(28% 0.045 195);
+    --c-on-accent: oklch(15% 0.01 250);
+    --c-canvas: oklch(12% 0.006 250);
+    --c-checker-a: oklch(16% 0.006 250);
+    --c-checker-b: oklch(20% 0.006 250);
+    --sh-sm: 0 1px 2px oklch(0% 0 0 / 0.3);
+    --sh-md: 0 2px 8px oklch(0% 0 0 / 0.4), 0 1px 2px oklch(0% 0 0 / 0.3);
+    --sh-lg: 0 8px 32px oklch(0% 0 0 / 0.5), 0 2px 8px oklch(0% 0 0 / 0.3);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :root {
+      --dur-instant: 0ms;
+      --dur-fast: 0ms;
+      --dur-base: 0ms;
+      --dur-slow: 0ms;
+    }
+  }
+}
+
+@theme inline {
+  --color-background: var(--c-bg);
+  --color-surface: var(--c-surface);
+  --color-border: var(--c-border);
+  --color-foreground: var(--c-text);
+  --color-muted: var(--c-text-muted);
+  --color-accent: var(--c-accent);
+  --color-danger: var(--c-danger);
+  --radius-sm: var(--r-sm);
+  --radius-md: var(--r-md);
+  --radius-lg: var(--r-lg);
+}

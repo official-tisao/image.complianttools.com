@@ -22,4 +22,7 @@ assert.match(`${denied.stdout}${denied.stderr}`, /gifsicle@5\.3\.0: GPL-2\.0/);
 const dual = runFixture('dual-allowed.json');
 assert.equal(dual.status, 0, `An OR expression with MIT must pass: ${dual.stderr}`);
 
-console.log('Verified denied and dual-licensed dependency behaviour.');
+const ijg = runFixture('ijg-allowed.json');
+assert.equal(ijg.status, 0, `IJG and IJG-short must pass the amended allowlist: ${ijg.stderr}`);
+
+console.log('Verified denied, dual-licensed, IJG, and IJG-short dependency behaviour.');

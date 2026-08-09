@@ -1,0 +1,61 @@
+.ct-button {
+  min-block-size: 2.25rem;
+  padding-inline: var(--sp-4);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--r-md);
+  background: var(--c-surface);
+  color: var(--c-text);
+  font: 600 var(--fs-base) / 1 var(--font-sans);
+  transition: background var(--dur-fast) var(--ease-out);
+}
+
+.ct-button[data-variant='primary'] {
+  border-color: var(--c-accent);
+  background: var(--c-accent);
+  color: var(--c-on-accent);
+}
+
+.ct-button[data-variant='danger'] {
+  border-color: var(--c-danger);
+  color: var(--c-danger);
+}
+
+.ct-button:focus-visible,
+.ct-slider:focus-visible,
+.ct-file-drop:focus-within {
+  outline: 2px solid var(--c-accent);
+  outline-offset: 2px;
+}
+
+.ct-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.ct-slider-field {
+  display: grid;
+  gap: var(--sp-2);
+  color: var(--c-text);
+  font: var(--fs-base) / var(--lh-normal) var(--font-sans);
+}
+
+.ct-slider {
+  inline-size: 100%;
+  accent-color: var(--c-accent);
+}
+
+.ct-file-drop {
+  display: grid;
+  min-block-size: 9rem;
+  place-items: center;
+  border: 1px dashed var(--c-border-strong);
+  border-radius: var(--r-lg);
+  background: var(--c-surface-sunk);
+  color: var(--c-text-muted);
+  font: var(--fs-base) / var(--lh-normal) var(--font-sans);
+}
+
+.ct-file-drop[data-dragging='true'] {
+  border-color: var(--c-accent);
+  background: var(--c-accent-subtle);
+}

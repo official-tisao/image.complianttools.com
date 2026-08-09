@@ -67,44 +67,44 @@ This is an engineering screening record, not a freedom-to-operate opinion or leg
 Every item below remains **excluded until its exact version appears in `pnpm-lock.yaml` and passes
 `pnpm verify:licenses`**. This is the explicit fallback decision required while P0-08 is incomplete.
 
-| README item                                      | Provisional disposition before pinning                                  |
-| ------------------------------------------------ | ----------------------------------------------------------------------- |
-| Svelte, SvelteKit, Vite                          | Excluded until pinned and verified                                      |
-| TypeScript, Vitest, Playwright, ESLint, Prettier | Only currently pinned toolchain versions approved by generated register |
-| Tailwind CSS                                     | Excluded until pinned and verified                                      |
-| `bits-ui`                                        | Excluded until pinned and verified                                      |
-| `lucide-svelte`                                  | Excluded until pinned and verified                                      |
-| `zod`                                            | Excluded until pinned and verified                                      |
-| `fast-check`                                     | Excluded until pinned and verified                                      |
-| `@inlang/paraglide-js`                           | Excluded until pinned and verified                                      |
-| `@jsquash/jpeg`                                  | Excluded until pinned and verified                                      |
-| `@jsquash/png`, `@jsquash/oxipng`                | Excluded until pinned and verified                                      |
-| `@jsquash/webp`                                  | Excluded until pinned and verified                                      |
-| `@jsquash/avif`                                  | Excluded until pinned and verified                                      |
-| `@jsquash/jxl`                                   | Excluded until pinned and verified                                      |
-| `@jsquash/resize`, `pica`                        | Excluded until pinned and verified                                      |
-| `UTIF.js`                                        | Excluded until pinned and verified                                      |
-| `tinyexr`                                        | Excluded until pinned and verified                                      |
-| OpenJPEG                                         | Excluded until pinned and verified                                      |
-| `gifuct-js`                                      | Excluded until pinned and verified                                      |
-| `mp4box.js`                                      | Excluded until pinned and verified                                      |
-| `pdfjs-dist`                                     | Excluded until pinned and verified                                      |
-| `pdf-lib`                                        | Excluded until pinned and verified                                      |
-| `ag-psd`                                         | Excluded until pinned and verified                                      |
-| `imagetracerjs`                                  | Excluded until pinned and verified                                      |
-| `@resvg/resvg-wasm`                              | Excluded until pinned and verified; wrapper-only if approved            |
-| `libarchive.js`                                  | Excluded until pinned and RAR provenance is verified; CBZ-only fallback |
-| `dxf-parser`                                     | Excluded until pinned and verified                                      |
-| OpenCV                                           | Excluded until pinned and verified; algorithm review remains separate   |
-| `onnxruntime-web`                                | Excluded until pinned and verified                                      |
-| `tesseract.js`                                   | Excluded until pinned and verified                                      |
-| `@mediapipe/tasks-vision`                        | Excluded until pinned and verified                                      |
-| `exifr`                                          | Excluded until pinned and verified                                      |
-| `piexifjs`                                       | Excluded until pinned and verified                                      |
-| `fflate`                                         | Excluded until pinned and verified                                      |
-| `culori`                                         | Excluded until pinned and verified                                      |
-| Inter, JetBrains Mono, Anton                     | Excluded until exact font hashes and OFL conditions are registered      |
-| Noto Emoji                                       | Excluded until exact font hash and OFL conditions are registered        |
+| README item                                      | Provisional disposition before pinning                                                                                             |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Svelte, SvelteKit, Vite                          | Svelte 5.56.8 approved; SvelteKit and Vite remain excluded until pinned                                                            |
+| TypeScript, Vitest, Playwright, ESLint, Prettier | Only versions in the generated register approved; Vitest 4.1.10 and Playwright 1.62.1 verified 2026-08-09                          |
+| Tailwind CSS                                     | Tailwind CSS 4.3.3 approved (MIT, verified 2026-08-09)                                                                             |
+| `bits-ui`                                        | Excluded until pinned and verified                                                                                                 |
+| `lucide-svelte`                                  | Excluded until pinned and verified                                                                                                 |
+| `zod`                                            | Excluded until pinned and verified                                                                                                 |
+| `fast-check`                                     | Excluded until pinned and verified                                                                                                 |
+| `@inlang/paraglide-js`                           | Excluded until pinned and verified                                                                                                 |
+| `@jsquash/jpeg`                                  | Approved at 1.6.0: Apache-2.0 wrapper; IJG, BSD-3, and Zlib apply by portion to bundled MozJPEG. IJG attribution is build-enforced |
+| `@jsquash/png`, `@jsquash/oxipng`                | Approved at 3.1.1 and 2.3.0; wrapper and bundled codec licence files verified                                                      |
+| `@jsquash/webp`                                  | Approved at 1.5.0; Apache-2.0 wrapper and BSD-3 bundled codec portion verified                                                     |
+| `@jsquash/avif`                                  | Excluded until pinned and verified                                                                                                 |
+| `@jsquash/jxl`                                   | Excluded until pinned and verified                                                                                                 |
+| `@jsquash/resize`, `pica`                        | Excluded until pinned and verified                                                                                                 |
+| `UTIF.js`                                        | Excluded until pinned and verified                                                                                                 |
+| `tinyexr`                                        | Excluded until pinned and verified                                                                                                 |
+| OpenJPEG                                         | Excluded until pinned and verified                                                                                                 |
+| `gifuct-js`                                      | Excluded until pinned and verified                                                                                                 |
+| `mp4box.js`                                      | Excluded until pinned and verified                                                                                                 |
+| `pdfjs-dist`                                     | Excluded until pinned and verified                                                                                                 |
+| `pdf-lib`                                        | Excluded until pinned and verified                                                                                                 |
+| `ag-psd`                                         | Excluded until pinned and verified                                                                                                 |
+| `imagetracerjs`                                  | Excluded until pinned and verified                                                                                                 |
+| `@resvg/resvg-wasm`                              | Excluded until pinned and verified; wrapper-only if approved                                                                       |
+| `libarchive.js`                                  | Excluded until pinned and RAR provenance is verified; CBZ-only fallback                                                            |
+| `dxf-parser`                                     | Excluded until pinned and verified                                                                                                 |
+| OpenCV                                           | Excluded until pinned and verified; algorithm review remains separate                                                              |
+| `onnxruntime-web`                                | Excluded until pinned and verified                                                                                                 |
+| `tesseract.js`                                   | Excluded until pinned and verified                                                                                                 |
+| `@mediapipe/tasks-vision`                        | Excluded until pinned and verified                                                                                                 |
+| `exifr`                                          | Excluded until pinned and verified                                                                                                 |
+| `piexifjs`                                       | Excluded until pinned and verified                                                                                                 |
+| `fflate`                                         | Excluded until pinned and verified                                                                                                 |
+| `culori`                                         | Excluded until pinned and verified                                                                                                 |
+| Inter, JetBrains Mono, Anton                     | Excluded until exact font hashes and OFL conditions are registered                                                                 |
+| Noto Emoji                                       | Excluded until exact font hash and OFL conditions are registered                                                                   |
 
 ## Model and data assets
 

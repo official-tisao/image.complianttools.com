@@ -7,11 +7,15 @@
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "test": "node --test",
+    "test": "node test/all.test.mjs",
     "lint": "tsc -p tsconfig.json --noEmit",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "devDependencies": {
+    "tailwindcss": "4.3.3",
     "typescript": "catalog:"
+  },
+  "dependencies": {
+    "svelte": "5.56.8"
   }
 }

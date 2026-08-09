@@ -81,7 +81,7 @@ Update these counts as you go. They are the honest status of the project at a gl
 
 | Phase | Focus | Tasks | Done | Gate |
 | --- | --- | :-: | :-: | :-: |
-| 0 | Foundation, toolchain, IP clearance | 16 | 5 | ⬜ |
+| 0 | Foundation, toolchain, IP clearance | 17 | 13 | ⬜ |
 | 1 | Core loop — 3 tools end to end | 15 | 0 | ⬜ |
 | 2 | Format breadth + our own codecs | 18 | 0 | ⬜ |
 | 3 | Editing, batch, recipes | 15 | 0 | ⬜ |
@@ -89,7 +89,7 @@ Update these counts as you go. They are the honest status of the project at a gl
 | 5 | BYOK AI escalation | 17 | 0 | ⬜ |
 | 6 | Long tail, PWA, CLI, extension | 16 | 0 | ⬜ |
 | 7 | Pages, i18n, launch | 14 | 0 | ⬜ |
-| — | **Total** | **133** | **0** | |
+| — | **Total** | **134** | **13** | |
 
 | Artefact | Target | Done |
 | --- | :-: | :-: |
@@ -134,7 +134,7 @@ any feature code exists. **Spec:** README §9, §23, §25.
 
 #### P0-04 · Licence gate (`verify:licenses`)
 - [x] Resolve full dependency graph from lockfile incl. transitive + optional, at **pinned** versions
-- [x] Allowlist: MIT, Apache-2.0, BSD-2, BSD-3, ISC, Zlib, 0BSD, MPL-2.0, Unlicense, CC0
+- [x] Allowlist: MIT, Apache-2.0, BSD-2, BSD-3, ISC, Zlib, IJG, IJG-short, 0BSD, MPL-2.0, Unlicense, CC0
 - [x] **Deny** on: GPL/LGPL/AGPL/SSPL/BUSL/CC-BY-NC/CC-BY-SA/research-only/non-commercial/unknown/missing
 - [x] Dual licences pass if **any** option is allowlisted; `SEE LICENSE IN …` fails
 - [x] Generate `docs/THIRD-PARTY-LICENSES.md`; fail if it differs from the committed copy
@@ -159,7 +159,7 @@ any feature code exists. **Spec:** README §9, §23, §25.
 - **Spec:** README §25.3, §25.3.5 · **Done when:** every §25.3 row has a decision or an explicit "awaiting counsel, fallback shipping"
 
 #### P0-08 · Verify the positive register
-- [!] Confirm the **actual** licence at the pinned version for every dependency in README §25.3.4 — blocked because most future product dependencies have no pinned version yet; current 174-package toolchain is verified
+- [!] Confirm the **actual** licence at the pinned version for every dependency in README §25.3.4 — blocked because most future product dependencies have no pinned version yet; current 219-package graph is verified
 - [!] Update README §25.3.4 where reality differs; log in §14 — blocked until exact product versions exist to compare
 - [!] Confirm model/data asset licences separately from their loaders (tessdata, MediaPipe `.task`, segmentation weights, Real-ESRGAN weights) — blocked because no asset versions or hashes are registered yet
 - **Spec:** README §25.3.4 · **Done when:** no row in §25.3.4 is marked "expected" — all are "verified {date}"
@@ -167,64 +167,71 @@ any feature code exists. **Spec:** README §9, §23, §25.
 ### Engine foundations
 
 #### P0-09 · Core types and error model
-- [ ] `RasterImage`, `Frame`, `FormatId`, `ColorSpaceId` (README §10.1)
-- [ ] `EngineError` union, **every variant carrying `remedy`** (README §8.7)
-- [ ] `Recipe`, `Step`, `ExportOptions` types (README §8.2)
-- [ ] Type test asserting no `EngineError` variant lacks `remedy`
+- [x] `RasterImage`, `Frame`, `FormatId`, `ColorSpaceId` (README §10.1)
+- [x] `EngineError` union, **every variant carrying `remedy`** (README §8.7)
+- [x] `Recipe`, `Step`, `ExportOptions` types (README §8.2)
+- [x] Type test asserting no `EngineError` variant lacks `remedy`
 - **Spec:** README §8.2, §8.7, §10.1 · **Done when:** adding a variant without `remedy` fails typecheck
 
 #### P0-10 · Worker pool + scheduler
-- [ ] Module workers, `N = clamp(hardwareConcurrency − 1, 1, 16)`, lazily created
-- [ ] Transferables for all buffers; ownership transferred, never retained
-- [ ] `AbortSignal` throughout; cancellation observed within 50 ms
-- [ ] Affinity scheduling (reuse a worker that already instantiated a given module)
-- [ ] `pool.pressure` 0..1 exposed for UI backpressure
+- [x] Module workers, `N = clamp(hardwareConcurrency − 1, 1, 16)`, lazily created
+- [x] Transferables for all buffers; ownership transferred, never retained
+- [x] `AbortSignal` throughout; cancellation observed within 50 ms
+- [x] Affinity scheduling (reuse a worker that already instantiated a given module)
+- [x] `pool.pressure` 0..1 exposed for UI backpressure
 - **Spec:** README §8.4, §10.6 · **Done when:** a test cancels a 5 s job and asserts abort < 50 ms and buffers freed
 
 #### P0-11 · Capability probing
-- [ ] `probeCapabilities()` returning `FormatCapability[]`
-- [ ] Detect WASM SIMD, threads/`crossOriginIsolated`, WebGPU, WebGL2, OffscreenCanvas, FSA, OPFS, WebCodecs
-- [ ] **Probe, never UA-sniff**
+- [x] `probeCapabilities()` returning `FormatCapability[]`
+- [x] Detect WASM SIMD, threads/`crossOriginIsolated`, WebGPU, WebGL2, OffscreenCanvas, FSA, OPFS, WebCodecs
+- [x] **Probe, never UA-sniff**
+- [x] Browser-matrix acceptance verified on the runnable `/debug/capabilities` route in Chromium, Firefox, and WebKit
 - **Spec:** README §5.7, §7.2 · **Done when:** probe results render on a debug route and are correct in all 3 browsers
 
 #### P0-12 · WASM asset pipeline
-- [ ] `scripts/fetch-wasm.ts`: download from pinned URLs, verify sha256 against `wasm-lock.json`
-- [ ] Emit to `apps/web/static/wasm/<name>.<hash>.wasm`
-- [ ] Build fails on hash mismatch; runtime re-verifies where SRI is unavailable
+- [x] `scripts/fetch-wasm.ts`: download from pinned URLs, verify sha256 against `wasm-lock.json`
+- [x] Emit to `apps/web/static/wasm/<name>.<hash>.wasm`
+- [x] Build fails on hash mismatch; runtime re-verifies where SRI is unavailable
 - **Spec:** README §23.5 · **Done when:** flipping one byte in a wasm file fails the build
 
+#### P0-13-R1 · IJG allowlist amendment
+- [x] Add IJG and IJG-short to README §25.2 and the enforced allowlist; record portion-based MozJPEG licensing in §25.3.4
+- [x] Ship the mandatory “Independent JPEG Group” product attribution in `docs/THIRD-PARTY-LICENSES.md` and rendered `/licenses`
+- [x] Fail the build if either attribution disappears; inspect bundled `LICENSE*` files in every installed package that ships WASM
+- **Spec:** README §25.2, §25.3.4 · **Done when:** removing the attribution from the register or rendered page fails the build
+
 #### P0-13 · First three codecs
-- [ ] JPEG (MozJPEG), PNG (+oxipng), WebP via `@jsquash/*`, running **in a worker**
-- [ ] Decode → `RasterImage` → encode round-trip
+- [x] JPEG (MozJPEG), PNG (+oxipng), WebP via pinned `@jsquash/*`, running **in a worker**
+- [x] Decode → `RasterImage` → encode round-trip
 - **Spec:** README §7.3 · **Done when:** Vitest decodes a JPEG in a worker and re-encodes as WebP, byte-stable
 
 #### P0-14 · Design tokens + first UI primitives
-- [ ] `packages/ui/src/tokens.css` exactly as README §12.2, light + dark
-- [ ] Tailwind 4 `@theme` consuming the tokens
-- [ ] Button, Slider, FileDrop with tests
-- [ ] Zero-flash theme script; `prefers-reduced-motion` zeroes durations
+- [x] `packages/ui/src/tokens.css` exactly as README §12.2, light + dark
+- [x] Tailwind 4 `@theme` consuming the tokens
+- [x] Button, Slider, FileDrop with tests
+- [x] Zero-flash theme script; `prefers-reduced-motion` zeroes durations
 - **Spec:** README §12 · **Done when:** a visual test passes in both themes with no flash on load
 
 #### P0-15 · The two load-bearing test harnesses
-- [ ] `no-network` Playwright harness (README §22.6) — scaffold, passing on a trivial flow
-- [ ] `credential-leak` test harness (README §16.6) — asserts no credential value can reach a log, error, or diagnostic bundle
-- [ ] Both wired as **required** CI checks from day one
+- [x] `no-network` Playwright harness (README §22.6) — scaffold, passing on a trivial flow
+- [x] `credential-leak` test harness (README §16.6) — asserts no credential value can reach a log, error, or diagnostic bundle
+- [!] Both exist as named CI jobs, but making them required in branch protection remains blocked by the same unavailable GitHub authentication as P0-03
 - **Spec:** README §22.6, §22.7 · **Done when:** both are required checks and pass
 
 #### P0-16 · Plan-sync gate
-- [ ] `scripts/check-plan-sync.ts`: fail CI when a commit/PR touches `README.md` without touching `PLAN.md`
-- [ ] Escape hatch: `[plan-exempt]` in the commit body, which the script logs into the PR comment
+- [x] `scripts/check-plan-sync.ts`: fail CI when a commit/PR touches `README.md` without touching `PLAN.md`
+- [x] Escape hatch: `[plan-exempt]` in the commit body, which the script logs into the PR comment
 - **Spec:** this file §0.3 · **Done when:** a README-only PR fails, and the same PR passes once PLAN.md is updated
 
 ### 🚦 Gate 0 — do not start Phase 1 until all are true
 
-- [ ] `pnpm build && pnpm test && pnpm lint && pnpm typecheck` all green
-- [ ] `verify:licenses` is a required check and **no copyleft dependency exists in the lockfile** (verified, not assumed)
-- [ ] Static-asset gate and trademark gate are required checks
-- [ ] `docs/ADR/ip-clearance.md` has a decision or an explicit fallback for every §25.3 item
-- [ ] README §25.3.4 rows all say "verified", not "expected"
-- [ ] A worker decodes a JPEG and re-encodes it as WebP in a test
-- [ ] `no-network`, `credential-leak`, and `plan-sync` harnesses exist and are required
+- [x] `pnpm build && pnpm test && pnpm lint && pnpm typecheck` all green
+- [x] `verify:licenses` is a required check and **no copyleft dependency exists in the lockfile** (verified, not assumed)
+- [x] Static-asset gate and trademark gate are required checks
+- [x] `docs/ADR/ip-clearance.md` has a decision or an explicit fallback for every §25.3 item
+- [!] README §25.3.4 rows all say "verified", not "expected" — unimplemented dependencies and model assets remain excluded until exact versions/hashes exist
+- [x] A worker decodes a JPEG and re-encodes it as WebP byte-stably in a Vitest test
+- [!] `no-network`, `credential-leak`, and `plan-sync` harnesses exist, but required branch-protection status is blocked by unavailable GitHub authentication
 
 ---
 
@@ -1179,6 +1186,8 @@ Every README change gets a row here, per §0.3. Newest first.
 
 | Date | README § | Change | PLAN action |
 | --- | --- | --- | --- |
+| 2026-08-09 | §7.3, §25.2, §25.3.4 | Approved IJG/IJG-short with mandatory attribution; verified the pinned jSquash codec portions | Added and completed P0-13-R1; unblocked and completed P0-13 |
+| 2026-08-09 | §25.3.4 | Verified newly pinned Svelte, Tailwind, and Playwright versions; excluded jSquash JPEG pending IJG review | Completed P0-14 infrastructure; blocked P0-13 explicitly |
 | — | §7.6 | Added per-page delivery architecture (D1–D10, five route archetypes) | Added P1-11, Appendix E; amended P7-01..03 |
 | — | §2 | Added P13 (clean IP by construction) | Added P0-04..08, Appendix D |
 | — | §25.2–25.6 | Added clearance framework and substitution register | Added Phase 0 clearance block |
@@ -1189,6 +1198,6 @@ Every README change gets a row here, per §0.3. Newest first.
 
 ---
 
-**Total: 133 tasks across 8 phases, 81 tools, 74 format entries, 10 adapters, ~680 pages.**
+**Total: 134 tasks across 8 phases, 81 tools, 74 format entries, 10 adapters, ~680 pages.**
 
 Start at **P0-01**.

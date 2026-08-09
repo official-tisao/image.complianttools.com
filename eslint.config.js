@@ -13,6 +13,8 @@ export default tseslint.config(
       '**/coverage/**',
       '**/dist/**',
       '**/node_modules/**',
+      '**/playwright-report/**',
+      '**/test-results/**',
       '**/fixtures/lint/**',
       'saas-template/**',
     ],
@@ -35,6 +37,23 @@ export default tseslint.config(
   {
     files: ['scripts/**/*.{js,mjs}'],
     languageOptions: { globals: { console: 'readonly', process: 'readonly' } },
+  },
+  {
+    files: ['apps/*/dev-server.mjs'],
+    languageOptions: { globals: { console: 'readonly', process: 'readonly', URL: 'readonly' } },
+  },
+  {
+    files: ['packages/*/test/**/*.{js,mjs}'],
+    languageOptions: {
+      globals: {
+        AbortController: 'readonly',
+        performance: 'readonly',
+        queueMicrotask: 'readonly',
+        structuredClone: 'readonly',
+        URL: 'readonly',
+        WebAssembly: 'readonly',
+      },
+    },
   },
   {
     files: ['**/*.svelte'],

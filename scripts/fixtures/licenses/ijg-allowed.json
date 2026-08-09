@@ -1,0 +1,20 @@
+{
+  "IJG": [
+    {
+      "name": "ijg-fixture",
+      "versions": ["1.0.0"],
+      "paths": ["node_modules/ijg-fixture"],
+      "license": "IJG",
+      "homepage": "https://example.com/ijg-fixture"
+    }
+  ],
+  "IJG-short": [
+    {
+      "name": "ijg-short-fixture",
+      "versions": ["1.0.0"],
+      "paths": ["node_modules/ijg-short-fixture"],
+      "license": "IJG-short",
+      "homepage": "https://example.com/ijg-short-fixture"
+    }
+  ]
+}
