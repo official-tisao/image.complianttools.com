@@ -1,0 +1,10 @@
+.svelte-kit
+.turbo
+build
+coverage
+dist
+node_modules
+saas-template
+pnpm-lock.yaml
+PLAN.md
+README.md
