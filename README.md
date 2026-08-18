@@ -3572,7 +3572,7 @@ unreviewed by being absent from both.
 
 | Dependency | Licence | Role |
 | --- | --- | --- |
-| `svelte` 5.56.8 | **MIT — verified 2026-08-09** | UI runtime; SvelteKit and Vite remain candidates until pinned |
+| `svelte` 5.56.8, `@sveltejs/kit` 2.48.5, `@sveltejs/adapter-static` 3.0.10, `@sveltejs/vite-plugin-svelte` 6.2.4, `vite` 6.4.3 | **MIT — verified 2026-08-09** | UI runtime, prerendering, static adapter, and build system |
 | `typescript` 5.7.2, `vitest` 4.1.10, `@playwright/test` 1.62.1, `eslint` 9.39.5, `prettier` 3.9.6 | **Apache-2.0 / MIT — verified 2026-08-09** | Toolchain and test runtime |
 | `@eslint/js` 9.39.5, `typescript-eslint` 8.20.0, `eslint-plugin-svelte` 3.22.0, `svelte-eslint-parser` 1.8.0 | **MIT — verified 2026-08-09** | Lint rule sets and parser |
 | `prettier-plugin-svelte` 4.1.1, `prettier-plugin-tailwindcss` 0.8.1 | **MIT — verified 2026-08-09** | Formatting plugins |
@@ -3580,6 +3580,11 @@ unreviewed by being absent from both.
 | `lefthook` 2.1.10 | **MIT — verified 2026-08-09** | Git hooks |
 | `turbo` 2.3.3, `tsx` 4.23.11 | **MPL-2.0 / MIT — verified 2026-08-09** | Task runner and TS execution |
 | `tailwindcss` 4.3.3 | **MIT — verified 2026-08-09** | Styling |
+| `zod` 4.4.3, `fast-check` 4.9.0, `fflate` 0.8.3 | **MIT — verified 2026-08-09** | Option schemas, property testing, and compressed recipe serialization |
+| `svelte-check` 4.7.5, `@types/node` 26.2.0 | **MIT — verified 2026-08-09** | Component diagnostics and prerender types |
+| `size-limit` 13.0.3, `@size-limit/file` 13.0.3 | **MIT — verified 2026-08-09** | Per-archetype delivery budgets |
+| `@lhci/cli` 0.15.1 | **Apache-2.0 — verified 2026-08-09** | Lighthouse performance and accessibility acceptance |
+| `@axe-core/playwright` 4.11.0 | **MPL-2.0 — verified 2026-08-09** | Blocking zero-violation accessibility checks on Phase 1 tool routes |
 | `@jsquash/jpeg` 1.6.0 → MozJPEG | **Apache-2.0 wrapper + IJG, BSD-3, Zlib codec portions — verified 2026-08-09.** These licences apply to different portions; they are not an election. Mandatory IJG attribution is rendered at `/licenses` and build-enforced | JPEG codec |
 | `@jsquash/png` 3.1.1, `@jsquash/oxipng` 2.3.0 → libpng, zlib, oxipng | **Apache-2.0 wrappers + BSD-3/MIT codec portions — verified 2026-08-09** | PNG codec + optimizer |
 | `@jsquash/webp` 1.5.0 → libwebp | **Apache-2.0 wrapper + BSD-3 codec portion — verified 2026-08-09** | WebP codec |
@@ -3596,8 +3601,6 @@ meaningless.
 | --- | --- | --- |
 | `bits-ui` | MIT | Headless UI primitives |
 | `lucide-svelte` | ISC | Icons |
-| `zod` | MIT | Option schemas |
-| `fast-check` | MIT | Property testing |
 | `@inlang/paraglide-js` | MIT | i18n |
 | `@jsquash/avif` → libavif + aom/dav1d | BSD-2 | AVIF codec |
 | `@jsquash/jxl` → libjxl | BSD-3 | JPEG XL codec + butteraugli |
@@ -3620,7 +3623,6 @@ meaningless.
 | `@mediapipe/tasks-vision` | Apache-2.0 | Face detection runtime |
 | `exifr` | MIT | Metadata read |
 | `piexifjs` | MIT | Metadata write |
-| `fflate` | MIT | ZIP |
 | `culori` | MIT | Colour maths |
 | Inter, JetBrains Mono, Anton | OFL-1.1 | Fonts |
 | Noto Emoji | OFL-1.1 | Emoji glyphs |

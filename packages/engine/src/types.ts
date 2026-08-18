@@ -22,11 +22,76 @@ export interface ExportOptions {
   readonly format: FormatId | 'same';
   readonly quality?: number;
   readonly lossless?: boolean;
+  readonly nearLossless?: number | 'off';
   readonly effort?: number;
   readonly progressive?: boolean;
+  readonly chromaSubsampling?: 'keep' | '4:4:4' | '4:4:0' | '4:2:2' | '4:2:0' | '4:1:1' | '4:1:0';
+  readonly bitDepth?: 'keep' | 1 | 2 | 4 | 8 | 10 | 12 | 16;
   readonly colorSpace?: ColorSpaceId | 'keep';
+  readonly iccProfile?: 'preserve' | 'convert' | 'strip' | `embed:${string}`;
+  readonly dpi?: number | 'keep';
+  readonly dpiUnit?: 'none' | 'inches' | 'cm';
+  readonly resampleWithDpi?: boolean;
   readonly stripMetadata?: 'none' | 'all' | 'gps' | 'except-orientation-copyright';
+  readonly targetSize?: { readonly value: number; readonly unit: 'KB' | 'MB' } | null;
+  readonly targetSizeStrategy?: 'quality' | 'quality-then-scale' | 'scale';
+  readonly backgroundColor?: string;
+  readonly flattenAlpha?: 'auto' | 'always' | 'never';
   readonly filenameTemplate?: string;
+}
+
+export interface InputMeta {
+  readonly width: number;
+  readonly height: number;
+  readonly format: FormatId;
+  readonly frameCount?: number;
+  readonly deviceMemoryGb?: number;
+  readonly wasm32?: boolean;
+}
+
+export type ExecutionTier = 'webgpu' | 'webgl2' | 'wasm-simd' | 'wasm' | 'js';
+
+export interface PlanStep {
+  readonly op: string;
+  readonly options: Readonly<Record<string, unknown>>;
+  readonly sourceStepIndexes: readonly number[];
+  readonly fused: boolean;
+  readonly kernelRadius: number;
+}
+
+export interface Plan {
+  readonly steps: readonly PlanStep[];
+  readonly tier: ExecutionTier;
+  readonly estimatedPeakBytes: number;
+  readonly lazyDownloads: readonly { readonly id: string; readonly bytes: number }[];
+  readonly warnings: readonly string[];
+  readonly memoryStrategy: 'whole' | 'reduced-concurrency' | 'tiled' | 'opfs-spill' | 'refuse';
+  readonly tileSize?: number;
+  readonly largestWorkableDimension?: number;
+}
+
+export interface Progress {
+  readonly itemIndex: number;
+  readonly itemCount: number;
+  readonly stepIndex: number;
+  readonly stepCount: number;
+  readonly fraction: number;
+  readonly phase: 'decoding' | 'processing' | 'encoding' | 'ai-request' | 'packaging';
+  readonly label: string;
+  readonly bytesProcessed?: number;
+  readonly etaMs?: number;
+}
+
+export interface ItemResult {
+  readonly itemIndex: number;
+  readonly image?: RasterImage;
+  readonly error?: EngineError;
+  readonly tiers: readonly ExecutionTier[];
+}
+
+export interface RunResult {
+  readonly items: readonly ItemResult[];
+  readonly plan: Plan;
 }
 
 type StepFor<Op extends string> = Readonly<{

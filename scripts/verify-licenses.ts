@@ -170,6 +170,26 @@ async function inspectWasmLicences(entries: PnpmLicenseEntry[]): Promise<WasmLic
   return records.sort((left, right) => left.packageName.localeCompare(right.packageName));
 }
 
+async function normalizeAmbiguousLicences(
+  entries: PnpmLicenseEntry[],
+): Promise<PnpmLicenseEntry[]> {
+  return Promise.all(
+    entries.map(async (entry) => {
+      if (entry.license !== 'BSD') return entry;
+      let licenceText = '';
+      for (const packagePath of entry.paths) {
+        licenceText += (await inspectPackageDirectory(packagePath)).licenceText;
+      }
+      const detected = detectBundledLicences(licenceText);
+      const bsd = detected.find(
+        (licence) => licence === 'BSD-2-Clause' || licence === 'BSD-3-Clause',
+      );
+      if (!bsd) return entry;
+      return { ...entry, license: bsd };
+    }),
+  );
+}
+
 async function render(
   entries: PnpmLicenseEntry[],
   wasmLicences: WasmLicenceRecord[],
@@ -234,7 +254,73 @@ async function render(
   ].join('\n')}\n`;
 }
 
-const entries = flatten(await loadReport());
+/**
+ * README §25.3.4 splits the positive register into a shipping table (installed, verified) and a
+ * candidate table (not installed, unverified). This gate keeps the split honest: every direct
+ * dependency in the workspace must appear in the shipping table. A package that appears in neither
+ * table, or only in the candidate table while actually installed, fails the build.
+ */
+async function verifyShippingRegister(): Promise<number> {
+  const readme = await readFile(path.join(process.cwd(), 'README.md'), 'utf8');
+  const section = readme.slice(readme.indexOf('##### Shipping register'));
+  const shippingTable = section.slice(0, section.indexOf('##### Candidate register'));
+  const candidateStart = section.indexOf('##### Candidate register');
+  const candidateTable = section.slice(candidateStart, section.indexOf('\n### ', candidateStart));
+  if (candidateStart < 0 || shippingTable.length === 0) {
+    throw new Error('README §25.3.4 is missing its shipping/candidate register split.');
+  }
+
+  const namesIn = (table: string): Set<string> => {
+    const names = new Set<string>();
+    for (const match of table.matchAll(/`(@?[a-z0-9][\w./-]*)`/gi)) names.add(match[1]);
+    return names;
+  };
+  const shipping = namesIn(shippingTable);
+  const candidates = namesIn(candidateTable);
+
+  const manifests = ['package.json', 'apps/web/package.json'];
+  for (const workspace of ['packages', 'apps']) {
+    for (const item of await readdir(path.join(process.cwd(), workspace), {
+      withFileTypes: true,
+    })) {
+      if (item.isDirectory()) manifests.push(`${workspace}/${item.name}/package.json`);
+    }
+  }
+
+  const direct = new Set<string>();
+  for (const manifest of new Set(manifests)) {
+    const parsed = JSON.parse(await readFile(path.join(process.cwd(), manifest), 'utf8')) as {
+      dependencies?: Record<string, string>;
+      devDependencies?: Record<string, string>;
+    };
+    for (const [name, range] of Object.entries({
+      ...parsed.dependencies,
+      ...parsed.devDependencies,
+    })) {
+      if (range.startsWith('workspace:')) continue;
+      direct.add(name);
+    }
+  }
+
+  const unregistered = [...direct].filter((name) => !shipping.has(name));
+  const misfiled = [...direct].filter((name) => !shipping.has(name) && candidates.has(name));
+  if (unregistered.length > 0) {
+    throw new Error(
+      `Positive-register gate failed: these direct dependencies are installed but absent from the README §25.3.4 shipping register:\n${unregistered
+        .map(
+          (name) =>
+            `- ${name}${misfiled.includes(name) ? ' (listed as a candidate; verify it and move it)' : ''}`,
+        )
+        .join('\n')}`,
+    );
+  }
+  return direct.size;
+}
+
+const rawEntries = flatten(await loadReport());
+const entries = process.env.CT_LICENSE_REPORT
+  ? rawEntries
+  : await normalizeAmbiguousLicences(rawEntries);
 const failures = entries.filter((entry) => !isAllowed(entry.license));
 if (failures.length > 0) {
   throw new Error(
@@ -246,6 +332,9 @@ if (process.env.CT_LICENSE_REPORT) {
   console.log(`Synthetic licence report passed for ${entries.length} dependencies.`);
   process.exit(0);
 }
+
+const directCount = await verifyShippingRegister();
+console.log(`Shipping register covers all ${directCount} direct dependencies.`);
 
 const wasmLicences = await inspectWasmLicences(entries);
 const generated = await render(entries, wasmLicences);
