@@ -4,11 +4,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node dev-server.mjs",
-    "build": "tsc -p tsconfig.json",
+    "dev": "vite dev --host 127.0.0.1 --port 4173",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1 --port 4173",
     "test": "node --test",
-    "lint": "tsc -p tsconfig.json --noEmit",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "lint": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "typecheck": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
   },
   "dependencies": {
     "@complianttools/image-engine": "workspace:*"
@@ -17,7 +18,9 @@
     "@sveltejs/adapter-static": "3.0.10",
     "@sveltejs/kit": "2.48.5",
     "@sveltejs/vite-plugin-svelte": "6.2.4",
+    "@types/node": "26.2.0",
     "svelte": "5.56.8",
+    "svelte-check": "4.7.5",
     "typescript": "catalog:",
     "vite": "6.4.3"
   }
