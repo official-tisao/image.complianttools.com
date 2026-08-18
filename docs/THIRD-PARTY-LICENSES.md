@@ -22,6 +22,7 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `@commitlint/to-lines` | `21.0.1` | MIT | [source](https://commitlint.js.org/) |
 | `@commitlint/types` | `21.2.0` | MIT | [source](https://commitlint.js.org/) |
 | `@conventional-changelog/template` | `1.2.1` | MIT | [source](https://conventional-changelog.js.org/template/) |
+| `@esbuild/win32-x64` | `0.25.12` | MIT | [source](https://github.com/evanw/esbuild#readme) |
 | `@esbuild/win32-x64` | `0.28.2` | MIT | [source](https://github.com/evanw/esbuild#readme) |
 | `@eslint-community/eslint-utils` | `4.10.1` | MIT | [source](https://github.com/eslint-community/eslint-utils#readme) |
 | `@eslint-community/regexpp` | `4.12.2` | MIT | [source](https://github.com/eslint-community/regexpp#readme) |
@@ -51,12 +52,21 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `@nodelib/fs.walk` | `1.2.8` | MIT | [source](https://github.com/nodelib/nodelib/tree/master#readme) |
 | `@oxc-project/types` | `0.143.0` | MIT | [source](https://oxc.rs) |
 | `@playwright/test` | `1.62.1` | Apache-2.0 | [source](https://playwright.dev) |
+| `@polka/url` | `1.0.0-next.29` | MIT | [source](https://github.com/lukeed/polka#readme) |
 | `@rolldown/binding-win32-x64-msvc` | `1.2.3` | MIT | [source](https://rolldown.rs/) |
 | `@rolldown/pluginutils` | `1.0.1` | MIT | [source](https://github.com/rolldown/plugins/tree/main/packages/pluginutils#readme) |
+| `@rollup/rollup-win32-x64-gnu` | `4.62.4` | MIT | [source](https://rollupjs.org/) |
+| `@rollup/rollup-win32-x64-msvc` | `4.62.4` | MIT | [source](https://rollupjs.org/) |
 | `@simple-libs/stream-utils` | `2.0.0` | MIT | [source](https://github.com/TrigenSoftware/simple-libs/tree/main/packages/stream-utils#readme) |
+| `@size-limit/file` | `13.0.3` | MIT | [source](https://github.com/ai/size-limit#readme) |
 | `@standard-schema/spec` | `1.1.0` | MIT | [source](https://standardschema.dev) |
 | `@sveltejs/acorn-typescript` | `1.0.12` | MIT | [source](https://github.com/sveltejs/acorn-typescript#readme) |
+| `@sveltejs/adapter-static` | `3.0.10` | MIT | [source](https://svelte.dev/docs/kit/adapter-static) |
+| `@sveltejs/kit` | `2.48.5` | MIT | [source](https://svelte.dev) |
+| `@sveltejs/vite-plugin-svelte` | `6.2.4` | MIT | [source](https://github.com/sveltejs/vite-plugin-svelte#readme) |
+| `@sveltejs/vite-plugin-svelte-inspector` | `5.0.2` | MIT | [source](https://github.com/sveltejs/vite-plugin-svelte#readme) |
 | `@types/chai` | `5.2.3` | MIT | [source](https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/chai) |
+| `@types/cookie` | `0.6.0` | MIT | [source](https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/cookie) |
 | `@types/deep-eql` | `4.0.2` | MIT | [source](https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/deep-eql) |
 | `@types/estree` | `1.0.9` | MIT | [source](https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/estree) |
 | `@types/json-schema` | `7.0.15` | MIT | [source](https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/json-schema) |
@@ -90,6 +100,7 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `brace-expansion` | `1.1.18` | MIT | [source](https://github.com/juliangruber/brace-expansion) |
 | `brace-expansion` | `2.1.4` | MIT | [source](https://github.com/juliangruber/brace-expansion) |
 | `braces` | `3.0.3` | MIT | [source](https://github.com/micromatch/braces) |
+| `bytes-iec` | `3.1.1` | MIT | [source](https://github.com/Saevon/bytes.js#readme) |
 | `callsites` | `3.1.0` | MIT | [source](https://github.com/sindresorhus/callsites#readme) |
 | `chai` | `6.2.2` | MIT | [source](http://chaijs.com) |
 | `chalk` | `4.1.2` | MIT | [source](https://github.com/chalk/chalk#readme) |
@@ -101,14 +112,17 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `conventional-changelog-conventionalcommits` | `10.2.1` | ISC | [source](https://conventional-changelog.js.org/presets/conventional-commits/) |
 | `conventional-commits-parser` | `7.1.2` | MIT | [source](https://conventional-changelog.js.org/commits-parser/) |
 | `convert-source-map` | `2.0.0` | MIT | [source](https://github.com/thlorenz/convert-source-map) |
+| `cookie` | `0.6.0` | MIT | [source](https://github.com/jshttp/cookie#readme) |
 | `cross-spawn` | `7.0.6` | MIT | [source](https://github.com/moxystudio/node-cross-spawn) |
 | `cssesc` | `3.0.0` | MIT | [source](https://mths.be/cssesc) |
 | `debug` | `4.4.3` | MIT | [source](https://github.com/debug-js/debug#readme) |
 | `deep-is` | `0.1.4` | MIT | [source](https://github.com/thlorenz/deep-is#readme) |
+| `deepmerge` | `4.3.1` | MIT | [source](https://github.com/TehShrike/deepmerge) |
 | `detect-libc` | `2.1.2` | Apache-2.0 | [source](https://github.com/lovell/detect-libc#readme) |
 | `devalue` | `5.9.0` | MIT | [source](https://github.com/sveltejs/devalue#readme) |
 | `es-module-lexer` | `2.3.1` | MIT | [source](https://github.com/guybedford/es-module-lexer#readme) |
 | `es-toolkit` | `1.50.0` | MIT | [source](https://es-toolkit.dev) |
+| `esbuild` | `0.25.12` | MIT | [source](https://github.com/evanw/esbuild#readme) |
 | `esbuild` | `0.28.2` | MIT | [source](https://github.com/evanw/esbuild#readme) |
 | `escape-string-regexp` | `4.0.0` | MIT | [source](https://github.com/sindresorhus/escape-string-regexp#readme) |
 | `eslint` | `9.39.5` | MIT | [source](https://eslint.org) |
@@ -125,12 +139,14 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `estree-walker` | `3.0.3` | MIT | [source](https://github.com/Rich-Harris/estree-walker#readme) |
 | `esutils` | `2.0.3` | BSD-2-Clause | [source](https://github.com/estools/esutils) |
 | `expect-type` | `1.4.0` | Apache-2.0 | [source](https://github.com/mmkal/expect-type#readme) |
+| `fast-check` | `4.9.0` | MIT | [source](https://fast-check.dev/) |
 | `fast-deep-equal` | `3.1.3` | MIT | [source](https://github.com/epoberezkin/fast-deep-equal#readme) |
 | `fast-glob` | `3.3.3` | MIT | [source](https://github.com/mrmlnc/fast-glob#readme) |
 | `fast-json-stable-stringify` | `2.1.0` | MIT | [source](https://github.com/epoberezkin/fast-json-stable-stringify) |
 | `fast-levenshtein` | `2.0.6` | MIT | [source](https://github.com/hiddentao/fast-levenshtein#readme) |
 | `fastq` | `1.20.1` | ISC | [source](https://github.com/mcollina/fastq#readme) |
 | `fdir` | `6.5.0` | MIT | [source](https://github.com/thecodrr/fdir#readme) |
+| `fflate` | `0.8.3` | MIT | [source](https://101arrowz.github.io/fflate) |
 | `file-entry-cache` | `8.0.0` | MIT | [source](https://github.com/jaredwray/file-entry-cache#readme) |
 | `fill-range` | `7.1.1` | MIT | [source](https://github.com/jonschlinkert/fill-range) |
 | `find-up` | `5.0.0` | MIT | [source](https://github.com/sindresorhus/find-up#readme) |
@@ -156,6 +172,7 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `json-schema-traverse` | `0.4.1` | MIT | [source](https://github.com/epoberezkin/json-schema-traverse#readme) |
 | `json-stable-stringify-without-jsonify` | `1.0.1` | MIT | [source](https://github.com/samn/json-stable-stringify) |
 | `keyv` | `4.5.4` | MIT | [source](https://github.com/jaredwray/keyv) |
+| `kleur` | `4.1.5` | MIT | [source](https://github.com/lukeed/kleur#readme) |
 | `known-css-properties` | `0.37.0` | MIT | [source](https://github.com/known-css/known-css-properties#readme) |
 | `lefthook` | `2.1.10` | MIT | [source](https://github.com/evilmartians/lefthook#readme) |
 | `lefthook-windows-x64` | `2.1.10` | MIT | [source](https://github.com/evilmartians/lefthook#readme) |
@@ -163,6 +180,7 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `lightningcss` | `1.33.0` | MPL-2.0 | [source](https://github.com/parcel-bundler/lightningcss#readme) |
 | `lightningcss-win32-x64-msvc` | `1.33.0` | MPL-2.0 | [source](https://github.com/parcel-bundler/lightningcss#readme) |
 | `lilconfig` | `2.1.0` | MIT | [source](https://github.com/antonk52/lilconfig#readme) |
+| `lilconfig` | `3.1.3` | MIT | [source](https://github.com/antonk52/lilconfig#readme) |
 | `locate-character` | `3.0.0` | MIT | [source](https://gitlab.com/Rich-Harris/locate-character#README) |
 | `locate-path` | `6.0.0` | MIT | [source](https://github.com/sindresorhus/locate-path#readme) |
 | `lodash.merge` | `4.6.2` | MIT | [source](https://lodash.com/) |
@@ -171,8 +189,11 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `micromatch` | `4.0.8` | MIT | [source](https://github.com/micromatch/micromatch) |
 | `minimatch` | `3.1.5` | ISC | [source](https://github.com/isaacs/minimatch#readme) |
 | `minimatch` | `9.0.9` | ISC | [source](https://github.com/isaacs/minimatch#readme) |
+| `mri` | `1.2.0` | MIT | [source](https://github.com/lukeed/mri#readme) |
+| `mrmime` | `2.0.1` | MIT | [source](https://github.com/lukeed/mrmime#readme) |
 | `ms` | `2.1.3` | MIT | [source](https://github.com/vercel/ms#readme) |
 | `nanoid` | `3.3.18` | MIT | [source](https://github.com/ai/nanoid#readme) |
+| `nanospinner` | `1.2.2` | MIT | [source](https://github.com/usmanyunusov/nanospinner#readme) |
 | `natural-compare` | `1.4.0` | MIT | [source](https://github.com/litejs/natural-compare-lite#readme) |
 | `obug` | `2.1.4` | MIT | [source](https://github.com/sxzz/obug#readme) |
 | `optionator` | `0.9.4` | MIT | [source](https://github.com/gkz/optionator) |
@@ -197,15 +218,21 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `prettier-plugin-svelte` | `4.1.1` | MIT | [source](https://github.com/sveltejs/prettier-plugin-svelte#readme) |
 | `prettier-plugin-tailwindcss` | `0.8.1` | MIT | [source](https://github.com/tailwindlabs/prettier-plugin-tailwindcss#readme) |
 | `punycode` | `2.3.1` | MIT | [source](https://mths.be/punycode) |
+| `pure-rand` | `8.4.2` | MIT | [source](https://github.com/dubzzz/pure-rand#readme) |
 | `queue-microtask` | `1.2.3` | MIT | [source](https://github.com/feross/queue-microtask) |
 | `resolve-from` | `4.0.0` | MIT | [source](https://github.com/sindresorhus/resolve-from#readme) |
 | `reusify` | `1.1.0` | MIT | [source](https://github.com/mcollina/reusify#readme) |
 | `rolldown` | `1.2.3` | MIT | [source](https://rolldown.rs/) |
+| `rollup` | `4.62.4` | MIT | [source](https://rollupjs.org/) |
 | `run-parallel` | `1.2.0` | MIT | [source](https://github.com/feross/run-parallel) |
+| `sade` | `1.8.1` | MIT | [source](https://github.com/lukeed/sade#readme) |
 | `semver` | `7.8.5` | ISC | [source](https://github.com/npm/node-semver#readme) |
+| `set-cookie-parser` | `2.7.2` | MIT | [source](https://github.com/nfriedly/set-cookie-parser) |
 | `shebang-command` | `2.0.0` | MIT | [source](https://github.com/kevva/shebang-command#readme) |
 | `shebang-regex` | `3.0.0` | MIT | [source](https://github.com/sindresorhus/shebang-regex#readme) |
 | `siginfo` | `2.0.0` | ISC | [source](https://github.com/emilbayes/siginfo#readme) |
+| `sirv` | `3.0.2` | MIT | [source](https://github.com/lukeed/sirv#readme) |
+| `size-limit` | `13.0.3` | MIT | [source](https://github.com/ai/size-limit#readme) |
 | `source-map-js` | `1.2.1` | BSD-3-Clause | [source](https://github.com/7rulnik/source-map-js) |
 | `sprintf-js` | `1.0.3` | BSD-3-Clause | [source](https://github.com/alexei/sprintf.js#readme) |
 | `stackback` | `0.0.2` | MIT | [source](https://github.com/shtylman/node-stackback#readme) |
@@ -220,6 +247,7 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `tinyglobby` | `0.2.17` | MIT | [source](https://superchupu.dev/tinyglobby) |
 | `tinyrainbow` | `3.1.1` | MIT | [source](https://github.com/tinylibs/tinyrainbow#readme) |
 | `to-regex-range` | `5.0.1` | MIT | [source](https://github.com/micromatch/to-regex-range) |
+| `totalist` | `3.0.1` | MIT | [source](https://github.com/lukeed/totalist#readme) |
 | `ts-api-utils` | `2.5.0` | MIT | [source](https://github.com/JoshuaKGoldberg/ts-api-utils#readme) |
 | `tsx` | `4.23.11` | MIT | [source](https://tsx.hirok.io) |
 | `turbo` | `2.3.3` | MIT | [source](https://turbo.build/repo) |
@@ -229,7 +257,9 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `typescript-eslint` | `8.20.0` | MIT | [source](https://typescript-eslint.io/packages/typescript-eslint) |
 | `uri-js` | `4.4.1` | BSD-2-Clause | [source](https://github.com/garycourt/uri-js) |
 | `util-deprecate` | `1.0.2` | MIT | [source](https://github.com/TooTallNate/util-deprecate) |
+| `vite` | `6.4.3` | MIT | [source](https://vite.dev) |
 | `vite` | `8.2.1` | MIT | [source](https://vite.dev) |
+| `vitefu` | `1.1.3` | MIT | [source](https://github.com/svitejs/vitefu#readme) |
 | `vitest` | `4.1.10` | MIT | [source](https://vitest.dev) |
 | `wasm-feature-detect` | `1.8.0` | Apache-2.0 | [source](https://github.com/GoogleChromeLabs/wasm-feature-detect#readme) |
 | `which` | `2.0.2` | ISC | [source](https://github.com/isaacs/node-which#readme) |
@@ -238,6 +268,7 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `yaml` | `1.10.3` | ISC | [source](https://eemeli.org/yaml/v1/) |
 | `yocto-queue` | `0.1.0` | MIT | [source](https://github.com/sindresorhus/yocto-queue#readme) |
 | `zimmerframe` | `1.1.4` | MIT | [source](https://github.com/sveltejs/zimmerframe#readme) |
+| `zod` | `4.4.3` | MIT | [source](https://zod.dev) |
 
 ## Bundled WebAssembly licence files
 
