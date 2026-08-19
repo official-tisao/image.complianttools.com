@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { resolveIccProfile, synthesizeIccProfile } from '../src/index.js';
+import { resolveIccProfile, synthesizeIccProfile, validateIccProfile } from '../src/index.js';
 
 describe('ICC profile synthesis', () => {
   it.each(
@@ -10,6 +10,7 @@ describe('ICC profile synthesis', () => {
   )('generates a structurally valid %s v%s profile', (kind, version) => {
     const profile = synthesizeIccProfile(kind, version);
     const view = new DataView(profile.buffer);
+    expect(() => validateIccProfile(profile)).not.toThrow();
     expect(view.getUint32(0)).toBe(profile.length);
     expect(view.getUint32(8)).toBe(version === 2 ? 0x02100000 : 0x04300000);
     expect(new TextDecoder().decode(profile.subarray(36, 40))).toBe('acsp');
@@ -30,5 +31,12 @@ describe('ICC profile synthesis', () => {
     expect(
       new DataView(resolveIccProfile(undefined, 'synthesize', 'gray', 2)!.buffer).getUint32(8),
     ).toBe(0x02100000);
+  });
+
+  it('rejects truncated, mismatched, and out-of-bounds profile structures', () => {
+    expect(() => validateIccProfile(new Uint8Array())).toThrow('truncated');
+    const profile = synthesizeIccProfile('srgb');
+    new DataView(profile.buffer).setUint32(0, 1);
+    expect(() => validateIccProfile(profile)).toThrow('declared size');
   });
 });

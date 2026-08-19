@@ -49,6 +49,28 @@ function tag(signatureName: string, body: Uint8Array): { signature: string; body
   return { signature: signatureName, body };
 }
 
+/** Validates the bounded structural invariants required for generated matrix/TRC ICC profiles. */
+export function validateIccProfile(input: ArrayBuffer | Uint8Array): void {
+  const bytes = input instanceof Uint8Array ? input : new Uint8Array(input);
+  if (bytes.length < 132) throw new Error('ICC profile is truncated before its tag table.');
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  if (view.getUint32(0) !== bytes.length)
+    throw new Error('ICC profile declared size does not match bytes.');
+  if (new TextDecoder('latin1').decode(bytes.subarray(36, 40)) !== 'acsp')
+    throw new Error('ICC profile is missing the acsp signature.');
+  const version = view.getUint32(8) >>> 24;
+  if (version !== 2 && version !== 4) throw new Error('ICC profile version is not v2 or v4.');
+  const count = view.getUint32(128);
+  if (count === 0 || count > 1_000 || 132 + count * 12 > bytes.length)
+    throw new Error('ICC profile has an invalid tag table.');
+  for (let index = 0; index < count; index += 1) {
+    const offset = view.getUint32(136 + index * 12);
+    const size = view.getUint32(140 + index * 12);
+    if (offset < 132 + count * 12 || size < 8 || offset > bytes.length - size)
+      throw new Error('ICC profile tag extends outside the profile.');
+  }
+}
+
 function xyz(x: number, y: number, z: number): Uint8Array {
   const output = new Uint8Array(20);
   output.set(signature('XYZ '));
