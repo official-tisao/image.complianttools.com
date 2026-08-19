@@ -55,6 +55,7 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `@jsquash/webp` | `1.5.0` | Apache-2.0 | [source](https://github.com/jamsinclair/jSquash#readme) |
 | `@lhci/cli` | `0.15.1` | Apache-2.0 | [source](https://github.com/GoogleChrome/lighthouse-ci#readme) |
 | `@lhci/utils` | `0.15.1` | Apache-2.0 | [source](https://github.com/GoogleChrome/lighthouse-ci#readme) |
+| `@napi-rs/canvas` | `0.1.100` | MIT | [source](https://github.com/Brooooooklyn/canvas#readme) |
 | `@nodelib/fs.scandir` | `2.1.5` | MIT | [source](https://github.com/nodelib/nodelib/tree/master#readme) |
 | `@nodelib/fs.stat` | `2.0.5` | MIT | [source](https://github.com/nodelib/nodelib/tree/master#readme) |
 | `@nodelib/fs.walk` | `1.2.8` | MIT | [source](https://github.com/nodelib/nodelib/tree/master#readme) |
@@ -371,6 +372,7 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `negotiator` | `0.6.4` | MIT | [source](https://github.com/jshttp/negotiator#readme) |
 | `netmask` | `2.1.1` | MIT | [source](https://github.com/rs/node-netmask) |
 | `node-fetch` | `2.7.0` | MIT | [source](https://github.com/bitinn/node-fetch) |
+| `node-readable-to-web-readable-stream` | `0.4.2` | MIT | [source](https://github.com/Borewit/node-readable-to-web-readable-stream#readme) |
 | `object-inspect` | `1.13.4` | MIT | [source](https://github.com/inspect-js/object-inspect) |
 | `obug` | `2.1.4` | MIT | [source](https://github.com/sxzz/obug#readme) |
 | `on-finished` | `2.4.1` | MIT | [source](https://github.com/jshttp/on-finished#readme) |
@@ -400,6 +402,7 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `path-to-regexp` | `0.1.13` | MIT | [source](https://github.com/pillarjs/path-to-regexp#readme) |
 | `pathe` | `2.0.3` | MIT | [source](https://github.com/unjs/pathe#readme) |
 | `pdf-lib` | `1.17.1` | MIT | [source](https://pdf-lib.js.org) |
+| `pdfjs-dist` | `5.4.624` | Apache-2.0 | [source](https://mozilla.github.io/pdf.js/) |
 | `pend` | `1.2.0` | MIT | [source](https://github.com/andrewrk/node-pend#readme) |
 | `picocolors` | `1.1.1` | ISC | [source](https://github.com/alexeyraspopov/picocolors#readme) |
 | `picomatch` | `2.3.2` | MIT | [source](https://github.com/micromatch/picomatch) |
@@ -572,6 +575,7 @@ Package metadata is not treated as sufficient for WASM codecs. The verifier walk
 | `@jsquash/png` | `3.1.1` | Apache-2.0, BSD-3-Clause | `LICENSE`<br>`codec/LICENSE.codec.md` |
 | `@jsquash/webp` | `1.5.0` | Apache-2.0, BSD-3-Clause | `LICENSE`<br>`codec/LICENSE.codec.md` |
 | `@resvg/resvg-wasm` | `2.6.2` | MPL-2.0 | `README.md` |
+| `pdfjs-dist` | `5.4.624` | Apache-2.0, BSD-3-Clause, MIT | `LICENSE`<br>`cmaps/LICENSE`<br>`iccs/LICENSE`<br>`standard_fonts/LICENSE_FOXIT`<br>`standard_fonts/LICENSE_LIBERATION`<br>`wasm/LICENSE_JBIG2`<br>`wasm/LICENSE_OPENJPEG`<br>`wasm/LICENSE_PDFJS_JBIG2`<br>`wasm/LICENSE_PDFJS_OPENJPEG`<br>`wasm/LICENSE_PDFJS_QCMS`<br>`wasm/LICENSE_QCMS` |
 | `playwright-core` | `1.62.1` | Apache-2.0 | `LICENSE`<br>`NOTICE` |
 
 ## Static assets

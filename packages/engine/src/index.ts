@@ -28,6 +28,7 @@ export * from './codecs/raw/preview.js';
 export * from './codecs/raw/demosaic.js';
 export * from './codecs/third-party/gif.js';
 export * from './documents/pdf.js';
+export * from './documents/pdf-read.js';
 export * from './documents/psd.js';
 export * from './export/filename.js';
 export * from './export/ico.js';

@@ -3595,6 +3595,7 @@ unreviewed by being absent from both.
 | `parse-exr` 1.0.2 | **MIT — verified 2026-08-18** | OpenEXR decode; ESM parser with bundled types, depends only on allowlisted `fflate` 0.8.3 |
 | `imagetracerjs` 1.2.6 | **Unlicense — verified 2026-08-19** | Browser-local raster-to-SVG vectorization; no runtime network access |
 | `@resvg/resvg-wasm` 2.6.2 | **MPL-2.0 — verified 2026-08-19** | Browser-local SVG rasterization. We use the upstream package unmodified through a local wrapper; its WASM only loads after an SVG is selected |
+| `pdfjs-dist` 5.4.624 | **Apache-2.0 — verified 2026-08-19** | Browser-local PDF page rendering with a bundled local worker; no document content is sent to a service |
 | `pdf-lib` 1.17.1 | **MIT — verified 2026-08-19** | Browser-local PDF creation for image-to-PDF output; generated documents remain on the device |
 | `mp4box` 2.4.1 | **BSD-3-Clause — verified 2026-08-19** | Browser-local MP4 container demuxing before WebCodecs decoding; no bundled video codec |
 | `ag-psd` 31.0.2 | **MIT — verified 2026-08-19** | Browser-local PSD/PSB read and write; no upload or external service |
@@ -3617,7 +3618,6 @@ meaningless.
 | `tinyexr` | BSD-3 | Superseded for browser decode by pinned `parse-exr` 1.0.2 (MIT); retain only as a possible future WASM implementation |
 | JPEG 2000 decoder | — | **No usable npm distribution.** The `openjpeg` package (0.2.3) publishes **no licence field at all**, which the gate denies by rule, and is an unaffiliated personal fork. Upstream OpenJPEG is BSD-2; a vendored WASM build would clear. See P2-04a |
 | `mp4box.js` | BSD-3 | MP4 demux |
-| `pdfjs-dist` | Apache-2.0 | PDF read |
 | `pdf-lib` | MIT | PDF write |
 | `imagetracerjs` | Unlicense (public domain) | Vectorize |
 | `libarchive.js` → libarchive | BSD-2 | CBZ/CBR. ⚠ Confirm the RAR reader used is libarchive's own BSD implementation and **not** derived from the `unrar` source, whose licence forbids reuse |
