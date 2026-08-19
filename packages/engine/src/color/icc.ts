@@ -1,4 +1,5 @@
 export type SynthesizedProfile = 'srgb' | 'display-p3' | 'adobe-rgb-compatible' | 'gray';
+export type IccProfileVersion = 2 | 4;
 
 type Chromaticities = {
   readonly red: readonly [number, number, number];
@@ -65,8 +66,11 @@ function curve(gamma: number): Uint8Array {
   return output;
 }
 
-/** Creates a self-contained ICC v4 matrix/TRC profile from published colour primaries. */
-export function synthesizeIccProfile(kind: SynthesizedProfile): Uint8Array {
+/** Creates a self-contained ICC v2/v4 matrix/TRC profile from published colour primaries. */
+export function synthesizeIccProfile(
+  kind: SynthesizedProfile,
+  version: IccProfileVersion = 4,
+): Uint8Array {
   const definition = kind === 'gray' ? undefined : profiles[kind];
   const tags = definition
     ? [
@@ -86,7 +90,7 @@ export function synthesizeIccProfile(kind: SynthesizedProfile): Uint8Array {
   output.set(signature('mntr'), 12);
   output.set(signature(definition ? 'RGB ' : 'GRAY'), 16);
   output.set(signature('XYZ '), 20);
-  put32(output, 8, 0x04300000);
+  put32(output, 8, version === 2 ? 0x02100000 : 0x04300000);
   output.set(signature('acsp'), 36);
   putS15Fixed16(output, 68, 0.9642);
   putS15Fixed16(output, 72, 1);
@@ -110,8 +114,9 @@ export function resolveIccProfile(
   embedded: Uint8Array | undefined,
   policy: 'preserve' | 'strip' | 'synthesize',
   kind: SynthesizedProfile = 'srgb',
+  version: IccProfileVersion = 4,
 ): Uint8Array | undefined {
   if (policy === 'strip') return undefined;
   if (policy === 'preserve' && embedded) return embedded;
-  return synthesizeIccProfile(kind);
+  return synthesizeIccProfile(kind, version);
 }
