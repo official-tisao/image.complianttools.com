@@ -6,6 +6,7 @@ export type FormatId =
   | 'heic'
   | 'jpeg'
   | 'jxl'
+  | 'pcx'
   | 'png'
   | 'pnm'
   | 'qoi'

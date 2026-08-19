@@ -44,6 +44,14 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     load: () => import('./simple/pnm.js'),
   },
   {
+    id: 'pcx',
+    animation: false,
+    lazyBytes: 8_000,
+    supports: ['decode'],
+    load: () => import('./simple/pcx.js'),
+    unavailableReason: 'PCX encoding is not implemented.',
+  },
+  {
     id: 'tga',
     animation: false,
     lazyBytes: 18_000,
