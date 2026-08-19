@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   createRaster,
+  embeddedByteSize,
   emitAdafruitGfxBitmap,
   emitEmbeddedCArray,
   emitLvglV8CArray,
@@ -20,6 +21,13 @@ describe('embedded exporter', () => {
     expect(
       packEmbeddedPixels(image, { outputName: 'logo', format: 'rgb565be', alphaByte: true }),
     ).toEqual(new Uint8Array([0xf8, 0x00, 128]));
+  });
+
+  it('reports the exact packed flash footprint before emitting data', () => {
+    expect(embeddedByteSize(image, { outputName: 'logo', format: 'rgb565' })).toBe(2);
+    expect(embeddedByteSize(image, { outputName: 'logo', format: 'rgb565', alphaByte: true })).toBe(
+      3,
+    );
   });
 
   it('emits a usable C array and validates its public symbol', () => {

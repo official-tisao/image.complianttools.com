@@ -1,15 +1,17 @@
 <script lang="ts">
   import {
     createRaster,
+    embeddedByteSize,
     emitAdafruitGfxBitmap,
     emitEmbeddedCArray,
     emitLvglV8CArray,
     emitLvglV9CArray,
+    packEmbeddedPixels,
   } from '@complianttools/image-engine';
 
   let status = $state('');
   let error = $state('');
-  let target = $state<'generic' | 'lvgl-v8' | 'lvgl-v9' | 'adafruit'>('generic');
+  let target = $state<'generic' | 'binary' | 'lvgl-v8' | 'lvgl-v9' | 'adafruit'>('generic');
   let outputName = $state('image_data');
 
   async function convert(file: File | undefined) {
@@ -30,21 +32,27 @@
         canvas.height,
         context.getImageData(0, 0, canvas.width, canvas.height).data,
       );
+      const options = { format: 'rgb565' as const, outputName };
       const output =
         target === 'lvgl-v8'
-          ? emitLvglV8CArray(image, { format: 'rgb565', outputName })
+          ? emitLvglV8CArray(image, options)
           : target === 'lvgl-v9'
-            ? emitLvglV9CArray(image, { format: 'rgb565', outputName })
+            ? emitLvglV9CArray(image, options)
             : target === 'adafruit'
               ? emitAdafruitGfxBitmap(image, outputName)
-              : emitEmbeddedCArray(image, { format: 'rgb565', outputName });
-      const url = URL.createObjectURL(new Blob([output], { type: 'text/x-c' }));
+              : target === 'binary'
+                ? new Uint8Array(packEmbeddedPixels(image, options))
+                : emitEmbeddedCArray(image, options);
+      const binary = target === 'binary';
+      const url = URL.createObjectURL(
+        new Blob([output], { type: binary ? 'application/octet-stream' : 'text/x-c' }),
+      );
       const download = document.createElement('a');
       download.href = url;
-      download.download = `${file.name.replace(/\.[^.]+$/u, '')}.h`;
+      download.download = `${file.name.replace(/\.[^.]+$/u, '')}.${binary ? 'bin' : 'h'}`;
       download.click();
       URL.revokeObjectURL(url);
-      status = `Exported ${canvas.width}×${canvas.height} ${target.replace('-', ' ')} C data locally.`;
+      status = `Exported ${canvas.width}×${canvas.height} ${target.replace('-', ' ')} data locally (${embeddedByteSize(image, options)} bytes flash footprint).`;
     } catch (reason) {
       error = reason instanceof Error ? reason.message : 'Unable to create embedded C data.';
     }
@@ -71,6 +79,7 @@
     Target
     <select bind:value={target}>
       <option value="generic">Generic RGB565 C array</option>
+      <option value="binary">Generic RGB565 binary</option>
       <option value="lvgl-v9">LVGL v9 image descriptor</option>
       <option value="lvgl-v8">LVGL v8 image descriptor</option>
       <option value="adafruit">Adafruit GFX 1-bit bitmap</option>

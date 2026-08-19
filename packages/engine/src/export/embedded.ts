@@ -54,6 +54,11 @@ export function packEmbeddedPixels(image: RasterImage, options: EmbeddedExportOp
   return output;
 }
 
+/** Returns the exact local flash footprint of the packed image data. */
+export function embeddedByteSize(image: RasterImage, options: EmbeddedExportOptions): number {
+  return packEmbeddedPixels(image, options).byteLength;
+}
+
 export function emitEmbeddedCArray(image: RasterImage, options: EmbeddedExportOptions): string {
   const bytes = packEmbeddedPixels(image, options);
   const width = Math.max(1, options.lineWidth ?? 12);
