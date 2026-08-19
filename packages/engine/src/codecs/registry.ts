@@ -121,9 +121,8 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     id: 'fits',
     animation: false,
     lazyBytes: 7_000,
-    supports: ['decode'],
+    supports: ['decode', 'encode'],
     load: () => import('./simple/fits.js'),
-    unavailableReason: 'FITS encoding is not implemented.',
   },
   {
     id: 'hdr',

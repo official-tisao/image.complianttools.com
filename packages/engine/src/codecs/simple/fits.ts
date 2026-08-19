@@ -71,3 +71,38 @@ export function decodeFits(input: ArrayBuffer | Uint8Array): RasterImage {
   }
   return { ...createRaster(width, height, pixels), colorSpace: 'gray' };
 }
+
+function card(name: string, value: string): string {
+  return `${name.padEnd(8, ' ')}= ${value.padStart(20, ' ')}`.padEnd(CARD_BYTES, ' ');
+}
+
+/** Encodes the first raster frame as an 8-bit, two-dimensional FITS primary image. */
+export function encodeFits(image: RasterImage): ArrayBuffer {
+  if (image.width < 1 || image.height < 1 || image.width * image.height > 100_000_000)
+    throw new Error('FITS dimensions are unsafe.');
+  const frame = image.frames[0];
+  if (!frame) throw new Error('Cannot encode an image without a frame.');
+  const headerText = [
+    card('SIMPLE', 'T'),
+    card('BITPIX', '8'),
+    card('NAXIS', '2'),
+    card('NAXIS1', String(image.width)),
+    card('NAXIS2', String(image.height)),
+    'END'.padEnd(CARD_BYTES, ' '),
+  ].join('');
+  const headerBytes = Math.ceil(headerText.length / BLOCK_BYTES) * BLOCK_BYTES;
+  const payloadBytes = image.width * image.height;
+  const output = new Uint8Array(headerBytes + Math.ceil(payloadBytes / BLOCK_BYTES) * BLOCK_BYTES);
+  output.set(new TextEncoder().encode(headerText));
+  for (let pixel = 0; pixel < payloadBytes; pixel += 1) {
+    const offset = pixel * 4;
+    const alpha = frame.data[offset + 3]! / 255;
+    output[headerBytes + pixel] = Math.round(
+      (frame.data[offset]! * 0.2126 +
+        frame.data[offset + 1]! * 0.7152 +
+        frame.data[offset + 2]! * 0.0722) *
+        alpha,
+    );
+  }
+  return output.buffer;
+}

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { decodeFits } from '../src/index.js';
+import { createRaster, decodeFits, encodeFits } from '../src/index.js';
 
 function card(value: string): string {
   return value.padEnd(80, ' ');
@@ -26,6 +26,17 @@ describe('FITS codec', () => {
     const image = decodeFits(fitsFixture());
     expect(image.colorSpace).toBe('gray');
     expect(image.frames[0].data).toEqual(new Uint8ClampedArray([0, 0, 0, 255, 255, 255, 255, 255]));
+  });
+
+  it('writes a block-aligned grayscale FITS primary image', () => {
+    const encoded = new Uint8Array(
+      encodeFits(createRaster(2, 1, new Uint8ClampedArray([0, 0, 0, 255, 255, 255, 255, 255]))),
+    );
+    expect(encoded.byteLength % 2880).toBe(0);
+    expect(new TextDecoder().decode(encoded.subarray(0, 80))).toContain('SIMPLE');
+    expect(decodeFits(encoded).frames[0].data).toEqual(
+      new Uint8ClampedArray([0, 0, 0, 255, 255, 255, 255, 255]),
+    );
   });
 
   it('refuses malformed headers and truncated pixel payloads', () => {
