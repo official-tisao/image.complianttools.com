@@ -6,6 +6,7 @@ import {
   emitAdafruitGfxBitmap,
   emitEmbeddedCArray,
   emitEspIdfCArray,
+  emitLvglUsageSnippet,
   emitLvglV8CArray,
   emitLvglV9CArray,
   packEmbeddedPixels,
@@ -61,12 +62,22 @@ describe('embedded exporter', () => {
     expect(output).toContain('#include "lvgl.h"');
     expect(output).toContain('.cf = LV_COLOR_FORMAT_RGB565');
     expect(output).toContain('lv_image_dsc_t logo');
+    expect(output).toContain('LV_IMAGE_DECLARE(logo);');
+    expect(output).toContain('lv_image_set_src(image, &logo);');
   });
 
   it('emits a version-specific LVGL v8 descriptor', () => {
     const output = emitLvglV8CArray(image, { outputName: 'logo', format: 'argb8888' });
     expect(output).toContain('lv_img_dsc_t logo');
     expect(output).toContain('LV_IMG_CF_TRUE_COLOR_ALPHA');
+    expect(output).toContain('LV_IMG_DECLARE(logo);');
+    expect(output).toContain('lv_img_set_src(image, &logo);');
+  });
+
+  it('emits version-specific LVGL usage snippets with a validated public symbol', () => {
+    expect(emitLvglUsageSnippet('logo', 8)).toContain('LV_IMG_DECLARE(logo)');
+    expect(emitLvglUsageSnippet('logo', 9)).toContain('LV_IMAGE_DECLARE(logo)');
+    expect(() => emitLvglUsageSnippet('not valid', 9)).toThrow('valid C identifier');
   });
 
   it('emits a 1-bit Adafruit GFX PROGMEM bitmap', () => {

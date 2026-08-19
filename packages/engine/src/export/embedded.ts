@@ -150,6 +150,14 @@ export function emitEmbeddedCArray(image: RasterImage, options: EmbeddedExportOp
   ].join('\n');
 }
 
+/** Returns the declaration and widget binding needed by an LVGL v8 or v9 caller. */
+export function emitLvglUsageSnippet(outputName: string, version: 8 | 9): string {
+  const name = validateEmbeddedOutputName(outputName);
+  return version === 9
+    ? `/* In a separate translation unit */\nLV_IMAGE_DECLARE(${name});\nlv_image_set_src(image, &${name});\n`
+    : `/* In a separate translation unit */\nLV_IMG_DECLARE(${name});\nlv_img_set_src(image, &${name});\n`;
+}
+
 /** Emits an LVGL v9 image descriptor and matching map for the supported true-colour formats. */
 export function emitLvglV9CArray(image: RasterImage, options: EmbeddedExportOptions): string {
   const colourFormat: Partial<Record<EmbeddedPixelFormat, string>> = {
@@ -174,7 +182,7 @@ export function emitLvglV9CArray(image: RasterImage, options: EmbeddedExportOpti
   .data_size = sizeof(${mapName}),
   .data = ${mapName},
 };
-`;
+}${emitLvglUsageSnippet(options.outputName, 9)}`;
 }
 
 /** Emits an LVGL v8 descriptor and matching map for supported true-colour formats. */
@@ -201,7 +209,7 @@ export function emitLvglV8CArray(image: RasterImage, options: EmbeddedExportOpti
   .data_size = sizeof(${mapName}),
   .data = ${mapName},
 };
-`;
+}${emitLvglUsageSnippet(options.outputName, 8)}`;
 }
 
 /** Emits a 1-bit MSB-first Adafruit GFX bitmap in a PROGMEM C array. */
