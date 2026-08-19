@@ -82,6 +82,15 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     load: () => import('./simple/pfm.js'),
   },
   {
+    id: 'psd',
+    animation: false,
+    lazyBytes: 350_000,
+    supports: ['decode'],
+    load: () => import('../documents/psd.js'),
+    unavailableReason:
+      'PSD/PSB export is not implemented; the flattened local composite can be read.',
+  },
+  {
     id: 'wbmp',
     animation: false,
     lazyBytes: 4_000,

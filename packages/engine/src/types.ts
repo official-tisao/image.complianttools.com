@@ -13,6 +13,7 @@ export type FormatId =
   | 'jxl'
   | 'pcx'
   | 'pfm'
+  | 'psd'
   | 'png'
   | 'pnm'
   | 'qoi'

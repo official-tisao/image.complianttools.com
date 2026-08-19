@@ -14,7 +14,7 @@ describe('P2 codec registry', () => {
       opfs: false,
       webCodecs: false,
     });
-    expect(capabilities).toHaveLength(24);
+    expect(capabilities).toHaveLength(25);
     expect(capabilities.find((entry) => entry.id === 'jpeg')).toMatchObject({
       decode: 'lazy',
       encode: 'lazy',
@@ -52,6 +52,11 @@ describe('P2 codec registry', () => {
       decode: 'lazy',
     });
     expect(capabilities.find((entry) => entry.id === 'sgi')).toMatchObject({ decode: 'lazy' });
+    expect(capabilities.find((entry) => entry.id === 'psd')).toMatchObject({
+      decode: 'lazy',
+      encode: 'unavailable',
+      lazyBytes: 350_000,
+    });
   });
 
   it('loads implemented codecs and rejects a codec with no implementation', async () => {
