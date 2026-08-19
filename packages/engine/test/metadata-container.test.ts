@@ -108,4 +108,30 @@ describe('container metadata', () => {
       new Uint8Array([0xff, 0xd8, 0xff, 0xdb, 0, 3, 9, 0xff, 0xd9]),
     );
   });
+
+  it('reads JFIF pixel density units and values', () => {
+    const jpeg = new Uint8Array([
+      0xff,
+      0xd8,
+      0xff,
+      0xe0,
+      0,
+      16,
+      ...new TextEncoder().encode('JFIF\0'),
+      1,
+      2,
+      1,
+      0,
+      72,
+      0,
+      36,
+      0,
+      0,
+      0xff,
+      0xd9,
+    ]);
+    expect(readContainerMetadata(jpeg).tags).toEqual([
+      { namespace: 'JFIF', name: 'density', value: '72×36 dpi' },
+    ]);
+  });
 });

@@ -108,6 +108,12 @@ function readJpeg(input: Uint8Array): ReadableMetadata {
     if (length < 2 || offset + 2 + length > input.length)
       throw new Error('JPEG contains a truncated metadata segment.');
     const data = input.subarray(offset + 4, offset + 2 + length);
+    if (marker === 0xe0 && latin1.decode(data.subarray(0, 5)) === 'JFIF\0' && data.length >= 12) {
+      const unit = data[7] === 1 ? 'dpi' : data[7] === 2 ? 'dpcm' : 'aspect';
+      const horizontal = (data[8]! << 8) | data[9]!;
+      const vertical = (data[10]! << 8) | data[11]!;
+      tags.push({ namespace: 'JFIF', name: 'density', value: `${horizontal}×${vertical} ${unit}` });
+    }
     if (marker === 0xe1 && latin1.decode(data.subarray(0, 6)) === 'Exif\0\0') {
       for (const field of readExifIfd0(data.subarray(6)))
         tags.push({ namespace: 'EXIF', name: field.name, value: String(field.value) });
