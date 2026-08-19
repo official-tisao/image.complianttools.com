@@ -3594,6 +3594,7 @@ unreviewed by being absent from both.
 | `gifuct-js` 2.1.2 | **MIT — verified 2026-08-18** | GIF decode |
 | `parse-exr` 1.0.2 | **MIT — verified 2026-08-18** | OpenEXR decode; ESM parser with bundled types, depends only on allowlisted `fflate` 0.8.3 |
 | `imagetracerjs` 1.2.6 | **Unlicense — verified 2026-08-19** | Browser-local raster-to-SVG vectorization; no runtime network access |
+| `@resvg/resvg-wasm` 2.6.2 | **MPL-2.0 — verified 2026-08-19** | Browser-local SVG rasterization. We use the upstream package unmodified through a local wrapper; its WASM only loads after an SVG is selected |
 | `pdf-lib` 1.17.1 | **MIT — verified 2026-08-19** | Browser-local PDF creation for image-to-PDF output; generated documents remain on the device |
 | `mp4box` 2.4.1 | **BSD-3-Clause — verified 2026-08-19** | Browser-local MP4 container demuxing before WebCodecs decoding; no bundled video codec |
 | `ag-psd` 31.0.2 | **MIT — verified 2026-08-19** | Browser-local PSD/PSB read and write; no upload or external service |
@@ -3619,7 +3620,6 @@ meaningless.
 | `pdfjs-dist` | Apache-2.0 | PDF read |
 | `pdf-lib` | MIT | PDF write |
 | `imagetracerjs` | Unlicense (public domain) | Vectorize |
-| `@resvg/resvg-wasm` | **MPL-2.0** | SVG rasterize. File-level copyleft — allowed, but we must publish the source of any MPL file we modify. **Do not modify it**; wrap it. Recorded as an ADR |
 | `libarchive.js` → libarchive | BSD-2 | CBZ/CBR. ⚠ Confirm the RAR reader used is libarchive's own BSD implementation and **not** derived from the `unrar` source, whose licence forbids reuse |
 | `dxf-parser` | MIT | DXF |
 | OpenCV (custom build: `core`, `imgproc`, `photo`) | Apache-2.0 (since 4.5.0) | Tier 1 CV heavy ops. Licence ✅; **algorithm patents cleared separately** in §25.3.2 |

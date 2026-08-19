@@ -14,7 +14,7 @@ describe('P2 codec registry', () => {
       opfs: false,
       webCodecs: false,
     });
-    expect(capabilities).toHaveLength(25);
+    expect(capabilities).toHaveLength(26);
     expect(capabilities.find((entry) => entry.id === 'jpeg')).toMatchObject({
       decode: 'lazy',
       encode: 'lazy',

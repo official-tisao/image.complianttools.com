@@ -18,6 +18,7 @@ export * from './codecs/simple/tga.js';
 export * from './codecs/simple/wbmp.js';
 export * from './codecs/simple/xbm.js';
 export * from './codecs/svg/safety.js';
+export * from './codecs/svg/rasterize.js';
 export * from './codecs/svg/vectorize.js';
 export * from './codecs/third-party/exr.js';
 export * from './codecs/third-party/tiff.js';

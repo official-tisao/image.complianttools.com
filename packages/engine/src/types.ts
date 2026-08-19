@@ -18,6 +18,7 @@ export type FormatId =
   | 'pnm'
   | 'qoi'
   | 'sgi'
+  | 'svg'
   | 'sun-raster'
   | 'tga'
   | 'tiff'

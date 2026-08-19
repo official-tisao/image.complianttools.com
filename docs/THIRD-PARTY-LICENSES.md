@@ -65,6 +65,7 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `@playwright/test` | `1.62.1` | Apache-2.0 | [source](https://playwright.dev) |
 | `@polka/url` | `1.0.0-next.29` | MIT | [source](https://github.com/lukeed/polka#readme) |
 | `@puppeteer/browsers` | `2.13.2` | Apache-2.0 | [source](https://github.com/puppeteer/puppeteer/tree/main#readme) |
+| `@resvg/resvg-wasm` | `2.6.2` | MPL-2.0 | [source](https://github.com/yisibl/resvg-js#readme) |
 | `@rolldown/pluginutils` | `1.0.1` | MIT | [source](https://github.com/rolldown/plugins/tree/main/packages/pluginutils#readme) |
 | `@sentry-internal/tracing` | `7.120.4` | MIT | [source](https://github.com/getsentry/sentry-javascript/tree/master/packages/tracing-internal) |
 | `@sentry/core` | `7.120.4` | MIT | [source](https://github.com/getsentry/sentry-javascript/tree/master/packages/core) |
@@ -570,6 +571,7 @@ Package metadata is not treated as sufficient for WASM codecs. The verifier walk
 | `@jsquash/oxipng` | `2.3.0` | Apache-2.0, MIT | `LICENSE`<br>`codec/LICENSE.codec.md` |
 | `@jsquash/png` | `3.1.1` | Apache-2.0, BSD-3-Clause | `LICENSE`<br>`codec/LICENSE.codec.md` |
 | `@jsquash/webp` | `1.5.0` | Apache-2.0, BSD-3-Clause | `LICENSE`<br>`codec/LICENSE.codec.md` |
+| `@resvg/resvg-wasm` | `2.6.2` | MPL-2.0 | `README.md` |
 | `playwright-core` | `1.62.1` | Apache-2.0 | `LICENSE`<br>`NOTICE` |
 
 ## Static assets

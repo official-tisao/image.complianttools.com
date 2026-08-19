@@ -91,6 +91,13 @@ export const codecRegistry: readonly CodecDescriptor[] = [
       'PSD/PSB export is not implemented; the flattened local composite can be read.',
   },
   {
+    id: 'svg',
+    animation: false,
+    lazyBytes: 2_400_000,
+    supports: ['decode'],
+    load: () => import('./svg/rasterize.js'),
+  },
+  {
     id: 'wbmp',
     animation: false,
     lazyBytes: 4_000,

@@ -410,7 +410,7 @@ upstreams are permissive (BSD-3, BSD-2), so the obstacle is a build we do not ow
 - **Spec:** README §5.2, §25.3.2 · **Done when:** decodes on macOS/iOS Safari + recent Windows Chrome; degrades with a named reason elsewhere
 
 #### P2-09 · Vector and document formats
-- [ ] SVG rasterize (`@resvg/resvg-wasm`, **unmodified** — wrap, never patch, per MPL note)
+- [x] SVG rasterize (`@resvg/resvg-wasm`, **unmodified** — wrap, never patch, per MPL note)
 - [ ] Vectorize (`imagetracerjs`)
 - [ ] PDF read (`pdfjs-dist`), PDF write (`pdf-lib`), PSD (`ag-psd`)
 - [ ] EPS preview extractor + PS operator subset (**ours**); outside the subset → unsupported, never partially rendered
