@@ -1,7 +1,7 @@
 import { createRaster } from '../../ops/raster.js';
 import type { RasterImage } from '../../types.js';
 
-export { encodeIco } from '../../export/ico.js';
+export { encodeCur, encodeIco } from '../../export/ico.js';
 
 const readView = (bytes: ArrayBuffer | Uint8Array) =>
   new DataView(

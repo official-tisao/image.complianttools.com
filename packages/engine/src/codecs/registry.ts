@@ -41,9 +41,9 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     id: 'cur',
     animation: false,
     lazyBytes: 5_000,
-    supports: ['decode'],
+    supports: ['decode', 'encode'],
     load: () => import('./simple/ico.js'),
-    unavailableReason: 'CUR encoding and PNG-backed CUR entries are not implemented.',
+    unavailableReason: 'PNG-backed CUR entries are not implemented.',
   },
   {
     id: 'qoi',

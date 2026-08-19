@@ -48,3 +48,36 @@ export function encodeIco(image: RasterImage): ArrayBuffer {
   output.set(bitmap, 22);
   return output.buffer;
 }
+
+/** Creates a single-image 32-bit Windows cursor with a validated pixel hotspot. */
+export function encodeCur(
+  image: RasterImage,
+  hotspot: { readonly x?: number; readonly y?: number } = {},
+): ArrayBuffer {
+  if (image.width < 1 || image.height < 1 || image.width > 256 || image.height > 256)
+    throw new Error('CUR dimensions must be between 1 and 256 pixels.');
+  const x = hotspot.x ?? 0;
+  const y = hotspot.y ?? 0;
+  if (
+    !Number.isInteger(x) ||
+    !Number.isInteger(y) ||
+    x < 0 ||
+    y < 0 ||
+    x >= image.width ||
+    y >= image.height
+  )
+    throw new Error('CUR hotspot must lie within the cursor dimensions.');
+  const bitmap = iconBitmap(image);
+  const output = new Uint8Array(22 + bitmap.length);
+  const view = new DataView(output.buffer);
+  view.setUint16(2, 2, true);
+  view.setUint16(4, 1, true);
+  output[6] = image.width === 256 ? 0 : image.width;
+  output[7] = image.height === 256 ? 0 : image.height;
+  view.setUint16(10, x, true);
+  view.setUint16(12, y, true);
+  view.setUint32(14, bitmap.length, true);
+  view.setUint32(18, 22, true);
+  output.set(bitmap, 22);
+  return output.buffer;
+}

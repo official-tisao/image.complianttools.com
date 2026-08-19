@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { createRaster, decodeCur, decodeIco, encodeIco } from '../src/index.js';
+import { createRaster, decodeCur, decodeIco, encodeCur, encodeIco } from '../src/index.js';
 
 describe('ICO exporter', () => {
   it('writes a one-image 32-bit ICO with an alpha AND mask', () => {
@@ -32,5 +32,19 @@ describe('ICO exporter', () => {
     view.setUint16(10, 7, true);
     view.setUint16(12, 9, true);
     expect(decodeCur(bytes).frames[0].data).toEqual(new Uint8ClampedArray([1, 2, 3, 255]));
+  });
+
+  it('writes a cursor with its hotspot in the CUR directory fields', () => {
+    const image = createRaster(2, 2, new Uint8ClampedArray(16).fill(255));
+    const bytes = new Uint8Array(encodeCur(image, { x: 1, y: 0 }));
+    const view = new DataView(bytes.buffer);
+    expect([view.getUint16(2, true), view.getUint16(10, true), view.getUint16(12, true)]).toEqual([
+      2, 1, 0,
+    ]);
+    expect(decodeCur(bytes).frames[0].data).toEqual(image.frames[0].data);
+  });
+
+  it('rejects cursor hotspots outside the image', () => {
+    expect(() => encodeCur(createRaster(1, 1), { x: 1 })).toThrow('hotspot');
   });
 });
