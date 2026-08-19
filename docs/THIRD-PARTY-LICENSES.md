@@ -60,6 +60,8 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `@nodelib/fs.walk` | `1.2.8` | MIT | [source](https://github.com/nodelib/nodelib/tree/master#readme) |
 | `@oxc-project/types` | `0.143.0` | MIT | [source](https://oxc.rs) |
 | `@paulirish/trace_engine` | `0.0.53` | BSD-3-Clause | — |
+| `@pdf-lib/standard-fonts` | `1.0.0` | MIT | [source](https://github.com/Hopding/standard-fonts) |
+| `@pdf-lib/upng` | `1.0.1` | MIT | [source](https://github.com/Hopding/upng#readme) |
 | `@playwright/test` | `1.62.1` | Apache-2.0 | [source](https://playwright.dev) |
 | `@polka/url` | `1.0.0-next.29` | MIT | [source](https://github.com/lukeed/polka#readme) |
 | `@puppeteer/browsers` | `2.13.2` | Apache-2.0 | [source](https://github.com/puppeteer/puppeteer/tree/main#readme) |
@@ -392,6 +394,7 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `path-key` | `3.1.1` | MIT | [source](https://github.com/sindresorhus/path-key#readme) |
 | `path-to-regexp` | `0.1.13` | MIT | [source](https://github.com/pillarjs/path-to-regexp#readme) |
 | `pathe` | `2.0.3` | MIT | [source](https://github.com/unjs/pathe#readme) |
+| `pdf-lib` | `1.17.1` | MIT | [source](https://pdf-lib.js.org) |
 | `pend` | `1.2.0` | MIT | [source](https://github.com/andrewrk/node-pend#readme) |
 | `picocolors` | `1.1.1` | ISC | [source](https://github.com/alexeyraspopov/picocolors#readme) |
 | `picomatch` | `2.3.2` | MIT | [source](https://github.com/micromatch/picomatch) |

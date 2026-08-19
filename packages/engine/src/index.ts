@@ -18,6 +18,7 @@ export * from './codecs/platform/video.js';
 export * from './codecs/raw/preview.js';
 export * from './codecs/raw/demosaic.js';
 export * from './codecs/third-party/gif.js';
+export * from './documents/pdf.js';
 export * from './export/filename.js';
 export * from './export/embedded.js';
 export * from './metadata/container.js';
