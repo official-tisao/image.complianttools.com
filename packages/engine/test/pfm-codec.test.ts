@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { decodePfm } from '../src/index.js';
+import { createRaster, decodePfm, encodePfm } from '../src/index.js';
 
 function pfmFixture(): Uint8Array {
   const header = new TextEncoder().encode('PF\n1 2\n-1.0\n');
@@ -25,5 +25,10 @@ describe('PFM codec', () => {
     const nonFinite = pfmFixture();
     new DataView(nonFinite.buffer, nonFinite.byteLength - 4).setFloat32(0, Number.NaN, true);
     expect(() => decodePfm(nonFinite)).toThrow('finite');
+  });
+
+  it('round-trips an RGB raster through little-endian PFM', () => {
+    const image = createRaster(1, 1, new Uint8ClampedArray([12, 34, 56, 255]));
+    expect(decodePfm(encodePfm(image)).frames[0].data).toEqual(image.frames[0].data);
   });
 });

@@ -59,3 +59,21 @@ export function decodePfm(input: ArrayBuffer | Uint8Array): RasterImage {
   }
   return createRaster(width, height, pixels);
 }
+
+/** Encodes the first frame as a little-endian RGB Portable Float Map. */
+export function encodePfm(image: RasterImage): ArrayBuffer {
+  const header = new TextEncoder().encode(`PF\n${image.width} ${image.height}\n-1.0\n`);
+  const output = new Uint8Array(header.length + image.width * image.height * 12);
+  output.set(header);
+  const view = new DataView(output.buffer, header.length);
+  const frame = image.frames[0].data;
+  for (let y = 0; y < image.height; y += 1)
+    for (let x = 0; x < image.width; x += 1) {
+      const source = ((image.height - 1 - y) * image.width + x) * 4;
+      const target = (y * image.width + x) * 12;
+      view.setFloat32(target, frame[source]! / 255, true);
+      view.setFloat32(target + 4, frame[source + 1]! / 255, true);
+      view.setFloat32(target + 8, frame[source + 2]! / 255, true);
+    }
+  return output.buffer;
+}

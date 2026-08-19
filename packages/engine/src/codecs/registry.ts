@@ -63,9 +63,8 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     id: 'pfm',
     animation: false,
     lazyBytes: 5_000,
-    supports: ['decode'],
+    supports: ['decode', 'encode'],
     load: () => import('./simple/pfm.js'),
-    unavailableReason: 'PFM encoding is not implemented.',
   },
   {
     id: 'wbmp',
