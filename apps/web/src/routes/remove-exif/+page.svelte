@@ -1,5 +1,6 @@
 <script lang="ts">
   import {
+    stripGifMetadata,
     stripJpegMetadata,
     stripPngMetadata,
     stripWebpMetadata,
@@ -17,15 +18,20 @@
     try {
       const isPng = file.type === 'image/png' || /\.png$/iu.test(file.name);
       const isWebp = file.type === 'image/webp' || /\.webp$/iu.test(file.name);
+      const isGif = file.type === 'image/gif' || /\.gif$/iu.test(file.name);
       const input = await file.arrayBuffer();
       const output = isPng
         ? stripPngMetadata(input)
         : isWebp
           ? stripWebpMetadata(input)
-          : stripJpegMetadata(input);
-      const extension = isPng ? 'png' : isWebp ? 'webp' : 'jpg';
+          : isGif
+            ? stripGifMetadata(input)
+            : stripJpegMetadata(input);
+      const extension = isPng ? 'png' : isWebp ? 'webp' : isGif ? 'gif' : 'jpg';
       const url = URL.createObjectURL(
-        new Blob([output], { type: isPng ? 'image/png' : isWebp ? 'image/webp' : 'image/jpeg' }),
+        new Blob([output], {
+          type: isPng ? 'image/png' : isWebp ? 'image/webp' : isGif ? 'image/gif' : 'image/jpeg',
+        }),
       );
       const anchor = document.createElement('a');
       anchor.href = url;
@@ -44,7 +50,7 @@
   <title>Remove Image Metadata — Image Compliant Tools</title>
   <meta
     name="description"
-    content="Remove supported PNG, JPEG, and WebP metadata locally in your browser."
+    content="Remove supported PNG, JPEG, GIF, and WebP metadata locally in your browser."
   />
   <link rel="canonical" href="https://image.complianttools.com/remove-exif" />
 </svelte:head>
@@ -53,14 +59,14 @@
   <a href="/exif-viewer">← Metadata Viewer</a>
   <h1>Metadata Remover</h1>
   <p>
-    PNG, JPEG, and WebP metadata is stripped locally. Other format-specific stripping options are
-    not offered until they are implemented and verified.
+    PNG, JPEG, GIF, and WebP metadata is stripped locally. Other format-specific stripping options
+    are not offered until they are implemented and verified.
   </p>
   <label>
-    Choose a PNG, JPEG, or WebP
+    Choose a PNG, JPEG, GIF, or WebP
     <input
       type="file"
-      accept="image/png,image/jpeg,image/webp"
+      accept="image/png,image/jpeg,image/gif,image/webp"
       onchange={(event) => void strip(event.currentTarget.files?.[0])}
     />
   </label>
