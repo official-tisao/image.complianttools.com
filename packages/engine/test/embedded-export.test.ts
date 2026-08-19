@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   createRaster,
   emitEmbeddedCArray,
+  emitLvglV8CArray,
   emitLvglV9CArray,
   packEmbeddedPixels,
   validateEmbeddedOutputName,
@@ -32,5 +33,11 @@ describe('embedded exporter', () => {
     expect(output).toContain('#include "lvgl.h"');
     expect(output).toContain('.cf = LV_COLOR_FORMAT_RGB565');
     expect(output).toContain('lv_image_dsc_t logo');
+  });
+
+  it('emits a version-specific LVGL v8 descriptor', () => {
+    const output = emitLvglV8CArray(image, { outputName: 'logo', format: 'argb8888' });
+    expect(output).toContain('lv_img_dsc_t logo');
+    expect(output).toContain('LV_IMG_CF_TRUE_COLOR_ALPHA');
   });
 });
