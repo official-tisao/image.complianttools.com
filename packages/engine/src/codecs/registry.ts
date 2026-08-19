@@ -59,6 +59,14 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     load: () => import('./simple/wbmp.js'),
   },
   {
+    id: 'xbm',
+    animation: false,
+    lazyBytes: 4_000,
+    supports: ['decode'],
+    load: () => import('./simple/xbm.js'),
+    unavailableReason: 'XBM encoding is not implemented.',
+  },
+  {
     id: 'tga',
     animation: false,
     lazyBytes: 18_000,

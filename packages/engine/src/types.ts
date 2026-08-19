@@ -13,6 +13,7 @@ export type FormatId =
   | 'tga'
   | 'tiff'
   | 'wbmp'
+  | 'xbm'
   | 'webp';
 
 export type ColorSpaceId = 'srgb' | 'display-p3' | 'adobe-rgb' | 'gray' | 'cmyk';
