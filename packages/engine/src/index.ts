@@ -9,6 +9,7 @@ export * from './codecs/simple/qoi.js';
 export * from './codecs/simple/pnm.js';
 export * from './codecs/simple/pcx.js';
 export * from './codecs/simple/pfm.js';
+export * from './codecs/simple/sgi.js';
 export * from './codecs/simple/sun-raster.js';
 export * from './codecs/simple/tga.js';
 export * from './codecs/simple/wbmp.js';

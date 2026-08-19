@@ -14,6 +14,7 @@ export type FormatId =
   | 'png'
   | 'pnm'
   | 'qoi'
+  | 'sgi'
   | 'sun-raster'
   | 'tga'
   | 'tiff'

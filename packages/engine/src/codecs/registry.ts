@@ -98,6 +98,14 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     unavailableReason: 'Sun Raster encoding is not implemented.',
   },
   {
+    id: 'sgi',
+    animation: false,
+    lazyBytes: 7_000,
+    supports: ['decode'],
+    load: () => import('./simple/sgi.js'),
+    unavailableReason: 'SGI encoding and RLE decoding are not implemented.',
+  },
+  {
     id: 'exr',
     animation: false,
     lazyBytes: 72_000,
