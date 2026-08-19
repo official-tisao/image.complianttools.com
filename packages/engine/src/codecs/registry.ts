@@ -64,7 +64,13 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     load: () => import('./third-party/gif.js'),
     unavailableReason: 'GIF encoding is scheduled separately in P2-05.',
   },
-  { id: 'avif', animation: true, lazyBytes: 1_900_000, supports: ['decode', 'encode'] },
+  {
+    id: 'avif',
+    animation: true,
+    lazyBytes: 1_900_000,
+    supports: ['decode', 'encode'],
+    load: () => import('./jsquash.js'),
+  },
   {
     id: 'bmp',
     animation: false,
@@ -79,7 +85,13 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     supports: ['decode', 'encode'],
     load: () => import('./third-party/tiff.js'),
   },
-  { id: 'jxl', animation: true, lazyBytes: 1_200_000, supports: ['decode', 'encode'] },
+  {
+    id: 'jxl',
+    animation: true,
+    lazyBytes: 1_200_000,
+    supports: ['decode', 'encode'],
+    load: () => import('./jsquash.js'),
+  },
 ];
 
 export function getCodec(id: FormatId): CodecDescriptor {
