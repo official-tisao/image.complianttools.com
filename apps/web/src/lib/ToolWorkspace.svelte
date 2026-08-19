@@ -15,11 +15,13 @@
     title,
     description,
     locale = 'en',
+    canonicalPath = kind,
   } = $props<{
     kind: ToolKind;
     title: string;
     description: string;
     locale?: Locale;
+    canonicalPath?: string;
   }>();
   const initialKind = untrack(() => kind);
   let values = $state<Record<string, unknown>>({
@@ -55,7 +57,7 @@
       ? `${formatBytes(sourceBytes)} → ${formatBytes(outputBytes)} (${Math.round((outputBytes / sourceBytes - 1) * 100)}%)`
       : translate(locale, 'status.choose', 'Choose an image to begin'),
   );
-  const canonical = $derived(`https://image.complianttools.com/${kind}`);
+  const canonical = $derived(`https://image.complianttools.com/${canonicalPath}`);
   const jsonLd = $derived({
     '@context': 'https://schema.org',
     '@graph': [
