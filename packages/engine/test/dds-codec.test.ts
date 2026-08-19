@@ -46,6 +46,20 @@ function bc4Fixture(): Uint8Array {
   return bytes;
 }
 
+function bc5Fixture(): Uint8Array {
+  const bytes = new Uint8Array(144);
+  const view = new DataView(bytes.buffer);
+  bytes.set(new TextEncoder().encode('DDS '));
+  view.setUint32(4, 124, true);
+  view.setUint32(12, 4, true);
+  view.setUint32(16, 4, true);
+  view.setUint32(76, 32, true);
+  bytes.set(new TextEncoder().encode('ATI2'), 84);
+  // The first two BC4 blocks encode red=200 and green=100 at selector zero.
+  bytes.set([200, 0, 0, 0, 0, 0, 0, 0, 100, 0], 128);
+  return bytes;
+}
+
 describe('DDS DXT1 codec', () => {
   it('decodes a single DXT1/BC1 block', () => {
     expect(decodeDds(dxt1Fixture()).frames[0].data.subarray(0, 4)).toEqual(
@@ -62,6 +76,12 @@ describe('DDS DXT1 codec', () => {
   it('decodes BC4 values as grayscale RGBA', () => {
     expect(decodeDds(bc4Fixture()).frames[0].data.subarray(0, 4)).toEqual(
       new Uint8ClampedArray([200, 200, 200, 255]),
+    );
+  });
+
+  it('decodes BC5 channels as red-green RGBA', () => {
+    expect(decodeDds(bc5Fixture()).frames[0].data.subarray(0, 4)).toEqual(
+      new Uint8ClampedArray([200, 100, 0, 255]),
     );
   });
 
