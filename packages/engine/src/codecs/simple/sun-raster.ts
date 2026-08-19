@@ -1,23 +1,34 @@
 import { createRaster } from '../../ops/raster.js';
 import type { RasterImage } from '../../types.js';
+import { readHeader, requiredHeaderValue } from './framework.js';
 
 const magic = 0x59a66a95;
+const sunRasterHeader = [
+  { name: 'magic', offset: 0, type: 'u32' },
+  { name: 'width', offset: 4, type: 'u32' },
+  { name: 'height', offset: 8, type: 'u32' },
+  { name: 'depth', offset: 12, type: 'u32' },
+  { name: 'length', offset: 16, type: 'u32' },
+  { name: 'type', offset: 20, type: 'u32' },
+  { name: 'mapType', offset: 24, type: 'u32' },
+  { name: 'mapLength', offset: 28, type: 'u32' },
+] as const;
 
 /** Decodes standard uncompressed 24/32-bit Sun Raster images into RGBA pixels. */
 export function decodeSunRaster(input: ArrayBuffer | Uint8Array): RasterImage {
   const bytes = input instanceof Uint8Array ? input : new Uint8Array(input);
   if (bytes.byteLength < 32) throw new Error('Sun Raster header is truncated.');
-  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-  const width = view.getUint32(4, false);
-  const height = view.getUint32(8, false);
-  const depth = view.getUint32(12, false);
-  const length = view.getUint32(16, false);
+  const header = readHeader(bytes, sunRasterHeader);
+  const width = requiredHeaderValue(header, 'width');
+  const height = requiredHeaderValue(header, 'height');
+  const depth = requiredHeaderValue(header, 'depth');
+  const length = requiredHeaderValue(header, 'length');
   if (
-    view.getUint32(0, false) !== magic ||
+    header.magic !== magic ||
     ![24, 32].includes(depth) ||
-    view.getUint32(20, false) !== 1 ||
-    view.getUint32(24, false) !== 0 ||
-    view.getUint32(28, false) !== 0 ||
+    header.type !== 1 ||
+    header.mapType !== 0 ||
+    header.mapLength !== 0 ||
     width < 1 ||
     height < 1 ||
     width * height > 100_000_000

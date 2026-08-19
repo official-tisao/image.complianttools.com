@@ -360,8 +360,8 @@ mega-dependency was replaced by a framework of our own (README §25.3.1).
 - **Spec:** README §5.7, §7.3 · **Done when:** the UI never offers an `unavailable` encode target, and always shows `lazyBytes` first
 
 #### P2-02 · Simple-format codec framework (**ours**)
-- [ ] `codecs/simple/_framework/`: `BitReader`, `BitWriter`, header-descriptor DSL, shared RLE
-- [ ] Fixture + adversarial test harness reused by every format built on it
+- [x] `codecs/simple/framework.ts`: `BitReader`, `BitWriter`, header-descriptor DSL, shared RLE
+- [x] Fixture + adversarial test harness reused by every format built on it
 - **Spec:** README §25.4 · **Done when:** two formats are implemented on it and share ≥ 60 % of their test scaffolding
 
 #### P2-03 · Simple formats (**ours**) — 16 formats

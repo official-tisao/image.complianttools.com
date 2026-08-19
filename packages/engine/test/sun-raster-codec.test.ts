@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { createRaster, decodeSunRaster, encodeSunRaster } from '../src/index.js';
+import { expectSimpleCodecRejects, expectSimpleCodecRoundTrip } from './fixtures/simple-codec.js';
 
 function fixture(): Uint8Array {
   const bytes = new Uint8Array(36);
@@ -24,7 +25,7 @@ describe('Sun Raster codec', () => {
 
   it('round-trips opaque RGB data through a padded Sun Raster payload', () => {
     const image = createRaster(1, 1, new Uint8ClampedArray([3, 2, 1, 255]));
-    expect(decodeSunRaster(encodeSunRaster(image)).frames[0].data).toEqual(image.frames[0].data);
+    expectSimpleCodecRoundTrip(image, encodeSunRaster, decodeSunRaster);
   });
 
   it('rejects alpha transparency because the encoder emits RGB only', () => {
@@ -34,7 +35,6 @@ describe('Sun Raster codec', () => {
   });
 
   it('refuses bad magic and declared-length mismatches', () => {
-    expect(() => decodeSunRaster(new Uint8Array(32))).toThrow('Unsupported');
-    expect(() => decodeSunRaster(fixture().subarray(0, -1))).toThrow('truncated');
+    expectSimpleCodecRejects(decodeSunRaster, [new Uint8Array(32), fixture().subarray(0, -1)]);
   });
 });

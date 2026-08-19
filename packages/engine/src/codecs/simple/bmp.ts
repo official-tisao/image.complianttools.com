@@ -1,5 +1,6 @@
 import { createRaster } from '../../ops/raster.js';
 import type { RasterImage } from '../../types.js';
+import { readHeader, requiredHeaderValue } from './framework.js';
 
 const viewOf = (bytes: ArrayBuffer | Uint8Array) =>
   new DataView(
@@ -7,16 +8,27 @@ const viewOf = (bytes: ArrayBuffer | Uint8Array) =>
     bytes instanceof Uint8Array ? bytes.byteOffset : 0,
   );
 
+const bmpHeader = [
+  { name: 'signature', offset: 0, type: 'u16', littleEndian: true },
+  { name: 'offset', offset: 10, type: 'u32', littleEndian: true },
+  { name: 'dibSize', offset: 14, type: 'u32', littleEndian: true },
+  { name: 'width', offset: 18, type: 'i32', littleEndian: true },
+  { name: 'height', offset: 22, type: 'i32', littleEndian: true },
+  { name: 'bitsPerPixel', offset: 28, type: 'u16', littleEndian: true },
+  { name: 'compression', offset: 30, type: 'u32', littleEndian: true },
+] as const;
+
 export function decodeBmp(bytes: ArrayBuffer | Uint8Array): RasterImage {
   const view = viewOf(bytes);
-  if (view.byteLength < 54 || view.getUint16(0, true) !== 0x4d42)
-    throw new Error('Invalid BMP header.');
-  const offset = view.getUint32(10, true);
-  const dibSize = view.getUint32(14, true);
-  const width = view.getInt32(18, true);
-  const signedHeight = view.getInt32(22, true);
-  const bitsPerPixel = view.getUint16(28, true);
-  const compression = view.getUint32(30, true);
+  if (view.byteLength < 54) throw new Error('Invalid BMP header.');
+  const header = readHeader(bytes, bmpHeader);
+  if (header.signature !== 0x4d42) throw new Error('Invalid BMP header.');
+  const offset = requiredHeaderValue(header, 'offset');
+  const dibSize = requiredHeaderValue(header, 'dibSize');
+  const width = requiredHeaderValue(header, 'width');
+  const signedHeight = requiredHeaderValue(header, 'height');
+  const bitsPerPixel = requiredHeaderValue(header, 'bitsPerPixel');
+  const compression = requiredHeaderValue(header, 'compression');
   if (
     dibSize < 40 ||
     width <= 0 ||
