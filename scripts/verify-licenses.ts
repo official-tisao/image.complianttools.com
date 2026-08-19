@@ -74,6 +74,17 @@ function flatten(report: PnpmLicenseReport): PnpmLicenseEntry[] {
     );
 }
 
+/**
+ * pnpm installs only the optional native binary matching the current host. Those packages are
+ * still checked above when present, but including them in the committed inventory makes a Windows
+ * checkout and the Ubuntu CI runner generate different documents from the same lockfile.
+ */
+function isHostSpecificBinaryPackage(name: string): boolean {
+  return /(?:^|[-/])(android|darwin|freebsd|linux|netbsd|openbsd|sunos|win32|windows)(?:[-/]|$)/i.test(
+    name,
+  );
+}
+
 async function inspectPackageDirectory(
   directory: string,
 ): Promise<{ hasWasm: boolean; licenceFiles: string[]; licenceText: string }> {
@@ -317,7 +328,9 @@ async function verifyShippingRegister(): Promise<number> {
   return direct.size;
 }
 
-const rawEntries = flatten(await loadReport());
+const rawEntries = flatten(await loadReport()).filter(
+  (entry) => !isHostSpecificBinaryPackage(entry.name),
+);
 const entries = process.env.CT_LICENSE_REPORT
   ? rawEntries
   : await normalizeAmbiguousLicences(rawEntries);

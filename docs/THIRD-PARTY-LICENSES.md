@@ -23,8 +23,6 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `@commitlint/to-lines` | `21.0.1` | MIT | [source](https://commitlint.js.org/) |
 | `@commitlint/types` | `21.2.0` | MIT | [source](https://commitlint.js.org/) |
 | `@conventional-changelog/template` | `1.2.1` | MIT | [source](https://conventional-changelog.js.org/template/) |
-| `@esbuild/win32-x64` | `0.25.12` | MIT | [source](https://github.com/evanw/esbuild#readme) |
-| `@esbuild/win32-x64` | `0.28.2` | MIT | [source](https://github.com/evanw/esbuild#readme) |
 | `@eslint-community/eslint-utils` | `4.10.1` | MIT | [source](https://github.com/eslint-community/eslint-utils#readme) |
 | `@eslint-community/regexpp` | `4.12.2` | MIT | [source](https://github.com/eslint-community/regexpp#readme) |
 | `@eslint/config-array` | `0.21.2` | Apache-2.0 | [source](https://github.com/eslint/rewrite/tree/main/packages/config-array#readme) |
@@ -63,10 +61,7 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `@playwright/test` | `1.62.1` | Apache-2.0 | [source](https://playwright.dev) |
 | `@polka/url` | `1.0.0-next.29` | MIT | [source](https://github.com/lukeed/polka#readme) |
 | `@puppeteer/browsers` | `2.13.2` | Apache-2.0 | [source](https://github.com/puppeteer/puppeteer/tree/main#readme) |
-| `@rolldown/binding-win32-x64-msvc` | `1.2.3` | MIT | [source](https://rolldown.rs/) |
 | `@rolldown/pluginutils` | `1.0.1` | MIT | [source](https://github.com/rolldown/plugins/tree/main/packages/pluginutils#readme) |
-| `@rollup/rollup-win32-x64-gnu` | `4.62.4` | MIT | [source](https://rollupjs.org/) |
-| `@rollup/rollup-win32-x64-msvc` | `4.62.4` | MIT | [source](https://rollupjs.org/) |
 | `@sentry-internal/tracing` | `7.120.4` | MIT | [source](https://github.com/getsentry/sentry-javascript/tree/master/packages/tracing-internal) |
 | `@sentry/core` | `7.120.4` | MIT | [source](https://github.com/getsentry/sentry-javascript/tree/master/packages/core) |
 | `@sentry/integrations` | `7.120.4` | MIT | [source](https://github.com/getsentry/sentry-javascript/tree/master/packages/integrations) |
@@ -314,7 +309,6 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `kleur` | `4.1.5` | MIT | [source](https://github.com/lukeed/kleur#readme) |
 | `known-css-properties` | `0.37.0` | MIT | [source](https://github.com/known-css/known-css-properties#readme) |
 | `lefthook` | `2.1.10` | MIT | [source](https://github.com/evilmartians/lefthook#readme) |
-| `lefthook-windows-x64` | `2.1.10` | MIT | [source](https://github.com/evilmartians/lefthook#readme) |
 | `legacy-javascript` | `0.0.1` | Apache-2.0 | [source](https://github.com/GoogleChrome/lighthouse#readme) |
 | `levn` | `0.4.1` | MIT | [source](https://github.com/gkz/levn) |
 | `lie` | `3.1.1` | MIT | [source](https://github.com/calvinmetcalf/lie#readme) |
@@ -323,7 +317,6 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `lighthouse-logger` | `2.0.2` | Apache-2.0 | [source](https://github.com/GoogleChrome/lighthouse#readme) |
 | `lighthouse-stack-packs` | `1.12.2` | Apache-2.0 | [source](https://github.com/GoogleChrome/lighthouse-stack-packs#readme) |
 | `lightningcss` | `1.33.0` | MPL-2.0 | [source](https://github.com/parcel-bundler/lightningcss#readme) |
-| `lightningcss-win32-x64-msvc` | `1.33.0` | MPL-2.0 | [source](https://github.com/parcel-bundler/lightningcss#readme) |
 | `lilconfig` | `2.1.0` | MIT | [source](https://github.com/antonk52/lilconfig#readme) |
 | `lilconfig` | `3.1.3` | MIT | [source](https://github.com/antonk52/lilconfig#readme) |
 | `localforage` | `1.10.0` | Apache-2.0 | [source](https://github.com/localForage/localForage) |
@@ -502,7 +495,6 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `tslib` | `2.8.1` | 0BSD | [source](https://www.typescriptlang.org/) |
 | `tsx` | `4.23.11` | MIT | [source](https://tsx.hirok.io) |
 | `turbo` | `2.3.3` | MIT | [source](https://turbo.build/repo) |
-| `turbo-windows-64` | `2.3.3` | MIT | [source](https://turbo.build/repo) |
 | `type-check` | `0.4.0` | MIT | [source](https://github.com/gkz/type-check) |
 | `type-is` | `1.6.18` | MIT | [source](https://github.com/jshttp/type-is#readme) |
 | `typed-query-selector` | `2.12.2` | MIT | [source](https://github.com/g-plane/typed-query-selector#readme) |
