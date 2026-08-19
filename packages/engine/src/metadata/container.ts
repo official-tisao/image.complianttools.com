@@ -4,7 +4,7 @@ export type MetadataTag = {
   readonly value: string;
 };
 export type ReadableMetadata = {
-  readonly format: 'png' | 'gif' | 'jpeg';
+  readonly format: 'png' | 'gif' | 'jpeg' | 'webp';
   readonly tags: readonly MetadataTag[];
 };
 
@@ -139,10 +139,55 @@ function readJpeg(input: Uint8Array): ReadableMetadata {
   return { format: 'jpeg', tags };
 }
 
+function webpChunks(
+  input: Uint8Array,
+): { type: string; data: Uint8Array; start: number; end: number }[] {
+  if (
+    input.length < 12 ||
+    latin1.decode(input.subarray(0, 4)) !== 'RIFF' ||
+    latin1.decode(input.subarray(8, 12)) !== 'WEBP'
+  )
+    throw new Error('WebP metadata requires a valid RIFF/WEBP signature.');
+  const view = new DataView(input.buffer, input.byteOffset, input.byteLength);
+  const riffBytes = view.getUint32(4, true) + 8;
+  if (riffBytes > input.length) throw new Error('WebP contains a truncated RIFF payload.');
+  const chunks: { type: string; data: Uint8Array; start: number; end: number }[] = [];
+  for (let offset = 12; offset < riffBytes;) {
+    if (offset > riffBytes - 8) throw new Error('WebP contains a truncated chunk header.');
+    const type = latin1.decode(input.subarray(offset, offset + 4));
+    const length = view.getUint32(offset + 4, true);
+    const dataStart = offset + 8;
+    const end = dataStart + length;
+    const paddedEnd = end + (length & 1);
+    if (paddedEnd > riffBytes) throw new Error('WebP contains a truncated chunk payload.');
+    chunks.push({ type, data: input.subarray(dataStart, end), start: offset, end: paddedEnd });
+    offset = paddedEnd;
+  }
+  return chunks;
+}
+
+function readWebp(input: Uint8Array): ReadableMetadata {
+  const tags: MetadataTag[] = [];
+  for (const chunk of webpChunks(input)) {
+    if (chunk.type === 'EXIF')
+      tags.push({ namespace: 'EXIF', name: 'embedded', value: `${chunk.data.length} bytes` });
+    if (chunk.type === 'XMP ')
+      tags.push({ namespace: 'XMP', name: 'packet', value: `${chunk.data.length} bytes` });
+    if (chunk.type === 'ICCP')
+      tags.push({ namespace: 'ICC', name: 'embedded', value: `${chunk.data.length} bytes` });
+  }
+  return { format: 'webp', tags };
+}
+
 export function readContainerMetadata(input: ArrayBuffer | Uint8Array): ReadableMetadata {
   const bytes = input instanceof Uint8Array ? input : new Uint8Array(input);
   if (matches(bytes, pngSignature)) return readPng(bytes);
   if (bytes[0] === 0xff && bytes[1] === 0xd8) return readJpeg(bytes);
+  if (
+    latin1.decode(bytes.subarray(0, 4)) === 'RIFF' &&
+    latin1.decode(bytes.subarray(8, 12)) === 'WEBP'
+  )
+    return readWebp(bytes);
   return readGif(bytes);
 }
 
@@ -190,5 +235,23 @@ export function stripJpegMetadata(input: ArrayBuffer | Uint8Array): Uint8Array {
     offset += 2 + length;
   }
   return Uint8Array.from(retained.flatMap((part) => [...part]));
+}
+
+/** Removes EXIF, XMP, and ICC chunks while retaining the WebP image payload byte-for-byte. */
+export function stripWebpMetadata(input: ArrayBuffer | Uint8Array): Uint8Array {
+  const bytes = input instanceof Uint8Array ? input : new Uint8Array(input);
+  const chunks = webpChunks(bytes);
+  const retained = chunks
+    .filter((chunk) => !['EXIF', 'XMP ', 'ICCP'].includes(chunk.type))
+    .map((chunk) => bytes.subarray(chunk.start, chunk.end));
+  const output = new Uint8Array(12 + retained.reduce((size, chunk) => size + chunk.length, 0));
+  output.set(bytes.subarray(0, 12));
+  new DataView(output.buffer).setUint32(4, output.length - 8, true);
+  let offset = 12;
+  for (const chunk of retained) {
+    output.set(chunk, offset);
+    offset += chunk.length;
+  }
+  return output;
 }
 import { readExifGps, readExifIfd0 } from './exif.js';

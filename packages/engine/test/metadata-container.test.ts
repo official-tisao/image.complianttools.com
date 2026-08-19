@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { readContainerMetadata, stripJpegMetadata, stripPngMetadata } from '../src/index.js';
+import {
+  readContainerMetadata,
+  stripJpegMetadata,
+  stripPngMetadata,
+  stripWebpMetadata,
+} from '../src/index.js';
 
 function pngChunk(type: string, data: readonly number[]): number[] {
   const length = data.length;
@@ -34,6 +39,18 @@ const png = new Uint8Array([
   ...pngChunk('IDAT', [1, 2, 3]),
   ...pngChunk('IEND', []),
 ]);
+
+function webpChunk(type: string, data: readonly number[]): number[] {
+  return [
+    ...[...type].map((value) => value.charCodeAt(0)),
+    data.length,
+    0,
+    0,
+    0,
+    ...data,
+    ...(data.length & 1 ? [0] : []),
+  ];
+}
 
 describe('container metadata', () => {
   it('reads PNG text and strips metadata without touching image chunks', () => {
@@ -153,5 +170,34 @@ describe('container metadata', () => {
     expect(readContainerMetadata(jpeg).tags).toEqual([
       { namespace: 'XMP', name: 'packet', value: `${packet.length} bytes` },
     ]);
+  });
+
+  it('reads and strips WebP EXIF, XMP, and ICC chunks without changing image chunks', () => {
+    const chunks = [
+      ...webpChunk('VP8 ', [1, 2, 3]),
+      ...webpChunk('EXIF', [4, 5]),
+      ...webpChunk('XMP ', [6]),
+      ...webpChunk('ICCP', [7, 8, 9]),
+    ];
+    const webp = new Uint8Array([
+      ...new TextEncoder().encode('RIFF'),
+      chunks.length + 4,
+      0,
+      0,
+      0,
+      ...new TextEncoder().encode('WEBP'),
+      ...chunks,
+    ]);
+    expect(readContainerMetadata(webp)).toEqual({
+      format: 'webp',
+      tags: [
+        { namespace: 'EXIF', name: 'embedded', value: '2 bytes' },
+        { namespace: 'XMP', name: 'packet', value: '1 bytes' },
+        { namespace: 'ICC', name: 'embedded', value: '3 bytes' },
+      ],
+    });
+    const stripped = stripWebpMetadata(webp);
+    expect(readContainerMetadata(stripped)).toEqual({ format: 'webp', tags: [] });
+    expect(new TextDecoder('latin1').decode(stripped)).toContain('VP8 ');
   });
 });
