@@ -51,7 +51,7 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     lazyBytes: 8_000,
     supports: ['decode'],
     load: () => import('./simple/dds.js'),
-    unavailableReason: 'DDS encoding and BC2/BC3/BC4/BC5/BC7 variants are not implemented.',
+    unavailableReason: 'DDS encoding and BC4/BC5/BC7 variants are not implemented.',
   },
   {
     id: 'qoi',
