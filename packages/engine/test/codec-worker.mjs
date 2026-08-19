@@ -8,6 +8,7 @@ import { init as initPngEncode } from '@jsquash/png/encode.js';
 import { init as initWebpEncode } from '@jsquash/webp/encode.js';
 
 import {
+  encodeRasterAsPng,
   encodeRasterAsJpeg,
   encodeRasterAsOptimisedPng,
   transcodeJpegToWebp,
@@ -74,11 +75,12 @@ parentPort.on('message', async ({ id }) => {
       ],
     };
     const jpeg = await encodeRasterAsJpeg(source, { quality: 90, progressive: true });
-    const [webp, png] = await Promise.all([
+    const [webp, plainPng, png] = await Promise.all([
       transcodeJpegToWebp(jpeg, { quality: 82 }),
+      encodeRasterAsPng(source),
       encodeRasterAsOptimisedPng(source),
     ]);
-    parentPort.postMessage({ id, jpeg, webp, png }, [jpeg, webp, png]);
+    parentPort.postMessage({ id, jpeg, webp, plainPng, png }, [jpeg, webp, plainPng, png]);
   } catch (error) {
     parentPort.postMessage({ id, error: error instanceof Error ? error.stack : String(error) });
   }
