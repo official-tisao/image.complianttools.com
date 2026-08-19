@@ -10,4 +10,15 @@ describe('GIF encoder', () => {
     } as typeof image;
     expect(decodeGif(encodeGif(animated)).frames).toHaveLength(2);
   });
+
+  it('uses dictionary LZW compression for repeated pixels', () => {
+    const image = createRaster(
+      100,
+      1,
+      new Uint8ClampedArray(Array.from({ length: 100 }, () => [12, 34, 56, 255]).flat()),
+    );
+    const encoded = encodeGif(image);
+    expect(new Uint8Array(encoded).byteLength).toBeLessThan(850);
+    expect(decodeGif(encoded).frames[0].data).toHaveLength(400);
+  });
 });

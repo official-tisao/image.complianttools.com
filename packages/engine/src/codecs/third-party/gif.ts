@@ -6,24 +6,49 @@ function push16(bytes: number[], value: number): void {
   bytes.push(value & 255, value >> 8);
 }
 
-function lzwLiteralStream(indexes: Uint8Array): Uint8Array {
+function lzwStream(indexes: Uint8Array): Uint8Array {
+  if (indexes.length === 0) return Uint8Array.of(0);
   const bytes: number[] = [];
   let bits = 0;
   let count = 0;
+  let codeSize = 9;
+  let nextCode = 258;
+  let dictionary = new Map<string, number>();
   const write = (code: number) => {
     bits |= code << count;
-    count += 9;
+    count += codeSize;
     while (count >= 8) {
       bytes.push(bits & 255);
       bits >>>= 8;
       count -= 8;
     }
   };
-  // Re-clearing for each pixel keeps the code width fixed at 9 bits and is valid GIF LZW.
-  for (const index of indexes) {
+  const reset = () => {
+    dictionary = new Map<string, number>();
+    codeSize = 9;
+    nextCode = 258;
     write(256);
-    write(index);
+  };
+  reset();
+  let prefix = String(indexes[0]!);
+  for (let offset = 1; offset < indexes.length; offset += 1) {
+    const value = indexes[offset]!;
+    const phrase = `${prefix},${value}`;
+    const existing = dictionary.get(phrase);
+    if (existing !== undefined) {
+      prefix = phrase;
+      continue;
+    }
+    write(dictionary.get(prefix) ?? Number(prefix));
+    if (nextCode < 4096) {
+      dictionary.set(phrase, nextCode++);
+      if (nextCode === 1 << codeSize && codeSize < 12) codeSize += 1;
+    } else {
+      reset();
+    }
+    prefix = String(value);
   }
+  write(dictionary.get(prefix) ?? Number(prefix));
   write(257);
   if (count) bytes.push(bits & 255);
   return Uint8Array.from(bytes);
@@ -62,7 +87,7 @@ export function encodeGif(image: RasterImage, loopCount = 0): ArrayBuffer {
         frame.data[offset + 2]!,
       );
     }
-    const data = lzwLiteralStream(indexes);
+    const data = lzwStream(indexes);
     for (let offset = 0; offset < data.length; offset += 255) {
       const block = data.subarray(offset, offset + 255);
       bytes.push(block.length, ...block);
