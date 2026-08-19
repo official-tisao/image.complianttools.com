@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { zlibSync } from 'fflate';
 
 import {
   readContainerMetadata,
@@ -62,6 +63,32 @@ describe('container metadata', () => {
     const stripped = stripPngMetadata(png);
     expect(readContainerMetadata(stripped)).toEqual({ format: 'png', tags: [] });
     expect([...stripped]).toContain(73);
+  });
+
+  it("reads international and compressed PNG text using each chunk's documented layout", () => {
+    const itxt = new TextEncoder().encode('Title\0\0\0en\0Title\0Hello ✓');
+    const ztext = [
+      ...new TextEncoder().encode('Comment\0'),
+      0,
+      ...zlibSync(new TextEncoder().encode('compressed local text')),
+    ];
+    const image = new Uint8Array([
+      137,
+      80,
+      78,
+      71,
+      13,
+      10,
+      26,
+      10,
+      ...pngChunk('iTXt', [...itxt]),
+      ...pngChunk('zTXt', ztext),
+      ...pngChunk('IEND', []),
+    ]);
+    expect(readContainerMetadata(image).tags).toEqual([
+      { namespace: 'PNG', name: 'Title', value: 'Hello ✓' },
+      { namespace: 'PNG', name: 'Comment', value: 'compressed local text' },
+    ]);
   });
 
   it('reads GIF comment extensions and rejects malformed containers', () => {

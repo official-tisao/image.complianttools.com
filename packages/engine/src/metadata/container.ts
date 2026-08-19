@@ -11,6 +11,7 @@ export type ReadableMetadata = {
 const pngSignature = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]);
 const metadataChunks = new Set(['tEXt', 'iTXt', 'zTXt', 'eXIf', 'iCCP']);
 const latin1 = new TextDecoder('latin1');
+const utf8 = new TextDecoder();
 
 function matches(input: Uint8Array, signature: Uint8Array): boolean {
   return signature.every((value, index) => input[index] === value);
@@ -54,12 +55,39 @@ function readPng(input: Uint8Array): ReadableMetadata {
     }
     if (chunk.type === 'iTXt') {
       const split = chunk.data.indexOf(0);
-      if (split > 0)
+      if (split > 0) {
+        let offset = split + 1;
+        if (offset + 2 > chunk.data.length)
+          throw new Error('PNG contains a truncated iTXt header.');
+        const compressed = chunk.data[offset++]!;
+        const method = chunk.data[offset++]!;
+        const languageEnd = chunk.data.indexOf(0, offset);
+        if (languageEnd < 0) throw new Error('PNG contains a truncated iTXt language tag.');
+        const translatedEnd = chunk.data.indexOf(0, languageEnd + 1);
+        if (translatedEnd < 0) throw new Error('PNG contains a truncated iTXt translated keyword.');
+        const text = chunk.data.subarray(translatedEnd + 1);
+        if (compressed !== 0 && compressed !== 1)
+          throw new Error('PNG contains an invalid iTXt compression flag.');
+        if (compressed === 1 && method !== 0)
+          throw new Error('PNG contains an unsupported iTXt compression method.');
         tags.push({
           namespace: 'PNG',
           name: latin1.decode(chunk.data.subarray(0, split)),
-          value: new TextDecoder().decode(chunk.data.subarray(split + 5)),
+          value: utf8.decode(compressed ? unzlibSync(text) : text),
         });
+      }
+    }
+    if (chunk.type === 'zTXt') {
+      const split = chunk.data.indexOf(0);
+      if (split > 0) {
+        const method = chunk.data[split + 1];
+        if (method !== 0) throw new Error('PNG contains an unsupported zTXt compression method.');
+        tags.push({
+          namespace: 'PNG',
+          name: latin1.decode(chunk.data.subarray(0, split)),
+          value: latin1.decode(unzlibSync(chunk.data.subarray(split + 2))),
+        });
+      }
     }
     if (chunk.type === 'eXIf')
       tags.push({ namespace: 'EXIF', name: 'embedded', value: `${chunk.data.length} bytes` });
@@ -319,3 +347,4 @@ export function stripGifMetadata(input: ArrayBuffer | Uint8Array): Uint8Array {
   return Uint8Array.from(retained.flatMap((part) => [...part]));
 }
 import { readExifGps, readExifIfd0 } from './exif.js';
+import { unzlibSync } from 'fflate';
