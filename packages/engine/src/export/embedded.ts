@@ -76,3 +76,27 @@ export function emitEmbeddedCArray(image: RasterImage, options: EmbeddedExportOp
     '',
   ].join('\n');
 }
+
+/** Emits an LVGL v9 image descriptor and matching map for the supported true-colour formats. */
+export function emitLvglV9CArray(image: RasterImage, options: EmbeddedExportOptions): string {
+  const colourFormat: Record<EmbeddedPixelFormat, string> = {
+    rgb565: 'LV_COLOR_FORMAT_RGB565',
+    rgb565be: 'LV_COLOR_FORMAT_RGB565',
+    rgb888: 'LV_COLOR_FORMAT_RGB888',
+    argb8888: 'LV_COLOR_FORMAT_ARGB8888',
+  };
+  const mapName = `${validateEmbeddedOutputName(options.outputName)}_map`;
+  const array = emitEmbeddedCArray(image, { ...options, outputName: mapName });
+  const descriptorStorage =
+    options.storage === 'static'
+      ? 'static'
+      : options.storage === 'const'
+        ? 'const'
+        : 'static const';
+  return `${array.replace('#include <stdint.h>', '#include <stdint.h>\n#include "lvgl.h"')}${descriptorStorage} lv_image_dsc_t ${options.outputName} = {
+  .header = { .cf = ${colourFormat[options.format]}, .w = ${image.width}, .h = ${image.height} },
+  .data_size = sizeof(${mapName}),
+  .data = ${mapName},
+};
+`;
+}

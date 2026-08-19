@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   createRaster,
   emitEmbeddedCArray,
+  emitLvglV9CArray,
   packEmbeddedPixels,
   validateEmbeddedOutputName,
 } from '../src/index.js';
@@ -24,5 +25,12 @@ describe('embedded exporter', () => {
       'static const uint8_t logo_data[]',
     );
     expect(() => validateEmbeddedOutputName('not-valid!')).toThrow('valid C identifier');
+  });
+
+  it('emits an LVGL v9 descriptor using the matching colour format', () => {
+    const output = emitLvglV9CArray(image, { outputName: 'logo', format: 'rgb565' });
+    expect(output).toContain('#include "lvgl.h"');
+    expect(output).toContain('.cf = LV_COLOR_FORMAT_RGB565');
+    expect(output).toContain('lv_image_dsc_t logo');
   });
 });
