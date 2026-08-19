@@ -355,6 +355,7 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `minimist` | `1.2.8` | MIT | [source](https://github.com/minimistjs/minimist) |
 | `mitt` | `3.0.1` | MIT | [source](https://github.com/developit/mitt) |
 | `mkdirp` | `0.5.6` | MIT | [source](https://github.com/substack/node-mkdirp#readme) |
+| `mp4box` | `2.4.1` | BSD-3-Clause | [source](https://github.com/gpac/mp4box.js) |
 | `mri` | `1.2.0` | MIT | [source](https://github.com/lukeed/mri#readme) |
 | `mrmime` | `2.0.1` | MIT | [source](https://github.com/lukeed/mrmime#readme) |
 | `ms` | `2.0.0` | MIT | [source](https://github.com/vercel/ms#readme) |

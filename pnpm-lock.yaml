@@ -150,6 +150,9 @@ importers:
       imagetracerjs:
         specifier: 1.2.6
         version: 1.2.6
+      mp4box:
+        specifier: ^2.4.1
+        version: 2.4.1
       parse-exr:
         specifier: 1.0.2
         version: 1.0.2
@@ -2213,6 +2216,10 @@ packages:
   mkdirp@0.5.6:
     resolution: {integrity: sha512-FP+p8RB8OWpF3YZBCrP5gtADmtXApB5AMLn+vdyA+PyxCjrCs00mjyUozssO33cwDeT3wNGdLxJ5M//YqtHAJw==}
     hasBin: true
+
+  mp4box@2.4.1:
+    resolution: {integrity: sha512-0HGX7nXoDIX6FKLVl4a3wtYjBlwqsN3xuQC3GXzNtKp98FXUOhDSq623azsz8DG5ptd9ZXcXodDkgbdMZOjWvw==}
+    engines: {node: '>=20.8.1'}
 
   mri@1.2.0:
     resolution: {integrity: sha512-tzzskb3bG8LvYGFF/mDTpq3jpI6Q9wc3LEmBaghu+DdCssd1FakN7Bc0hVNmEyGq1bq3RgfkCb3cmQLpNPOroA==}
@@ -5129,6 +5136,8 @@ snapshots:
   mkdirp@0.5.6:
     dependencies:
       minimist: 1.2.8
+
+  mp4box@2.4.1: {}
 
   mri@1.2.0: {}
 
