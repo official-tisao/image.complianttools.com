@@ -38,17 +38,31 @@ interface WasmLicenceRecord {
   detectedLicences: string[];
 }
 
-function licenceOptions(expression: string): string[] {
+/**
+ * Split an SPDX expression into its OR-alternatives. Each alternative may itself be an AND
+ * conjunction, so alternatives are returned as arrays of terms.
+ */
+function licenceOptions(expression: string): string[][] {
   return expression
     .replace(/[()]/g, '')
     .split(/\s+OR\s+|\s*\/\s*/i)
-    .map((value) => value.trim())
-    .filter(Boolean);
+    .map((alternative) =>
+      alternative
+        .split(/\s+AND\s+/i)
+        .map((term) => term.trim())
+        .filter(Boolean),
+    )
+    .filter((terms) => terms.length > 0);
 }
 
+/**
+ * OR is a choice: one allowlisted alternative is enough. AND is a conjunction: every term binds us,
+ * so every term must be allowlisted. Treating `(MIT AND Zlib)` as a choice would let a denied
+ * licence through whenever it were paired with a permitted one.
+ */
 function isAllowed(expression: string): boolean {
   if (!expression || /^SEE LICENSE IN/i.test(expression)) return false;
-  return licenceOptions(expression).some((option) => allowed.has(option));
+  return licenceOptions(expression).some((terms) => terms.every((term) => allowed.has(term)));
 }
 
 async function loadReport(): Promise<PnpmLicenseReport> {
@@ -283,7 +297,9 @@ async function verifyShippingRegister(): Promise<number> {
 
   const namesIn = (table: string): Set<string> => {
     const names = new Set<string>();
-    for (const match of table.matchAll(/`(@?[a-z0-9][\w./-]*)`/gi)) names.add(match[1]);
+    for (const match of table.matchAll(/`(@?[a-z0-9][\w./-]*)`/gi)) {
+      if (match[1]) names.add(match[1]);
+    }
     return names;
   };
   const shipping = namesIn(shippingTable);

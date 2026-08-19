@@ -35,7 +35,7 @@ try {
     `gate-fixture.${sha256.slice(0, 12)}.wasm`,
   );
   const tampered = new Uint8Array(await readFile(output));
-  tampered[0] ^= 1;
+  tampered[0] = tampered[0]! ^ 1;
   await writeFile(output, tampered);
   await assert.rejects(
     processWasmLock({ root, mode: 'verify' }),

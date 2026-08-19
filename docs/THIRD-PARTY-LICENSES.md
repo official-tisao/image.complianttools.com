@@ -47,7 +47,9 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `@jridgewell/resolve-uri` | `3.1.2` | MIT | [source](https://github.com/jridgewell/resolve-uri#readme) |
 | `@jridgewell/sourcemap-codec` | `1.5.5` | MIT | [source](https://github.com/jridgewell/sourcemaps/tree/main/packages/sourcemap-codec) |
 | `@jridgewell/trace-mapping` | `0.3.31` | MIT | [source](https://github.com/jridgewell/sourcemaps/tree/main/packages/trace-mapping) |
+| `@jsquash/avif` | `2.1.1` | Apache-2.0 | [source](https://github.com/jamsinclair/jSquash#readme) |
 | `@jsquash/jpeg` | `1.6.0` | Apache-2.0 | [source](https://github.com/jamsinclair/jSquash#readme) |
+| `@jsquash/jxl` | `1.3.0` | Apache-2.0 | [source](https://github.com/jamsinclair/jSquash#readme) |
 | `@jsquash/oxipng` | `2.3.0` | Apache-2.0 | — |
 | `@jsquash/png` | `3.1.1` | Apache-2.0 | [source](https://github.com/jamsinclair/jSquash#readme) |
 | `@jsquash/webp` | `1.5.0` | Apache-2.0 | [source](https://github.com/jamsinclair/jSquash#readme) |
@@ -257,6 +259,7 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `get-proto` | `1.0.1` | MIT | [source](https://github.com/ljharb/get-proto#readme) |
 | `get-stream` | `5.2.0` | MIT | [source](https://github.com/sindresorhus/get-stream#readme) |
 | `get-uri` | `6.0.5` | MIT | [source](https://github.com/TooTallNate/proxy-agents#readme) |
+| `gifuct-js` | `2.1.2` | MIT | [source](https://github.com/matt-way/gifuct-js) |
 | `glob` | `7.2.3` | ISC | [source](https://github.com/isaacs/node-glob#readme) |
 | `glob-parent` | `5.1.2` | ISC | [source](https://github.com/gulpjs/glob-parent#readme) |
 | `glob-parent` | `6.0.2` | ISC | [source](https://github.com/gulpjs/glob-parent#readme) |
@@ -299,6 +302,7 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `isomorphic-fetch` | `3.0.0` | MIT | [source](https://github.com/matthew-andrews/isomorphic-fetch/issues) |
 | `jiti` | `2.6.1` | MIT | [source](https://github.com/unjs/jiti#readme) |
 | `jpeg-js` | `0.4.4` | BSD-3-Clause | [source](https://github.com/eugeneware/jpeg-js#readme) |
+| `js-binary-schema-parser` | `2.0.3` | MIT | [source](https://github.com/matt-way/jsBinarySchemaParser) |
 | `js-library-detector` | `6.7.0` | MIT | [source](https://github.com/johnmichel/Library-Detector-for-Chrome#readme) |
 | `js-yaml` | `3.15.1` | MIT | [source](https://github.com/nodeca/js-yaml#readme) |
 | `js-yaml` | `4.3.1` | MIT | [source](https://github.com/nodeca/js-yaml#readme) |
@@ -377,8 +381,10 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `p-try` | `2.2.0` | MIT | [source](https://github.com/sindresorhus/p-try#readme) |
 | `pac-proxy-agent` | `7.2.0` | MIT | [source](https://github.com/TooTallNate/proxy-agents#readme) |
 | `pac-resolver` | `7.0.1` | MIT | [source](https://github.com/TooTallNate/proxy-agents#readme) |
+| `pako` | `1.0.11` | (MIT AND Zlib) | [source](https://github.com/nodeca/pako) |
 | `parent-module` | `1.0.1` | MIT | [source](https://github.com/sindresorhus/parent-module#readme) |
 | `parse-cache-control` | `1.0.1` | BSD-2-Clause | [source](https://github.com/roryf/parse-cache-control#readme) |
+| `parse-exr` | `1.0.2` | MIT | [source](https://github.com/dmnsgn/parse-exr) |
 | `parseurl` | `1.3.3` | MIT | [source](https://github.com/pillarjs/parseurl#readme) |
 | `path-exists` | `4.0.0` | MIT | [source](https://github.com/sindresorhus/path-exists#readme) |
 | `path-is-absolute` | `1.0.1` | MIT | [source](https://github.com/sindresorhus/path-is-absolute#readme) |
@@ -505,6 +511,7 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `unique-string` | `2.0.0` | MIT | [source](https://github.com/sindresorhus/unique-string#readme) |
 | `unpipe` | `1.0.0` | MIT | [source](https://github.com/stream-utils/unpipe#readme) |
 | `uri-js` | `4.4.1` | BSD-2-Clause | [source](https://github.com/garycourt/uri-js) |
+| `utif` | `3.1.0` | MIT | [source](https://github.com/photopea/UTIF.js) |
 | `util-deprecate` | `1.0.2` | MIT | [source](https://github.com/TooTallNate/util-deprecate) |
 | `utils-merge` | `1.0.1` | MIT | [source](https://github.com/jaredhanson/utils-merge#readme) |
 | `uuid` | `8.3.2` | MIT | [source](https://github.com/uuidjs/uuid#readme) |
@@ -549,7 +556,9 @@ Package metadata is not treated as sufficient for WASM codecs. The verifier walk
 
 | Package | Version | Detected portions | Bundled legal files |
 | --- | --- | --- | --- |
+| `@jsquash/avif` | `2.1.1` | Apache-2.0 | `LICENSE` |
 | `@jsquash/jpeg` | `1.6.0` | Apache-2.0, BSD-3-Clause, IJG, Zlib | `LICENSE`<br>`codec/LICENSE.codec.md` |
+| `@jsquash/jxl` | `1.3.0` | Apache-2.0 | `LICENSE` |
 | `@jsquash/oxipng` | `2.3.0` | Apache-2.0, MIT | `LICENSE`<br>`codec/LICENSE.codec.md` |
 | `@jsquash/png` | `3.1.1` | Apache-2.0, BSD-3-Clause | `LICENSE`<br>`codec/LICENSE.codec.md` |
 | `@jsquash/webp` | `1.5.0` | Apache-2.0, BSD-3-Clause | `LICENSE`<br>`codec/LICENSE.codec.md` |

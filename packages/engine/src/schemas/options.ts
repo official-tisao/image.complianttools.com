@@ -4,7 +4,7 @@ const cssColor = z.string().regex(/^#[0-9a-f]{6}(?:[0-9a-f]{2})?$/i, 'Use a hex 
 
 export const ExportOptionsSchema = z.object({
   format: z
-    .enum(['same', 'avif', 'bmp', 'gif', 'jpeg', 'jxl', 'png', 'tiff', 'webp'])
+    .enum(['same', 'avif', 'bmp', 'exr', 'gif', 'jpeg', 'jxl', 'png', 'qoi', 'tga', 'tiff', 'webp'])
     .default('same'),
   quality: z.number().min(1).max(100).default(82),
   lossless: z.boolean().default(false),

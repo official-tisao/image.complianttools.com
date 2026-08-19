@@ -45,10 +45,9 @@ async function githubContext(): Promise<{ base?: string; body?: string }> {
     pull_request?: { base?: { sha?: string }; body?: string };
     head_commit?: { message?: string };
   };
-  return {
-    base: event.pull_request?.base?.sha ?? event.before,
-    body: event.pull_request?.body ?? event.head_commit?.message,
-  };
+  const base = event.pull_request?.base?.sha ?? event.before;
+  const body = event.pull_request?.body ?? event.head_commit?.message;
+  return { ...(base === undefined ? {} : { base }), ...(body === undefined ? {} : { body }) };
 }
 
 async function main(): Promise<void> {

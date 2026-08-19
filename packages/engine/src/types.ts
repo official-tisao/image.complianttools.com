@@ -1,4 +1,5 @@
-export type FormatId = 'avif' | 'bmp' | 'gif' | 'jpeg' | 'jxl' | 'png' | 'tiff' | 'webp';
+export type FormatId =
+  'avif' | 'bmp' | 'exr' | 'gif' | 'jpeg' | 'jxl' | 'png' | 'qoi' | 'tga' | 'tiff' | 'webp';
 
 export type ColorSpaceId = 'srgb' | 'display-p3' | 'adobe-rgb' | 'gray' | 'cmyk';
 
