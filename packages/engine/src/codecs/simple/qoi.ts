@@ -24,20 +24,24 @@ export function decodeQoi(input: ArrayBuffer | Uint8Array): RasterImage {
     b = 0,
     a = 255,
     run = 0;
+  const nextByte = (): number => {
+    const value = bytes[offset++];
+    if (value === undefined) throw new Error('Truncated QOI image.');
+    return value;
+  };
   while (pixel < width * height) {
     if (run > 0) run -= 1;
     else {
-      const tag = bytes[offset++];
-      if (tag === undefined) throw new Error('Truncated QOI image.');
+      const tag = nextByte();
       if (tag === 0xfe) {
-        r = bytes[offset++]!;
-        g = bytes[offset++]!;
-        b = bytes[offset++]!;
+        r = nextByte();
+        g = nextByte();
+        b = nextByte();
       } else if (tag === 0xff) {
-        r = bytes[offset++]!;
-        g = bytes[offset++]!;
-        b = bytes[offset++]!;
-        a = bytes[offset++]!;
+        r = nextByte();
+        g = nextByte();
+        b = nextByte();
+        a = nextByte();
       } else if ((tag & 0xc0) === 0x00) {
         const i = tag * 4;
         r = index[i]!;
@@ -49,7 +53,7 @@ export function decodeQoi(input: ArrayBuffer | Uint8Array): RasterImage {
         g = (g + (((tag >> 2) & 3) - 2) + 256) % 256;
         b = (b + ((tag & 3) - 2) + 256) % 256;
       } else if ((tag & 0xc0) === 0x80) {
-        const next = bytes[offset++]!;
+        const next = nextByte();
         const dg = (tag & 63) - 32;
         r = (r + dg + ((next >> 4) - 8) + 512) % 256;
         g = (g + dg + 256) % 256;

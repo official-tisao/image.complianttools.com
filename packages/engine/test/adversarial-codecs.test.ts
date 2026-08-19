@@ -46,6 +46,46 @@ describe('Phase 2 adversarial codec corpus', () => {
     expect(() => decodeQoi(hostile)).toThrow('safe decode limit');
   });
 
+  it('rejects truncated QOI multi-byte pixel opcodes instead of coercing missing bytes', () => {
+    // Each fixture keeps the container's 22-byte minimum, then reaches an incomplete opcode.
+    const truncatedRgb = new Uint8Array([
+      ...qoiHeader(7, 1),
+      0xc0,
+      0xc0,
+      0xc0,
+      0xc0,
+      0xc0,
+      0xc0,
+      0xfe,
+      12,
+    ]);
+    const truncatedRgba = new Uint8Array([
+      ...qoiHeader(6, 1),
+      0xc0,
+      0xc0,
+      0xc0,
+      0xc0,
+      0xc0,
+      0xff,
+      12,
+      34,
+    ]);
+    const truncatedLuma = new Uint8Array([
+      ...qoiHeader(8, 1),
+      0xc0,
+      0xc0,
+      0xc0,
+      0xc0,
+      0xc0,
+      0xc0,
+      0xc0,
+      0x80,
+    ]);
+    for (const input of [truncatedRgb, truncatedRgba, truncatedLuma]) {
+      expect(() => decodeQoi(input)).toThrow('Truncated QOI image.');
+    }
+  });
+
   it('handles self-generated 1×1 and 30000×1 QOI fixtures within the decode limit', () => {
     const tiny = new Uint8Array([...qoiHeader(1, 1), 0xfe, 10, 20, 30, 0, 0, 0, 0, 0, 0, 0, 1]);
     expect(decodeQoi(tiny).frames[0].data).toEqual(new Uint8ClampedArray([10, 20, 30, 255]));
