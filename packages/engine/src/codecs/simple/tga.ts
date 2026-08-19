@@ -3,7 +3,7 @@ import type { RasterImage } from '../../types.js';
 
 export function decodeTga(input: ArrayBuffer | Uint8Array): RasterImage {
   const bytes = input instanceof Uint8Array ? input : new Uint8Array(input);
-  if (bytes.length < 18 || bytes[1] !== 0 || bytes[2] !== 2)
+  if (bytes.length < 18 || bytes[1] !== 0 || ![2, 10].includes(bytes[2]!))
     throw new Error('Unsupported TGA encoding.');
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   const width = view.getUint16(12, true),
@@ -13,18 +13,43 @@ export function decodeTga(input: ArrayBuffer | Uint8Array): RasterImage {
     throw new Error('Invalid TGA header.');
   const offset = 18 + bytes[0]!,
     pixelBytes = depth / 8;
-  if (offset + width * height * pixelBytes > bytes.length) throw new Error('Truncated TGA image.');
   const output = new Uint8ClampedArray(width * height * 4),
     topOrigin = (bytes[17]! & 0x20) !== 0;
-  for (let y = 0; y < height; y += 1)
-    for (let x = 0; x < width; x += 1) {
-      const source = offset + (y * width + x) * pixelBytes,
-        target = ((topOrigin ? y : height - 1 - y) * width + x) * 4;
-      output[target] = bytes[source + 2]!;
-      output[target + 1] = bytes[source + 1]!;
-      output[target + 2] = bytes[source]!;
-      output[target + 3] = depth === 32 ? bytes[source + 3]! : 255;
+  let source = offset;
+  const writePixel = (pixel: number, bgr: Uint8Array) => {
+    const y = Math.floor(pixel / width),
+      x = pixel % width;
+    const target = ((topOrigin ? y : height - 1 - y) * width + x) * 4;
+    output[target] = bgr[2]!;
+    output[target + 1] = bgr[1]!;
+    output[target + 2] = bgr[0]!;
+    output[target + 3] = depth === 32 ? bgr[3]! : 255;
+  };
+  const readPixel = () => {
+    if (source + pixelBytes > bytes.length) throw new Error('Truncated TGA image.');
+    const pixel = bytes.subarray(source, source + pixelBytes);
+    source += pixelBytes;
+    return pixel;
+  };
+  for (let pixel = 0; pixel < width * height;) {
+    if (bytes[2] === 2) {
+      writePixel(pixel, readPixel());
+      pixel += 1;
+      continue;
     }
+    if (source >= bytes.length) throw new Error('Truncated TGA RLE data.');
+    const header = bytes[source++]!;
+    const count = (header & 0x7f) + 1;
+    if (pixel + count > width * height)
+      throw new Error('TGA RLE data exceeds declared dimensions.');
+    if ((header & 0x80) !== 0) {
+      const value = readPixel();
+      for (let index = 0; index < count; index += 1) writePixel(pixel + index, value);
+    } else {
+      for (let index = 0; index < count; index += 1) writePixel(pixel + index, readPixel());
+    }
+    pixel += count;
+  }
   return createRaster(width, height, output);
 }
 
