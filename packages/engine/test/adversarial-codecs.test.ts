@@ -8,6 +8,7 @@ import {
   decodePnm,
   decodeQoi,
   decodeTga,
+  readExifIfd0,
 } from '../src/index.js';
 
 const decoders = [decodeBmp, decodePcx, decodePnm, decodeQoi, decodeTga];
@@ -67,5 +68,20 @@ describe('Phase 2 adversarial codec corpus', () => {
         '<svg xmlns="http://www.w3.org/2000/svg"><image href="https://example.test/x.png"/></svg>',
       ),
     ).toThrow(SVG_EXTERNAL_REFERENCE_MESSAGE);
+  });
+
+  it('rejects a nested active SVG document and oversized EXIF IFD tables before traversal', () => {
+    expect(() =>
+      assertSafeSvg(
+        '<svg><foreignObject><iframe src="https://example.test/evil" /></foreignObject></svg>',
+      ),
+    ).toThrow();
+
+    const exifBomb = new Uint8Array(16);
+    const view = new DataView(exifBomb.buffer);
+    exifBomb.set([0x49, 0x49, 42, 0]);
+    view.setUint32(4, 8, true);
+    view.setUint16(8, 12_000, true);
+    expect(() => readExifIfd0(exifBomb)).toThrow('truncated');
   });
 });
