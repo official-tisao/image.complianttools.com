@@ -55,7 +55,7 @@ function lzwStream(indexes: Uint8Array): Uint8Array {
 }
 
 function paletteIndex(red: number, green: number, blue: number): number {
-  return ((red >> 5) << 5) | ((green >> 5) << 2) | (blue >> 6);
+  return 1 + (Math.min(6, red >> 5) << 5) + ((green >> 5) << 2) + (blue >> 6);
 }
 
 /** Encodes local 8-bit frames as an animated GIF89a with a deterministic 3:3:2 global palette. */
@@ -71,7 +71,10 @@ export function encodeGif(image: RasterImage, loopCount = 0): ArrayBuffer {
   push16(bytes, loopCount);
   bytes.push(0);
   for (const frame of image.frames) {
-    bytes.push(0x21, 0xf9, 4, 0);
+    const hasTransparentPixels = frame.data.some(
+      (_, index) => index % 4 === 3 && frame.data[index]! < 128,
+    );
+    bytes.push(0x21, 0xf9, 4, hasTransparentPixels ? 1 : 0);
     push16(bytes, Math.max(1, Math.round(frame.durationMs / 10)));
     bytes.push(0, 0);
     bytes.push(0x2c, 0, 0, 0, 0);
@@ -86,6 +89,7 @@ export function encodeGif(image: RasterImage, loopCount = 0): ArrayBuffer {
         frame.data[offset + 1]!,
         frame.data[offset + 2]!,
       );
+      if (frame.data[offset + 3]! < 128) indexes[pixel] = 0;
     }
     const data = lzwStream(indexes);
     for (let offset = 0; offset < data.length; offset += 255) {

@@ -34,4 +34,9 @@ describe('GIF encoder', () => {
     expect(result.frames).toHaveLength(1);
     expect(result.frames[0].durationMs).toBe(50);
   });
+
+  it('preserves transparent GIF pixels with a reserved palette index', () => {
+    const image = createRaster(1, 1, new Uint8ClampedArray([0, 0, 0, 0]));
+    expect(decodeGif(encodeGif(image)).frames[0].data[3]).toBe(0);
+  });
 });
