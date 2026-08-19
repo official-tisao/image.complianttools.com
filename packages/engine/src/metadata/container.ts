@@ -147,6 +147,11 @@ function readJpeg(input: Uint8Array): ReadableMetadata {
     }
     if (marker === 0xe2 && latin1.decode(data.subarray(0, 11)) === 'ICC_PROFILE\0')
       tags.push({ namespace: 'ICC', name: 'embedded', value: `${data.length} bytes` });
+    if (marker === 0xed && latin1.decode(data.subarray(0, 14)) === 'Photoshop 3.0\0')
+      tags.push({ namespace: 'IPTC', name: 'resource-blocks', value: `${data.length - 14} bytes` });
+    // JPEG C2PA manifests are carried in APP11 JUMBF boxes. Keep the packet opaque and local.
+    if (marker === 0xeb && latin1.decode(data.subarray(0, 4)) === 'JUMB')
+      tags.push({ namespace: 'C2PA', name: 'jumbf', value: `${data.length} bytes` });
     offset += length + 2;
   }
   return { format: 'jpeg', tags };

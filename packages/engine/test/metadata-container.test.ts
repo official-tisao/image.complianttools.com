@@ -205,6 +205,31 @@ describe('container metadata', () => {
     ]);
   });
 
+  it('reports JPEG IPTC resource blocks and C2PA JUMBF packets without executing either', () => {
+    const iptc = new TextEncoder().encode('Photoshop 3.0\0IPTC');
+    const c2pa = new TextEncoder().encode('JUMBmanifest');
+    const jpeg = new Uint8Array([
+      0xff,
+      0xd8,
+      0xff,
+      0xed,
+      0,
+      iptc.length + 2,
+      ...iptc,
+      0xff,
+      0xeb,
+      0,
+      c2pa.length + 2,
+      ...c2pa,
+      0xff,
+      0xd9,
+    ]);
+    expect(readContainerMetadata(jpeg).tags).toEqual([
+      { namespace: 'IPTC', name: 'resource-blocks', value: '4 bytes' },
+      { namespace: 'C2PA', name: 'jumbf', value: `${c2pa.length} bytes` },
+    ]);
+  });
+
   it('reads and strips WebP EXIF, XMP, and ICC chunks without changing image chunks', () => {
     const chunks = [
       ...webpChunk('VP8 ', [1, 2, 3]),
