@@ -8,6 +8,7 @@ import {
   decodePnm,
   decodeQoi,
   decodeTga,
+  detectImageFormat,
   readExifIfd0,
 } from '../src/index.js';
 
@@ -38,6 +39,25 @@ describe('Phase 2 adversarial codec corpus', () => {
       expect(() => decode(new Uint8Array())).toThrow();
       expect(() => decode(new Uint8Array([0xde, 0xad, 0xbe, 0xef]))).toThrow();
     }
+  });
+
+  it('identifies content bytes independently of a mismatched filename extension', () => {
+    const qoiNamedAsJpeg = new Uint8Array([
+      ...qoiHeader(1, 1),
+      0xfe,
+      10,
+      20,
+      30,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+    ]);
+    expect(detectImageFormat(qoiNamedAsJpeg)).toBe('qoi');
   });
 
   it('rejects a QOI file declaring a hostile pixel allocation before allocating pixels', () => {
