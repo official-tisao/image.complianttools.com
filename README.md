@@ -545,8 +545,8 @@ an `LV_IMG_DECLARE` / `lv_image_set_src` usage snippet.
 ### 5.6 Video input (T13 only)
 
 Decode only, for frame extraction: `.mp4 .m4v .mov .webm .mkv .avi .ogv .wmv† .flv† .3gp .mts .m2ts`
-Implemented with the platform's **WebCodecs `VideoDecoder`** plus `mp4box.js` (BSD-3) and
-`jswebm` (MIT) for demuxing — no bundled codec, no download, no patent exposure, and hardware
+Implemented with the platform's **WebCodecs `VideoDecoder`** plus `mp4box` (BSD-3) and
+`mediabunny` (MPL-2.0) for MP4/WebM container reading — no bundled codec, no patent exposure, and hardware
 acceleration for free. Container and codec support is therefore **whatever the browser provides**, so
 it is capability-probed per §5.7 and reported honestly rather than promised. Formats the platform
 cannot decode say exactly that.

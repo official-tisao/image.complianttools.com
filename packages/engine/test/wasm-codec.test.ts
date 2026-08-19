@@ -6,13 +6,9 @@ import { init as initAvifEncoder } from '@jsquash/avif/encode.js';
 import { init as initJxl } from '@jsquash/jxl/decode.js';
 import { init as initJxlEncoder } from '@jsquash/jxl/encode.js';
 
-import {
-  createRaster,
-  decodeAvifToRaster,
-  decodeJxlToRaster,
-  encodeRasterAsAvif,
-  encodeRasterAsJxl,
-} from '../src/index.js';
+import { createRaster, decodeAvifToRaster, decodeJxlToRaster } from '../src/index.js';
+import { encodeRasterAsAvif } from '../src/codecs/third-party/avif.js';
+import { encodeRasterAsJxl } from '../src/codecs/third-party/jxl.js';
 
 const fixture = createRaster(1, 1, new Uint8ClampedArray([32, 96, 160, 255]));
 

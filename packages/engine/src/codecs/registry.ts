@@ -180,8 +180,10 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     id: 'avif',
     animation: true,
     lazyBytes: 1_900_000,
-    supports: ['decode', 'encode'],
-    load: () => import('./third-party/avif.js'),
+    supports: ['decode'],
+    load: () => import('./third-party/avif-decode.js'),
+    unavailableReason:
+      'AVIF encoding is not offered until its worker build can be delivered and verified in production.',
   },
   {
     id: 'bmp',
@@ -201,8 +203,10 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     id: 'jxl',
     animation: true,
     lazyBytes: 1_200_000,
-    supports: ['decode', 'encode'],
-    load: () => import('./third-party/jxl.js'),
+    supports: ['decode'],
+    load: () => import('./third-party/jxl-decode.js'),
+    unavailableReason:
+      'JPEG XL encoding is not offered until its worker build can be delivered and verified in production.',
   },
 ];
 
