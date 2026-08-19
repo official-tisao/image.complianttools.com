@@ -20,7 +20,11 @@ describe('P2 codec registry', () => {
       encode: 'lazy',
       lazyBytes: 195_000,
     });
-    expect(capabilities.find((entry) => entry.id === 'gif')?.decode).toBe('unavailable');
+    expect(capabilities.find((entry) => entry.id === 'gif')).toMatchObject({
+      decode: 'lazy',
+      encode: 'unavailable',
+      unavailableReason: 'GIF encoding is scheduled separately in P2-05.',
+    });
     expect(capabilities.find((entry) => entry.id === 'exr')).toMatchObject({
       decode: 'lazy',
       encode: 'unavailable',
@@ -28,10 +32,10 @@ describe('P2 codec registry', () => {
     });
   });
 
-  it('loads an implemented codec and rejects an unavailable codec', async () => {
+  it('loads implemented codecs and rejects a codec with no implementation', async () => {
     await expect(loadCodec('jpeg')).resolves.toBeDefined();
     await expect(loadCodec('exr')).resolves.toBeDefined();
-    await expect(loadCodec('gif')).rejects.toThrow('unavailable');
+    await expect(loadCodec('gif')).resolves.toBeDefined();
     expect(getCodec('webp').supports).toEqual(['decode', 'encode']);
   });
 });
