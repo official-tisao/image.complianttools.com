@@ -4,6 +4,7 @@
     embeddedByteSize,
     emitAdafruitGfxBitmap,
     emitEmbeddedCArray,
+    emitEspIdfCArray,
     emitLvglV8CArray,
     emitLvglV9CArray,
     packEmbeddedPixels,
@@ -11,8 +12,21 @@
 
   let status = $state('');
   let error = $state('');
-  let target = $state<'generic' | 'binary' | 'lvgl-v8' | 'lvgl-v9' | 'adafruit'>('generic');
+  let target = $state<'generic' | 'binary' | 'lvgl-v8' | 'lvgl-v9' | 'adafruit' | 'esp-idf'>(
+    'generic',
+  );
   let outputName = $state('image_data');
+  let format = $state<
+    | 'rgb332'
+    | 'rgb565'
+    | 'rgb565be'
+    | 'rgb888'
+    | 'bgr888'
+    | 'argb8888'
+    | 'rgba8888'
+    | 'gray8'
+    | 'mono1'
+  >('rgb565');
 
   async function convert(file: File | undefined) {
     status = '';
@@ -32,7 +46,7 @@
         canvas.height,
         context.getImageData(0, 0, canvas.width, canvas.height).data,
       );
-      const options = { format: 'rgb565' as const, outputName };
+      const options = { format, outputName };
       const output =
         target === 'lvgl-v8'
           ? emitLvglV8CArray(image, options)
@@ -40,9 +54,11 @@
             ? emitLvglV9CArray(image, options)
             : target === 'adafruit'
               ? emitAdafruitGfxBitmap(image, outputName)
-              : target === 'binary'
-                ? new Uint8Array(packEmbeddedPixels(image, options))
-                : emitEmbeddedCArray(image, options);
+              : target === 'esp-idf'
+                ? emitEspIdfCArray(image, options)
+                : target === 'binary'
+                  ? new Uint8Array(packEmbeddedPixels(image, options))
+                  : emitEmbeddedCArray(image, options);
       const binary = target === 'binary';
       const url = URL.createObjectURL(
         new Blob([output], { type: binary ? 'application/octet-stream' : 'text/x-c' }),
@@ -72,8 +88,8 @@
   <a href="/convert">← Convert</a>
   <h1>Embedded Image Converter</h1>
   <p>
-    Export a local RGB565 C array for generic, LVGL v8/v9, or Adafruit projects. Nothing is
-    uploaded.
+    Export a local pixel array for generic, LVGL, Adafruit, ESP-IDF, or TFT_eSPI projects. Nothing
+    is uploaded.
   </p>
   <label>
     Target
@@ -83,6 +99,21 @@
       <option value="lvgl-v9">LVGL v9 image descriptor</option>
       <option value="lvgl-v8">LVGL v8 image descriptor</option>
       <option value="adafruit">Adafruit GFX 1-bit bitmap</option>
+      <option value="esp-idf">ESP-IDF / TFT_eSPI RGB565 array</option>
+    </select>
+  </label>
+  <label>
+    Pixel format
+    <select bind:value={format}>
+      <option value="rgb332">RGB332</option>
+      <option value="rgb565">RGB565</option>
+      <option value="rgb565be">RGB565 big-endian</option>
+      <option value="rgb888">RGB888</option>
+      <option value="bgr888">BGR888</option>
+      <option value="argb8888">ARGB8888</option>
+      <option value="rgba8888">RGBA8888</option>
+      <option value="gray8">Gray8</option>
+      <option value="mono1">Mono1</option>
     </select>
   </label>
   <label>

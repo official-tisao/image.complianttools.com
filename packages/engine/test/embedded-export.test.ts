@@ -5,6 +5,7 @@ import {
   embeddedByteSize,
   emitAdafruitGfxBitmap,
   emitEmbeddedCArray,
+  emitEspIdfCArray,
   emitLvglV8CArray,
   emitLvglV9CArray,
   packEmbeddedPixels,
@@ -27,6 +28,24 @@ describe('embedded exporter', () => {
     expect(embeddedByteSize(image, { outputName: 'logo', format: 'rgb565' })).toBe(2);
     expect(embeddedByteSize(image, { outputName: 'logo', format: 'rgb565', alphaByte: true })).toBe(
       3,
+    );
+  });
+
+  it('packs every generic raw byte layout deterministically', () => {
+    expect(packEmbeddedPixels(image, { outputName: 'logo', format: 'rgb332' })).toEqual(
+      new Uint8Array([0xe0]),
+    );
+    expect(packEmbeddedPixels(image, { outputName: 'logo', format: 'bgr888' })).toEqual(
+      new Uint8Array([0, 0, 255]),
+    );
+    expect(packEmbeddedPixels(image, { outputName: 'logo', format: 'rgba8888' })).toEqual(
+      new Uint8Array([255, 0, 0, 128]),
+    );
+    expect(packEmbeddedPixels(image, { outputName: 'logo', format: 'gray8' })).toEqual(
+      new Uint8Array([54]),
+    );
+    expect(packEmbeddedPixels(image, { outputName: 'logo', format: 'mono1' })).toEqual(
+      new Uint8Array([0x80]),
     );
   });
 
@@ -55,5 +74,11 @@ describe('embedded exporter', () => {
     expect(output).toContain('#include <avr/pgmspace.h>');
     expect(output).toContain('logo[] PROGMEM');
     expect(output).toContain('0x80');
+  });
+
+  it('emits an RGB565 word array for ESP-IDF and TFT_eSPI', () => {
+    expect(emitEspIdfCArray(image, { outputName: 'logo', format: 'rgb565' })).toContain(
+      'uint16_t logo[] = { 0xf800 };',
+    );
   });
 });
