@@ -117,6 +117,12 @@ function readJpeg(input: Uint8Array): ReadableMetadata {
     if (marker === 0xe1 && latin1.decode(data.subarray(0, 6)) === 'Exif\0\0') {
       for (const field of readExifIfd0(data.subarray(6)))
         tags.push({ namespace: 'EXIF', name: field.name, value: String(field.value) });
+      const gps = readExifGps(data.subarray(6));
+      if (gps) {
+        tags.push({ namespace: 'GPS', name: 'latitude', value: String(gps.latitude) });
+        tags.push({ namespace: 'GPS', name: 'longitude', value: String(gps.longitude) });
+        tags.push({ namespace: 'GPS', name: 'geo-uri', value: gps.geoUri });
+      }
     }
     const xmpPrefix = 'http://ns.adobe.com/xap/1.0/\0';
     if (marker === 0xe1 && latin1.decode(data.subarray(0, xmpPrefix.length)) === xmpPrefix) {
@@ -185,4 +191,4 @@ export function stripJpegMetadata(input: ArrayBuffer | Uint8Array): Uint8Array {
   }
   return Uint8Array.from(retained.flatMap((part) => [...part]));
 }
-import { readExifIfd0 } from './exif.js';
+import { readExifGps, readExifIfd0 } from './exif.js';
