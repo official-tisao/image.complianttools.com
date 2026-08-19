@@ -2,6 +2,7 @@ export type FormatId =
   | 'avif'
   | 'bmp'
   | 'exr'
+  | 'fits'
   | 'gif'
   | 'heic'
   | 'jpeg'

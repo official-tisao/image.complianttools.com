@@ -90,6 +90,14 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     unavailableReason: 'OpenEXR encoding is not implemented.',
   },
   {
+    id: 'fits',
+    animation: false,
+    lazyBytes: 7_000,
+    supports: ['decode'],
+    load: () => import('./simple/fits.js'),
+    unavailableReason: 'FITS encoding is not implemented.',
+  },
+  {
     id: 'png',
     animation: false,
     lazyBytes: 165_000,
