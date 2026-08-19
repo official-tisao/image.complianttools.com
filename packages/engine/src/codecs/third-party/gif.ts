@@ -2,6 +2,13 @@ import { decompressFrames, parseGIF } from 'gifuct-js';
 
 import type { RasterImage } from '../../types.js';
 
+export interface GifEncodeOptions {
+  /** 0 retains every frame; 1 merges duplicates; 2–3 also encode unchanged pixels as transparent. */
+  readonly optimizeLevel?: 0 | 1 | 2 | 3;
+  /** Deterministic colour reduction from 0 (off) through 200 (strongest). */
+  readonly lossy?: number;
+}
+
 function push16(bytes: number[], value: number): void {
   bytes.push(value & 255, value >> 8);
 }
@@ -54,23 +61,49 @@ function lzwStream(indexes: Uint8Array): Uint8Array {
   return Uint8Array.from(bytes);
 }
 
-function paletteIndex(red: number, green: number, blue: number): number {
+function paletteIndex(red: number, green: number, blue: number, lossy = 0): number {
+  const strength = Math.max(0, Math.min(200, Math.round(lossy)));
+  const levels = Math.max(2, 8 - Math.floor(strength / 34));
+  const reduce = (value: number) =>
+    strength === 0
+      ? value
+      : Math.round((Math.round((value * (levels - 1)) / 255) * 255) / (levels - 1));
+  red = reduce(red);
+  green = reduce(green);
+  blue = reduce(blue);
   return 1 + (Math.min(6, red >> 5) << 5) + ((green >> 5) << 2) + (blue >> 6);
 }
 
 /** Encodes local 8-bit frames as an animated GIF89a with a deterministic 3:3:2 global palette. */
-export function encodeGif(image: RasterImage, loopCount = 0): ArrayBuffer {
+export function encodeGif(
+  image: RasterImage,
+  loopCount = 0,
+  options: GifEncodeOptions = {},
+): ArrayBuffer {
+  const source =
+    options.optimizeLevel && options.optimizeLevel > 0
+      ? optimiseGifFrames(image, options.optimizeLevel)
+      : image;
   const bytes: number[] = [...new TextEncoder().encode('GIF89a')];
-  push16(bytes, image.width);
-  push16(bytes, image.height);
+  push16(bytes, source.width);
+  push16(bytes, source.height);
   bytes.push(0xf7, 0, 0); // 256-colour global palette
-  for (let index = 0; index < 256; index += 1) {
-    bytes.push(((index >> 5) & 7) * 36, ((index >> 2) & 7) * 36, (index & 3) * 85);
+  const palette = new Uint8Array(256 * 3);
+  for (let red = 0; red < 7; red += 1) {
+    for (let green = 0; green < 8; green += 1) {
+      for (let blue = 0; blue < 4; blue += 1) {
+        const index = 1 + red * 32 + green * 4 + blue;
+        palette[index * 3] = red * 36;
+        palette[index * 3 + 1] = green * 36;
+        palette[index * 3 + 2] = blue * 85;
+      }
+    }
   }
+  bytes.push(...palette);
   bytes.push(0x21, 0xff, 11, ...new TextEncoder().encode('NETSCAPE2.0'), 3, 1);
   push16(bytes, loopCount);
   bytes.push(0);
-  for (const frame of image.frames) {
+  for (const frame of source.frames) {
     const hasTransparentPixels = frame.data.some(
       (_, index) => index % 4 === 3 && frame.data[index]! < 128,
     );
@@ -78,16 +111,17 @@ export function encodeGif(image: RasterImage, loopCount = 0): ArrayBuffer {
     push16(bytes, Math.max(1, Math.round(frame.durationMs / 10)));
     bytes.push(0, 0);
     bytes.push(0x2c, 0, 0, 0, 0);
-    push16(bytes, image.width);
-    push16(bytes, image.height);
+    push16(bytes, source.width);
+    push16(bytes, source.height);
     bytes.push(0, 8);
-    const indexes = new Uint8Array(image.width * image.height);
+    const indexes = new Uint8Array(source.width * source.height);
     for (let pixel = 0; pixel < indexes.length; pixel += 1) {
       const offset = pixel * 4;
       indexes[pixel] = paletteIndex(
         frame.data[offset]!,
         frame.data[offset + 1]!,
         frame.data[offset + 2]!,
+        options.lossy,
       );
       if (frame.data[offset + 3]! < 128) indexes[pixel] = 0;
     }
@@ -102,8 +136,16 @@ export function encodeGif(image: RasterImage, loopCount = 0): ArrayBuffer {
   return Uint8Array.from(bytes).buffer;
 }
 
-/** Losslessly merges consecutive identical GIF frames before encoding. */
-export function optimiseGifFrames(image: RasterImage): RasterImage {
+/**
+ * Applies deterministic lossless GIF frame optimisation. Level 1 merges duplicate
+ * frames; levels 2 and 3 additionally make pixels unchanged from the preceding
+ * frame transparent, which GIF89a composites over the existing canvas.
+ */
+export function optimiseGifFrames(
+  image: RasterImage,
+  optimizeLevel: 0 | 1 | 2 | 3 = 1,
+): RasterImage {
+  if (optimizeLevel === 0) return image;
   const frames: { data: Uint8ClampedArray; durationMs: number }[] = [];
   for (const frame of image.frames) {
     const previous = frames.at(-1);
@@ -117,7 +159,25 @@ export function optimiseGifFrames(image: RasterImage): RasterImage {
       frames.push({ data: frame.data.slice(), durationMs: frame.durationMs });
     }
   }
-  return { ...image, frames: frames as unknown as RasterImage['frames'] };
+  if (optimizeLevel < 2) return { ...image, frames: frames as unknown as RasterImage['frames'] };
+  return {
+    ...image,
+    frames: frames.map((frame, index) => {
+      if (index === 0) return frame;
+      const previous = frames[index - 1]!.data;
+      const data = frame.data.slice();
+      for (let offset = 0; offset < data.length; offset += 4) {
+        if (
+          data[offset] === previous[offset] &&
+          data[offset + 1] === previous[offset + 1] &&
+          data[offset + 2] === previous[offset + 2] &&
+          data[offset + 3] === previous[offset + 3]
+        )
+          data[offset + 3] = 0;
+      }
+      return { ...frame, data };
+    }) as unknown as RasterImage['frames'],
+  };
 }
 
 export function decodeGif(input: ArrayBuffer | Uint8Array): RasterImage {
@@ -134,7 +194,12 @@ export function decodeGif(input: ArrayBuffer | Uint8Array): RasterImage {
     for (let y = 0; y < frame.dims.height; y += 1) {
       const source = y * frame.dims.width * 4;
       const target = ((frame.dims.top + y) * parsed.lsd.width + frame.dims.left) * 4;
-      canvas.set(frame.patch.subarray(source, source + frame.dims.width * 4), target);
+      for (let x = 0; x < frame.dims.width; x += 1) {
+        const sourceOffset = source + x * 4;
+        // A transparent patch pixel leaves the GIF canvas unchanged when disposal is "none".
+        if (frame.patch[sourceOffset + 3] === 0) continue;
+        canvas.set(frame.patch.subarray(sourceOffset, sourceOffset + 4), target + x * 4);
+      }
     }
     return { data: canvas.slice(), durationMs: Math.max(10, frame.delay * 10) };
   });
