@@ -31,4 +31,13 @@ describe('PNM codec', () => {
         .data,
     ).toEqual(new Uint8ClampedArray([1, 2, 3, 255]));
   });
+
+  it('decodes PAM RGB alpha and rejects incomplete payloads', () => {
+    const header = new TextEncoder().encode(
+      'P7\nWIDTH 1\nHEIGHT 1\nDEPTH 4\nMAXVAL 255\nTUPLTYPE RGB_ALPHA\nENDHDR\n',
+    );
+    const pam = new Uint8Array([...header, 10, 20, 30, 40]);
+    expect(decodePnm(pam).frames[0].data).toEqual(new Uint8ClampedArray([10, 20, 30, 40]));
+    expect(() => decodePnm(pam.subarray(0, -1))).toThrow('Truncated');
+  });
 });
