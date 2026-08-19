@@ -52,3 +52,32 @@ export function demosaicBilinear(
     }
   return createRaster(width, height, output);
 }
+
+/** Applies DNG-style channel gains and a 3×3 colour matrix to a developed raster. */
+export function applyRawColourTransform(
+  image: RasterImage,
+  gains: readonly [number, number, number],
+  matrix: readonly [number, number, number, number, number, number, number, number, number],
+): RasterImage {
+  if (
+    gains.some((gain) => !Number.isFinite(gain) || gain < 0) ||
+    matrix.some((value) => !Number.isFinite(value))
+  )
+    throw new Error('Invalid RAW colour transform.');
+  const pixels = image.frames[0].data.slice();
+  for (let offset = 0; offset < pixels.length; offset += 4) {
+    const red = (pixels[offset]! / 255) * gains[0];
+    const green = (pixels[offset + 1]! / 255) * gains[1];
+    const blue = (pixels[offset + 2]! / 255) * gains[2];
+    pixels[offset] = Math.round(
+      Math.max(0, Math.min(1, matrix[0] * red + matrix[1] * green + matrix[2] * blue)) * 255,
+    );
+    pixels[offset + 1] = Math.round(
+      Math.max(0, Math.min(1, matrix[3] * red + matrix[4] * green + matrix[5] * blue)) * 255,
+    );
+    pixels[offset + 2] = Math.round(
+      Math.max(0, Math.min(1, matrix[6] * red + matrix[7] * green + matrix[8] * blue)) * 255,
+    );
+  }
+  return { ...image, frames: [{ ...image.frames[0], data: pixels }] };
+}
