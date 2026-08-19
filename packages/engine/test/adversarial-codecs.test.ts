@@ -124,4 +124,17 @@ describe('Phase 2 adversarial codec corpus', () => {
     view.setUint16(8, 12_000, true);
     expect(() => readExifIfd0(exifBomb)).toThrow('truncated');
   });
+
+  it('rejects an EXIF field whose declared value offset lies outside the local file', () => {
+    const exif = new Uint8Array(26);
+    const view = new DataView(exif.buffer);
+    exif.set([0x49, 0x49, 42, 0]);
+    view.setUint32(4, 8, true);
+    view.setUint16(8, 1, true);
+    view.setUint16(10, 0x8298, true); // Copyright
+    view.setUint16(12, 2, true); // ASCII
+    view.setUint32(14, 20, true);
+    view.setUint32(18, 0xfffffff0, true);
+    expect(() => readExifIfd0(exif)).toThrow('copyright offset is outside the file');
+  });
 });
