@@ -6,7 +6,8 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   reporter: process.env.CI ? [['line'], ['html', { open: 'never' }]] : 'line',
   webServer: {
-    command: 'pnpm --filter @complianttools/web dev',
+    command:
+      'pnpm --filter @complianttools/image-engine build && pnpm --filter @complianttools/web dev',
     url: 'http://127.0.0.1:4173/debug/capabilities',
     reuseExistingServer: !process.env.CI,
   },

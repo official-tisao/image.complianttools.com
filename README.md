@@ -3554,23 +3554,54 @@ The three tables above record what was *removed*. This one records what we **kee
 allowed. Without it a reviewer cannot tell "cleared" from "not yet examined", which is the failure mode
 this whole section exists to prevent.
 
-> **⚠ Every licence below is the expected value and must be confirmed at the pinned version during the
-> Phase 0 clearance pass.** Packages relicense between releases, and a licence I recall is not a licence
-> I verified. `verify:licenses` is the authority; this table is the starting hypothesis.
+The register is split in two, because "cleared" and "not yet examined" are different states and a single
+table cannot hold both without lying about one of them.
 
-| Dependency | Expected licence | Role |
+- **The shipping register** lists every dependency that is *actually installed* — present in
+  `pnpm-lock.yaml` today. Each row states a licence confirmed by reading the installed package, not
+  recalled. This table is enforced: `verify:licenses` fails if a direct dependency is missing from it.
+- **The candidate register** lists dependencies we expect to adopt in later phases. They are **not
+  installed**, so their licences **cannot** be verified and the values shown are hypotheses. Nothing in
+  it is enforced, and nothing in it gates Phase 0.
+
+A package graduates from candidate to shipping the moment it enters the lockfile, and the verifier
+fails on any direct dependency that appears in **neither** table — so a package cannot arrive
+unreviewed by being absent from both.
+
+##### Shipping register — installed and verified
+
+| Dependency | Licence | Role |
 | --- | --- | --- |
-| Svelte 5.56.8 | **MIT — verified 2026-08-09** | UI runtime; SvelteKit and Vite remain excluded until pinned |
-| TypeScript 5.7.2, Vitest 4.1.10, Playwright 1.62.1, ESLint 9.39.5, Prettier 3.9.6 | **Apache-2.0 / MIT — verified 2026-08-09** | Toolchain and test runtime |
-| Tailwind CSS 4.3.3 | **MIT — verified 2026-08-09** | Styling |
-| `bits-ui` | MIT | Headless UI primitives |
-| `lucide-svelte` | ISC | Icons |
-| `zod` | MIT | Option schemas |
-| `fast-check` | MIT | Property testing |
-| `@inlang/paraglide-js` | MIT | i18n ⚠ verify |
+| `svelte` 5.56.8, `@sveltejs/kit` 2.48.5, `@sveltejs/adapter-static` 3.0.10, `@sveltejs/vite-plugin-svelte` 6.2.4, `vite` 6.4.3 | **MIT — verified 2026-08-09** | UI runtime, prerendering, static adapter, and build system |
+| `typescript` 5.7.2, `vitest` 4.1.10, `@playwright/test` 1.62.1, `eslint` 9.39.5, `prettier` 3.9.6 | **Apache-2.0 / MIT — verified 2026-08-09** | Toolchain and test runtime |
+| `@eslint/js` 9.39.5, `typescript-eslint` 8.20.0, `eslint-plugin-svelte` 3.22.0, `svelte-eslint-parser` 1.8.0 | **MIT — verified 2026-08-09** | Lint rule sets and parser |
+| `prettier-plugin-svelte` 4.1.1, `prettier-plugin-tailwindcss` 0.8.1 | **MIT — verified 2026-08-09** | Formatting plugins |
+| `@commitlint/lint` 21.2.0, `@commitlint/config-conventional` 21.2.0 | **MIT — verified 2026-08-09** | Commit message linting |
+| `lefthook` 2.1.10 | **MIT — verified 2026-08-09** | Git hooks |
+| `turbo` 2.3.3, `tsx` 4.23.11 | **MPL-2.0 / MIT — verified 2026-08-09** | Task runner and TS execution |
+| `tailwindcss` 4.3.3 | **MIT — verified 2026-08-09** | Styling |
+| `zod` 4.4.3, `fast-check` 4.9.0, `fflate` 0.8.3 | **MIT — verified 2026-08-09** | Option schemas, property testing, and compressed recipe serialization |
+| `svelte-check` 4.7.5, `@types/node` 26.2.0 | **MIT — verified 2026-08-09** | Component diagnostics and prerender types |
+| `size-limit` 13.0.3, `@size-limit/file` 13.0.3 | **MIT — verified 2026-08-09** | Per-archetype delivery budgets |
+| `@lhci/cli` 0.15.1 | **Apache-2.0 — verified 2026-08-09** | Lighthouse performance and accessibility acceptance |
+| `@axe-core/playwright` 4.11.0 | **MPL-2.0 — verified 2026-08-09** | Blocking zero-violation accessibility checks on Phase 1 tool routes |
 | `@jsquash/jpeg` 1.6.0 → MozJPEG | **Apache-2.0 wrapper + IJG, BSD-3, Zlib codec portions — verified 2026-08-09.** These licences apply to different portions; they are not an election. Mandatory IJG attribution is rendered at `/licenses` and build-enforced | JPEG codec |
 | `@jsquash/png` 3.1.1, `@jsquash/oxipng` 2.3.0 → libpng, zlib, oxipng | **Apache-2.0 wrappers + BSD-3/MIT codec portions — verified 2026-08-09** | PNG codec + optimizer |
 | `@jsquash/webp` 1.5.0 → libwebp | **Apache-2.0 wrapper + BSD-3 codec portion — verified 2026-08-09** | WebP codec |
+
+##### Candidate register — not installed, licences unverified
+
+**Nothing in this table is cleared.** Every value is an expectation drawn from public metadata, not a
+reading of an installed package. A row must be verified at its pinned version and moved into the
+shipping register before the dependency may be used. These rows do **not** gate Phase 0, because
+verifying a package we have not installed is not possible and pretending otherwise would make the gate
+meaningless.
+
+| Dependency | Expected licence | Role |
+| --- | --- | --- |
+| `bits-ui` | MIT | Headless UI primitives |
+| `lucide-svelte` | ISC | Icons |
+| `@inlang/paraglide-js` | MIT | i18n |
 | `@jsquash/avif` → libavif + aom/dav1d | BSD-2 | AVIF codec |
 | `@jsquash/jxl` → libjxl | BSD-3 | JPEG XL codec + butteraugli |
 | `@jsquash/resize`, `pica` | Apache-2.0 / MIT | Resampling |
@@ -3592,7 +3623,6 @@ this whole section exists to prevent.
 | `@mediapipe/tasks-vision` | Apache-2.0 | Face detection runtime |
 | `exifr` | MIT | Metadata read |
 | `piexifjs` | MIT | Metadata write |
-| `fflate` | MIT | ZIP |
 | `culori` | MIT | Colour maths |
 | Inter, JetBrains Mono, Anton | OFL-1.1 | Fonts |
 | Noto Emoji | OFL-1.1 | Emoji glyphs |
@@ -3605,7 +3635,14 @@ export — that would embed a font we have no right to.
 
 **Data and model assets, cleared separately from their loaders** (this is the §25.5 rule applied to our
 own remaining picks, since flagging the principle for RMBG and then not applying it here would be
-exactly the mistake being warned about):
+exactly the mistake being warned about).
+
+**All of these are candidates.** No model or data asset is registered in `docs/static-assets.json`
+today, so none has a pinned hash and none can be licence-verified. The enforcement that matters is
+already live and does not depend on this table: `verify:static-assets` fails on **any** asset present in
+`static/` that lacks a register row with a source URL, licence, licence URL, sha256, and check date.
+An unverified asset therefore cannot ship — it fails the build the moment it is added, whether or not
+anyone remembered to update the list below.
 
 | Asset | Expected licence | Note |
 | --- | --- | --- |

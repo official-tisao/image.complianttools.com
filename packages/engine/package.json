@@ -7,11 +7,12 @@
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "test": "node test/all.test.mjs && vitest run test/codec-roundtrip.test.ts",
+    "test": "node test/all.test.mjs && vitest run test/codec-roundtrip.test.ts test/phase1.test.ts",
     "lint": "tsc -p tsconfig.json --noEmit",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "devDependencies": {
+    "fast-check": "4.9.0",
     "typescript": "catalog:",
     "vitest": "4.1.10"
   },
@@ -19,6 +20,8 @@
     "@jsquash/jpeg": "1.6.0",
     "@jsquash/oxipng": "2.3.0",
     "@jsquash/png": "3.1.1",
-    "@jsquash/webp": "1.5.0"
+    "@jsquash/webp": "1.5.0",
+    "fflate": "0.8.3",
+    "zod": "4.4.3"
   }
 }

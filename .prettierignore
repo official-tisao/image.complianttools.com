@@ -4,6 +4,7 @@ build
 coverage
 dist
 node_modules
+.lighthouseci
 saas-template
 pnpm-lock.yaml
 PLAN.md

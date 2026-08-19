@@ -15,7 +15,7 @@
   },
   "scripts": {
     "dev": "turbo dev",
-    "build": "pnpm verify:attributions && tsx scripts/fetch-wasm.ts --verify && turbo build",
+    "build": "pnpm verify:attributions && tsx scripts/fetch-wasm.ts --verify && turbo build && pnpm verify:route-budgets && pnpm size",
     "test": "turbo test",
     "test:e2e": "playwright test",
     "test:no-network": "playwright test e2e/no-network.spec.ts",
@@ -34,21 +34,55 @@
     "verify:trademarks": "tsx scripts/verify-trademarks.ts",
     "verify:wasm": "tsx scripts/fetch-wasm.ts --verify",
     "verify:plan-sync": "tsx scripts/check-plan-sync.ts",
+    "verify:route-budgets": "tsx scripts/verify-route-budgets.ts",
+    "size": "size-limit",
+    "lighthouse": "lhci autorun",
     "wasm:fetch": "tsx scripts/fetch-wasm.ts",
     "test:gates": "tsx scripts/test-static-assets.ts && tsx scripts/test-license-gate.ts && tsx scripts/test-attribution-gate.ts && tsx scripts/test-trademark-gate.ts && tsx scripts/test-wasm-gate.ts && tsx scripts/test-plan-sync.ts",
     "prepare": "lefthook install"
   },
+  "size-limit": [
+    {
+      "name": "tool /convert",
+      "path": "apps/web/build/convert.html",
+      "limit": "90 kB"
+    },
+    {
+      "name": "format-pair",
+      "path": "apps/web/build/convert/png-to-webp.html",
+      "limit": "90 kB"
+    },
+    {
+      "name": "reference",
+      "path": "apps/web/build/docs/formats/jpeg.html",
+      "limit": "20 kB"
+    },
+    {
+      "name": "connect-ai",
+      "path": "apps/web/build/connect-ai.html",
+      "limit": "45 kB"
+    },
+    {
+      "name": "app-shell",
+      "path": "apps/web/build/editor.html",
+      "limit": "220 kB"
+    }
+  ],
   "devDependencies": {
+    "@axe-core/playwright": "4.11.0",
     "@commitlint/config-conventional": "21.2.0",
     "@commitlint/lint": "21.2.0",
     "@eslint/js": "9.39.5",
+    "@lhci/cli": "0.15.1",
     "@playwright/test": "1.62.1",
+    "@size-limit/file": "13.0.3",
     "eslint": "9.39.5",
     "eslint-plugin-svelte": "3.22.0",
     "lefthook": "2.1.10",
     "prettier": "3.9.6",
     "prettier-plugin-svelte": "4.1.1",
     "prettier-plugin-tailwindcss": "0.8.1",
+    "size-limit": "13.0.3",
     "svelte-eslint-parser": "1.8.0",
     "tsx": "4.23.11",
     "turbo": "2.3.3",

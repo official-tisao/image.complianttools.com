@@ -57,6 +57,27 @@ export default tseslint.config(
   },
   {
     files: ['**/*.svelte'],
-    languageOptions: { parserOptions: { parser: tseslint.parser } },
+    languageOptions: {
+      parserOptions: { parser: tseslint.parser },
+      globals: {
+        Blob: 'readonly',
+        clearTimeout: 'readonly',
+        createImageBitmap: 'readonly',
+        document: 'readonly',
+        Event: 'readonly',
+        File: 'readonly',
+        HTMLInputElement: 'readonly',
+        ImageData: 'readonly',
+        performance: 'readonly',
+        setTimeout: 'readonly',
+        URL: 'readonly',
+        Worker: 'readonly',
+      },
+    },
+    rules: { 'svelte/no-navigation-without-resolve': 'off' },
+  },
+  {
+    files: ['lighthouserc.cjs'],
+    languageOptions: { globals: { module: 'readonly' } },
   },
 );
