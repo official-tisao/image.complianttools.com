@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { stripPngMetadata } from '@complianttools/image-engine';
+  import { stripJpegMetadata, stripPngMetadata } from '@complianttools/image-engine';
 
   let fileName = $state('');
   let status = $state('');
@@ -11,11 +11,17 @@
     error = '';
     if (!file) return;
     try {
-      const output = stripPngMetadata(await file.arrayBuffer());
-      const url = URL.createObjectURL(new Blob([output], { type: 'image/png' }));
+      const isPng = file.type === 'image/png' || /\.png$/iu.test(file.name);
+      const output = isPng
+        ? stripPngMetadata(await file.arrayBuffer())
+        : stripJpegMetadata(await file.arrayBuffer());
+      const extension = isPng ? 'png' : 'jpg';
+      const url = URL.createObjectURL(
+        new Blob([output], { type: isPng ? 'image/png' : 'image/jpeg' }),
+      );
       const anchor = document.createElement('a');
       anchor.href = url;
-      anchor.download = `${file.name.replace(/\.png$/iu, '')}-stripped.png`;
+      anchor.download = `${file.name.replace(/\.[^.]+$/u, '')}-stripped.${extension}`;
       anchor.click();
       URL.revokeObjectURL(url);
       status = `Removed metadata locally: ${file.size} bytes → ${output.byteLength} bytes.`;
@@ -27,8 +33,11 @@
 </script>
 
 <svelte:head>
-  <title>Remove PNG Metadata — Image Compliant Tools</title>
-  <meta name="description" content="Remove supported PNG metadata locally in your browser." />
+  <title>Remove Image Metadata — Image Compliant Tools</title>
+  <meta
+    name="description"
+    content="Remove supported PNG and JPEG metadata locally in your browser."
+  />
   <link rel="canonical" href="https://image.complianttools.com/remove-exif" />
 </svelte:head>
 
@@ -36,14 +45,14 @@
   <a href="/exif-viewer">← Metadata Viewer</a>
   <h1>Metadata Remover</h1>
   <p>
-    PNG metadata is stripped locally. Other format-specific stripping options are not offered until
-    they are implemented and verified.
+    PNG and JPEG metadata is stripped locally. Other format-specific stripping options are not
+    offered until they are implemented and verified.
   </p>
   <label>
-    Choose a PNG
+    Choose a PNG or JPEG
     <input
       type="file"
-      accept="image/png"
+      accept="image/png,image/jpeg"
       onchange={(event) => void strip(event.currentTarget.files?.[0])}
     />
   </label>

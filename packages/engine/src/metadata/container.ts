@@ -138,4 +138,37 @@ export function stripPngMetadata(input: ArrayBuffer | Uint8Array): Uint8Array {
   ];
   return Uint8Array.from(retained.flatMap((part) => [...part]));
 }
+
+/** Removes APP1 (EXIF/XMP), APP2 (ICC/FlashPix), and APP13 (IPTC) JPEG metadata segments. */
+export function stripJpegMetadata(input: ArrayBuffer | Uint8Array): Uint8Array {
+  const bytes = input instanceof Uint8Array ? input : new Uint8Array(input);
+  if (bytes[0] !== 0xff || bytes[1] !== 0xd8)
+    throw new Error('JPEG metadata requires a valid JPEG signature.');
+  const retained: Uint8Array[] = [bytes.subarray(0, 2)];
+  for (let offset = 2; offset < bytes.length;) {
+    if (bytes[offset] !== 0xff) {
+      retained.push(bytes.subarray(offset));
+      break;
+    }
+    const marker = bytes[offset + 1];
+    if (marker === undefined) throw new Error('JPEG contains a truncated marker.');
+    if (marker === 0xd9 || marker === 0xda) {
+      retained.push(bytes.subarray(offset));
+      break;
+    }
+    if (marker === 0x01 || (marker >= 0xd0 && marker <= 0xd7)) {
+      retained.push(bytes.subarray(offset, offset + 2));
+      offset += 2;
+      continue;
+    }
+    if (offset + 4 > bytes.length) throw new Error('JPEG contains a truncated metadata segment.');
+    const length = (bytes[offset + 2]! << 8) | bytes[offset + 3]!;
+    if (length < 2 || offset + 2 + length > bytes.length)
+      throw new Error('JPEG contains a truncated metadata segment.');
+    if (![0xe1, 0xe2, 0xed].includes(marker))
+      retained.push(bytes.subarray(offset, offset + 2 + length));
+    offset += 2 + length;
+  }
+  return Uint8Array.from(retained.flatMap((part) => [...part]));
+}
 import { readExifIfd0 } from './exif.js';

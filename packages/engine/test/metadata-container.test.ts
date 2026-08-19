@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { readContainerMetadata, stripPngMetadata } from '../src/index.js';
+import { readContainerMetadata, stripJpegMetadata, stripPngMetadata } from '../src/index.js';
 
 function pngChunk(type: string, data: readonly number[]): number[] {
   const length = data.length;
@@ -98,5 +98,14 @@ describe('container metadata', () => {
       format: 'jpeg',
       tags: [{ namespace: 'EXIF', name: 'orientation', value: '6' }],
     });
+  });
+
+  it('removes JPEG APP metadata while preserving image markers', () => {
+    const jpeg = new Uint8Array([
+      0xff, 0xd8, 0xff, 0xe1, 0, 4, 1, 2, 0xff, 0xdb, 0, 3, 9, 0xff, 0xd9,
+    ]);
+    expect(stripJpegMetadata(jpeg)).toEqual(
+      new Uint8Array([0xff, 0xd8, 0xff, 0xdb, 0, 3, 9, 0xff, 0xd9]),
+    );
   });
 });
