@@ -53,6 +53,19 @@ describe('GIF encoder', () => {
     expect(decoded.frames[1].data[6]).toBeGreaterThan(200);
   });
 
+  it('writes a smaller changed-pixel rectangle at optimization level 2', () => {
+    const image = createRaster(20, 20, new Uint8ClampedArray(20 * 20 * 4).fill(255));
+    const changed = image.frames[0].data.slice();
+    changed.set([0, 0, 0, 255], (10 * 20 + 10) * 4);
+    const animated = {
+      ...image,
+      frames: [image.frames[0], { data: changed, durationMs: 40 }],
+    } as typeof image;
+    expect(encodeGif(animated, 0, { optimizeLevel: 2 }).byteLength).toBeLessThan(
+      encodeGif(animated, 0, { optimizeLevel: 1 }).byteLength,
+    );
+  });
+
   it('offers deterministic lossy palette reduction within the documented range', () => {
     const image = createRaster(2, 1, new Uint8ClampedArray([31, 95, 159, 255, 201, 99, 11, 255]));
     const zero = new Uint8Array(encodeGif(image, 0, { lossy: 0 }));

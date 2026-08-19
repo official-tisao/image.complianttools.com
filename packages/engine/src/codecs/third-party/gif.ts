@@ -74,6 +74,42 @@ function paletteIndex(red: number, green: number, blue: number, lossy = 0): numb
   return 1 + (Math.min(6, red >> 5) << 5) + ((green >> 5) << 2) + (blue >> 6);
 }
 
+function frameRectangle(
+  data: Uint8ClampedArray,
+  width: number,
+  height: number,
+): {
+  readonly left: number;
+  readonly top: number;
+  readonly width: number;
+  readonly height: number;
+  readonly data: Uint8ClampedArray;
+} {
+  let left = width,
+    top = height,
+    right = -1,
+    bottom = -1;
+  for (let y = 0; y < height; y += 1)
+    for (let x = 0; x < width; x += 1)
+      if (data[(y * width + x) * 4 + 3] !== 0) {
+        left = Math.min(left, x);
+        top = Math.min(top, y);
+        right = Math.max(right, x);
+        bottom = Math.max(bottom, y);
+      }
+  // GIF image blocks cannot be empty; a transparent one-pixel patch preserves the canvas.
+  if (right < left) return { left: 0, top: 0, width: 1, height: 1, data: new Uint8ClampedArray(4) };
+  const patchWidth = right - left + 1;
+  const patchHeight = bottom - top + 1;
+  const patch = new Uint8ClampedArray(patchWidth * patchHeight * 4);
+  for (let y = 0; y < patchHeight; y += 1)
+    patch.set(
+      data.subarray(((top + y) * width + left) * 4, ((top + y) * width + left + patchWidth) * 4),
+      y * patchWidth * 4,
+    );
+  return { left, top, width: patchWidth, height: patchHeight, data: patch };
+}
+
 /** Encodes local 8-bit frames as an animated GIF89a with a deterministic 3:3:2 global palette. */
 export function encodeGif(
   image: RasterImage,
@@ -104,26 +140,32 @@ export function encodeGif(
   push16(bytes, loopCount);
   bytes.push(0);
   for (const frame of source.frames) {
+    const rectangle =
+      options.optimizeLevel && options.optimizeLevel >= 2
+        ? frameRectangle(frame.data, source.width, source.height)
+        : { left: 0, top: 0, width: source.width, height: source.height, data: frame.data };
     const hasTransparentPixels = frame.data.some(
       (_, index) => index % 4 === 3 && frame.data[index]! < 128,
     );
     bytes.push(0x21, 0xf9, 4, hasTransparentPixels ? 1 : 0);
     push16(bytes, Math.max(1, Math.round(frame.durationMs / 10)));
     bytes.push(0, 0);
-    bytes.push(0x2c, 0, 0, 0, 0);
-    push16(bytes, source.width);
-    push16(bytes, source.height);
+    bytes.push(0x2c);
+    push16(bytes, rectangle.left);
+    push16(bytes, rectangle.top);
+    push16(bytes, rectangle.width);
+    push16(bytes, rectangle.height);
     bytes.push(0, 8);
-    const indexes = new Uint8Array(source.width * source.height);
+    const indexes = new Uint8Array(rectangle.width * rectangle.height);
     for (let pixel = 0; pixel < indexes.length; pixel += 1) {
       const offset = pixel * 4;
       indexes[pixel] = paletteIndex(
-        frame.data[offset]!,
-        frame.data[offset + 1]!,
-        frame.data[offset + 2]!,
+        rectangle.data[offset]!,
+        rectangle.data[offset + 1]!,
+        rectangle.data[offset + 2]!,
         options.lossy,
       );
-      if (frame.data[offset + 3]! < 128) indexes[pixel] = 0;
+      if (rectangle.data[offset + 3]! < 128) indexes[pixel] = 0;
     }
     const data = lzwStream(indexes);
     for (let offset = 0; offset < data.length; offset += 255) {
