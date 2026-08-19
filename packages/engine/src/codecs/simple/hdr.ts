@@ -58,3 +58,51 @@ export function decodeHdr(input: ArrayBuffer | Uint8Array): RasterImage {
   }
   return createRaster(width, height, pixels);
 }
+
+function sdrToRgbE(
+  red: number,
+  green: number,
+  blue: number,
+): readonly [number, number, number, number] {
+  // The decoder applies Reinhard tone mapping, so encode its inverse for an SDR raster.
+  const linear = [red, green, blue].map((value) => {
+    const normalized = value / 255;
+    return normalized >= 1 ? 65_535 : normalized / (1 - normalized);
+  });
+  const maximum = Math.max(...linear);
+  if (maximum <= 0) return [0, 0, 0, 0];
+  const exponent = Math.ceil(Math.log2(maximum));
+  const scale = 256 / 2 ** exponent;
+  return [
+    Math.min(255, Math.round(linear[0]! * scale)),
+    Math.min(255, Math.round(linear[1]! * scale)),
+    Math.min(255, Math.round(linear[2]! * scale)),
+    exponent + 128,
+  ];
+}
+
+/** Encodes the first raster frame as a non-RLE Radiance RGBE file. */
+export function encodeHdr(image: RasterImage): ArrayBuffer {
+  if (image.width < 1 || image.height < 1 || image.width * image.height > 100_000_000)
+    throw new Error('Radiance HDR dimensions are unsafe.');
+  const frame = image.frames[0];
+  if (!frame) throw new Error('Cannot encode an image without a frame.');
+  const header = new TextEncoder().encode(
+    `#?RADIANCE\nFORMAT=32-bit_rle_rgbe\n\n-Y ${image.height} +X ${image.width}\n`,
+  );
+  const output = new Uint8Array(header.length + image.width * image.height * 4);
+  output.set(header);
+  for (let pixel = 0; pixel < image.width * image.height; pixel += 1) {
+    const source = pixel * 4;
+    const alpha = frame.data[source + 3]! / 255;
+    output.set(
+      sdrToRgbE(
+        frame.data[source]! * alpha,
+        frame.data[source + 1]! * alpha,
+        frame.data[source + 2]! * alpha,
+      ),
+      header.length + pixel * 4,
+    );
+  }
+  return output.buffer;
+}

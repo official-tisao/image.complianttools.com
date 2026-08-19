@@ -128,9 +128,8 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     id: 'hdr',
     animation: false,
     lazyBytes: 7_000,
-    supports: ['decode'],
+    supports: ['decode', 'encode'],
     load: () => import('./simple/hdr.js'),
-    unavailableReason: 'Radiance HDR encoding is not implemented.',
   },
   {
     id: 'png',
