@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   createRaster,
+  emitAdafruitGfxBitmap,
   emitEmbeddedCArray,
   emitLvglV8CArray,
   emitLvglV9CArray,
@@ -39,5 +40,12 @@ describe('embedded exporter', () => {
     const output = emitLvglV8CArray(image, { outputName: 'logo', format: 'argb8888' });
     expect(output).toContain('lv_img_dsc_t logo');
     expect(output).toContain('LV_IMG_CF_TRUE_COLOR_ALPHA');
+  });
+
+  it('emits a 1-bit Adafruit GFX PROGMEM bitmap', () => {
+    const output = emitAdafruitGfxBitmap(image, 'logo');
+    expect(output).toContain('#include <avr/pgmspace.h>');
+    expect(output).toContain('logo[] PROGMEM');
+    expect(output).toContain('0x80');
   });
 });

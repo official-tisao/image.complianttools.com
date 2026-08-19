@@ -124,3 +124,19 @@ export function emitLvglV8CArray(image: RasterImage, options: EmbeddedExportOpti
 };
 `;
 }
+
+/** Emits a 1-bit MSB-first Adafruit GFX bitmap in a PROGMEM C array. */
+export function emitAdafruitGfxBitmap(image: RasterImage, outputName: string): string {
+  const name = validateEmbeddedOutputName(outputName);
+  const rowBytes = Math.ceil(image.width / 8);
+  const bytes = new Uint8Array(rowBytes * image.height);
+  const pixels = image.frames[0].data;
+  for (let y = 0; y < image.height; y += 1)
+    for (let x = 0; x < image.width; x += 1) {
+      const offset = (y * image.width + x) * 4;
+      const luminance =
+        pixels[offset]! * 0.2126 + pixels[offset + 1]! * 0.7152 + pixels[offset + 2]! * 0.0722;
+      if (luminance < 128) bytes[y * rowBytes + Math.floor(x / 8)]! |= 0x80 >> (x % 8);
+    }
+  return `#include <avr/pgmspace.h>\nconst uint8_t ${name}[] PROGMEM = { ${[...bytes].map((value) => `0x${value.toString(16).padStart(2, '0')}`).join(', ')} };\n`;
+}
