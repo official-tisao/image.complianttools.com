@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { createRaster, encodeIco } from '../src/index.js';
+import { createRaster, decodeIco, encodeIco } from '../src/index.js';
 
 describe('ICO exporter', () => {
   it('writes a one-image 32-bit ICO with an alpha AND mask', () => {
@@ -16,5 +16,10 @@ describe('ICO exporter', () => {
 
   it('rejects icon dimensions outside the ICO range', () => {
     expect(() => encodeIco(createRaster(257, 1))).toThrow('between 1 and 256');
+  });
+
+  it('round-trips its own 32-bit BMP-backed icon payload', () => {
+    const image = createRaster(2, 1, new Uint8ClampedArray([12, 34, 56, 255, 78, 90, 123, 0]));
+    expect(decodeIco(encodeIco(image)).frames[0].data).toEqual(image.frames[0].data);
   });
 });

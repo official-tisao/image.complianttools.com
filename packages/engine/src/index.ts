@@ -5,6 +5,7 @@ export * from './codecs/simple/framework.js';
 export * from './codecs/simple/bmp.js';
 export * from './codecs/simple/fits.js';
 export * from './codecs/simple/hdr.js';
+export * from './codecs/simple/ico.js';
 export * from './codecs/simple/qoi.js';
 export * from './codecs/simple/pnm.js';
 export * from './codecs/simple/pcx.js';

@@ -39,7 +39,10 @@ describe('P2 codec registry', () => {
     });
     expect(capabilities.find((entry) => entry.id === 'fits')).toMatchObject({ decode: 'lazy' });
     expect(capabilities.find((entry) => entry.id === 'hdr')).toMatchObject({ decode: 'lazy' });
-    expect(capabilities.find((entry) => entry.id === 'ico')).toMatchObject({ encode: 'lazy' });
+    expect(capabilities.find((entry) => entry.id === 'ico')).toMatchObject({
+      decode: 'lazy',
+      encode: 'lazy',
+    });
     expect(capabilities.find((entry) => entry.id === 'sun-raster')).toMatchObject({
       decode: 'lazy',
     });

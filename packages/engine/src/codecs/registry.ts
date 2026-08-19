@@ -33,9 +33,9 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     id: 'ico',
     animation: false,
     lazyBytes: 5_000,
-    supports: ['encode'],
-    load: () => import('../export/ico.js'),
-    unavailableReason: 'ICO decoding is not implemented.',
+    supports: ['decode', 'encode'],
+    load: () => import('./simple/ico.js'),
+    unavailableReason: 'PNG-backed ICO entries are not implemented.',
   },
   {
     id: 'qoi',
