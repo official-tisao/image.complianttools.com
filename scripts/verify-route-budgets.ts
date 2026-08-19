@@ -1,4 +1,5 @@
-import { readFile, stat } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
+import { gzipSync } from 'node:zlib';
 import path from 'node:path';
 
 const buildDirectory = path.join(process.cwd(), 'apps', 'web', 'build');
@@ -29,11 +30,7 @@ for (const check of cases) {
   let compressedBytes = 0;
   for (const asset of assets) {
     const absolute = path.resolve(path.dirname(htmlPath), asset);
-    try {
-      compressedBytes += (await stat(`${absolute}.gz`)).size;
-    } catch {
-      compressedBytes += (await stat(absolute)).size;
-    }
+    compressedBytes += gzipSync(await readFile(absolute)).byteLength;
   }
   if (compressedBytes > check.budget) {
     throw new Error(
