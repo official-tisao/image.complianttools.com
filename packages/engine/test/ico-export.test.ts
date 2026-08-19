@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { createRaster, decodeIco, encodeIco } from '../src/index.js';
+import { createRaster, decodeCur, decodeIco, encodeIco } from '../src/index.js';
 
 describe('ICO exporter', () => {
   it('writes a one-image 32-bit ICO with an alpha AND mask', () => {
@@ -21,5 +21,16 @@ describe('ICO exporter', () => {
   it('round-trips its own 32-bit BMP-backed icon payload', () => {
     const image = createRaster(2, 1, new Uint8ClampedArray([12, 34, 56, 255, 78, 90, 123, 0]));
     expect(decodeIco(encodeIco(image)).frames[0].data).toEqual(image.frames[0].data);
+  });
+
+  it('decodes the bitmap payload of a cursor without treating hotspots as planes', () => {
+    const bytes = new Uint8Array(
+      encodeIco(createRaster(1, 1, new Uint8ClampedArray([1, 2, 3, 255]))),
+    );
+    const view = new DataView(bytes.buffer);
+    view.setUint16(2, 2, true);
+    view.setUint16(10, 7, true);
+    view.setUint16(12, 9, true);
+    expect(decodeCur(bytes).frames[0].data).toEqual(new Uint8ClampedArray([1, 2, 3, 255]));
   });
 });

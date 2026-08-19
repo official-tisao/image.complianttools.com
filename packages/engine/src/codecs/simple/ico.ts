@@ -11,14 +11,14 @@ const readView = (bytes: ArrayBuffer | Uint8Array) =>
   );
 
 /**
- * Decodes a 32-bit BMP-backed ICO entry. PNG-backed entries deliberately fail
- * here; their decoding is delegated to the PNG codec rather than pretending all
- * ICO payloads share a bitmap layout.
+ * Decodes a 32-bit BMP-backed ICO or CUR entry. PNG-backed entries deliberately
+ * fail here; their decoding is delegated to the PNG codec rather than pretending
+ * all icon payloads share a bitmap layout.
  */
-export function decodeIco(bytes: ArrayBuffer | Uint8Array): RasterImage {
+function decodeIcon(bytes: ArrayBuffer | Uint8Array, kind: 1 | 2): RasterImage {
   const view = readView(bytes);
-  if (view.byteLength < 22 || view.getUint16(0, true) !== 0 || view.getUint16(2, true) !== 1)
-    throw new Error('Invalid ICO header.');
+  if (view.byteLength < 22 || view.getUint16(0, true) !== 0 || view.getUint16(2, true) !== kind)
+    throw new Error(`Invalid ${kind === 1 ? 'ICO' : 'CUR'} header.`);
   const count = view.getUint16(4, true);
   if (count < 1 || view.byteLength < 6 + count * 16) throw new Error('Truncated ICO directory.');
 
@@ -77,4 +77,13 @@ export function decodeIco(bytes: ArrayBuffer | Uint8Array): RasterImage {
     }
   }
   return createRaster(width, directoryHeight, pixels);
+}
+
+export function decodeIco(bytes: ArrayBuffer | Uint8Array): RasterImage {
+  return decodeIcon(bytes, 1);
+}
+
+/** Decodes a BMP-backed Windows cursor; cursor hotspots are intentionally ignored for raster export. */
+export function decodeCur(bytes: ArrayBuffer | Uint8Array): RasterImage {
+  return decodeIcon(bytes, 2);
 }

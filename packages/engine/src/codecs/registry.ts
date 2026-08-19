@@ -38,6 +38,14 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     unavailableReason: 'PNG-backed ICO entries are not implemented.',
   },
   {
+    id: 'cur',
+    animation: false,
+    lazyBytes: 5_000,
+    supports: ['decode'],
+    load: () => import('./simple/ico.js'),
+    unavailableReason: 'CUR encoding and PNG-backed CUR entries are not implemented.',
+  },
+  {
     id: 'qoi',
     animation: false,
     lazyBytes: 12_000,

@@ -14,7 +14,7 @@ describe('P2 codec registry', () => {
       opfs: false,
       webCodecs: false,
     });
-    expect(capabilities).toHaveLength(22);
+    expect(capabilities).toHaveLength(23);
     expect(capabilities.find((entry) => entry.id === 'jpeg')).toMatchObject({
       decode: 'lazy',
       encode: 'lazy',
@@ -43,6 +43,7 @@ describe('P2 codec registry', () => {
       decode: 'lazy',
       encode: 'lazy',
     });
+    expect(capabilities.find((entry) => entry.id === 'cur')).toMatchObject({ decode: 'lazy' });
     expect(capabilities.find((entry) => entry.id === 'sun-raster')).toMatchObject({
       decode: 'lazy',
     });
