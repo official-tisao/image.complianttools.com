@@ -35,7 +35,7 @@ describe('P2 codec registry', () => {
     });
     expect(capabilities.find((entry) => entry.id === 'pfm')).toMatchObject({
       decode: 'lazy',
-      encode: 'unavailable',
+      encode: 'lazy',
     });
     expect(capabilities.find((entry) => entry.id === 'fits')).toMatchObject({ decode: 'lazy' });
     expect(capabilities.find((entry) => entry.id === 'hdr')).toMatchObject({ decode: 'lazy' });
