@@ -438,9 +438,9 @@ upstreams are permissive (BSD-3, BSD-2), so the obstacle is a build we do not ow
 - **Spec:** README §6.9 · **Done when:** the preservation property test passes across all metadata-carrying formats
 
 #### P2-13 · ICC profile synthesis (**ours**)
-- [ ] Generate v2/v4 matrix+TRC profiles from primaries/white point/TRC
-- [ ] sRGB, Display P3, "Adobe RGB compatible", Gray
-- [ ] User's embedded profile always preserved verbatim unless explicitly converted
+- [x] Generate v2/v4 matrix+TRC profiles from primaries/white point/TRC
+- [x] sRGB, Display P3, "Adobe RGB compatible", Gray
+- [x] User's embedded profile always preserved verbatim unless explicitly converted
 - **Spec:** README §7.3, §25.3.3 · **Done when:** synthesized profiles validate and round-trip correctly; no vendor profile is redistributed
 
 #### P2-14 · Adversarial corpus
