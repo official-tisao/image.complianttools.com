@@ -3,7 +3,32 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "exports": "./dist/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./ops/raster": {
+      "types": "./dist/ops/raster.d.ts",
+      "default": "./dist/ops/raster.js"
+    },
+    "./pipeline/execute": {
+      "types": "./dist/pipeline/execute.d.ts",
+      "default": "./dist/pipeline/execute.js"
+    },
+    "./pipeline/target-size": {
+      "types": "./dist/pipeline/target-size.d.ts",
+      "default": "./dist/pipeline/target-size.js"
+    },
+    "./schemas/options": {
+      "types": "./dist/schemas/options.d.ts",
+      "default": "./dist/schemas/options.js"
+    },
+    "./types": {
+      "types": "./dist/types.d.ts",
+      "default": "./dist/types.js"
+    }
+  },
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc -p tsconfig.json",

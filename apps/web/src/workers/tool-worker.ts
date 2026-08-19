@@ -1,4 +1,6 @@
-import { createRaster, run, type Recipe } from '@complianttools/image-engine';
+import { createRaster } from '@complianttools/image-engine/ops/raster';
+import { run } from '@complianttools/image-engine/pipeline/execute';
+import type { Recipe } from '@complianttools/image-engine/types';
 
 self.onmessage = async (
   event: MessageEvent<{ width: number; height: number; data: ArrayBuffer; recipe: Recipe }>,

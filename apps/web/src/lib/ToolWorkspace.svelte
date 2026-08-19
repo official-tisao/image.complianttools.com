@@ -1,10 +1,8 @@
 <script lang="ts">
   import { onDestroy, untrack } from 'svelte';
-  import {
-    phaseOneOptionDescriptions,
-    searchTargetSize,
-    type Recipe,
-  } from '@complianttools/image-engine';
+  import { searchTargetSize } from '@complianttools/image-engine/pipeline/target-size';
+  import { phaseOneOptionDescriptions } from '@complianttools/image-engine/schemas/options';
+  import type { Recipe } from '@complianttools/image-engine/types';
   import CompareCanvas from './CompareCanvas.svelte';
   import GeneratedControls from './GeneratedControls.svelte';
   import { localizeOptions, translate, type Locale } from './i18n';
