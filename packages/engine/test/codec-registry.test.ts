@@ -14,7 +14,7 @@ describe('P2 codec registry', () => {
       opfs: false,
       webCodecs: false,
     });
-    expect(capabilities).toHaveLength(16);
+    expect(capabilities).toHaveLength(17);
     expect(capabilities.find((entry) => entry.id === 'jpeg')).toMatchObject({
       decode: 'lazy',
       encode: 'lazy',
@@ -32,6 +32,10 @@ describe('P2 codec registry', () => {
       decode: 'lazy',
       encode: 'unavailable',
       unavailableReason: 'OpenEXR encoding is not implemented.',
+    });
+    expect(capabilities.find((entry) => entry.id === 'pfm')).toMatchObject({
+      decode: 'lazy',
+      encode: 'unavailable',
     });
   });
 

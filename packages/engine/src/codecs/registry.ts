@@ -52,6 +52,14 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     unavailableReason: 'PCX encoding is not implemented.',
   },
   {
+    id: 'pfm',
+    animation: false,
+    lazyBytes: 5_000,
+    supports: ['decode'],
+    load: () => import('./simple/pfm.js'),
+    unavailableReason: 'PFM encoding is not implemented.',
+  },
+  {
     id: 'wbmp',
     animation: false,
     lazyBytes: 4_000,

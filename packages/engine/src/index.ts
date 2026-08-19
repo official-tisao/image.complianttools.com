@@ -6,6 +6,7 @@ export * from './codecs/simple/bmp.js';
 export * from './codecs/simple/qoi.js';
 export * from './codecs/simple/pnm.js';
 export * from './codecs/simple/pcx.js';
+export * from './codecs/simple/pfm.js';
 export * from './codecs/simple/tga.js';
 export * from './codecs/simple/wbmp.js';
 export * from './codecs/simple/xbm.js';

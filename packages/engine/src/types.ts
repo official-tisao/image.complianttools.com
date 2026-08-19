@@ -7,6 +7,7 @@ export type FormatId =
   | 'jpeg'
   | 'jxl'
   | 'pcx'
+  | 'pfm'
   | 'png'
   | 'pnm'
   | 'qoi'
