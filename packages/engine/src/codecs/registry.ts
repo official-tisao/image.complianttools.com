@@ -56,7 +56,14 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     supports: ['decode', 'encode'],
     load: () => import('./jsquash.js'),
   },
-  { id: 'gif', animation: true, lazyBytes: 180_000, supports: ['decode', 'encode'] },
+  {
+    id: 'gif',
+    animation: true,
+    lazyBytes: 180_000,
+    supports: ['decode'],
+    load: () => import('./third-party/gif.js'),
+    unavailableReason: 'GIF encoding is scheduled separately in P2-05.',
+  },
   { id: 'avif', animation: true, lazyBytes: 1_900_000, supports: ['decode', 'encode'] },
   {
     id: 'bmp',
