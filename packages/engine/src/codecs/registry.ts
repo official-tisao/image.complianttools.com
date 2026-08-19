@@ -35,6 +35,14 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     load: () => import('./simple/tga.js'),
   },
   {
+    id: 'exr',
+    animation: false,
+    lazyBytes: 72_000,
+    supports: ['decode'],
+    load: () => import('./third-party/exr.js'),
+    unavailableReason: 'OpenEXR encoding is not implemented.',
+  },
+  {
     id: 'png',
     animation: false,
     lazyBytes: 165_000,
@@ -86,7 +94,11 @@ export function codecCapabilities(runtime: RuntimeCapabilities): FormatCapabilit
         : 'unavailable',
       animation: codec.animation,
       lazyBytes: codec.lazyBytes,
-      ...(codec.load ? {} : { unavailableReason: 'Codec implementation is not installed yet.' }),
+      ...(codec.unavailableReason
+        ? { unavailableReason: codec.unavailableReason }
+        : codec.load
+          ? {}
+          : { unavailableReason: 'Codec implementation is not installed yet.' }),
     };
   });
 }

@@ -3592,6 +3592,7 @@ unreviewed by being absent from both.
 | `@jsquash/jxl` 1.3.0 → libjxl | **Apache-2.0 wrapper + BSD-3 codec portion — verified 2026-08-18** | JPEG XL codec + butteraugli |
 | `utif` 3.1.0 (UTIF.js) | **MIT — verified 2026-08-18** | TIFF decode/encode. Upstream `photopea/UTIF.js`; the `utif2` fork was rejected in favour of the canonical package |
 | `gifuct-js` 2.1.2 | **MIT — verified 2026-08-18** | GIF decode |
+| `parse-exr` 1.0.2 | **MIT — verified 2026-08-18** | OpenEXR decode; ESM parser with bundled types, depends only on allowlisted `fflate` 0.8.3 |
 | `pako` 1.0.11 | **MIT AND Zlib — verified 2026-08-18** | Deflate, pulled in by `utif`. Both terms of the conjunction are allowlisted |
 
 ##### Candidate register — not installed, licences unverified
@@ -3608,7 +3609,7 @@ meaningless.
 | `lucide-svelte` | ISC | Icons |
 | `@inlang/paraglide-js` | MIT | i18n |
 | `@jsquash/resize`, `pica` | Apache-2.0 / MIT | Resampling |
-| OpenEXR decoder | — | **No pinnable distribution exists.** `tinyexr` is a C++ single-header library with no npm package; using it means vendoring source and building WASM ourselves (BSD-3, permissive). Blocked on that build step, not on licensing. See P2-04a |
+| `tinyexr` | BSD-3 | Superseded for browser decode by pinned `parse-exr` 1.0.2 (MIT); retain only as a possible future WASM implementation |
 | JPEG 2000 decoder | — | **No usable npm distribution.** The `openjpeg` package (0.2.3) publishes **no licence field at all**, which the gate denies by rule, and is an unaffiliated personal fork. Upstream OpenJPEG is BSD-2; a vendored WASM build would clear. See P2-04a |
 | `mp4box.js` | BSD-3 | MP4 demux |
 | `pdfjs-dist` | Apache-2.0 | PDF read |

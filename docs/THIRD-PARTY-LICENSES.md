@@ -384,6 +384,7 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `pako` | `1.0.11` | (MIT AND Zlib) | [source](https://github.com/nodeca/pako) |
 | `parent-module` | `1.0.1` | MIT | [source](https://github.com/sindresorhus/parent-module#readme) |
 | `parse-cache-control` | `1.0.1` | BSD-2-Clause | [source](https://github.com/roryf/parse-cache-control#readme) |
+| `parse-exr` | `1.0.2` | MIT | [source](https://github.com/dmnsgn/parse-exr) |
 | `parseurl` | `1.3.3` | MIT | [source](https://github.com/pillarjs/parseurl#readme) |
 | `path-exists` | `4.0.0` | MIT | [source](https://github.com/sindresorhus/path-exists#readme) |
 | `path-is-absolute` | `1.0.1` | MIT | [source](https://github.com/sindresorhus/path-is-absolute#readme) |
