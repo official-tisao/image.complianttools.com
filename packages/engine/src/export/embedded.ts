@@ -19,6 +19,7 @@ export interface EmbeddedExportOptions {
   readonly bigEndian?: boolean;
   readonly storage?: 'const' | 'static' | 'static-const';
   readonly lineWidth?: number;
+  readonly dithering?: 'none' | 'ordered';
 }
 
 export function validateEmbeddedOutputName(value: string): string {
@@ -34,6 +35,20 @@ function rgb565(red: number, green: number, blue: number): number {
 
 function luminance(red: number, green: number, blue: number): number {
   return red * 0.2126 + green * 0.7152 + blue * 0.0722;
+}
+
+const bayer4 = [
+  [0, 8, 2, 10],
+  [12, 4, 14, 6],
+  [3, 11, 1, 9],
+  [15, 7, 13, 5],
+] as const;
+
+function ditherChannel(value: number, pixel: number, width: number, enabled: boolean): number {
+  if (!enabled) return value;
+  const x = pixel % width;
+  const y = Math.floor(pixel / width);
+  return Math.max(0, Math.min(255, value + (bayer4[y % 4]![x % 4]! - 7.5) * 2));
 }
 
 /** Packs the first frame for LVGL or a generic embedded target without a runtime dependency. */
@@ -69,30 +84,34 @@ export function packEmbeddedPixels(image: RasterImage, options: EmbeddedExportOp
   );
   let target = 0;
   for (let offset = 0; offset < rgba.length; offset += 4) {
-    const [red, green, blue, alpha] = rgba.subarray(offset, offset + 4);
+    const [sourceRed, sourceGreen, sourceBlue, alpha] = rgba.subarray(offset, offset + 4);
+    const pixel = offset / 4;
+    const red = ditherChannel(sourceRed!, pixel, image.width, options.dithering === 'ordered');
+    const green = ditherChannel(sourceGreen!, pixel, image.width, options.dithering === 'ordered');
+    const blue = ditherChannel(sourceBlue!, pixel, image.width, options.dithering === 'ordered');
     const transparent = options.chromaKey?.every(
-      (value, index) => value === [red, green, blue][index],
+      (value, index) => value === [sourceRed, sourceGreen, sourceBlue][index],
     );
     if (options.format === 'rgb332') {
-      output[target++] = (red! & 0xe0) | ((green! >> 3) & 0x1c) | (blue! >> 6);
+      output[target++] = (red & 0xe0) | ((green >> 3) & 0x1c) | (blue >> 6);
     } else if (options.format === 'rgb565' || options.format === 'rgb565be') {
-      const value = rgb565(red!, green!, blue!);
+      const value = rgb565(red, green, blue);
       const bigEndian = options.bigEndian || options.format === 'rgb565be';
       output[target++] = bigEndian ? value >> 8 : value & 255;
       output[target++] = bigEndian ? value & 255 : value >> 8;
     } else if (options.format === 'rgb888') {
-      output.set([red!, green!, blue!], target);
+      output.set([red, green, blue], target);
       target += 3;
     } else if (options.format === 'bgr888') {
-      output.set([blue!, green!, red!], target);
+      output.set([blue, green, red], target);
       target += 3;
     } else if (options.format === 'gray8') {
-      output[target++] = Math.round(luminance(red!, green!, blue!));
+      output[target++] = Math.round(luminance(red, green, blue));
     } else if (options.format === 'argb8888') {
-      output.set([transparent ? 0 : alpha!, red!, green!, blue!], target);
+      output.set([transparent ? 0 : alpha!, red, green, blue], target);
       target += 4;
     } else {
-      output.set([red!, green!, blue!, transparent ? 0 : alpha!], target);
+      output.set([red, green, blue, transparent ? 0 : alpha!], target);
       target += 4;
     }
     if (options.alphaByte) output[target++] = transparent ? 0 : alpha!;

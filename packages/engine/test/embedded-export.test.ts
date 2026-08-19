@@ -50,6 +50,20 @@ describe('embedded exporter', () => {
     );
   });
 
+  it('applies deterministic ordered dithering only when explicitly requested', () => {
+    const middleGray = createRaster(1, 1, new Uint8ClampedArray([127, 127, 127, 255]));
+    expect(packEmbeddedPixels(middleGray, { outputName: 'logo', format: 'rgb565' })).toEqual(
+      new Uint8Array([0xef, 0x7b]),
+    );
+    expect(
+      packEmbeddedPixels(middleGray, {
+        outputName: 'logo',
+        format: 'rgb565',
+        dithering: 'ordered',
+      }),
+    ).toEqual(new Uint8Array([0x8e, 0x73]));
+  });
+
   it('emits a usable C array and validates its public symbol', () => {
     expect(emitEmbeddedCArray(image, { outputName: 'logo_data', format: 'argb8888' })).toContain(
       'static const uint8_t logo_data[]',

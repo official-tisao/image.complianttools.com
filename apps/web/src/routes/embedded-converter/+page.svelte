@@ -22,6 +22,7 @@
   let bigEndian = $state(false);
   let storage = $state<'const' | 'static' | 'static-const'>('static-const');
   let lineWidth = $state(12);
+  let dithering = $state<'none' | 'ordered'>('none');
   let format = $state<
     | 'rgb332'
     | 'rgb565'
@@ -62,6 +63,7 @@
         bigEndian,
         storage,
         lineWidth,
+        dithering,
         ...(chromaKeyed && chroma
           ? {
               chromaKey: [
@@ -125,6 +127,13 @@
       <option value="lvgl-v8">LVGL v8 image descriptor</option>
       <option value="adafruit">Adafruit GFX 1-bit bitmap</option>
       <option value="esp-idf">ESP-IDF / TFT_eSPI RGB565 array</option>
+    </select>
+  </label>
+  <label>
+    Dithering
+    <select bind:value={dithering}>
+      <option value="none">None</option>
+      <option value="ordered">Ordered Bayer</option>
     </select>
   </label>
   <label><input type="checkbox" bind:checked={alphaByte} /> Append alpha byte</label>
