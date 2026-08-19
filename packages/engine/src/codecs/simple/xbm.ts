@@ -33,3 +33,77 @@ export function decodeXbm(input: ArrayBuffer | Uint8Array): RasterImage {
     }
   return createRaster(width, height, rgba);
 }
+
+function xpmColour(value: string): readonly [number, number, number, number] {
+  if (value === 'None') return [0, 0, 0, 0];
+  const hex = value.match(/^#([0-9a-f]{6})$/iu)?.[1];
+  if (hex)
+    return [
+      Number.parseInt(hex.slice(0, 2), 16),
+      Number.parseInt(hex.slice(2, 4), 16),
+      Number.parseInt(hex.slice(4, 6), 16),
+      255,
+    ];
+  const named: Record<string, readonly [number, number, number, number]> = {
+    black: [0, 0, 0, 255],
+    white: [255, 255, 255, 255],
+    red: [255, 0, 0, 255],
+    green: [0, 128, 0, 255],
+    blue: [0, 0, 255, 255],
+    yellow: [255, 255, 0, 255],
+    gray: [128, 128, 128, 255],
+    grey: [128, 128, 128, 255],
+  };
+  const colour = named[value.toLowerCase()];
+  if (!colour) throw new Error(`Unsupported XPM colour ${value}.`);
+  return colour;
+}
+
+/** Decodes the portable XPM C-source format with #RRGGBB, transparency, and basic named colours. */
+export function decodeXpm(input: ArrayBuffer | Uint8Array): RasterImage {
+  const source = new TextDecoder().decode(
+    input instanceof Uint8Array ? input : new Uint8Array(input),
+  );
+  const lines = [...source.matchAll(/"([^"\\]*(?:\\.[^"\\]*)*)"/gu)].map((match) => match[1]!);
+  const header = lines[0]?.trim().split(/\s+/u).map(Number);
+  const width = header?.[0];
+  const height = header?.[1];
+  const colourCount = header?.[2];
+  const charsPerPixel = header?.[3];
+  if (
+    !Number.isInteger(width) ||
+    !Number.isInteger(height) ||
+    !Number.isInteger(colourCount) ||
+    !Number.isInteger(charsPerPixel) ||
+    width! < 1 ||
+    height! < 1 ||
+    colourCount! < 1 ||
+    charsPerPixel! < 1 ||
+    charsPerPixel! > 8 ||
+    width! > 100_000 ||
+    width! > 100_000_000 / height! ||
+    colourCount! > 65_536 ||
+    lines.length !== 1 + colourCount! + height!
+  )
+    throw new Error('Invalid or unsafe XPM header.');
+  const palette = new Map<string, readonly [number, number, number, number]>();
+  for (let index = 0; index < colourCount!; index += 1) {
+    const definition = lines[1 + index]!;
+    const key = definition.slice(0, charsPerPixel);
+    const colour = definition.slice(charsPerPixel).match(/(?:^|\s)c\s+([^\s]+)/u)?.[1];
+    if (key.length !== charsPerPixel || !colour || palette.has(key))
+      throw new Error('Invalid XPM colour definition.');
+    palette.set(key, xpmColour(colour));
+  }
+  const rgba = new Uint8ClampedArray(width! * height! * 4);
+  for (let y = 0; y < height!; y += 1) {
+    const row = lines[1 + colourCount! + y]!;
+    if (row.length !== width! * charsPerPixel!) throw new Error('Truncated XPM pixel row.');
+    for (let x = 0; x < width!; x += 1) {
+      const colour = palette.get(row.slice(x * charsPerPixel!, (x + 1) * charsPerPixel!));
+      if (!colour) throw new Error('XPM pixel references an undefined colour.');
+      rgba.set(colour, (y * width! + x) * 4);
+    }
+  }
+  return createRaster(width!, height!, rgba);
+}
