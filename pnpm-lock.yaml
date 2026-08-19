@@ -38,6 +38,9 @@ importers:
       '@size-limit/file':
         specifier: 13.0.3
         version: 13.0.3(size-limit@13.0.3)
+      '@types/node':
+        specifier: 26.2.0
+        version: 26.2.0
       eslint:
         specifier: 9.39.5
         version: 9.39.5(jiti@2.6.1)

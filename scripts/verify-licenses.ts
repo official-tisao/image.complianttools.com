@@ -297,7 +297,9 @@ async function verifyShippingRegister(): Promise<number> {
 
   const namesIn = (table: string): Set<string> => {
     const names = new Set<string>();
-    for (const match of table.matchAll(/`(@?[a-z0-9][\w./-]*)`/gi)) names.add(match[1]);
+    for (const match of table.matchAll(/`(@?[a-z0-9][\w./-]*)`/gi)) {
+      if (match[1]) names.add(match[1]);
+    }
     return names;
   };
   const shipping = namesIn(shippingTable);
