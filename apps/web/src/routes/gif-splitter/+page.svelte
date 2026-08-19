@@ -1,8 +1,9 @@
 <script lang="ts">
-  import { decodeGif } from '@complianttools/image-engine';
+  import { decodeGif, encodeApng } from '@complianttools/image-engine';
 
   let status = $state('');
   let error = $state('');
+  let output = $state<'frames' | 'apng'>('frames');
 
   async function split(file: File | undefined) {
     status = '';
@@ -10,6 +11,17 @@
     if (!file) return;
     try {
       const image = decodeGif(await file.arrayBuffer());
+      if (output === 'apng') {
+        const bytes = await encodeApng(image);
+        const url = URL.createObjectURL(new Blob([bytes], { type: 'image/png' }));
+        const download = document.createElement('a');
+        download.href = url;
+        download.download = `${file.name.replace(/\.gif$/iu, '')}.apng`;
+        download.click();
+        URL.revokeObjectURL(url);
+        status = `Converted ${image.frames.length} GIF frame${image.frames.length === 1 ? '' : 's'} to APNG locally.`;
+        return;
+      }
       const canvas = document.createElement('canvas');
       canvas.width = image.width;
       canvas.height = image.height;
@@ -39,14 +51,21 @@
 
 <svelte:head>
   <title>GIF Splitter — Image Compliant Tools</title>
-  <meta name="description" content="Export each animated GIF frame as a PNG locally." />
+  <meta name="description" content="Export GIF frames as PNGs or convert them to APNG locally." />
   <link rel="canonical" href="https://image.complianttools.com/gif-splitter" />
 </svelte:head>
 
 <main>
   <a href="/convert">← Convert</a>
   <h1>GIF Splitter</h1>
-  <p>Export animated GIF frames as PNG files locally. Nothing is uploaded.</p>
+  <p>Export animated GIF frames as PNG files or a single APNG locally. Nothing is uploaded.</p>
+  <label>
+    Output
+    <select bind:value={output}>
+      <option value="frames">Separate PNG frames</option>
+      <option value="apng">Animated PNG (APNG)</option>
+    </select>
+  </label>
   <label
     >Choose a GIF <input
       type="file"
