@@ -98,9 +98,8 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     id: 'sun-raster',
     animation: false,
     lazyBytes: 6_000,
-    supports: ['decode'],
+    supports: ['decode', 'encode'],
     load: () => import('./simple/sun-raster.js'),
-    unavailableReason: 'Sun Raster encoding is not implemented.',
   },
   {
     id: 'sgi',

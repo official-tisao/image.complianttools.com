@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { decodeSunRaster } from '../src/index.js';
+import { createRaster, decodeSunRaster, encodeSunRaster } from '../src/index.js';
 
 function fixture(): Uint8Array {
   const bytes = new Uint8Array(36);
@@ -19,6 +19,17 @@ describe('Sun Raster codec', () => {
   it('decodes a padded 24-bit RGB scanline', () => {
     expect(decodeSunRaster(fixture()).frames[0].data).toEqual(
       new Uint8ClampedArray([3, 2, 1, 255]),
+    );
+  });
+
+  it('round-trips opaque RGB data through a padded Sun Raster payload', () => {
+    const image = createRaster(1, 1, new Uint8ClampedArray([3, 2, 1, 255]));
+    expect(decodeSunRaster(encodeSunRaster(image)).frames[0].data).toEqual(image.frames[0].data);
+  });
+
+  it('rejects alpha transparency because the encoder emits RGB only', () => {
+    expect(() => encodeSunRaster(createRaster(1, 1, new Uint8ClampedArray([0, 0, 0, 0])))).toThrow(
+      'alpha',
     );
   });
 

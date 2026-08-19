@@ -44,3 +44,31 @@ export function decodeSunRaster(input: ArrayBuffer | Uint8Array): RasterImage {
     }
   return createRaster(width, height, pixels);
 }
+
+/** Encodes an opaque raster as a standard, padded 24-bit Sun Raster image. */
+export function encodeSunRaster(image: RasterImage): ArrayBuffer {
+  if (image.width < 1 || image.height < 1 || image.width * image.height > 100_000_000)
+    throw new Error('Sun Raster dimensions are unsafe.');
+  const frame = image.frames[0];
+  if (!frame) throw new Error('Cannot encode an image without a frame.');
+  const rowBytes = Math.ceil((image.width * 3) / 2) * 2;
+  const output = new Uint8Array(32 + rowBytes * image.height);
+  const view = new DataView(output.buffer);
+  view.setUint32(0, magic, false);
+  view.setUint32(4, image.width, false);
+  view.setUint32(8, image.height, false);
+  view.setUint32(12, 24, false);
+  view.setUint32(16, rowBytes * image.height, false);
+  view.setUint32(20, 1, false);
+  for (let y = 0; y < image.height; y += 1)
+    for (let x = 0; x < image.width; x += 1) {
+      const source = (y * image.width + x) * 4;
+      if (frame.data[source + 3] !== 255)
+        throw new Error('Sun Raster does not support alpha transparency.');
+      const target = 32 + y * rowBytes + x * 3;
+      output[target] = frame.data[source]!;
+      output[target + 1] = frame.data[source + 1]!;
+      output[target + 2] = frame.data[source + 2]!;
+    }
+  return output.buffer;
+}
