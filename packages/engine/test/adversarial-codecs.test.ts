@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
-import { decodeBmp, decodePcx, decodePnm, decodeQoi, decodeTga } from '../src/index.js';
+import {
+  SVG_EXTERNAL_REFERENCE_MESSAGE,
+  assertSafeSvg,
+  decodeBmp,
+  decodePcx,
+  decodePnm,
+  decodeQoi,
+  decodeTga,
+} from '../src/index.js';
 
 const decoders = [decodeBmp, decodePcx, decodePnm, decodeQoi, decodeTga];
 
@@ -51,5 +59,13 @@ describe('Phase 2 adversarial codec corpus', () => {
     expect([decoded.width, decoded.height, decoded.frames[0].data.length]).toEqual([
       30_000, 1, 120_000,
     ]);
+  });
+
+  it('refuses SVG external references before any renderer can request them', () => {
+    expect(() =>
+      assertSafeSvg(
+        '<svg xmlns="http://www.w3.org/2000/svg"><image href="https://example.test/x.png"/></svg>',
+      ),
+    ).toThrow(SVG_EXTERNAL_REFERENCE_MESSAGE);
   });
 });
