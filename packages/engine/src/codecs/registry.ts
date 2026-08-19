@@ -65,7 +65,13 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     supports: ['decode', 'encode'],
     load: () => import('./simple/bmp.js'),
   },
-  { id: 'tiff', animation: true, lazyBytes: 620_000, supports: ['decode', 'encode'] },
+  {
+    id: 'tiff',
+    animation: true,
+    lazyBytes: 620_000,
+    supports: ['decode', 'encode'],
+    load: () => import('./third-party/tiff.js'),
+  },
   { id: 'jxl', animation: true, lazyBytes: 1_200_000, supports: ['decode', 'encode'] },
 ];
 

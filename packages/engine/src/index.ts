@@ -6,6 +6,7 @@ export * from './codecs/simple/bmp.js';
 export * from './codecs/simple/qoi.js';
 export * from './codecs/simple/tga.js';
 export * from './codecs/third-party/exr.js';
+export * from './codecs/third-party/tiff.js';
 export * from './export/filename.js';
 export * from './ops/geometry.js';
 export * from './ops/raster.js';
