@@ -28,6 +28,13 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     load: () => import('./simple/qoi.js'),
   },
   {
+    id: 'pnm',
+    animation: false,
+    lazyBytes: 8_000,
+    supports: ['decode', 'encode'],
+    load: () => import('./simple/pnm.js'),
+  },
+  {
     id: 'tga',
     animation: false,
     lazyBytes: 18_000,
