@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   readContainerMetadata,
+  stripGifMetadata,
   stripJpegMetadata,
   stripPngMetadata,
   stripWebpMetadata,
@@ -85,6 +86,38 @@ describe('container metadata', () => {
       { namespace: 'GIF', name: 'comment', value: 'OK' },
     ]);
     expect(() => readContainerMetadata(new Uint8Array([0]))).toThrow('GIF metadata');
+  });
+
+  it('strips GIF comments while retaining the image trailer and control blocks', () => {
+    const gif = new Uint8Array([
+      ...new TextEncoder().encode('GIF89a'),
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0x21,
+      0xfe,
+      2,
+      79,
+      75,
+      0,
+      0x21,
+      0xf9,
+      4,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0x3b,
+    ]);
+    const stripped = stripGifMetadata(gif);
+    expect(readContainerMetadata(stripped).tags).toEqual([]);
+    expect([...stripped]).toContain(0xf9);
+    expect(stripped.at(-1)).toBe(0x3b);
   });
 
   it('reads selected EXIF fields from a JPEG APP1 segment', () => {

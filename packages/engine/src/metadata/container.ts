@@ -96,6 +96,17 @@ function readGif(input: Uint8Array): ReadableMetadata {
   return { format: 'gif', tags };
 }
 
+function gifSubBlocksEnd(input: Uint8Array, offset: number): number {
+  for (;;) {
+    const length = input[offset++];
+    if (length === undefined) throw new Error('GIF contains a truncated extension block.');
+    if (length === 0) return offset;
+    if (offset + length > input.length)
+      throw new Error('GIF contains a truncated extension block.');
+    offset += length;
+  }
+}
+
 function readJpeg(input: Uint8Array): ReadableMetadata {
   if (input[0] !== 0xff || input[1] !== 0xd8)
     throw new Error('JPEG metadata requires a valid JPEG signature.');
@@ -253,5 +264,51 @@ export function stripWebpMetadata(input: ArrayBuffer | Uint8Array): Uint8Array {
     offset += chunk.length;
   }
   return output;
+}
+
+/** Removes GIF comment extensions while copying image and control blocks byte-for-byte. */
+export function stripGifMetadata(input: ArrayBuffer | Uint8Array): Uint8Array {
+  const bytes = input instanceof Uint8Array ? input : new Uint8Array(input);
+  const signature = latin1.decode(bytes.subarray(0, 6));
+  if ((signature !== 'GIF87a' && signature !== 'GIF89a') || bytes.length < 13)
+    throw new Error('GIF metadata requires a valid GIF signature.');
+  let offset = 13;
+  if ((bytes[10]! & 0x80) !== 0) {
+    const colourBytes = 3 * 2 ** ((bytes[10]! & 0x07) + 1);
+    offset += colourBytes;
+    if (offset > bytes.length) throw new Error('GIF contains a truncated global colour table.');
+  }
+  const retained: Uint8Array[] = [bytes.subarray(0, offset)];
+  while (offset < bytes.length) {
+    const blockStart = offset;
+    const marker = bytes[offset++]!;
+    if (marker === 0x3b) {
+      retained.push(bytes.subarray(blockStart, offset));
+      if (offset !== bytes.length) throw new Error('GIF contains data after its trailer.');
+      break;
+    }
+    if (marker === 0x21) {
+      const label = bytes[offset++];
+      if (label === undefined) throw new Error('GIF contains a truncated extension label.');
+      const end = gifSubBlocksEnd(bytes, offset);
+      if (label !== 0xfe) retained.push(bytes.subarray(blockStart, end));
+      offset = end;
+      continue;
+    }
+    if (marker !== 0x2c) throw new Error('GIF contains an invalid block marker.');
+    if (offset + 9 > bytes.length) throw new Error('GIF contains a truncated image descriptor.');
+    const packed = bytes[offset + 8]!;
+    offset += 9;
+    if ((packed & 0x80) !== 0) {
+      const colourBytes = 3 * 2 ** ((packed & 0x07) + 1);
+      offset += colourBytes;
+      if (offset > bytes.length) throw new Error('GIF contains a truncated local colour table.');
+    }
+    if (bytes[offset++] === undefined)
+      throw new Error('GIF contains a truncated image data header.');
+    offset = gifSubBlocksEnd(bytes, offset);
+    retained.push(bytes.subarray(blockStart, offset));
+  }
+  return Uint8Array.from(retained.flatMap((part) => [...part]));
 }
 import { readExifGps, readExifIfd0 } from './exif.js';
