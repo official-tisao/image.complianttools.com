@@ -34,6 +34,63 @@ export type VideoDecoderConstructor = {
 type VideoEnvironment = { readonly VideoDecoder?: VideoDecoderConstructor };
 const platform = globalThis as unknown as VideoEnvironment;
 
+export type ContainerVideoFrame = {
+  readonly width: number;
+  readonly height: number;
+  readonly pixels: Uint8ClampedArray;
+};
+
+export type ContainerVideoFrameReader = {
+  readFirstFrame(input: Blob, timestampSeconds: number): Promise<ContainerVideoFrame>;
+};
+
+async function loadContainerVideoFrameReader(): Promise<ContainerVideoFrameReader> {
+  const { ALL_FORMATS, BlobSource, CanvasSink, Input } = await import('mediabunny');
+  return {
+    async readFirstFrame(input: Blob, timestampSeconds: number): Promise<ContainerVideoFrame> {
+      const media = new Input({ formats: ALL_FORMATS, source: new BlobSource(input) });
+      try {
+        const track = await media.getPrimaryVideoTrack();
+        if (!track) throw new Error('The video contains no video track.');
+        if (!(await track.canDecode())) throw new Error(VIDEO_UNSUPPORTED_MESSAGE);
+        const wrapped = await new CanvasSink(track).getCanvas(timestampSeconds);
+        if (!wrapped) throw new Error('The requested timestamp has no video frame.');
+        const context = wrapped.canvas.getContext('2d');
+        if (!context) throw new Error('Your browser cannot read the decoded video canvas.');
+        const width = wrapped.canvas.width;
+        const height = wrapped.canvas.height;
+        return { width, height, pixels: context.getImageData(0, 0, width, height).data };
+      } finally {
+        media.dispose();
+      }
+    },
+  };
+}
+
+/**
+ * Extracts one local MP4 or WebM frame through a container reader and the
+ * browser's WebCodecs implementation. No media bytes leave the device.
+ */
+export async function extractContainerVideoFrame(
+  input: Blob,
+  timestampSeconds = 0,
+  readerLoader: () => Promise<ContainerVideoFrameReader> = loadContainerVideoFrameReader,
+): Promise<RasterImage> {
+  if (!Number.isFinite(timestampSeconds) || timestampSeconds < 0)
+    throw new Error('Video timestamp must be a non-negative finite number.');
+  const frame = await (await readerLoader()).readFirstFrame(input, timestampSeconds);
+  if (frame.width < 1 || frame.height < 1 || frame.pixels.length !== frame.width * frame.height * 4)
+    throw new Error('The video decoder returned an invalid RGBA frame.');
+  return {
+    width: frame.width,
+    height: frame.height,
+    colorSpace: 'srgb',
+    bitDepth: 8,
+    premultipliedAlpha: false,
+    frames: [{ data: frame.pixels, durationMs: 0 }],
+  };
+}
+
 export type DemuxedVideoChunk = {
   readonly config: VideoDecoderConfig;
   readonly data: Uint8Array;

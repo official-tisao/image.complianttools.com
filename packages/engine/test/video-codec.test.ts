@@ -2,12 +2,28 @@ import { describe, expect, it } from 'vitest';
 
 import {
   demuxMp4FirstVideoSample,
+  extractContainerVideoFrame,
   extractVideoFrame,
   supportsVideoDecoder,
   type VideoDecoderConstructor,
 } from '../src/index.js';
 
 describe('platform video frame extraction', () => {
+  it('turns a browser-local MP4 or WebM container frame into an engine raster', async () => {
+    const frame = await extractContainerVideoFrame(
+      new Blob([new Uint8Array([1])], { type: 'video/webm' }),
+      2.5,
+      async () => ({
+        async readFirstFrame(_input, timestampSeconds) {
+          expect(timestampSeconds).toBe(2.5);
+          return { width: 1, height: 1, pixels: new Uint8ClampedArray([1, 2, 3, 255]) };
+        },
+      }),
+    );
+    expect(frame.frames[0]?.data).toEqual(new Uint8ClampedArray([1, 2, 3, 255]));
+    await expect(extractContainerVideoFrame(new Blob(), -1)).rejects.toThrow('non-negative');
+  });
+
   it('demuxes the first local MP4 video sample without bundling a decoder', async () => {
     let appended: (ArrayBuffer & { fileStart: number }) | undefined;
     const chunk = await demuxMp4FirstVideoSample(new Uint8Array([1, 2, 3]), async () => ({

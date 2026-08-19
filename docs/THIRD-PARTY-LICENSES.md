@@ -87,6 +87,8 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `@types/chai` | `5.2.3` | MIT | [source](https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/chai) |
 | `@types/cookie` | `0.6.0` | MIT | [source](https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/cookie) |
 | `@types/deep-eql` | `4.0.2` | MIT | [source](https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/deep-eql) |
+| `@types/dom-mediacapture-transform` | `0.1.12` | MIT | [source](https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/dom-mediacapture-transform) |
+| `@types/dom-webcodecs` | `0.1.13` | MIT | [source](https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/dom-webcodecs) |
 | `@types/estree` | `1.0.9` | MIT | [source](https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/estree) |
 | `@types/json-schema` | `7.0.15` | MIT | [source](https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/json-schema) |
 | `@types/node` | `26.2.0` | MIT | [source](https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/node) |
@@ -344,6 +346,7 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `marky` | `1.3.0` | Apache-2.0 | [source](https://github.com/nolanlawson/marky#readme) |
 | `math-intrinsics` | `1.1.0` | MIT | [source](https://github.com/es-shims/math-intrinsics#readme) |
 | `media-typer` | `0.3.0` | MIT | [source](https://github.com/jshttp/media-typer#readme) |
+| `mediabunny` | `1.25.1` | MPL-2.0 | [source](https://mediabunny.dev/) |
 | `merge-descriptors` | `1.0.3` | MIT | [source](https://github.com/sindresorhus/merge-descriptors#readme) |
 | `merge2` | `1.4.1` | MIT | [source](https://github.com/teambition/merge2) |
 | `metaviewport-parser` | `0.3.0` | MIT | [source](https://github.com/dontcallmedom/metaviewport-parser#readme) |
