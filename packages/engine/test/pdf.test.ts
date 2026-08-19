@@ -1,7 +1,7 @@
 import { PDFDocument } from 'pdf-lib';
 import { describe, expect, it } from 'vitest';
 
-import { createPdfFromPng } from '../src/index.js';
+import { createPdfFromPng, createPdfFromPngPages } from '../src/index.js';
 
 const onePixelPng = new Uint8Array([
   137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82, 0, 0, 0, 1, 0, 0, 0, 1, 8, 6, 0, 0,
@@ -21,5 +21,17 @@ describe('PDF export', () => {
 
   it('rejects invalid page dimensions before creating a document', async () => {
     await expect(createPdfFromPng(onePixelPng, 0, 10)).rejects.toThrow('positive finite');
+  });
+
+  it('creates ordered local PNG pages in one multi-page PDF', async () => {
+    const bytes = await createPdfFromPngPages([
+      { pngBytes: onePixelPng, width: 72, height: 36 },
+      { pngBytes: onePixelPng, width: 36, height: 72 },
+    ]);
+    const pdf = await PDFDocument.load(bytes);
+    expect(pdf.getPageCount()).toBe(2);
+    expect(pdf.getPage(0).getSize()).toEqual({ height: 36, width: 72 });
+    expect(pdf.getPage(1).getSize()).toEqual({ height: 72, width: 36 });
+    await expect(createPdfFromPngPages([])).rejects.toThrow('at least one page');
   });
 });
