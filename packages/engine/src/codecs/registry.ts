@@ -46,6 +46,14 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     unavailableReason: 'PNG-backed CUR entries are not implemented.',
   },
   {
+    id: 'dds',
+    animation: false,
+    lazyBytes: 8_000,
+    supports: ['decode'],
+    load: () => import('./simple/dds.js'),
+    unavailableReason: 'DDS encoding and BC2/BC3/BC4/BC5/BC7 variants are not implemented.',
+  },
+  {
     id: 'qoi',
     animation: false,
     lazyBytes: 12_000,
