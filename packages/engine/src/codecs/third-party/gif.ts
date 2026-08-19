@@ -98,6 +98,24 @@ export function encodeGif(image: RasterImage, loopCount = 0): ArrayBuffer {
   return Uint8Array.from(bytes).buffer;
 }
 
+/** Losslessly merges consecutive identical GIF frames before encoding. */
+export function optimiseGifFrames(image: RasterImage): RasterImage {
+  const frames: { data: Uint8ClampedArray; durationMs: number }[] = [];
+  for (const frame of image.frames) {
+    const previous = frames.at(-1);
+    if (
+      previous &&
+      previous.data.length === frame.data.length &&
+      previous.data.every((value, index) => value === frame.data[index])
+    ) {
+      previous.durationMs += frame.durationMs;
+    } else {
+      frames.push({ data: frame.data.slice(), durationMs: frame.durationMs });
+    }
+  }
+  return { ...image, frames: frames as unknown as RasterImage['frames'] };
+}
+
 export function decodeGif(input: ArrayBuffer | Uint8Array): RasterImage {
   const bytes = input instanceof Uint8Array ? input : new Uint8Array(input);
   const buffer = bytes.buffer.slice(
