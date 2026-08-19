@@ -69,7 +69,7 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     animation: true,
     lazyBytes: 1_900_000,
     supports: ['decode', 'encode'],
-    load: () => import('./jsquash.js'),
+    unavailableReason: 'AVIF is awaiting a Vite-compatible lazy WASM wrapper.',
   },
   {
     id: 'bmp',
@@ -90,7 +90,7 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     animation: true,
     lazyBytes: 1_200_000,
     supports: ['decode', 'encode'],
-    load: () => import('./jsquash.js'),
+    unavailableReason: 'JPEG XL is awaiting a Vite-compatible lazy WASM wrapper.',
   },
 ];
 

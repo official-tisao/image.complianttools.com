@@ -1,9 +1,5 @@
 import decodeJpeg from '@jsquash/jpeg/decode.js';
 import encodeJpeg from '@jsquash/jpeg/encode.js';
-import decodeAvif from '@jsquash/avif/decode.js';
-import encodeAvif from '@jsquash/avif/encode.js';
-import decodeJxl from '@jsquash/jxl/decode.js';
-import encodeJxl from '@jsquash/jxl/encode.js';
 import optimisePng from '@jsquash/oxipng/optimise.js';
 import encodePng from '@jsquash/png/encode.js';
 import encodeWebp from '@jsquash/webp/encode.js';
@@ -18,35 +14,6 @@ function toImageData(image: RasterImage): ImageData {
     height: image.height,
     colorSpace: image.colorSpace === 'display-p3' ? 'display-p3' : 'srgb',
   } as ImageData;
-}
-
-function fromImageData(decoded: ImageData): RasterImage {
-  return {
-    width: decoded.width,
-    height: decoded.height,
-    colorSpace: decoded.colorSpace === 'display-p3' ? 'display-p3' : 'srgb',
-    bitDepth: 8,
-    premultipliedAlpha: false,
-    frames: [{ data: decoded.data, durationMs: 0 }],
-  };
-}
-
-export async function decodeAvifToRaster(bytes: ArrayBuffer): Promise<RasterImage> {
-  const decoded = await decodeAvif(bytes, { bitDepth: 8 });
-  if (!decoded) throw new Error('AVIF decoder returned no image.');
-  return fromImageData(decoded);
-}
-
-export function encodeRasterAsAvif(image: RasterImage): Promise<ArrayBuffer> {
-  return encodeAvif(toImageData(image));
-}
-
-export async function decodeJxlToRaster(bytes: ArrayBuffer): Promise<RasterImage> {
-  return fromImageData(await decodeJxl(bytes));
-}
-
-export function encodeRasterAsJxl(image: RasterImage): Promise<ArrayBuffer> {
-  return encodeJxl(toImageData(image));
 }
 
 export async function decodeJpegToRaster(bytes: ArrayBuffer): Promise<RasterImage> {
