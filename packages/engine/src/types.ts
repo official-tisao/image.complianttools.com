@@ -1,5 +1,17 @@
 export type FormatId =
-  'avif' | 'bmp' | 'exr' | 'gif' | 'jpeg' | 'jxl' | 'png' | 'pnm' | 'qoi' | 'tga' | 'tiff' | 'webp';
+  | 'avif'
+  | 'bmp'
+  | 'exr'
+  | 'gif'
+  | 'heic'
+  | 'jpeg'
+  | 'jxl'
+  | 'png'
+  | 'pnm'
+  | 'qoi'
+  | 'tga'
+  | 'tiff'
+  | 'webp';
 
 export type ColorSpaceId = 'srgb' | 'display-p3' | 'adobe-rgb' | 'gray' | 'cmyk';
 

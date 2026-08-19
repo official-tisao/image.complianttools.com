@@ -14,7 +14,7 @@ describe('P2 codec registry', () => {
       opfs: false,
       webCodecs: false,
     });
-    expect(capabilities).toHaveLength(12);
+    expect(capabilities).toHaveLength(13);
     expect(capabilities.find((entry) => entry.id === 'jpeg')).toMatchObject({
       decode: 'lazy',
       encode: 'lazy',
@@ -23,6 +23,10 @@ describe('P2 codec registry', () => {
     expect(capabilities.find((entry) => entry.id === 'gif')).toMatchObject({
       decode: 'lazy',
       encode: 'lazy',
+    });
+    expect(capabilities.find((entry) => entry.id === 'heic')).toMatchObject({
+      decode: 'lazy',
+      encode: 'unavailable',
     });
     expect(capabilities.find((entry) => entry.id === 'exr')).toMatchObject({
       decode: 'lazy',

@@ -8,6 +8,7 @@ export * from './codecs/simple/pnm.js';
 export * from './codecs/simple/tga.js';
 export * from './codecs/third-party/exr.js';
 export * from './codecs/third-party/tiff.js';
+export * from './codecs/platform/heic.js';
 export * from './codecs/third-party/gif.js';
 export * from './export/filename.js';
 export * from './ops/geometry.js';

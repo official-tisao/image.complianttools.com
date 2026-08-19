@@ -14,6 +14,15 @@ export interface CodecDescriptor {
 
 export const codecRegistry: readonly CodecDescriptor[] = [
   {
+    id: 'heic',
+    animation: true,
+    lazyBytes: 0,
+    supports: ['decode'],
+    load: () => import('./platform/heic.js'),
+    unavailableReason:
+      'This browser does not provide an HEIC decoder. Open the file on a device with HEIC support or export it as JPEG.',
+  },
+  {
     id: 'jpeg',
     animation: false,
     lazyBytes: 195_000,
