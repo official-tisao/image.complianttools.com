@@ -90,6 +90,14 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     load: () => import('./simple/tga.js'),
   },
   {
+    id: 'sun-raster',
+    animation: false,
+    lazyBytes: 6_000,
+    supports: ['decode'],
+    load: () => import('./simple/sun-raster.js'),
+    unavailableReason: 'Sun Raster encoding is not implemented.',
+  },
+  {
     id: 'exr',
     animation: false,
     lazyBytes: 72_000,
