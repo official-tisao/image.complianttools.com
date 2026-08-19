@@ -98,6 +98,14 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     unavailableReason: 'FITS encoding is not implemented.',
   },
   {
+    id: 'hdr',
+    animation: false,
+    lazyBytes: 7_000,
+    supports: ['decode'],
+    load: () => import('./simple/hdr.js'),
+    unavailableReason: 'Radiance HDR encoding is not implemented.',
+  },
+  {
     id: 'png',
     animation: false,
     lazyBytes: 165_000,

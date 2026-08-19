@@ -4,6 +4,7 @@ export type FormatId =
   | 'exr'
   | 'fits'
   | 'gif'
+  | 'hdr'
   | 'heic'
   | 'jpeg'
   | 'jxl'
