@@ -13,6 +13,7 @@ export * from './codecs/raw/preview.js';
 export * from './codecs/third-party/gif.js';
 export * from './export/filename.js';
 export * from './export/embedded.js';
+export * from './metadata/container.js';
 export * from './ops/geometry.js';
 export * from './ops/raster.js';
 export * from './ops/resize.js';
