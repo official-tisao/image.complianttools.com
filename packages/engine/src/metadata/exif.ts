@@ -7,11 +7,23 @@ export type ExifField = {
 export type ExifGps = {
   readonly latitude: number;
   readonly longitude: number;
+  readonly latitudeDms: string;
+  readonly longitudeDms: string;
   readonly geoUri: string;
 };
 
 function ascii(bytes: Uint8Array): string {
   return new TextDecoder().decode(bytes).replace(/\0+$/u, '');
+}
+
+function dms(value: number, positive: string, negative: string): string {
+  const hemisphere = value < 0 ? negative : positive;
+  const absolute = Math.abs(value);
+  const degrees = Math.floor(absolute);
+  const minutesFloat = (absolute - degrees) * 60;
+  const minutes = Math.floor(minutesFloat);
+  const seconds = Math.round((minutesFloat - minutes) * 60_000) / 1_000;
+  return `${degrees}° ${minutes}′ ${seconds}″ ${hemisphere}`;
 }
 
 /** Reads selected safe EXIF IFD0 fields without following arbitrary MakerNote pointers. */
@@ -100,5 +112,11 @@ export function readExifGps(input: ArrayBuffer | Uint8Array): ExifGps | undefine
   if (latitude === undefined || longitude === undefined) return undefined;
   if (latitudeRef === 'S') latitude = -latitude;
   if (longitudeRef === 'W') longitude = -longitude;
-  return { latitude, longitude, geoUri: `geo:${latitude},${longitude}` };
+  return {
+    latitude,
+    longitude,
+    latitudeDms: dms(latitude, 'N', 'S'),
+    longitudeDms: dms(longitude, 'E', 'W'),
+    geoUri: `geo:${latitude},${longitude}`,
+  };
 }

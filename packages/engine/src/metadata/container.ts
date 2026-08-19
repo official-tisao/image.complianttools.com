@@ -132,6 +132,8 @@ function readJpeg(input: Uint8Array): ReadableMetadata {
       if (gps) {
         tags.push({ namespace: 'GPS', name: 'latitude', value: String(gps.latitude) });
         tags.push({ namespace: 'GPS', name: 'longitude', value: String(gps.longitude) });
+        tags.push({ namespace: 'GPS', name: 'latitude-dms', value: gps.latitudeDms });
+        tags.push({ namespace: 'GPS', name: 'longitude-dms', value: gps.longitudeDms });
         tags.push({ namespace: 'GPS', name: 'geo-uri', value: gps.geoUri });
       }
     }

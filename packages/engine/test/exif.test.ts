@@ -63,6 +63,12 @@ describe('EXIF IFD0 reader', () => {
     [40, 1, 0, 1, 0, 1, 74, 1, 0, 1, 0, 1].forEach((value, index) =>
       view.setUint32(128 + index * 4, value, true),
     );
-    expect(readExifGps(bytes)).toEqual({ latitude: 40, longitude: -74, geoUri: 'geo:40,-74' });
+    expect(readExifGps(bytes)).toEqual({
+      latitude: 40,
+      longitude: -74,
+      latitudeDms: '40° 0′ 0″ N',
+      longitudeDms: '74° 0′ 0″ W',
+      geoUri: 'geo:40,-74',
+    });
   });
 });
