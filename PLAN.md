@@ -411,8 +411,8 @@ upstreams are permissive (BSD-3, BSD-2), so the obstacle is a build we do not ow
 
 #### P2-09 · Vector and document formats
 - [x] SVG rasterize (`@resvg/resvg-wasm`, **unmodified** — wrap, never patch, per MPL note)
-- [ ] Vectorize (`imagetracerjs`)
-- [ ] PDF read (`pdfjs-dist`), PDF write (`pdf-lib`), PSD (`ag-psd`)
+- [x] Vectorize (`imagetracerjs`)
+- [x] PDF read (`pdfjs-dist`), PDF write (`pdf-lib`), PSD (`ag-psd`)
 - [ ] EPS preview extractor + PS operator subset (**ours**); outside the subset → unsupported, never partially rendered
 - [ ] WMF/EMF parser (**ours**), best-effort with warnings; DXF (`dxf-parser`)
 - [ ] XCF composite reader (**ours**)
