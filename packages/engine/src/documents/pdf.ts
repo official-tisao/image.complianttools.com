@@ -1,7 +1,12 @@
-import { PDFDocument } from 'pdf-lib';
-
 import { encodeRasterAsPng } from '../codecs/jsquash.js';
 import type { RasterImage } from '../types.js';
+
+let pdfLib: Promise<typeof import('pdf-lib')> | undefined;
+
+function loadPdfLib(): Promise<typeof import('pdf-lib')> {
+  pdfLib ??= import('pdf-lib');
+  return pdfLib;
+}
 
 /**
  * Creates a single-page PDF containing a PNG image. Width and height are PDF
@@ -16,6 +21,7 @@ export async function createPdfFromPng(
     throw new Error('PDF page dimensions must be positive finite values.');
   }
 
+  const { PDFDocument } = await loadPdfLib();
   const pdfDocument = await PDFDocument.create();
   const page = pdfDocument.addPage([width, height]);
   const image = await pdfDocument.embedPng(pngBytes);
