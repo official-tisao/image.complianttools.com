@@ -109,6 +109,7 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `accepts` | `1.3.8` | MIT | [source](https://github.com/jshttp/accepts#readme) |
 | `acorn` | `8.18.0` | MIT | [source](https://github.com/acornjs/acorn) |
 | `acorn-jsx` | `5.3.2` | MIT | [source](https://github.com/acornjs/acorn-jsx) |
+| `ag-psd` | `31.0.2` | MIT | [source](https://github.com/Agamnentzar/ag-psd#readme) |
 | `agent-base` | `7.1.4` | MIT | [source](https://github.com/TooTallNate/proxy-agents#readme) |
 | `ajv` | `6.15.0` | MIT | [source](https://github.com/ajv-validator/ajv) |
 | `ansi-colors` | `4.1.3` | MIT | [source](https://github.com/doowb/ansi-colors) |
@@ -134,6 +135,7 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `bare-path` | `3.1.1` | Apache-2.0 | [source](https://github.com/holepunchto/bare-path#readme) |
 | `bare-stream` | `2.13.3` | Apache-2.0 | [source](https://github.com/holepunchto/bare-stream#readme) |
 | `bare-url` | `2.5.1` | Apache-2.0 | [source](https://github.com/holepunchto/bare-url) |
+| `base64-js` | `1.5.1` | MIT | [source](https://github.com/beatgammit/base64-js) |
 | `basic-ftp` | `5.3.1` | MIT | [source](https://github.com/patrickjuchli/basic-ftp#readme) |
 | `body-parser` | `1.20.6` | MIT | [source](https://github.com/expressjs/body-parser#readme) |
 | `brace-expansion` | `1.1.18` | MIT | [source](https://github.com/juliangruber/brace-expansion) |
@@ -385,7 +387,8 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `p-try` | `2.2.0` | MIT | [source](https://github.com/sindresorhus/p-try#readme) |
 | `pac-proxy-agent` | `7.2.0` | MIT | [source](https://github.com/TooTallNate/proxy-agents#readme) |
 | `pac-resolver` | `7.0.1` | MIT | [source](https://github.com/TooTallNate/proxy-agents#readme) |
-| `pako` | `1.0.11` | (MIT AND Zlib) | [source](https://github.com/nodeca/pako) |
+| `pako` | `1.0.11` | (MIT AND Zlib) | [source](https://github.com/nodeca/pako#readme) |
+| `pako` | `2.1.0` | (MIT AND Zlib) | [source](https://github.com/nodeca/pako#readme) |
 | `parent-module` | `1.0.1` | MIT | [source](https://github.com/sindresorhus/parent-module#readme) |
 | `parse-cache-control` | `1.0.1` | BSD-2-Clause | [source](https://github.com/roryf/parse-cache-control#readme) |
 | `parse-exr` | `1.0.2` | MIT | [source](https://github.com/dmnsgn/parse-exr) |
