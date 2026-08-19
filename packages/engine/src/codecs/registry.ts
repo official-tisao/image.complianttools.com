@@ -28,6 +28,13 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     load: () => import('./simple/qoi.js'),
   },
   {
+    id: 'tga',
+    animation: false,
+    lazyBytes: 18_000,
+    supports: ['decode', 'encode'],
+    load: () => import('./simple/tga.js'),
+  },
+  {
     id: 'png',
     animation: false,
     lazyBytes: 165_000,
