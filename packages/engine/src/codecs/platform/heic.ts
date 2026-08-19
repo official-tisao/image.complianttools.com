@@ -20,6 +20,22 @@ export type ImageDecoderConstructor = {
 type ImageDecoderEnvironment = { readonly ImageDecoder?: ImageDecoderConstructor };
 const platform = globalThis as unknown as ImageDecoderEnvironment;
 
+export type HeicMimeType = 'image/heic' | 'image/heif';
+
+/**
+ * Selects the platform MIME type from an ISO-BMFF `ftyp` brand. `mif1` and
+ * `msf1` are HEIF brands; HEVC-specific brands are HEIC. Unknown input stays
+ * HEIC so an installed platform decoder can still provide its own diagnosis.
+ */
+export function detectHeicMimeType(input: ArrayBuffer | Uint8Array): HeicMimeType {
+  const bytes = input instanceof Uint8Array ? input : new Uint8Array(input);
+  if (bytes.length < 12 || String.fromCharCode(...bytes.subarray(4, 8)) !== 'ftyp') {
+    return 'image/heic';
+  }
+  const brand = String.fromCharCode(...bytes.subarray(8, 12));
+  return brand === 'mif1' || brand === 'msf1' ? 'image/heif' : 'image/heic';
+}
+
 /** Returns whether this browser's installed platform decoder accepts HEIC or HEIF. */
 export async function supportsHeicDecode(
   environment: ImageDecoderEnvironment = platform,
@@ -44,7 +60,7 @@ export async function decodeHeic(
     bytes.byteOffset,
     bytes.byteOffset + bytes.byteLength,
   ) as ArrayBuffer;
-  const decoder = new decoderConstructor({ data, type: 'image/heic' });
+  const decoder = new decoderConstructor({ data, type: detectHeicMimeType(bytes) });
   try {
     const { image } = await decoder.decode();
     try {
