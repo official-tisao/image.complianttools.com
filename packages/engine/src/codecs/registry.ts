@@ -105,9 +105,9 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     id: 'sgi',
     animation: false,
     lazyBytes: 7_000,
-    supports: ['decode'],
+    supports: ['decode', 'encode'],
     load: () => import('./simple/sgi.js'),
-    unavailableReason: 'SGI encoding and RLE decoding are not implemented.',
+    unavailableReason: 'SGI RLE decoding is not implemented.',
   },
   {
     id: 'exr',

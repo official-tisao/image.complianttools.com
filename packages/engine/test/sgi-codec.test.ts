@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { decodeSgi } from '../src/index.js';
+import { createRaster, decodeSgi, encodeSgi } from '../src/index.js';
 
 function fixture(): Uint8Array {
   const bytes = new Uint8Array(515);
@@ -18,6 +18,15 @@ function fixture(): Uint8Array {
 describe('SGI codec', () => {
   it('decodes planar RGB channels', () => {
     expect(decodeSgi(fixture()).frames[0].data).toEqual(new Uint8ClampedArray([3, 2, 1, 255]));
+  });
+
+  it('round-trips uncompressed RGB and RGBA SGI images', () => {
+    const image = createRaster(1, 1, new Uint8ClampedArray([3, 2, 1, 7]));
+    expect(decodeSgi(encodeSgi(image)).frames[0].data).toEqual(image.frames[0].data);
+  });
+
+  it('rejects dimensions outside the SGI header range', () => {
+    expect(() => encodeSgi(createRaster(65_536, 1))).toThrow('65535');
   });
 
   it('refuses RLE and truncated data', () => {
