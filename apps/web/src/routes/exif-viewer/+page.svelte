@@ -23,7 +23,10 @@
 
 <svelte:head>
   <title>Metadata Viewer — Image Compliant Tools</title>
-  <meta name="description" content="Read supported PNG and GIF metadata locally in your browser." />
+  <meta
+    name="description"
+    content="Read supported PNG, JPEG, GIF, and WebP metadata locally in your browser."
+  />
   <link rel="canonical" href="https://image.complianttools.com/exif-viewer" />
 </svelte:head>
 
@@ -31,13 +34,13 @@
   <a href="/convert">← Convert</a>
   <h1>Metadata Viewer</h1>
   <p>
-    Your file stays in this browser. PNG text/EXIF/ICC markers and GIF comments are supported today.
+    Your file stays in this browser. PNG, JPEG, GIF, and WebP metadata markers are supported today.
   </p>
   <label>
     Choose an image
     <input
       type="file"
-      accept="image/png,image/gif"
+      accept="image/png,image/jpeg,image/gif,image/webp"
       onchange={(event) => void inspect(event.currentTarget.files?.[0])}
     />
   </label>
