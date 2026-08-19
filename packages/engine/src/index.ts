@@ -20,6 +20,7 @@ export * from './codecs/third-party/gif.js';
 export * from './export/filename.js';
 export * from './export/embedded.js';
 export * from './metadata/container.js';
+export * from './metadata/exif.js';
 export * from './color/icc.js';
 export * from './ops/geometry.js';
 export * from './ops/raster.js';
