@@ -63,9 +63,8 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     id: 'pcx',
     animation: false,
     lazyBytes: 8_000,
-    supports: ['decode'],
+    supports: ['decode', 'encode'],
     load: () => import('./simple/pcx.js'),
-    unavailableReason: 'PCX encoding is not implemented.',
   },
   {
     id: 'pfm',

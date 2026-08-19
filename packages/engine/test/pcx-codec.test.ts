@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { decodePcx } from '../src/index.js';
+import { createRaster, decodePcx, encodePcx } from '../src/index.js';
 
 function pcxFixture(): Uint8Array {
   const output = new Uint8Array(128 + 2 + 769);
@@ -22,6 +22,28 @@ describe('PCX codec', () => {
     expect(decodePcx(pcxFixture()).frames[0].data).toEqual(
       new Uint8ClampedArray([255, 0, 0, 255, 0, 255, 0, 255]),
     );
+  });
+
+  it('round-trips an opaque, exact-colour PCX image', () => {
+    const image = createRaster(
+      3,
+      1,
+      new Uint8ClampedArray([255, 0, 0, 255, 0, 255, 0, 255, 255, 0, 0, 255]),
+    );
+    expect(decodePcx(encodePcx(image)).frames[0].data).toEqual(image.frames[0].data);
+  });
+
+  it('rejects alpha and palettes beyond the PCX exact-colour limit', () => {
+    expect(() => encodePcx(createRaster(1, 1, new Uint8ClampedArray([0, 0, 0, 0])))).toThrow(
+      'alpha',
+    );
+    const pixels = new Uint8ClampedArray(257 * 4);
+    for (let index = 0; index < 257; index += 1) {
+      pixels[index * 4] = index & 0xff;
+      pixels[index * 4 + 1] = index >> 8;
+      pixels[index * 4 + 3] = 255;
+    }
+    expect(() => encodePcx(createRaster(257, 1, pixels))).toThrow('256');
   });
 
   it('rejects missing palettes and truncated RLE', () => {
