@@ -67,9 +67,8 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     id: 'gif',
     animation: true,
     lazyBytes: 180_000,
-    supports: ['decode'],
+    supports: ['decode', 'encode'],
     load: () => import('./third-party/gif.js'),
-    unavailableReason: 'GIF encoding is scheduled separately in P2-05.',
   },
   {
     id: 'avif',

@@ -22,8 +22,7 @@ describe('P2 codec registry', () => {
     });
     expect(capabilities.find((entry) => entry.id === 'gif')).toMatchObject({
       decode: 'lazy',
-      encode: 'unavailable',
-      unavailableReason: 'GIF encoding is scheduled separately in P2-05.',
+      encode: 'lazy',
     });
     expect(capabilities.find((entry) => entry.id === 'exr')).toMatchObject({
       decode: 'lazy',
