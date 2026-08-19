@@ -3,6 +3,8 @@
 
   let status = $state('');
   let error = $state('');
+  let optimizeLevel = $state<0 | 1 | 2 | 3>(2);
+  let lossy = $state(0);
 
   async function convert(file: File | undefined) {
     status = '';
@@ -22,13 +24,14 @@
         canvas.height,
         context.getImageData(0, 0, canvas.width, canvas.height).data,
       );
-      const url = URL.createObjectURL(new Blob([encodeGif(image)], { type: 'image/gif' }));
+      const bytes = encodeGif(image, 0, { optimizeLevel, lossy });
+      const url = URL.createObjectURL(new Blob([bytes], { type: 'image/gif' }));
       const download = document.createElement('a');
       download.href = url;
       download.download = `${file.name.replace(/\.[^.]+$/u, '')}.gif`;
       download.click();
       URL.revokeObjectURL(url);
-      status = `Created a ${canvas.width}×${canvas.height} GIF locally.`;
+      status = `Created a ${canvas.width}×${canvas.height} GIF locally (${bytes.byteLength.toLocaleString()} bytes; optimization ${optimizeLevel}, palette reduction ${lossy}).`;
     } catch (reason) {
       error = reason instanceof Error ? reason.message : 'Unable to create a GIF.';
     }
@@ -45,6 +48,20 @@
   <a href="/convert">← Convert</a>
   <h1>GIF Maker</h1>
   <p>Create a GIF locally from an image. Nothing is uploaded.</p>
+  <label>
+    Optimization level
+    <select bind:value={optimizeLevel}>
+      <option value={0}>0 — retain every frame</option>
+      <option value={1}>1 — merge duplicate frames</option>
+      <option value={2}>2 — transparent unchanged pixels</option>
+      <option value={3}>3 — maximum local frame optimization</option>
+    </select>
+  </label>
+  <label>
+    Palette reduction (0–200)
+    <input type="range" min="0" max="200" step="1" bind:value={lossy} />
+    {lossy}
+  </label>
   <label
     >Choose an image <input
       type="file"
