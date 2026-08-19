@@ -30,7 +30,11 @@ function dxt5Alpha(bytes: Uint8Array, offset: number): number[] {
   );
 }
 
-/** Decodes a single-mip DXT1/BC1, DXT3/BC2, or DXT5/BC3 DDS texture into RGBA. */
+function bc4Values(bytes: Uint8Array, offset: number): number[] {
+  return dxt5Alpha(bytes, offset);
+}
+
+/** Decodes a single-mip DXT1/BC1, DXT3/BC2, DXT5/BC3, or BC4 DDS texture into RGBA. */
 export function decodeDds(input: ArrayBuffer | Uint8Array): RasterImage {
   const bytes = input instanceof Uint8Array ? input : new Uint8Array(input);
   if (bytes.length < 128 || new TextDecoder('latin1').decode(bytes.subarray(0, 4)) !== 'DDS ')
@@ -42,21 +46,33 @@ export function decodeDds(input: ArrayBuffer | Uint8Array): RasterImage {
   if (
     view.getUint32(4, true) !== 124 ||
     view.getUint32(76, true) !== 32 ||
-    !['DXT1', 'DXT3', 'DXT5'].includes(fourCc) ||
+    !['DXT1', 'DXT3', 'DXT5', 'ATI1', 'BC4U'].includes(fourCc) ||
     width < 1 ||
     height < 1 ||
     width * height > 100_000_000
   )
-    throw new Error('Only safe DXT1/3/5 DDS textures are supported.');
+    throw new Error('Only safe DXT1/3/5 and BC4 DDS textures are supported.');
   const blocksWide = Math.ceil(width / 4);
   const blocksHigh = Math.ceil(height / 4);
-  const blockBytes = fourCc === 'DXT1' ? 8 : 16;
+  const blockBytes = fourCc === 'DXT1' || fourCc === 'ATI1' || fourCc === 'BC4U' ? 8 : 16;
   const dataBytes = blocksWide * blocksHigh * blockBytes;
   if (128 + dataBytes > bytes.length) throw new Error('DDS texture data is truncated.');
   const pixels = new Uint8ClampedArray(width * height * 4);
   for (let blockY = 0; blockY < blocksHigh; blockY += 1)
     for (let blockX = 0; blockX < blocksWide; blockX += 1) {
       const offset = 128 + (blockY * blocksWide + blockX) * blockBytes;
+      if (fourCc === 'ATI1' || fourCc === 'BC4U') {
+        const values = bc4Values(bytes, offset);
+        for (let y = 0; y < 4; y += 1)
+          for (let x = 0; x < 4; x += 1) {
+            const targetX = blockX * 4 + x;
+            const targetY = blockY * 4 + y;
+            if (targetX >= width || targetY >= height) continue;
+            const value = values[y * 4 + x]!;
+            pixels.set([value, value, value, 255], (targetY * width + targetX) * 4);
+          }
+        continue;
+      }
       const colourOffset = fourCc === 'DXT1' ? offset : offset + 8;
       const first = view.getUint16(colourOffset, true);
       const second = view.getUint16(colourOffset + 2, true);

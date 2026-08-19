@@ -32,6 +32,20 @@ function dxt5Fixture(): Uint8Array {
   return bytes;
 }
 
+function bc4Fixture(): Uint8Array {
+  const bytes = new Uint8Array(136);
+  const view = new DataView(bytes.buffer);
+  bytes.set(new TextEncoder().encode('DDS '));
+  view.setUint32(4, 124, true);
+  view.setUint32(12, 4, true);
+  view.setUint32(16, 4, true);
+  view.setUint32(76, 32, true);
+  bytes.set(new TextEncoder().encode('ATI1'), 84);
+  // Endpoint 0 is selected for every pixel because the six index bytes stay zero.
+  bytes.set([200, 0], 128);
+  return bytes;
+}
+
 describe('DDS DXT1 codec', () => {
   it('decodes a single DXT1/BC1 block', () => {
     expect(decodeDds(dxt1Fixture()).frames[0].data.subarray(0, 4)).toEqual(
@@ -42,6 +56,12 @@ describe('DDS DXT1 codec', () => {
   it('decodes DXT5/BC3 alpha and colour blocks', () => {
     expect(decodeDds(dxt5Fixture()).frames[0].data.subarray(0, 4)).toEqual(
       new Uint8ClampedArray([255, 0, 0, 255]),
+    );
+  });
+
+  it('decodes BC4 values as grayscale RGBA', () => {
+    expect(decodeDds(bc4Fixture()).frames[0].data.subarray(0, 4)).toEqual(
+      new Uint8ClampedArray([200, 200, 200, 255]),
     );
   });
 
