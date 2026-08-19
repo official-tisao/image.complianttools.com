@@ -369,9 +369,21 @@ mega-dependency was replaced by a framework of our own (README §25.3.1).
 - **Spec:** README §5.2, §25.4 · **Done when:** each has a fixture round-trip test and an adversarial test
 
 #### P2-04 · Permissive third-party codecs
-- [ ] TIFF (`UTIF.js`) · OpenEXR (`tinyexr`) · JPEG 2000 (`OpenJPEG`) · GIF decode (`gifuct-js`)
-- [ ] AVIF, JPEG XL via `@jsquash/*`
-- **Spec:** README §5.2, §25.3.4 · **Done when:** each passes fixture round-trip and appears in `THIRD-PARTY-LICENSES.md`
+- [x] Clearance unblocked: `utif` 3.1.0 (MIT), `gifuct-js` 2.1.2 (MIT), `@jsquash/avif` 2.1.1, `@jsquash/jxl` 1.3.0 (both Apache-2.0 wrapper) pinned, licence-verified, graduated into the README §25.3.4 shipping register and recorded in the clearance ADR
+- [ ] TIFF (`utif`) decode/encode wired into the codec registry with fixture round-trip
+- [ ] GIF decode (`gifuct-js`) wired in with fixture round-trip
+- [ ] AVIF, JPEG XL via `@jsquash/*` wired in with fixture round-trip
+- [ ] OpenEXR and JPEG 2000 **moved to P2-04a** — no permissively-distributable package exists; not a clearance failure
+- **Spec:** README §5.2, §25.3.4 · **Done when:** each of the four passes fixture round-trip and appears in `THIRD-PARTY-LICENSES.md`
+
+#### P2-04a · OpenEXR + JPEG 2000 — vendored WASM builds
+Neither format has a usable published package. `tinyexr` is a C++ single-header library with no npm
+distribution; npm `openjpeg` 0.2.3 ships **no licence field** and is an unaffiliated fork. Both
+upstreams are permissive (BSD-3, BSD-2), so the obstacle is a build we do not own yet, not licensing.
+- [ ] Decide: vendor + build WASM ourselves, or report both formats unsupported for v1
+- [ ] If vendoring: pin upstream by commit sha, record the licence file, add to the WASM asset lock, and treat the build as a first-class CI artefact
+- [ ] Until then, both formats report unsupported with the specific reason (README §11.8), never a generic failure
+- **Spec:** README §5.2, §25.3.4, §25.5 · **Done when:** either both decode from fixtures, or both are documented as v1-unsupported with a stated reason
 
 #### P2-05 · GIF encoder + optimizer (**ours**)
 - [ ] LZW encode; quantizers (Wu, median-cut, octree, neuquant-equivalent); dithers
@@ -1201,6 +1213,8 @@ Every README change gets a row here, per §0.3. Newest first.
 | 2026-08-09 | §7.6, §8, §10, §11, §19, §25.3.4 | Implemented the Phase 1 engine core, static route archetypes, generated controls, compare canvas, predicted sizing, and pinned/verified their direct dependencies | Completed P1-01..07, P1-10/11/13; recorded partial completion on P1-08/09/12/14 and measured Gate 1 evidence |
 | 2026-08-09 | §7.3, §25.2, §25.3.4 | Approved IJG/IJG-short with mandatory attribution; verified the pinned jSquash codec portions | Added and completed P0-13-R1; unblocked and completed P0-13 |
 | 2026-08-09 | §23.6 | **Waiver.** Required-check enforcement deferred; harnesses exist and pass, but branch protection needs repository settings access that is unavailable. Substance satisfied, mechanism deferred | P0-03 and P0-15 → `[~]`; Gate 0 row waived; added P7-15 as the re-entry trigger and a Gate 7 row that blocks launch on it |
+| 2026-08-18 | §25.3.4 | Graduated `utif` 3.1.0, `gifuct-js` 2.1.2, `@jsquash/avif` 2.1.1, `@jsquash/jxl` 1.3.0 and transitive `pako` 1.0.11 into the shipping register; rewrote the OpenEXR and JPEG 2000 rows to state that no distributable package exists rather than implying a licence problem | Unblocked P2-04; added P2-04a for the two vendored WASM builds |
+| 2026-08-18 | — | Fixed the licence-expression parser: SPDX `AND` was parsed as a choice, so a conjunction was allowed whenever any one term was allowlisted. Now every term of an `AND` must be allowlisted | Gate correctness; no plan task |
 | 2026-08-09 | §25.3.4 | Split the positive register into a shipping register (installed, verified, enforced) and a candidate register (not installed, unverified, unenforced); added a build gate requiring every direct dependency to appear in the shipping register | P0-08 unblocked and completed; Gate 0 §25.3.4 row satisfied |
 | 2026-08-09 | §25.3, §25.3.3 | Counsel recipient set (Festus Ogun / FOLEGAL); packet expanded to a full engagement brief with threshold questions and a response-record table; cover email drafted | P0-07 send subtasks moved `[!]` → `[~]`; added a response-recording subtask |
 | 2026-08-09 | §25.3.4 | Verified newly pinned Svelte, Tailwind, and Playwright versions; excluded jSquash JPEG pending IJG review | Completed P0-14 infrastructure; blocked P0-13 explicitly |
