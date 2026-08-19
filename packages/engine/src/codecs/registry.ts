@@ -36,7 +36,13 @@ export const codecRegistry: readonly CodecDescriptor[] = [
   },
   { id: 'gif', animation: true, lazyBytes: 180_000, supports: ['decode', 'encode'] },
   { id: 'avif', animation: true, lazyBytes: 1_900_000, supports: ['decode', 'encode'] },
-  { id: 'bmp', animation: false, lazyBytes: 45_000, supports: ['decode', 'encode'] },
+  {
+    id: 'bmp',
+    animation: false,
+    lazyBytes: 45_000,
+    supports: ['decode', 'encode'],
+    load: () => import('./simple/bmp.js'),
+  },
   { id: 'tiff', animation: true, lazyBytes: 620_000, supports: ['decode', 'encode'] },
   { id: 'jxl', animation: true, lazyBytes: 1_200_000, supports: ['decode', 'encode'] },
 ];
