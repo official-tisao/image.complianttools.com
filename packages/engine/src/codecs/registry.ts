@@ -30,6 +30,14 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     load: () => import('./jsquash.js'),
   },
   {
+    id: 'ico',
+    animation: false,
+    lazyBytes: 5_000,
+    supports: ['encode'],
+    load: () => import('../export/ico.js'),
+    unavailableReason: 'ICO decoding is not implemented.',
+  },
+  {
     id: 'qoi',
     animation: false,
     lazyBytes: 12_000,

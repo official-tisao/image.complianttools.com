@@ -14,7 +14,7 @@ describe('P2 codec registry', () => {
       opfs: false,
       webCodecs: false,
     });
-    expect(capabilities).toHaveLength(19);
+    expect(capabilities).toHaveLength(20);
     expect(capabilities.find((entry) => entry.id === 'jpeg')).toMatchObject({
       decode: 'lazy',
       encode: 'lazy',
@@ -39,6 +39,7 @@ describe('P2 codec registry', () => {
     });
     expect(capabilities.find((entry) => entry.id === 'fits')).toMatchObject({ decode: 'lazy' });
     expect(capabilities.find((entry) => entry.id === 'hdr')).toMatchObject({ decode: 'lazy' });
+    expect(capabilities.find((entry) => entry.id === 'ico')).toMatchObject({ encode: 'lazy' });
   });
 
   it('loads implemented codecs and rejects a codec with no implementation', async () => {

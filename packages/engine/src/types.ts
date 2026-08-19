@@ -6,6 +6,7 @@ export type FormatId =
   | 'gif'
   | 'hdr'
   | 'heic'
+  | 'ico'
   | 'jpeg'
   | 'jxl'
   | 'pcx'
