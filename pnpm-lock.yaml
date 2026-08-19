@@ -147,6 +147,9 @@ importers:
       gifuct-js:
         specifier: 2.1.2
         version: 2.1.2
+      imagetracerjs:
+        specifier: 1.2.6
+        version: 1.2.6
       parse-exr:
         specifier: 1.0.2
         version: 1.0.2
@@ -1819,6 +1822,9 @@ packages:
 
   image-ssim@0.2.0:
     resolution: {integrity: sha512-W7+sO6/yhxy83L0G7xR8YAc5Z5QFtYEXXRV6EaE8tuYBZJnA3gVgp3q7X7muhLZVodeb9UfvjSbwt9VJwjIYAg==}
+
+  imagetracerjs@1.2.6:
+    resolution: {integrity: sha512-LKJlnKmXFzDdh6IZtXTyBxXcCLTAkwgKYS+NMiPXiXVnlTLjQC8fq7U89laUSgHtypJB3TdMMDK4ecG5NI/Cgw==}
 
   immediate@3.0.6:
     resolution: {integrity: sha512-XXOFtyqDjNDAQxVfYxuF7g9Il/IbWmmlQg2MYKOH8ExIT1qg6xc4zyS3HaEEATgs1btfzxq15ciUiY7gjSXRGQ==}
@@ -4751,6 +4757,8 @@ snapshots:
   ignore@5.3.2: {}
 
   image-ssim@0.2.0: {}
+
+  imagetracerjs@1.2.6: {}
 
   immediate@3.0.6: {}
 

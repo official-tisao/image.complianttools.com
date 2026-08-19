@@ -279,6 +279,7 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `iconv-lite` | `0.4.24` | MIT | [source](https://github.com/ashtuchkin/iconv-lite) |
 | `ignore` | `5.3.2` | MIT | [source](https://github.com/kaelzhang/node-ignore#readme) |
 | `image-ssim` | `0.2.0` | MIT | [source](https://github.com/darosh/image-ssim-js/issues) |
+| `imagetracerjs` | `1.2.6` | Unlicense | [source](https://github.com/jankovicsandras/imagetracerjs#readme) |
 | `immediate` | `3.0.6` | MIT | [source](https://github.com/calvinmetcalf/immediate#readme) |
 | `import-fresh` | `3.3.1` | MIT | [source](https://github.com/sindresorhus/import-fresh#readme) |
 | `imurmurhash` | `0.1.4` | MIT | [source](https://github.com/jensyt/imurmurhash-js) |
