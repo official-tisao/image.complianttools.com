@@ -34,6 +34,30 @@ export function decodeXbm(input: ArrayBuffer | Uint8Array): RasterImage {
   return createRaster(width, height, rgba);
 }
 
+/** Encodes the first raster frame as traditional LSB-first X11 bitmap source. */
+export function encodeXbm(image: RasterImage, name = 'image'): Uint8Array {
+  if (!/^[A-Za-z_][A-Za-z0-9_]*$/u.test(name)) throw new Error('XBM name must be a C identifier.');
+  if (image.width < 1 || image.height < 1) throw new Error('XBM dimensions must be positive.');
+  const frame = image.frames[0];
+  if (!frame) throw new Error('Cannot encode an image without a frame.');
+  const rowBytes = Math.ceil(image.width / 8);
+  const bytes = new Uint8Array(rowBytes * image.height);
+  for (let y = 0; y < image.height; y += 1)
+    for (let x = 0; x < image.width; x += 1) {
+      const offset = (y * image.width + x) * 4;
+      const luminance =
+        frame.data[offset]! * 0.2126 +
+        frame.data[offset + 1]! * 0.7152 +
+        frame.data[offset + 2]! * 0.0722;
+      if (frame.data[offset + 3]! >= 128 && luminance < 128)
+        bytes[y * rowBytes + Math.floor(x / 8)]! |= 1 << (x % 8);
+    }
+  const literals = [...bytes].map((value) => `0x${value.toString(16).padStart(2, '0')}`).join(', ');
+  return new TextEncoder().encode(
+    `#define ${name}_width ${image.width}\n#define ${name}_height ${image.height}\nstatic unsigned char ${name}_bits[] = { ${literals} };\n`,
+  );
+}
+
 function xpmColour(value: string): readonly [number, number, number, number] {
   if (value === 'None') return [0, 0, 0, 0];
   const hex = value.match(/^#([0-9a-f]{6})$/iu)?.[1];

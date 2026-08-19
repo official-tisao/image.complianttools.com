@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { decodeXbm, decodeXpm } from '../src/index.js';
+import { createRaster, decodeXbm, decodeXpm, encodeXbm } from '../src/index.js';
 
 describe('XBM codec', () => {
   it('decodes LSB-first bitmap source data', () => {
@@ -9,6 +9,22 @@ describe('XBM codec', () => {
     expect(decodeXbm(new TextEncoder().encode(source)).frames[0].data).toEqual(
       new Uint8ClampedArray([0, 0, 0, 255, 255, 255, 255, 255, 0, 0, 0, 255]),
     );
+  });
+
+  it('encodes an LSB-first XBM source that round-trips', () => {
+    const image = createRaster(
+      3,
+      1,
+      new Uint8ClampedArray([0, 0, 0, 255, 255, 255, 255, 255, 0, 0, 0, 255]),
+    );
+    const source = new TextDecoder().decode(encodeXbm(image, 'icon'));
+    expect(source).toContain('#define icon_width 3');
+    expect(source).toContain('0x05');
+    expect(decodeXbm(encodeXbm(image)).frames[0].data).toEqual(image.frames[0].data);
+  });
+
+  it('rejects non-identifier XBM names', () => {
+    expect(() => encodeXbm(createRaster(1, 1), 'not-valid')).toThrow('identifier');
   });
 
   it('rejects missing declarations and payloads', () => {
