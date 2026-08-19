@@ -157,7 +157,7 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     animation: true,
     lazyBytes: 1_900_000,
     supports: ['decode', 'encode'],
-    load: () => import('./third-party/avif.js'),
+    unavailableReason: 'AVIF is awaiting a Vite-compatible lazy WASM wrapper.',
   },
   {
     id: 'bmp',

@@ -54,7 +54,6 @@ describe('P2 codec registry', () => {
     await expect(loadCodec('jpeg')).resolves.toBeDefined();
     await expect(loadCodec('exr')).resolves.toBeDefined();
     await expect(loadCodec('gif')).resolves.toBeDefined();
-    await expect(loadCodec('avif')).resolves.toBeDefined();
     expect(getCodec('webp').supports).toEqual(['decode', 'encode']);
   });
 });
