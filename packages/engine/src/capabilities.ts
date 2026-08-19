@@ -1,4 +1,5 @@
 import type { FormatId } from './types.js';
+import { codecCapabilities } from './codecs/registry.js';
 
 export interface FormatCapability {
   readonly id: FormatId;
@@ -74,15 +75,5 @@ export async function probeCapabilities(
   environment: CapabilityEnvironment = globalThis as CapabilityEnvironment,
 ): Promise<FormatCapability[]> {
   const runtime = probeRuntimeCapabilities(environment);
-  const browserDecode = runtime.webCodecs ? 'ready' : 'lazy';
-  return [
-    { id: 'jpeg', decode: browserDecode, encode: 'lazy', animation: false, lazyBytes: 195_000 },
-    { id: 'png', decode: browserDecode, encode: 'lazy', animation: false, lazyBytes: 165_000 },
-    { id: 'webp', decode: browserDecode, encode: 'lazy', animation: true, lazyBytes: 210_000 },
-    { id: 'gif', decode: browserDecode, encode: 'lazy', animation: true, lazyBytes: 180_000 },
-    { id: 'avif', decode: browserDecode, encode: 'lazy', animation: true, lazyBytes: 1_900_000 },
-    { id: 'bmp', decode: 'lazy', encode: 'lazy', animation: false, lazyBytes: 45_000 },
-    { id: 'tiff', decode: 'lazy', encode: 'lazy', animation: true, lazyBytes: 620_000 },
-    { id: 'jxl', decode: 'lazy', encode: 'lazy', animation: true, lazyBytes: 1_200_000 },
-  ];
+  return codecCapabilities(runtime);
 }
