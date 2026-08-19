@@ -7,7 +7,7 @@
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "test": "node test/all.test.mjs && vitest run test/codec-roundtrip.test.ts test/phase1.test.ts test/bmp-codec.test.ts test/codec-registry.test.ts test/simple-codec-framework.test.ts",
+    "test": "node test/all.test.mjs && vitest run test/codec-roundtrip.test.ts test/phase1.test.ts test/bmp-codec.test.ts test/codec-registry.test.ts test/simple-codec-framework.test.ts test/qoi-codec.test.ts",
     "lint": "tsc -p tsconfig.json --noEmit",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },

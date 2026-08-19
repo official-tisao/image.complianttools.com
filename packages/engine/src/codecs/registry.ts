@@ -21,6 +21,13 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     load: () => import('./jsquash.js'),
   },
   {
+    id: 'qoi',
+    animation: false,
+    lazyBytes: 12_000,
+    supports: ['decode', 'encode'],
+    load: () => import('./simple/qoi.js'),
+  },
+  {
     id: 'png',
     animation: false,
     lazyBytes: 165_000,

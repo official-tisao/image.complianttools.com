@@ -3,6 +3,7 @@ export * from './codecs/jsquash.js';
 export * from './codecs/registry.js';
 export * from './codecs/simple/framework.js';
 export * from './codecs/simple/bmp.js';
+export * from './codecs/simple/qoi.js';
 export * from './export/filename.js';
 export * from './ops/geometry.js';
 export * from './ops/raster.js';
