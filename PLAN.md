@@ -370,8 +370,8 @@ mega-dependency was replaced by a framework of our own (README §25.3.1).
 
 #### P2-04 · Permissive third-party codecs
 - [x] Clearance unblocked: `utif` 3.1.0 (MIT), `gifuct-js` 2.1.2 (MIT), `@jsquash/avif` 2.1.1, `@jsquash/jxl` 1.3.0 (both Apache-2.0 wrapper) pinned, licence-verified, graduated into the README §25.3.4 shipping register and recorded in the clearance ADR
-- [ ] TIFF (`utif`) decode/encode wired into the codec registry with fixture round-trip
-- [ ] GIF decode (`gifuct-js`) wired in with fixture round-trip
+- [x] TIFF (`utif`) decode/encode wired into the codec registry with fixture round-trip
+- [x] GIF decode (`gifuct-js`) wired in with fixture round-trip
 - [ ] AVIF, JPEG XL via `@jsquash/*` wired in with fixture round-trip
 - [ ] OpenEXR and JPEG 2000 **moved to P2-04a** — no permissively-distributable package exists; not a clearance failure
 - **Spec:** README §5.2, §25.3.4 · **Done when:** each of the four passes fixture round-trip and appears in `THIRD-PARTY-LICENSES.md`
