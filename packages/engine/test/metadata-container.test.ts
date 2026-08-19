@@ -69,4 +69,34 @@ describe('container metadata', () => {
     ]);
     expect(() => readContainerMetadata(new Uint8Array([0]))).toThrow('GIF metadata');
   });
+
+  it('reads selected EXIF fields from a JPEG APP1 segment', () => {
+    const tiff = new Uint8Array(26);
+    const view = new DataView(tiff.buffer);
+    tiff.set([0x49, 0x49, 42, 0]);
+    view.setUint32(4, 8, true);
+    view.setUint16(8, 1, true);
+    view.setUint16(10, 0x0112, true);
+    view.setUint16(12, 3, true);
+    view.setUint32(14, 1, true);
+    view.setUint16(18, 6, true);
+    const payload = new Uint8Array(6 + tiff.length);
+    payload.set(new TextEncoder().encode('Exif\0\0'));
+    payload.set(tiff, 6);
+    const jpeg = new Uint8Array([
+      0xff,
+      0xd8,
+      0xff,
+      0xe1,
+      0,
+      payload.length + 2,
+      ...payload,
+      0xff,
+      0xd9,
+    ]);
+    expect(readContainerMetadata(jpeg)).toEqual({
+      format: 'jpeg',
+      tags: [{ namespace: 'EXIF', name: 'orientation', value: '6' }],
+    });
+  });
 });

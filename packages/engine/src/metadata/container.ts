@@ -4,7 +4,7 @@ export type MetadataTag = {
   readonly value: string;
 };
 export type ReadableMetadata = {
-  readonly format: 'png' | 'gif';
+  readonly format: 'png' | 'gif' | 'jpeg';
   readonly tags: readonly MetadataTag[];
 };
 
@@ -96,9 +96,33 @@ function readGif(input: Uint8Array): ReadableMetadata {
   return { format: 'gif', tags };
 }
 
+function readJpeg(input: Uint8Array): ReadableMetadata {
+  if (input[0] !== 0xff || input[1] !== 0xd8)
+    throw new Error('JPEG metadata requires a valid JPEG signature.');
+  const tags: MetadataTag[] = [];
+  for (let offset = 2; offset + 4 <= input.length;) {
+    if (input[offset] !== 0xff) throw new Error('JPEG contains an invalid marker.');
+    const marker = input[offset + 1]!;
+    if (marker === 0xd9 || marker === 0xda) break;
+    const length = (input[offset + 2]! << 8) | input[offset + 3]!;
+    if (length < 2 || offset + 2 + length > input.length)
+      throw new Error('JPEG contains a truncated metadata segment.');
+    const data = input.subarray(offset + 4, offset + 2 + length);
+    if (marker === 0xe1 && latin1.decode(data.subarray(0, 6)) === 'Exif\0\0') {
+      for (const field of readExifIfd0(data.subarray(6)))
+        tags.push({ namespace: 'EXIF', name: field.name, value: String(field.value) });
+    }
+    if (marker === 0xe2 && latin1.decode(data.subarray(0, 11)) === 'ICC_PROFILE\0')
+      tags.push({ namespace: 'ICC', name: 'embedded', value: `${data.length} bytes` });
+    offset += length + 2;
+  }
+  return { format: 'jpeg', tags };
+}
+
 export function readContainerMetadata(input: ArrayBuffer | Uint8Array): ReadableMetadata {
   const bytes = input instanceof Uint8Array ? input : new Uint8Array(input);
   if (matches(bytes, pngSignature)) return readPng(bytes);
+  if (bytes[0] === 0xff && bytes[1] === 0xd8) return readJpeg(bytes);
   return readGif(bytes);
 }
 
@@ -114,3 +138,4 @@ export function stripPngMetadata(input: ArrayBuffer | Uint8Array): Uint8Array {
   ];
   return Uint8Array.from(retained.flatMap((part) => [...part]));
 }
+import { readExifIfd0 } from './exif.js';
