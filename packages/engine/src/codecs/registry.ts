@@ -52,6 +52,13 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     unavailableReason: 'PCX encoding is not implemented.',
   },
   {
+    id: 'wbmp',
+    animation: false,
+    lazyBytes: 4_000,
+    supports: ['decode', 'encode'],
+    load: () => import('./simple/wbmp.js'),
+  },
+  {
     id: 'tga',
     animation: false,
     lazyBytes: 18_000,

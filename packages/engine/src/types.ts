@@ -12,6 +12,7 @@ export type FormatId =
   | 'qoi'
   | 'tga'
   | 'tiff'
+  | 'wbmp'
   | 'webp';
 
 export type ColorSpaceId = 'srgb' | 'display-p3' | 'adobe-rgb' | 'gray' | 'cmyk';
