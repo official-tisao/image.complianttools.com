@@ -16,6 +16,12 @@
     'generic',
   );
   let outputName = $state('image_data');
+  let alphaByte = $state(false);
+  let chromaKeyed = $state(false);
+  let chromaKey = $state('#00ff00');
+  let bigEndian = $state(false);
+  let storage = $state<'const' | 'static' | 'static-const'>('static-const');
+  let lineWidth = $state(12);
   let format = $state<
     | 'rgb332'
     | 'rgb565'
@@ -46,7 +52,26 @@
         canvas.height,
         context.getImageData(0, 0, canvas.width, canvas.height).data,
       );
-      const options = { format, outputName };
+      const parsedChromaKey = /^#([0-9a-f]{6})$/iu.exec(chromaKey);
+      if (chromaKeyed && !parsedChromaKey) throw new Error('Choose a six-digit chroma-key colour.');
+      const chroma = parsedChromaKey?.[1];
+      const options = {
+        format,
+        outputName,
+        alphaByte,
+        bigEndian,
+        storage,
+        lineWidth,
+        ...(chromaKeyed && chroma
+          ? {
+              chromaKey: [
+                Number.parseInt(chroma.slice(0, 2), 16),
+                Number.parseInt(chroma.slice(2, 4), 16),
+                Number.parseInt(chroma.slice(4, 6), 16),
+              ] as const,
+            }
+          : {}),
+      };
       const output =
         target === 'lvgl-v8'
           ? emitLvglV8CArray(image, options)
@@ -102,6 +127,23 @@
       <option value="esp-idf">ESP-IDF / TFT_eSPI RGB565 array</option>
     </select>
   </label>
+  <label><input type="checkbox" bind:checked={alphaByte} /> Append alpha byte</label>
+  <label><input type="checkbox" bind:checked={bigEndian} /> Big-endian byte order</label>
+  <label><input type="checkbox" bind:checked={chromaKeyed} /> Chroma key colour</label>
+  {#if chromaKeyed}
+    <label>Chroma key <input type="color" bind:value={chromaKey} /></label>
+  {/if}
+  <label>
+    Storage qualifier
+    <select bind:value={storage}>
+      <option value="static-const">static const</option>
+      <option value="const">const</option>
+      <option value="static">static</option>
+    </select>
+  </label>
+  <label
+    >Bytes per source line <input type="number" min="1" max="256" bind:value={lineWidth} /></label
+  >
   <label>
     Pixel format
     <select bind:value={format}>
