@@ -3,6 +3,7 @@ import type { RasterImage } from '../../types.js';
 
 const endMarker = Uint8Array.from([0, 0, 0, 0, 0, 0, 0, 1]);
 const hash = (r: number, g: number, b: number, a: number) => (r * 3 + g * 5 + b * 7 + a * 11) % 64;
+const MAX_DECODE_PIXELS = 100_000_000;
 
 export function decodeQoi(input: ArrayBuffer | Uint8Array): RasterImage {
   const bytes = input instanceof Uint8Array ? input : new Uint8Array(input);
@@ -12,6 +13,8 @@ export function decodeQoi(input: ArrayBuffer | Uint8Array): RasterImage {
   const width = view.getUint32(4);
   const height = view.getUint32(8);
   if (width === 0 || height === 0 || bytes[12] !== 4) throw new Error('Unsupported QOI image.');
+  if (width > MAX_DECODE_PIXELS / height)
+    throw new Error('QOI dimensions exceed the safe decode limit.');
   const output = new Uint8ClampedArray(width * height * 4);
   const index = new Uint8Array(64 * 4);
   let offset = 14,
