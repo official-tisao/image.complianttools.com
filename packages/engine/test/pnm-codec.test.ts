@@ -16,4 +16,19 @@ describe('PNM codec', () => {
       'Truncated',
     );
   });
+
+  it('decodes binary PBM, PGM, and PPM payloads', () => {
+    expect(
+      decodePnm(new Uint8Array([...new TextEncoder().encode('P4\n3 1\n'), 0b01000000])).frames[0]
+        .data,
+    ).toEqual(new Uint8ClampedArray([0, 0, 0, 255, 255, 255, 255, 255, 0, 0, 0, 255]));
+    expect(
+      decodePnm(new Uint8Array([...new TextEncoder().encode('P5\n1 1\n255\n'), 50])).frames[0]
+        .data[0],
+    ).toBe(50);
+    expect(
+      decodePnm(new Uint8Array([...new TextEncoder().encode('P6\n1 1\n255\n'), 1, 2, 3])).frames[0]
+        .data,
+    ).toEqual(new Uint8ClampedArray([1, 2, 3, 255]));
+  });
 });

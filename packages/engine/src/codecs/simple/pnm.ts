@@ -1,24 +1,32 @@
 import { createRaster } from '../../ops/raster.js';
 import type { RasterImage } from '../../types.js';
 
-function tokens(bytes: Uint8Array): string[] {
-  return new TextDecoder()
-    .decode(bytes)
-    .replace(/#[^\r\n]*/g, '')
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean);
+function readToken(bytes: Uint8Array, start: number): { value: string; next: number } {
+  let offset = start;
+  while (offset < bytes.length && /\s/u.test(String.fromCharCode(bytes[offset]!))) offset += 1;
+  if (bytes[offset] === 35) {
+    while (offset < bytes.length && bytes[offset] !== 10 && bytes[offset] !== 13) offset += 1;
+    return readToken(bytes, offset);
+  }
+  const begin = offset;
+  while (offset < bytes.length && !/\s/u.test(String.fromCharCode(bytes[offset]!))) offset += 1;
+  return { value: new TextDecoder().decode(bytes.subarray(begin, offset)), next: offset };
 }
 
 export function decodePnm(input: ArrayBuffer | Uint8Array): RasterImage {
   const bytes = input instanceof Uint8Array ? input : new Uint8Array(input);
-  const header = tokens(bytes);
-  const magic = header[0];
-  const width = Number(header[1]);
-  const height = Number(header[2]);
-  const max = magic === 'P1' || magic === 'P4' ? 1 : Number(header[3]);
+  const magicToken = readToken(bytes, 0);
+  const widthToken = readToken(bytes, magicToken.next);
+  const heightToken = readToken(bytes, widthToken.next);
+  const maxToken = ['P1', 'P4'].includes(magicToken.value)
+    ? undefined
+    : readToken(bytes, heightToken.next);
+  const magic = magicToken.value;
+  const width = Number(widthToken.value);
+  const height = Number(heightToken.value);
+  const max = maxToken ? Number(maxToken.value) : 1;
   if (
-    !['P1', 'P2', 'P3'].includes(magic ?? '') ||
+    !['P1', 'P2', 'P3', 'P4', 'P5', 'P6'].includes(magic) ||
     !Number.isInteger(width) ||
     !Number.isInteger(height) ||
     width < 1 ||
@@ -27,8 +35,44 @@ export function decodePnm(input: ArrayBuffer | Uint8Array): RasterImage {
     max > 65535
   )
     throw new Error('Unsupported or malformed PNM image.');
-  const samples = header.slice(magic === 'P1' ? 3 : 4).map(Number);
-  const channels = magic === 'P3' ? 3 : 1;
+  const binary = ['P4', 'P5', 'P6'].includes(magic);
+  const channels = magic === 'P3' || magic === 'P6' ? 3 : 1;
+  const headerEnd = (maxToken ?? heightToken).next;
+  if (!/\s/u.test(String.fromCharCode(bytes[headerEnd] ?? 0)))
+    throw new Error('Malformed PNM header separator.');
+  const start =
+    bytes[headerEnd] === 13 && bytes[headerEnd + 1] === 10 ? headerEnd + 2 : headerEnd + 1;
+  const samples: number[] = [];
+  if (binary) {
+    if (magic === 'P4') {
+      const rowBytes = Math.ceil(width / 8);
+      if (start + rowBytes * height !== bytes.length)
+        throw new Error('Truncated or invalid PNM pixel data.');
+      for (let pixel = 0; pixel < width * height; pixel += 1)
+        samples.push(
+          (bytes[start + Math.floor(pixel / width) * rowBytes + Math.floor((pixel % width) / 8)]! >>
+            (7 - (pixel % 8))) &
+            1,
+        );
+    } else {
+      const sampleBytes = max > 255 ? 2 : 1;
+      const count = width * height * channels;
+      if (start + count * sampleBytes !== bytes.length)
+        throw new Error('Truncated or invalid PNM pixel data.');
+      for (let index = 0; index < count; index += 1)
+        samples.push(
+          sampleBytes === 1
+            ? bytes[start + index]!
+            : (bytes[start + index * 2]! << 8) | bytes[start + index * 2 + 1]!,
+        );
+    }
+  } else {
+    const body = new TextDecoder()
+      .decode(bytes.subarray(start))
+      .replace(/#[^\r\n]*/g, '')
+      .trim();
+    samples.push(...(body ? body.split(/\s+/).map(Number) : []));
+  }
   if (
     samples.length !== width * height * channels ||
     samples.some((sample) => !Number.isInteger(sample) || sample < 0 || sample > max)
