@@ -118,6 +118,14 @@ function readJpeg(input: Uint8Array): ReadableMetadata {
       for (const field of readExifIfd0(data.subarray(6)))
         tags.push({ namespace: 'EXIF', name: field.name, value: String(field.value) });
     }
+    const xmpPrefix = 'http://ns.adobe.com/xap/1.0/\0';
+    if (marker === 0xe1 && latin1.decode(data.subarray(0, xmpPrefix.length)) === xmpPrefix) {
+      tags.push({
+        namespace: 'XMP',
+        name: 'packet',
+        value: `${data.length - xmpPrefix.length} bytes`,
+      });
+    }
     if (marker === 0xe2 && latin1.decode(data.subarray(0, 11)) === 'ICC_PROFILE\0')
       tags.push({ namespace: 'ICC', name: 'embedded', value: `${data.length} bytes` });
     offset += length + 2;

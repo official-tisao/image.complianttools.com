@@ -134,4 +134,24 @@ describe('container metadata', () => {
       { namespace: 'JFIF', name: 'density', value: '72×36 dpi' },
     ]);
   });
+
+  it('reports an embedded JPEG XMP packet without interpreting its XML', () => {
+    const prefix = new TextEncoder().encode('http://ns.adobe.com/xap/1.0/\0');
+    const packet = new TextEncoder().encode('<x:xmpmeta/>');
+    const jpeg = new Uint8Array([
+      0xff,
+      0xd8,
+      0xff,
+      0xe1,
+      0,
+      prefix.length + packet.length + 2,
+      ...prefix,
+      ...packet,
+      0xff,
+      0xd9,
+    ]);
+    expect(readContainerMetadata(jpeg).tags).toEqual([
+      { namespace: 'XMP', name: 'packet', value: `${packet.length} bytes` },
+    ]);
+  });
 });
