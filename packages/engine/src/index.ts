@@ -1,5 +1,6 @@
 export * from './capabilities.js';
 export * from './codecs/jsquash.js';
+export * from './codecs/encode.js';
 export * from './codecs/registry.js';
 export * from './codecs/detect.js';
 export * from './codecs/simple/framework.js';

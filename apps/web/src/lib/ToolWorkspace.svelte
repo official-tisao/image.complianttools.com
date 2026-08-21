@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onDestroy, untrack } from 'svelte';
   import { searchTargetSize } from '@complianttools/image-engine/pipeline/target-size';
+  import { productionEncoderFormats } from '@complianttools/image-engine';
   import { phaseOneOptionDescriptions } from '@complianttools/image-engine/schemas/options';
   import type { Recipe } from '@complianttools/image-engine/types';
   import CompareCanvas from './CompareCanvas.svelte';
@@ -41,15 +42,23 @@
   let latency = $state(0);
   let targetProgress = $state('');
   let updateTimer: ReturnType<typeof setTimeout> | undefined;
-  const relevant = $derived(
-    Object.fromEntries(
-      Object.entries(localizeOptions(locale, phaseOneOptionDescriptions)).filter(([path]) =>
+  const relevant = $derived.by(() => {
+    const localized = localizeOptions(locale, phaseOneOptionDescriptions);
+    const descriptions = {
+      ...localized,
+      'export.format': {
+        ...localized['export.format']!,
+        options: ['same', ...productionEncoderFormats()],
+      },
+    };
+    return Object.fromEntries(
+      Object.entries(descriptions).filter(([path]) =>
         kind === 'resize'
           ? path.startsWith('resize.') || path.startsWith('export.')
           : path.startsWith('export.'),
       ),
-    ),
-  );
+    );
+  });
   const summary = $derived(
     sourceBytes && outputBytes
       ? `${formatBytes(sourceBytes)} → ${formatBytes(outputBytes)} (${Math.round((outputBytes / sourceBytes - 1) * 100)}%)`
@@ -160,6 +169,24 @@
       worker.postMessage({ width: image.width, height: image.height, data: copy, recipe }, [copy]);
     });
   }
+  function workerEncode(image: ImageData, format: 'jpeg' | 'png' | 'webp', quality: number) {
+    return new Promise<ArrayBuffer>((resolve, reject) => {
+      const worker = new Worker(new URL('../workers/encode-worker.ts', import.meta.url), {
+        type: 'module',
+      });
+      worker.onmessage = (event) => {
+        worker.terminate();
+        if (event.data.error) reject(new Error(event.data.error));
+        else resolve(event.data.bytes as ArrayBuffer);
+      };
+      worker.onerror = reject;
+      const copy = image.data.slice().buffer;
+      worker.postMessage(
+        { width: image.width, height: image.height, data: copy, format, quality },
+        [copy],
+      );
+    });
+  }
   async function predictSize(image: ImageData) {
     const started = performance.now();
     const longest = Math.max(image.width, image.height);
@@ -241,23 +268,12 @@
         },
       };
       const result = await workerProcess(image, recipe);
-      const canvas = document.createElement('canvas');
-      canvas.width = result.width;
-      canvas.height = result.height;
-      canvas.getContext('2d')!.putImageData(result, 0, 0);
-      const format =
-        values['export.format'] === 'same' ? file.type : `image/${values['export.format']}`;
-      const quality = Number(values['export.quality']) / 100;
-      const blob = await new Promise<Blob>((resolve, reject) =>
-        canvas.toBlob(
-          (value) =>
-            value
-              ? resolve(value)
-              : reject(new Error('This browser cannot encode the selected format.')),
-          format,
-          quality,
-        ),
-      );
+      const selectedFormat = String(values['export.format']);
+      const inputFormat = file.type === 'image/jpeg' ? 'jpeg' : file.type.slice('image/'.length);
+      const format = (selectedFormat === 'same' ? inputFormat : selectedFormat) as
+        'jpeg' | 'png' | 'webp';
+      const bytes = await workerEncode(result, format, Number(values['export.quality']));
+      const blob = new Blob([bytes], { type: `image/${format}` });
       if (outputUrl) URL.revokeObjectURL(outputUrl);
       outputUrl = URL.createObjectURL(blob);
       outputBytes = blob.size;

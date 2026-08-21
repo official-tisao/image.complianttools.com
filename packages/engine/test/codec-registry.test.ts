@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { codecCapabilities, getCodec, loadCodec } from '../src/index.js';
+import './encode-raster.test.js';
 
 describe('P2 codec registry', () => {
   it('reports only registered formats and their lazy download costs', () => {
@@ -22,7 +23,8 @@ describe('P2 codec registry', () => {
     });
     expect(capabilities.find((entry) => entry.id === 'gif')).toMatchObject({
       decode: 'lazy',
-      encode: 'lazy',
+      encode: 'unavailable',
+      unavailableReason: 'GIF encoding is not available in the production browser export path.',
     });
     expect(capabilities.find((entry) => entry.id === 'heic')).toMatchObject({
       decode: 'lazy',
@@ -35,13 +37,13 @@ describe('P2 codec registry', () => {
     });
     expect(capabilities.find((entry) => entry.id === 'pfm')).toMatchObject({
       decode: 'lazy',
-      encode: 'lazy',
+      encode: 'unavailable',
     });
     expect(capabilities.find((entry) => entry.id === 'fits')).toMatchObject({ decode: 'lazy' });
     expect(capabilities.find((entry) => entry.id === 'hdr')).toMatchObject({ decode: 'lazy' });
     expect(capabilities.find((entry) => entry.id === 'ico')).toMatchObject({
       decode: 'lazy',
-      encode: 'lazy',
+      encode: 'unavailable',
     });
     expect(capabilities.find((entry) => entry.id === 'cur')).toMatchObject({ decode: 'lazy' });
     expect(capabilities.find((entry) => entry.id === 'dds')).toMatchObject({
@@ -64,5 +66,6 @@ describe('P2 codec registry', () => {
     await expect(loadCodec('exr')).resolves.toBeDefined();
     await expect(loadCodec('gif')).resolves.toBeDefined();
     expect(getCodec('webp').supports).toEqual(['decode', 'encode']);
+    expect(getCodec('qoi').supports).toEqual(['decode']);
   });
 });

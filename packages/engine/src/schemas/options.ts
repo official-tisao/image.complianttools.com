@@ -153,7 +153,6 @@ export const phaseOneOptionDescriptions: Readonly<Record<string, OptionDescripti
     control: 'select',
     group: 'Output',
     advanced: false,
-    options: ['same', 'jpeg', 'png', 'webp'],
     defaultValue: 'same',
   },
   'export.quality': {

@@ -10,6 +10,7 @@ export interface CodecDescriptor {
   readonly supports: readonly CodecOperation[];
   readonly load?: () => Promise<unknown>;
   readonly unavailableReason?: string;
+  readonly encodeUnavailableReason?: string;
 }
 
 export const codecRegistry: readonly CodecDescriptor[] = [
@@ -33,17 +34,19 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     id: 'ico',
     animation: false,
     lazyBytes: 5_000,
-    supports: ['decode', 'encode'],
+    supports: ['decode'],
     load: () => import('./simple/ico.js'),
     unavailableReason: 'PNG-backed ICO entries are not implemented.',
+    encodeUnavailableReason: 'ICO encoding is not available in the production browser export path.',
   },
   {
     id: 'cur',
     animation: false,
     lazyBytes: 5_000,
-    supports: ['decode', 'encode'],
+    supports: ['decode'],
     load: () => import('./simple/ico.js'),
     unavailableReason: 'PNG-backed CUR entries are not implemented.',
+    encodeUnavailableReason: 'CUR encoding is not available in the production browser export path.',
   },
   {
     id: 'dds',
@@ -57,29 +60,33 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     id: 'qoi',
     animation: false,
     lazyBytes: 12_000,
-    supports: ['decode', 'encode'],
+    supports: ['decode'],
     load: () => import('./simple/qoi.js'),
+    encodeUnavailableReason: 'QOI encoding is not available in the production browser export path.',
   },
   {
     id: 'pnm',
     animation: false,
     lazyBytes: 8_000,
-    supports: ['decode', 'encode'],
+    supports: ['decode'],
     load: () => import('./simple/pnm.js'),
+    encodeUnavailableReason: 'PNM encoding is not available in the production browser export path.',
   },
   {
     id: 'pcx',
     animation: false,
     lazyBytes: 8_000,
-    supports: ['decode', 'encode'],
+    supports: ['decode'],
     load: () => import('./simple/pcx.js'),
+    encodeUnavailableReason: 'PCX encoding is not available in the production browser export path.',
   },
   {
     id: 'pfm',
     animation: false,
     lazyBytes: 5_000,
-    supports: ['decode', 'encode'],
+    supports: ['decode'],
     load: () => import('./simple/pfm.js'),
+    encodeUnavailableReason: 'PFM encoding is not available in the production browser export path.',
   },
   {
     id: 'psd',
@@ -101,37 +108,44 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     id: 'wbmp',
     animation: false,
     lazyBytes: 4_000,
-    supports: ['decode', 'encode'],
+    supports: ['decode'],
     load: () => import('./simple/wbmp.js'),
+    encodeUnavailableReason:
+      'WBMP encoding is not available in the production browser export path.',
   },
   {
     id: 'xbm',
     animation: false,
     lazyBytes: 4_000,
-    supports: ['decode', 'encode'],
+    supports: ['decode'],
     load: () => import('./simple/xbm.js'),
+    encodeUnavailableReason: 'XBM encoding is not available in the production browser export path.',
   },
   {
     id: 'tga',
     animation: false,
     lazyBytes: 18_000,
-    supports: ['decode', 'encode'],
+    supports: ['decode'],
     load: () => import('./simple/tga.js'),
+    encodeUnavailableReason: 'TGA encoding is not available in the production browser export path.',
   },
   {
     id: 'sun-raster',
     animation: false,
     lazyBytes: 6_000,
-    supports: ['decode', 'encode'],
+    supports: ['decode'],
     load: () => import('./simple/sun-raster.js'),
+    encodeUnavailableReason:
+      'Sun Raster encoding is not available in the production browser export path.',
   },
   {
     id: 'sgi',
     animation: false,
     lazyBytes: 7_000,
-    supports: ['decode', 'encode'],
+    supports: ['decode'],
     load: () => import('./simple/sgi.js'),
     unavailableReason: 'SGI RLE decoding is not implemented.',
+    encodeUnavailableReason: 'SGI encoding is not available in the production browser export path.',
   },
   {
     id: 'exr',
@@ -145,15 +159,18 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     id: 'fits',
     animation: false,
     lazyBytes: 7_000,
-    supports: ['decode', 'encode'],
+    supports: ['decode'],
     load: () => import('./simple/fits.js'),
+    encodeUnavailableReason:
+      'FITS encoding is not available in the production browser export path.',
   },
   {
     id: 'hdr',
     animation: false,
     lazyBytes: 7_000,
-    supports: ['decode', 'encode'],
+    supports: ['decode'],
     load: () => import('./simple/hdr.js'),
+    encodeUnavailableReason: 'HDR encoding is not available in the production browser export path.',
   },
   {
     id: 'png',
@@ -173,8 +190,9 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     id: 'gif',
     animation: true,
     lazyBytes: 180_000,
-    supports: ['decode', 'encode'],
+    supports: ['decode'],
     load: () => import('./third-party/gif.js'),
+    encodeUnavailableReason: 'GIF encoding is not available in the production browser export path.',
   },
   {
     id: 'avif',
@@ -189,15 +207,18 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     id: 'bmp',
     animation: false,
     lazyBytes: 45_000,
-    supports: ['decode', 'encode'],
+    supports: ['decode'],
     load: () => import('./simple/bmp.js'),
+    encodeUnavailableReason: 'BMP encoding is not available in the production browser export path.',
   },
   {
     id: 'tiff',
     animation: true,
     lazyBytes: 620_000,
-    supports: ['decode', 'encode'],
+    supports: ['decode'],
     load: () => import('./third-party/tiff.js'),
+    encodeUnavailableReason:
+      'TIFF encoding is not available in the production browser export path.',
   },
   {
     id: 'jxl',
@@ -214,6 +235,12 @@ export function getCodec(id: FormatId): CodecDescriptor {
   const codec = codecRegistry.find((entry) => entry.id === id);
   if (!codec) throw new Error(`No codec registry entry exists for ${id}.`);
   return codec;
+}
+
+export function productionEncoderFormats(): FormatId[] {
+  return codecRegistry
+    .filter((codec) => codec.supports.includes('encode'))
+    .map((codec) => codec.id);
 }
 
 export function codecCapabilities(runtime: RuntimeCapabilities): FormatCapability[] {
@@ -235,11 +262,17 @@ export function codecCapabilities(runtime: RuntimeCapabilities): FormatCapabilit
         : 'unavailable',
       animation: codec.animation,
       lazyBytes: codec.lazyBytes,
-      ...(codec.unavailableReason
-        ? { unavailableReason: codec.unavailableReason }
-        : codec.load
-          ? {}
-          : { unavailableReason: 'Codec implementation is not installed yet.' }),
+      ...(codec.supports.includes('encode')
+        ? codec.unavailableReason
+          ? { unavailableReason: codec.unavailableReason }
+          : {}
+        : codec.encodeUnavailableReason
+          ? { unavailableReason: codec.encodeUnavailableReason }
+          : codec.unavailableReason
+            ? { unavailableReason: codec.unavailableReason }
+            : codec.load
+              ? {}
+              : { unavailableReason: 'Codec implementation is not installed yet.' }),
     };
   });
 }

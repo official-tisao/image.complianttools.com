@@ -12,6 +12,10 @@
       "types": "./dist/ops/raster.d.ts",
       "default": "./dist/ops/raster.js"
     },
+    "./codecs/encode": {
+      "types": "./dist/codecs/encode.d.ts",
+      "default": "./dist/codecs/encode.js"
+    },
     "./pipeline/execute": {
       "types": "./dist/pipeline/execute.d.ts",
       "default": "./dist/pipeline/execute.js"
