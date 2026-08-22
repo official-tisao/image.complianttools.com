@@ -399,7 +399,7 @@ upstreams are permissive (BSD-3, BSD-2), so the obstacle is a build we do not ow
 
 #### P2-07 · RAW pipeline Stage 2 (**ours**) — DNG first
 - [x] Demosaic (bilinear, VNG, AHD), black/white levels, WB, colour matrix, tone curve
-- [ ] Full option surface from README §5.3
+- [x] Full option surface from README §5.3
 - [x] Formats without Stage 2 say so plainly rather than silently using Stage 1
 - **Spec:** README §5.3 · **Done when:** DNG develops correctly vs a reference; unsupported formats report honestly
 
