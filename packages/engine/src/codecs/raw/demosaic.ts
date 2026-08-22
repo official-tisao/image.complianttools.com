@@ -53,6 +53,188 @@ export function demosaicBilinear(
   return createRaster(width, height, output);
 }
 
+type DemosaicAlgorithm = 'vng' | 'ahd';
+
+function validateMosaic(
+  samples: Uint16Array,
+  width: number,
+  height: number,
+  blackLevel: number,
+  whiteLevel: number,
+): void {
+  if (width < 1 || height < 1 || samples.length !== width * height || whiteLevel <= blackLevel)
+    throw new Error('Invalid Bayer mosaic dimensions or levels.');
+}
+
+function demosaicDirectional(
+  samples: Uint16Array,
+  width: number,
+  height: number,
+  pattern: BayerPattern,
+  blackLevel: number,
+  whiteLevel: number,
+  algorithm: DemosaicAlgorithm,
+): RasterImage {
+  validateMosaic(samples, width, height, blackLevel, whiteLevel);
+  const count = width * height;
+  const raw = new Float64Array(count);
+  for (let index = 0; index < count; index += 1)
+    raw[index] =
+      (Math.max(blackLevel, Math.min(whiteLevel, samples[index]!)) - blackLevel) /
+      (whiteLevel - blackLevel);
+  const at = (x: number, y: number) => raw[y * width + x]!;
+  const valid = (x: number, y: number) => x >= 0 && x < width && y >= 0 && y < height;
+  const average = (values: number[], fallback: number) =>
+    values.length === 0 ? fallback : values.reduce((sum, value) => sum + value, 0) / values.length;
+  const directionalGreen = (x: number, y: number, horizontal: boolean) => {
+    const center = at(x, y);
+    const adjacent: number[] = [];
+    const same: number[] = [];
+    for (const sign of [-1, 1]) {
+      const ax = x + (horizontal ? sign : 0);
+      const ay = y + (horizontal ? 0 : sign);
+      if (valid(ax, ay) && colorAt(pattern, ax, ay) === 'g') adjacent.push(at(ax, ay));
+      const sx = x + (horizontal ? sign * 2 : 0);
+      const sy = y + (horizontal ? 0 : sign * 2);
+      if (valid(sx, sy)) same.push(at(sx, sy));
+    }
+    return Math.max(
+      0,
+      Math.min(1, average(adjacent, center) + (center - average(same, center)) / 2),
+    );
+  };
+  const greenH = new Float64Array(count);
+  const greenV = new Float64Array(count);
+  for (let y = 0; y < height; y += 1)
+    for (let x = 0; x < width; x += 1) {
+      const index = y * width + x;
+      if (colorAt(pattern, x, y) === 'g') greenH[index] = greenV[index] = at(x, y);
+      else {
+        greenH[index] = directionalGreen(x, y, true);
+        greenV[index] = directionalGreen(x, y, false);
+      }
+    }
+
+  const buildCandidate = (green: Float64Array) => {
+    const candidate = new Float64Array(count * 3);
+    for (let y = 0; y < height; y += 1)
+      for (let x = 0; x < width; x += 1) {
+        const index = y * width + x;
+        const own = colorAt(pattern, x, y);
+        for (const [channelIndex, wanted] of ['r', 'g', 'b'].entries()) {
+          if (wanted === 'g') candidate[index * 3 + channelIndex] = green[index]!;
+          else if (own === wanted) candidate[index * 3 + channelIndex] = at(x, y);
+          else {
+            const differences: number[] = [];
+            for (let dy = -1; dy <= 1; dy += 1)
+              for (let dx = -1; dx <= 1; dx += 1) {
+                if ((dx === 0 && dy === 0) || !valid(x + dx, y + dy)) continue;
+                if (colorAt(pattern, x + dx, y + dy) === wanted) {
+                  const neighbour = (y + dy) * width + x + dx;
+                  differences.push(at(x + dx, y + dy) - green[neighbour]!);
+                }
+              }
+            candidate[index * 3 + channelIndex] = Math.max(
+              0,
+              Math.min(1, green[index]! + average(differences, 0)),
+            );
+          }
+        }
+      }
+    return candidate;
+  };
+
+  let horizontal: Float64Array;
+  let vertical: Float64Array;
+  if (algorithm === 'vng') {
+    const selected = new Float64Array(count);
+    for (let y = 0; y < height; y += 1)
+      for (let x = 0; x < width; x += 1) {
+        const index = y * width + x;
+        const horizontalGradient =
+          (valid(x - 1, y) && valid(x + 1, y) ? Math.abs(at(x - 1, y) - at(x + 1, y)) : 1) +
+          (valid(x - 2, y) && valid(x + 2, y) ? Math.abs(at(x - 2, y) - at(x + 2, y)) : 0);
+        const verticalGradient =
+          (valid(x, y - 1) && valid(x, y + 1) ? Math.abs(at(x, y - 1) - at(x, y + 1)) : 1) +
+          (valid(x, y - 2) && valid(x, y + 2) ? Math.abs(at(x, y - 2) - at(x, y + 2)) : 0);
+        selected[index] =
+          horizontalGradient < verticalGradient
+            ? greenH[index]!
+            : verticalGradient < horizontalGradient
+              ? greenV[index]!
+              : (greenH[index]! + greenV[index]!) / 2;
+      }
+    horizontal = vertical = buildCandidate(selected);
+  } else {
+    horizontal = buildCandidate(greenH);
+    vertical = buildCandidate(greenV);
+  }
+
+  const homogeneityCost = (candidate: Float64Array, x: number, y: number) => {
+    const index = y * width + x;
+    let cost = 0;
+    for (const [dx, dy] of [
+      [-1, 0],
+      [1, 0],
+      [0, -1],
+      [0, 1],
+    ] as const) {
+      if (!valid(x + dx, y + dy)) continue;
+      const neighbour = (y + dy) * width + x + dx;
+      const luminance =
+        0.299 * candidate[index * 3]! +
+        0.587 * candidate[index * 3 + 1]! +
+        0.114 * candidate[index * 3 + 2]!;
+      const neighbourLuminance =
+        0.299 * candidate[neighbour * 3]! +
+        0.587 * candidate[neighbour * 3 + 1]! +
+        0.114 * candidate[neighbour * 3 + 2]!;
+      const chroma = candidate[index * 3]! - candidate[index * 3 + 2]!;
+      const neighbourChroma = candidate[neighbour * 3]! - candidate[neighbour * 3 + 2]!;
+      cost += Math.abs(luminance - neighbourLuminance) + 0.5 * Math.abs(chroma - neighbourChroma);
+    }
+    return cost;
+  };
+  const output = new Uint8ClampedArray(count * 4);
+  for (let y = 0; y < height; y += 1)
+    for (let x = 0; x < width; x += 1) {
+      const index = y * width + x;
+      const candidate =
+        algorithm === 'ahd' && homogeneityCost(vertical, x, y) < homogeneityCost(horizontal, x, y)
+          ? vertical
+          : horizontal;
+      output[index * 4] = Math.round(candidate[index * 3]! * 255);
+      output[index * 4 + 1] = Math.round(candidate[index * 3 + 1]! * 255);
+      output[index * 4 + 2] = Math.round(candidate[index * 3 + 2]! * 255);
+      output[index * 4 + 3] = 255;
+    }
+  return createRaster(width, height, output);
+}
+
+/** Variable Number of Gradients demosaic with per-pixel directional selection. */
+export function demosaicVng(
+  samples: Uint16Array,
+  width: number,
+  height: number,
+  pattern: BayerPattern = 'RGGB',
+  blackLevel = 0,
+  whiteLevel = 65535,
+): RasterImage {
+  return demosaicDirectional(samples, width, height, pattern, blackLevel, whiteLevel, 'vng');
+}
+
+/** Adaptive Homogeneity-Directed demosaic using horizontal and vertical colour-difference candidates. */
+export function demosaicAhd(
+  samples: Uint16Array,
+  width: number,
+  height: number,
+  pattern: BayerPattern = 'RGGB',
+  blackLevel = 0,
+  whiteLevel = 65535,
+): RasterImage {
+  return demosaicDirectional(samples, width, height, pattern, blackLevel, whiteLevel, 'ahd');
+}
+
 /** Applies DNG-style channel gains and a 3×3 colour matrix to a developed raster. */
 export function applyRawColourTransform(
   image: RasterImage,
