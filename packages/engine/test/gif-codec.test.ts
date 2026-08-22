@@ -106,6 +106,17 @@ describe('GIF encoder', () => {
     expect(decodeGif(wu)).toMatchObject({ width: 512, height: 1 });
   });
 
+  it('uses a deterministic self-organizing neural palette', () => {
+    const pixels = new Uint8ClampedArray(512 * 4);
+    for (let pixel = 0; pixel < 512; pixel += 1)
+      pixels.set([(pixel * 17) & 255, (pixel * 73) & 255, (pixel * 149) & 255, 255], pixel * 4);
+    const image = createRaster(512, 1, pixels);
+    const neural = new Uint8Array(encodeGif(image, 0, { quantizer: 'neural' }));
+    expect(neural).not.toEqual(new Uint8Array(encodeGif(image, 0, { quantizer: 'fixed-332' })));
+    expect(new Uint8Array(encodeGif(image, 0, { quantizer: 'neural' }))).toEqual(neural);
+    expect(decodeGif(neural)).toMatchObject({ width: 512, height: 1 });
+  });
+
   it('offers deterministic Floyd-Steinberg palette-error diffusion', () => {
     const pixels = new Uint8ClampedArray(32 * 4);
     for (let pixel = 0; pixel < 32; pixel += 1) {

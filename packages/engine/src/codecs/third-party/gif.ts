@@ -8,7 +8,7 @@ export interface GifEncodeOptions {
   /** Deterministic colour reduction from 0 (off) through 200 (strongest). */
   readonly lossy?: number;
   /** Palette construction strategy. Median-cut uses a weighted histogram over all frames. */
-  readonly quantizer?: 'fixed-332' | 'median-cut' | 'octree' | 'wu';
+  readonly quantizer?: 'fixed-332' | 'median-cut' | 'octree' | 'wu' | 'neural';
   /** Optional palette-error diffusion. */
   readonly dither?: 'none' | 'ordered' | 'floyd-steinberg';
   /** GIF89a disposal method. Automatic uses background disposal for transparent full frames. */
@@ -371,6 +371,79 @@ function wuPalette(image: RasterImage, lossy = 0): Uint8Array {
   return palette;
 }
 
+/** Independent deterministic self-organizing-map quantizer; no NeuQuant code is used. */
+function neuralPalette(image: RasterImage, lossy = 0): Uint8Array {
+  const samples: number[] = [];
+  const opaquePixels = image.frames.reduce(
+    (total, frame) =>
+      total +
+      frame.data.reduce(
+        (count, alpha, index) => count + (index % 4 === 3 && alpha >= 128 ? 1 : 0),
+        0,
+      ),
+    0,
+  );
+  const stride = Math.max(1, Math.floor(opaquePixels / 4096));
+  let seen = 0;
+  for (const frame of image.frames)
+    for (let offset = 0; offset < frame.data.length; offset += 4) {
+      if (frame.data[offset + 3]! < 128) continue;
+      if (seen % stride === 0 && samples.length < 4096 * 3)
+        samples.push(
+          reduceChannel(frame.data[offset]!, lossy),
+          reduceChannel(frame.data[offset + 1]!, lossy),
+          reduceChannel(frame.data[offset + 2]!, lossy),
+        );
+      seen += 1;
+    }
+  if (samples.length === 0) samples.push(0, 0, 0);
+  const neurons = new Float64Array(255 * 3);
+  const sampleCount = samples.length / 3;
+  for (let neuron = 0; neuron < 255; neuron += 1) {
+    const sample = Math.min(sampleCount - 1, Math.floor((neuron * sampleCount) / 255));
+    neurons.set(samples.slice(sample * 3, sample * 3 + 3), neuron * 3);
+  }
+  for (let epoch = 0; epoch < 10; epoch += 1) {
+    const progress = epoch / 9;
+    const learningRate = 0.45 * (1 - progress) + 0.04 * progress;
+    const radius = Math.max(1, Math.round(24 * (1 - progress)));
+    const step = 1 + ((epoch * 499) % sampleCount);
+    for (let iteration = 0, sample = epoch % sampleCount; iteration < sampleCount; iteration += 1) {
+      const source = sample * 3;
+      let winner = 0;
+      let distance = Number.POSITIVE_INFINITY;
+      for (let neuron = 0; neuron < 255; neuron += 1) {
+        const target = neuron * 3;
+        const next =
+          (samples[source]! - neurons[target]!) ** 2 +
+          (samples[source + 1]! - neurons[target + 1]!) ** 2 +
+          (samples[source + 2]! - neurons[target + 2]!) ** 2;
+        if (next < distance) {
+          distance = next;
+          winner = neuron;
+        }
+      }
+      const first = Math.max(0, winner - radius);
+      const last = Math.min(254, winner + radius);
+      for (let neuron = first; neuron <= last; neuron += 1) {
+        const influence = learningRate * (1 - Math.abs(neuron - winner) / (radius + 1));
+        const target = neuron * 3;
+        neurons[target] = neurons[target]! + (samples[source]! - neurons[target]!) * influence;
+        neurons[target + 1] =
+          neurons[target + 1]! + (samples[source + 1]! - neurons[target + 1]!) * influence;
+        neurons[target + 2] =
+          neurons[target + 2]! + (samples[source + 2]! - neurons[target + 2]!) * influence;
+      }
+      sample = (sample + step) % sampleCount;
+    }
+  }
+  const palette = new Uint8Array(256 * 3);
+  for (let neuron = 0; neuron < 255; neuron += 1)
+    for (let channel = 0; channel < 3; channel += 1)
+      palette[(neuron + 1) * 3 + channel] = Math.round(neurons[neuron * 3 + channel]!);
+  return palette;
+}
+
 function nearestPaletteIndex(
   palette: Uint8Array,
   red: number,
@@ -443,7 +516,8 @@ function paletteIndexes(
       const index =
         options.quantizer === 'median-cut' ||
         options.quantizer === 'octree' ||
-        options.quantizer === 'wu'
+        options.quantizer === 'wu' ||
+        options.quantizer === 'neural'
           ? nearestPaletteIndex(palette, red, green, blue)
           : fixedPaletteIndex(red, green, blue);
       indexes[pixel] = index;
@@ -529,11 +603,14 @@ export function encodeGif(
         ? octreePalette(source, options.lossy)
         : options.quantizer === 'wu'
           ? wuPalette(source, options.lossy)
-          : new Uint8Array(256 * 3);
+          : options.quantizer === 'neural'
+            ? neuralPalette(source, options.lossy)
+            : new Uint8Array(256 * 3);
   if (
     options.quantizer !== 'median-cut' &&
     options.quantizer !== 'octree' &&
-    options.quantizer !== 'wu'
+    options.quantizer !== 'wu' &&
+    options.quantizer !== 'neural'
   ) {
     for (let red = 0; red < 7; red += 1) {
       for (let green = 0; green < 8; green += 1) {
