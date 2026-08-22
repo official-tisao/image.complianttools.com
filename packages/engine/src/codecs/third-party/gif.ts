@@ -749,10 +749,10 @@ function frameRectangle(
 /** Encodes local 8-bit frames as an animated GIF89a with configurable palette generation. */
 export function encodeGif(
   image: RasterImage,
-  loopCount = 0,
+  loopCount: number | null = 0,
   options: GifEncodeOptions = {},
 ): ArrayBuffer {
-  if (!Number.isInteger(loopCount) || loopCount < 0 || loopCount > 65_535)
+  if (loopCount !== null && (!Number.isInteger(loopCount) || loopCount < 0 || loopCount > 65_535))
     throw new Error('GIF loop count must be an integer from 0 through 65535.');
   const source =
     options.optimizeLevel && options.optimizeLevel > 0
@@ -819,9 +819,11 @@ export function encodeGif(
   bytes.push(globalPalette ? 0xf0 | tableSizeCode : 0x70, 0, 0);
   if (globalPalette)
     bytes.push(...remapTransparency(globalPalette, new Uint8Array(), transparencyIndex).palette);
-  bytes.push(0x21, 0xff, 11, ...new TextEncoder().encode('NETSCAPE2.0'), 3, 1);
-  push16(bytes, loopCount);
-  bytes.push(0);
+  if (loopCount !== null) {
+    bytes.push(0x21, 0xff, 11, ...new TextEncoder().encode('NETSCAPE2.0'), 3, 1);
+    push16(bytes, loopCount);
+    bytes.push(0);
+  }
   for (const { frame, rectangle, palette, indexes } of prepared) {
     const hasTransparentPixels = frame.data.some(
       (_, index) => index % 4 === 3 && frame.data[index]! < 128,
@@ -947,7 +949,11 @@ export function decodeGif(input: ArrayBuffer | Uint8Array): RasterImage {
         canvas.set(frame.patch.subarray(sourceOffset, sourceOffset + 4), target + x * 4);
       }
     }
-    const result = { data: canvas.slice(), durationMs: Math.max(10, frame.delay * 10) };
+    // gifuct-js exposes the GIF centisecond delay converted to milliseconds.
+    const result = {
+      data: canvas.slice(),
+      durationMs: Number.isFinite(frame.delay) ? Math.max(10, frame.delay) : 10,
+    };
     previousFrame = frame.dims;
     previousDisposal = frame.disposalType;
     previousCanvas = restoreCanvas;
@@ -960,5 +966,87 @@ export function decodeGif(input: ArrayBuffer | Uint8Array): RasterImage {
     bitDepth: 8,
     premultipliedAlpha: false,
     frames: frames as unknown as RasterImage['frames'],
+  };
+}
+
+/** Returns the Netscape animation loop count, or `null` when no loop extension is present. */
+export function readGifLoopCount(input: ArrayBuffer | Uint8Array): number | null {
+  const bytes = input instanceof Uint8Array ? input : new Uint8Array(input);
+  const signature = new TextEncoder().encode('NETSCAPE2.0');
+  for (let offset = 0; offset <= bytes.length - signature.length; offset += 1) {
+    let matches = true;
+    for (let index = 0; index < signature.length; index += 1)
+      if (bytes[offset + index] !== signature[index]) {
+        matches = false;
+        break;
+      }
+    if (!matches) continue;
+    const subBlock = offset + signature.length;
+    if (bytes[subBlock] === 3 && bytes[subBlock + 1] === 1 && bytes[subBlock + 4] === 0)
+      return bytes[subBlock + 2]! | (bytes[subBlock + 3]! << 8);
+  }
+  return null;
+}
+
+function gifRasterSequenceEquals(left: RasterImage, right: RasterImage): boolean {
+  if (
+    left.width !== right.width ||
+    left.height !== right.height ||
+    left.frames.length !== right.frames.length
+  )
+    return false;
+  return left.frames.every((frame, frameIndex) => {
+    const other = right.frames[frameIndex]!;
+    return (
+      frame.durationMs === other.durationMs &&
+      frame.data.length === other.data.length &&
+      frame.data.every((value, index) => value === other.data[index])
+    );
+  });
+}
+
+export interface LosslessGifOptimizationResult {
+  readonly bytes: ArrayBuffer;
+  readonly changed: boolean;
+  readonly originalBytes: number;
+  readonly optimizedBytes: number;
+}
+
+/**
+ * Conservatively optimizes a GIF and independently verifies rendered frames,
+ * timing, dimensions, and loop semantics before returning changed bytes.
+ */
+export function optimizeGifLossless(
+  input: ArrayBuffer | Uint8Array,
+): LosslessGifOptimizationResult {
+  const source = input instanceof Uint8Array ? input.slice() : new Uint8Array(input.slice(0));
+  const original = decodeGif(source);
+  const loopCount = readGifLoopCount(source);
+  let best = source;
+  for (const optimizeLevel of [3, 2, 1, 0] as const) {
+    const candidate = new Uint8Array(
+      encodeGif(original, loopCount, {
+        optimizeLevel,
+        paletteMode: 'per-frame',
+        paletteSize: 256,
+        quantizer: 'wu',
+        dither: 'none',
+        disposal: 'none',
+      }),
+    );
+    if (candidate.byteLength >= best.byteLength) continue;
+    try {
+      const decoded = decodeGif(candidate);
+      if (readGifLoopCount(candidate) === loopCount && gifRasterSequenceEquals(original, decoded))
+        best = candidate;
+    } catch {
+      // A failed verification candidate is ignored; the original remains authoritative.
+    }
+  }
+  return {
+    bytes: best.buffer.slice(best.byteOffset, best.byteOffset + best.byteLength),
+    changed: best.byteLength < source.byteLength,
+    originalBytes: source.byteLength,
+    optimizedBytes: best.byteLength,
   };
 }

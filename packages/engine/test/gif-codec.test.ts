@@ -5,6 +5,8 @@ import {
   encodeGif,
   generateGifFrames,
   optimiseGifFrames,
+  optimizeGifLossless,
+  readGifLoopCount,
 } from '../src/index.js';
 
 describe('GIF encoder', () => {
@@ -46,13 +48,67 @@ describe('GIF encoder', () => {
     } as typeof image;
     expect(() => encodeGif(invalid)).toThrow(/frame delays/u);
   });
+
+  it('preserves absence of a loop extension when requested', () => {
+    const image = createRaster(1, 1, new Uint8ClampedArray([1, 2, 3, 255]));
+    expect(readGifLoopCount(encodeGif(image, null))).toBeNull();
+    expect(readGifLoopCount(encodeGif(image, 7))).toBe(7);
+  });
+
+  it('returns only a smaller independently pixel-verified lossless GIF', () => {
+    const image = createRaster(2, 1, new Uint8ClampedArray([255, 0, 0, 255, 0, 0, 255, 255]));
+    const encoded = new Uint8Array(encodeGif(image, 7));
+    const comment = new TextEncoder().encode('generated removable comment '.repeat(8));
+    const inflated = new Uint8Array(encoded.length + comment.length + 4);
+    inflated.set(encoded.subarray(0, -1));
+    let target = encoded.length - 1;
+    inflated.set([0x21, 0xfe, comment.length], target);
+    target += 3;
+    inflated.set(comment, target);
+    inflated[target + comment.length] = 0;
+    inflated[inflated.length - 1] = 0x3b;
+
+    const directCandidate = encodeGif(decodeGif(inflated), 7, {
+      optimizeLevel: 0,
+      paletteMode: 'per-frame',
+      paletteSize: 256,
+      quantizer: 'wu',
+      dither: 'none',
+      disposal: 'none',
+    });
+    expect(decodeGif(directCandidate)).toEqual(decodeGif(inflated));
+    const result = optimizeGifLossless(inflated);
+    expect(result.changed).toBe(true);
+    expect(result.optimizedBytes).toBeLessThan(result.originalBytes);
+    expect(readGifLoopCount(result.bytes)).toBe(7);
+    expect(decodeGif(result.bytes)).toEqual(decodeGif(inflated));
+  });
+
+  it('preserves no-loop semantics while optimizing a still GIF', () => {
+    const image = createRaster(1, 1, new Uint8ClampedArray([20, 40, 60, 255]));
+    const encoded = new Uint8Array(encodeGif(image, null));
+    const result = optimizeGifLossless(encoded);
+    expect(readGifLoopCount(result.bytes)).toBeNull();
+    expect(decodeGif(result.bytes)).toEqual(decodeGif(encoded));
+    expect(result.optimizedBytes).toBeLessThanOrEqual(result.originalBytes);
+  });
+
+  it('normalizes a legacy still GIF with no graphic-control delay', () => {
+    const legacy = Uint8Array.from(
+      Buffer.from('R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==', 'base64'),
+    );
+    expect(decodeGif(legacy).frames[0].durationMs).toBe(10);
+    expect(() => optimizeGifLossless(legacy)).not.toThrow();
+  });
   it('encodes an animated GIF that decodes to its original frame count', () => {
     const image = createRaster(2, 1, new Uint8ClampedArray([255, 0, 0, 255, 0, 255, 0, 255]));
     const animated = {
       ...image,
       frames: [image.frames[0], { data: image.frames[0].data.slice(), durationMs: 40 }],
     } as typeof image;
-    expect(decodeGif(encodeGif(animated)).frames).toHaveLength(2);
+    const decoded = decodeGif(encodeGif(animated));
+    expect(decoded.frames).toHaveLength(2);
+    expect(decoded.frames.map((frame) => frame.durationMs)).toEqual([10, 40]);
   });
 
   it('uses dictionary LZW compression for repeated pixels', () => {
