@@ -235,6 +235,140 @@ export function demosaicAhd(
   return demosaicDirectional(samples, width, height, pattern, blackLevel, whiteLevel, 'ahd');
 }
 
+function normalizedMosaic(
+  samples: Uint16Array,
+  width: number,
+  height: number,
+  blackLevel: number,
+  whiteLevel: number,
+): Float64Array {
+  validateMosaic(samples, width, height, blackLevel, whiteLevel);
+  return Float64Array.from(samples, (sample) =>
+    Math.max(0, Math.min(1, (sample - blackLevel) / (whiteLevel - blackLevel))),
+  );
+}
+
+function rasterFromLinearRgb(rgb: Float64Array, width: number, height: number): RasterImage {
+  const output = new Uint8ClampedArray(width * height * 4);
+  for (let index = 0; index < width * height; index += 1) {
+    output[index * 4] = Math.round(Math.max(0, Math.min(1, rgb[index * 3]!)) * 255);
+    output[index * 4 + 1] = Math.round(Math.max(0, Math.min(1, rgb[index * 3 + 1]!)) * 255);
+    output[index * 4 + 2] = Math.round(Math.max(0, Math.min(1, rgb[index * 3 + 2]!)) * 255);
+    output[index * 4 + 3] = 255;
+  }
+  return createRaster(width, height, output);
+}
+
+/** Patterned Pixel Grouping demosaic with directional green and colour-difference interpolation. */
+export function demosaicPpg(
+  samples: Uint16Array,
+  width: number,
+  height: number,
+  pattern: BayerPattern = 'RGGB',
+  blackLevel = 0,
+  whiteLevel = 65535,
+): RasterImage {
+  const raw = normalizedMosaic(samples, width, height, blackLevel, whiteLevel);
+  const seed = demosaicBilinear(samples, width, height, pattern, blackLevel, whiteLevel);
+  const rgb = Float64Array.from(seed.frames[0].data, (value, index) =>
+    index % 4 === 3 ? 1 : value / 255,
+  ).filter((_, index) => index % 4 !== 3);
+  const at = (x: number, y: number) => raw[y * width + x]!;
+  const component = (x: number, y: number, channel: number) => rgb[(y * width + x) * 3 + channel]!;
+  const set = (x: number, y: number, channel: number, value: number) => {
+    rgb[(y * width + x) * 3 + channel] = Math.max(0, Math.min(1, value));
+  };
+  for (let y = 2; y < height - 2; y += 1)
+    for (let x = 2; x < width - 2; x += 1) {
+      const own = colorAt(pattern, x, y);
+      if (own === 'g') continue;
+      const center = at(x, y);
+      const horizontal =
+        (at(x - 1, y) + at(x + 1, y)) / 2 + (2 * center - at(x - 2, y) - at(x + 2, y)) / 4;
+      const vertical =
+        (at(x, y - 1) + at(x, y + 1)) / 2 + (2 * center - at(x, y - 2) - at(x, y + 2)) / 4;
+      const horizontalGradient =
+        Math.abs(at(x - 1, y) - at(x + 1, y)) + Math.abs(2 * center - at(x - 2, y) - at(x + 2, y));
+      const verticalGradient =
+        Math.abs(at(x, y - 1) - at(x, y + 1)) + Math.abs(2 * center - at(x, y - 2) - at(x, y + 2));
+      set(x, y, 1, horizontalGradient < verticalGradient ? horizontal : vertical);
+    }
+  for (let y = 1; y < height - 1; y += 1)
+    for (let x = 1; x < width - 1; x += 1) {
+      const own = colorAt(pattern, x, y);
+      const green = component(x, y, 1);
+      for (const [channel, wanted] of [
+        [0, 'r'],
+        [2, 'b'],
+      ] as const) {
+        if (own === wanted) {
+          set(x, y, channel, at(x, y));
+          continue;
+        }
+        const neighbours: Array<readonly [number, number]> = [];
+        if (own === 'g') {
+          const horizontal = colorAt(pattern, x - 1, y) === wanted;
+          if (horizontal) neighbours.push([x - 1, y], [x + 1, y]);
+          else neighbours.push([x, y - 1], [x, y + 1]);
+        } else {
+          neighbours.push([x - 1, y - 1], [x + 1, y - 1], [x - 1, y + 1], [x + 1, y + 1]);
+        }
+        const difference =
+          neighbours.reduce((sum, [nx, ny]) => sum + at(nx, ny) - component(nx, ny, 1), 0) /
+          neighbours.length;
+        set(x, y, channel, green + difference);
+      }
+    }
+  return rasterFromLinearRgb(rgb, width, height);
+}
+
+/** Iterative Directional-Correction Bayer demosaic seeded by PPG colour differences. */
+export function demosaicDcb(
+  samples: Uint16Array,
+  width: number,
+  height: number,
+  pattern: BayerPattern = 'RGGB',
+  blackLevel = 0,
+  whiteLevel = 65535,
+): RasterImage {
+  normalizedMosaic(samples, width, height, blackLevel, whiteLevel);
+  const seed = demosaicPpg(samples, width, height, pattern, blackLevel, whiteLevel);
+  let rgb = new Float64Array(width * height * 3);
+  for (let index = 0; index < width * height; index += 1)
+    for (let channel = 0; channel < 3; channel += 1)
+      rgb[index * 3 + channel] = seed.frames[0].data[index * 4 + channel]! / 255;
+  for (let iteration = 0; iteration < 3; iteration += 1) {
+    const next = rgb.slice();
+    for (let y = 1; y < height - 1; y += 1)
+      for (let x = 1; x < width - 1; x += 1) {
+        const own = colorAt(pattern, x, y);
+        if (own === 'g') continue;
+        const channel = own === 'r' ? 0 : 2;
+        const index = y * width + x;
+        const horizontal =
+          (rgb[(index - 1) * 3 + 1]! + rgb[(index + 1) * 3 + 1]!) / 2 +
+          rgb[index * 3 + channel]! -
+          (rgb[(index - 2 >= 0 ? index - 1 : index) * 3 + channel]! +
+            rgb[(index + 1 < width * height ? index + 1 : index) * 3 + channel]!) /
+            2;
+        const vertical =
+          (rgb[(index - width) * 3 + 1]! + rgb[(index + width) * 3 + 1]!) / 2 +
+          rgb[index * 3 + channel]! -
+          (rgb[(index - width) * 3 + channel]! + rgb[(index + width) * 3 + channel]!) / 2;
+        const horizontalGradient = Math.abs(rgb[(index - 1) * 3 + 1]! - rgb[(index + 1) * 3 + 1]!);
+        const verticalGradient = Math.abs(
+          rgb[(index - width) * 3 + 1]! - rgb[(index + width) * 3 + 1]!,
+        );
+        next[index * 3 + 1] = Math.max(
+          0,
+          Math.min(1, horizontalGradient < verticalGradient ? horizontal : vertical),
+        );
+      }
+    rgb = next;
+  }
+  return rasterFromLinearRgb(rgb, width, height);
+}
+
 /** Applies DNG-style channel gains and a 3×3 colour matrix to a developed raster. */
 export function applyRawColourTransform(
   image: RasterImage,

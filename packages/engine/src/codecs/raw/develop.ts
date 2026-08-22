@@ -1,9 +1,16 @@
 import type { ColorSpaceId, RasterImage } from '../../types.js';
-import { applyRawColourTransform, demosaicAhd, demosaicBilinear, demosaicVng } from './demosaic.js';
+import {
+  applyRawColourTransform,
+  demosaicAhd,
+  demosaicBilinear,
+  demosaicDcb,
+  demosaicPpg,
+  demosaicVng,
+} from './demosaic.js';
 import { parseDngMosaic, type DngMosaic } from './dng.js';
 
 export interface DngDevelopOptions {
-  readonly demosaic?: 'linear' | 'vng' | 'ahd';
+  readonly demosaic?: 'linear' | 'vng' | 'ppg' | 'dcb' | 'ahd';
   readonly whiteBalance?: 'as-shot' | 'camera' | 'auto' | 'daylight' | 'custom';
   readonly temperatureKelvin?: number;
   readonly tint?: number;
@@ -179,14 +186,32 @@ export function developDngMosaic(mosaic: DngMosaic, options: DngDevelopOptions =
             mosaic.blackLevel,
             mosaic.whiteLevel,
           )
-        : demosaicAhd(
-            mosaic.samples,
-            mosaic.width,
-            mosaic.height,
-            mosaic.pattern,
-            mosaic.blackLevel,
-            mosaic.whiteLevel,
-          );
+        : demosaic === 'ppg'
+          ? demosaicPpg(
+              mosaic.samples,
+              mosaic.width,
+              mosaic.height,
+              mosaic.pattern,
+              mosaic.blackLevel,
+              mosaic.whiteLevel,
+            )
+          : demosaic === 'dcb'
+            ? demosaicDcb(
+                mosaic.samples,
+                mosaic.width,
+                mosaic.height,
+                mosaic.pattern,
+                mosaic.blackLevel,
+                mosaic.whiteLevel,
+              )
+            : demosaicAhd(
+                mosaic.samples,
+                mosaic.width,
+                mosaic.height,
+                mosaic.pattern,
+                mosaic.blackLevel,
+                mosaic.whiteLevel,
+              );
   return applyDevelopOptions(
     applyRawColourTransform(
       developed,

@@ -18,12 +18,14 @@ const mosaic: DngMosaic = {
 };
 
 describe('DNG develop orchestration', () => {
-  it('selects linear, VNG, and AHD paths with metadata-derived levels and colour', () => {
-    const outputs = (['linear', 'vng', 'ahd'] as const).map((demosaic) =>
+  it('selects linear, VNG, PPG, DCB, and AHD paths with metadata-derived levels and colour', () => {
+    const outputs = (['linear', 'vng', 'ppg', 'dcb', 'ahd'] as const).map((demosaic) =>
       developDngMosaic(mosaic, { demosaic, gamma: 1 }),
     );
     expect(outputs[0]?.frames[0].data).not.toEqual(outputs[1]?.frames[0].data);
     expect(outputs[1]?.frames[0].data).not.toEqual(outputs[2]?.frames[0].data);
+    expect(outputs[2]?.frames[0].data).not.toEqual(outputs[3]?.frames[0].data);
+    expect(outputs[3]?.frames[0].data).not.toEqual(outputs[4]?.frames[0].data);
     for (const output of outputs) expect(output.frames[0].data).toHaveLength(100);
   });
 
