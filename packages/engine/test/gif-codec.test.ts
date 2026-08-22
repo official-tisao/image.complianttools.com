@@ -99,4 +99,42 @@ describe('GIF encoder', () => {
     expect(new Uint8Array(encodeGif(image, 0, { dither: 'floyd-steinberg' }))).toEqual(dithered);
     expect(decodeGif(dithered)).toMatchObject({ width: 32, height: 1 });
   });
+
+  it('offers deterministic ordered palette dithering', () => {
+    const pixels = new Uint8ClampedArray(32 * 4);
+    for (let pixel = 0; pixel < 32; pixel += 1) pixels.set([128, 128, 128, 255], pixel * 4);
+    const image = createRaster(8, 4, pixels);
+    const plain = new Uint8Array(encodeGif(image, 0, { dither: 'none' }));
+    const ordered = new Uint8Array(encodeGif(image, 0, { dither: 'ordered' }));
+    expect(ordered).not.toEqual(plain);
+    expect(new Uint8Array(encodeGif(image, 0, { dither: 'ordered' }))).toEqual(ordered);
+  });
+
+  it.each([
+    ['keep', 1],
+    ['background', 2],
+    ['previous', 3],
+  ] as const)(
+    'writes the %s disposal method into the graphic control extension',
+    (disposal, code) => {
+      const encoded = new Uint8Array(encodeGif(createRaster(1, 1), 0, { disposal }));
+      const extension = encoded.findIndex(
+        (value, index) => value === 0x21 && encoded[index + 1] === 0xf9 && encoded[index + 2] === 4,
+      );
+      expect(extension).toBeGreaterThan(0);
+      expect((encoded[extension + 3]! >> 2) & 7).toBe(code);
+    },
+  );
+
+  it('honors background disposal while compositing decoded animation frames', () => {
+    const image = createRaster(1, 1, new Uint8ClampedArray([255, 0, 0, 255]));
+    const animated = {
+      ...image,
+      frames: [image.frames[0], { data: new Uint8ClampedArray(4), durationMs: 40 }],
+    } as typeof image;
+    const decoded = decodeGif(encodeGif(animated, 0, { disposal: 'background' }));
+    expect(decoded.frames[0].data[0]).toBeGreaterThan(200);
+    expect(decoded.frames[0].data[3]).toBe(255);
+    expect(decoded.frames[1].data).toEqual(new Uint8ClampedArray(4));
+  });
 });

@@ -10,7 +10,9 @@ export interface GifEncodeOptions {
   /** Palette construction strategy. Median-cut uses a weighted histogram over all frames. */
   readonly quantizer?: 'fixed-332' | 'median-cut';
   /** Optional palette-error diffusion. */
-  readonly dither?: 'none' | 'floyd-steinberg';
+  readonly dither?: 'none' | 'ordered' | 'floyd-steinberg';
+  /** GIF89a disposal method. Automatic uses background disposal for transparent full frames. */
+  readonly disposal?: 'auto' | 'keep' | 'background' | 'previous';
 }
 
 function push16(bytes: number[], value: number): void {
@@ -211,6 +213,7 @@ function paletteIndexes(
   palette: Uint8Array,
   options: GifEncodeOptions,
 ): Uint8Array {
+  const bayer4 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5] as const;
   const indexes = new Uint8Array(width * height);
   let currentErrors = new Float64Array((width + 2) * 3);
   let nextErrors = new Float64Array((width + 2) * 3);
@@ -223,22 +226,31 @@ function paletteIndexes(
         continue;
       }
       const errorOffset = (x + 1) * 3;
+      const orderedError =
+        options.dither === 'ordered' ? (bayer4[(y % 4) * 4 + (x % 4)]! - 7.5) * 4 : 0;
       const red = Math.max(
         0,
-        Math.min(255, reduceChannel(data[offset]!, options.lossy) + currentErrors[errorOffset]!),
+        Math.min(
+          255,
+          reduceChannel(data[offset]!, options.lossy) + currentErrors[errorOffset]! + orderedError,
+        ),
       );
       const green = Math.max(
         0,
         Math.min(
           255,
-          reduceChannel(data[offset + 1]!, options.lossy) + currentErrors[errorOffset + 1]!,
+          reduceChannel(data[offset + 1]!, options.lossy) +
+            currentErrors[errorOffset + 1]! +
+            orderedError,
         ),
       );
       const blue = Math.max(
         0,
         Math.min(
           255,
-          reduceChannel(data[offset + 2]!, options.lossy) + currentErrors[errorOffset + 2]!,
+          reduceChannel(data[offset + 2]!, options.lossy) +
+            currentErrors[errorOffset + 2]! +
+            orderedError,
         ),
       );
       const index =
@@ -259,6 +271,13 @@ function paletteIndexes(
     nextErrors = new Float64Array((width + 2) * 3);
   }
   return indexes;
+}
+
+function disposalCode(options: GifEncodeOptions, hasTransparency: boolean): number {
+  if (options.disposal === 'background') return 2;
+  if (options.disposal === 'previous') return 3;
+  if (options.disposal === 'keep') return 1;
+  return hasTransparency && (!options.optimizeLevel || options.optimizeLevel < 2) ? 2 : 1;
 }
 
 function frameRectangle(
@@ -342,7 +361,12 @@ export function encodeGif(
     const hasTransparentPixels = frame.data.some(
       (_, index) => index % 4 === 3 && frame.data[index]! < 128,
     );
-    bytes.push(0x21, 0xf9, 4, hasTransparentPixels ? 1 : 0);
+    bytes.push(
+      0x21,
+      0xf9,
+      4,
+      (disposalCode(options, hasTransparentPixels) << 2) | (hasTransparentPixels ? 1 : 0),
+    );
     push16(bytes, Math.max(1, Math.round(frame.durationMs / 10)));
     bytes.push(0, 0);
     bytes.push(0x2c);
@@ -430,7 +454,24 @@ export function decodeGif(input: ArrayBuffer | Uint8Array): RasterImage {
   const decoded = decompressFrames(parsed, true);
   if (decoded.length === 0) throw new Error('GIF contains no image frames.');
   const canvas = new Uint8ClampedArray(parsed.lsd.width * parsed.lsd.height * 4);
+  let previousFrame:
+    | {
+        readonly left: number;
+        readonly top: number;
+        readonly width: number;
+        readonly height: number;
+      }
+    | undefined;
+  let previousDisposal = 0;
+  let previousCanvas: Uint8ClampedArray | undefined;
   const frames = decoded.map((frame) => {
+    if (previousDisposal === 2 && previousFrame) {
+      for (let y = 0; y < previousFrame.height; y += 1) {
+        const offset = ((previousFrame.top + y) * parsed.lsd.width + previousFrame.left) * 4;
+        canvas.fill(0, offset, offset + previousFrame.width * 4);
+      }
+    } else if (previousDisposal === 3 && previousCanvas) canvas.set(previousCanvas);
+    const restoreCanvas = frame.disposalType === 3 ? canvas.slice() : undefined;
     for (let y = 0; y < frame.dims.height; y += 1) {
       const source = y * frame.dims.width * 4;
       const target = ((frame.dims.top + y) * parsed.lsd.width + frame.dims.left) * 4;
@@ -441,7 +482,11 @@ export function decodeGif(input: ArrayBuffer | Uint8Array): RasterImage {
         canvas.set(frame.patch.subarray(sourceOffset, sourceOffset + 4), target + x * 4);
       }
     }
-    return { data: canvas.slice(), durationMs: Math.max(10, frame.delay * 10) };
+    const result = { data: canvas.slice(), durationMs: Math.max(10, frame.delay * 10) };
+    previousFrame = frame.dims;
+    previousDisposal = frame.disposalType;
+    previousCanvas = restoreCanvas;
+    return result;
   });
   return {
     width: parsed.lsd.width,
