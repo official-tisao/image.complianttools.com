@@ -9,6 +9,8 @@ export interface GifEncodeOptions {
   readonly lossy?: number;
   /** Palette construction strategy. Median-cut uses a weighted histogram over all frames. */
   readonly quantizer?: 'fixed-332' | 'median-cut';
+  /** Optional palette-error diffusion. */
+  readonly dither?: 'none' | 'floyd-steinberg';
 }
 
 function push16(bytes: number[], value: number): void {
@@ -202,6 +204,63 @@ function nearestPaletteIndex(
   return selected;
 }
 
+function paletteIndexes(
+  data: Uint8ClampedArray,
+  width: number,
+  height: number,
+  palette: Uint8Array,
+  options: GifEncodeOptions,
+): Uint8Array {
+  const indexes = new Uint8Array(width * height);
+  let currentErrors = new Float64Array((width + 2) * 3);
+  let nextErrors = new Float64Array((width + 2) * 3);
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const pixel = y * width + x;
+      const offset = pixel * 4;
+      if (data[offset + 3]! < 128) {
+        indexes[pixel] = 0;
+        continue;
+      }
+      const errorOffset = (x + 1) * 3;
+      const red = Math.max(
+        0,
+        Math.min(255, reduceChannel(data[offset]!, options.lossy) + currentErrors[errorOffset]!),
+      );
+      const green = Math.max(
+        0,
+        Math.min(
+          255,
+          reduceChannel(data[offset + 1]!, options.lossy) + currentErrors[errorOffset + 1]!,
+        ),
+      );
+      const blue = Math.max(
+        0,
+        Math.min(
+          255,
+          reduceChannel(data[offset + 2]!, options.lossy) + currentErrors[errorOffset + 2]!,
+        ),
+      );
+      const index =
+        options.quantizer === 'median-cut'
+          ? nearestPaletteIndex(palette, red, green, blue)
+          : fixedPaletteIndex(red, green, blue);
+      indexes[pixel] = index;
+      if (options.dither !== 'floyd-steinberg') continue;
+      for (let channel = 0; channel < 3; channel += 1) {
+        const error = [red, green, blue][channel]! - palette[index * 3 + channel]!;
+        currentErrors[errorOffset + 3 + channel]! += (error * 7) / 16;
+        nextErrors[errorOffset - 3 + channel]! += (error * 3) / 16;
+        nextErrors[errorOffset + channel]! += (error * 5) / 16;
+        nextErrors[errorOffset + 3 + channel]! += error / 16;
+      }
+    }
+    currentErrors = nextErrors;
+    nextErrors = new Float64Array((width + 2) * 3);
+  }
+  return indexes;
+}
+
 function frameRectangle(
   data: Uint8ClampedArray,
   width: number,
@@ -292,25 +351,13 @@ export function encodeGif(
     push16(bytes, rectangle.width);
     push16(bytes, rectangle.height);
     bytes.push(0, 8);
-    const indexes = new Uint8Array(rectangle.width * rectangle.height);
-    for (let pixel = 0; pixel < indexes.length; pixel += 1) {
-      const offset = pixel * 4;
-      indexes[pixel] =
-        options.quantizer === 'median-cut'
-          ? nearestPaletteIndex(
-              palette,
-              reduceChannel(rectangle.data[offset]!, options.lossy),
-              reduceChannel(rectangle.data[offset + 1]!, options.lossy),
-              reduceChannel(rectangle.data[offset + 2]!, options.lossy),
-            )
-          : fixedPaletteIndex(
-              rectangle.data[offset]!,
-              rectangle.data[offset + 1]!,
-              rectangle.data[offset + 2]!,
-              options.lossy,
-            );
-      if (rectangle.data[offset + 3]! < 128) indexes[pixel] = 0;
-    }
+    const indexes = paletteIndexes(
+      rectangle.data,
+      rectangle.width,
+      rectangle.height,
+      palette,
+      options,
+    );
     const data = lzwStream(indexes);
     for (let offset = 0; offset < data.length; offset += 255) {
       const block = data.subarray(offset, offset + 255);

@@ -83,4 +83,20 @@ describe('GIF encoder', () => {
       new Uint8Array(encoded),
     );
   });
+
+  it('offers deterministic Floyd-Steinberg palette-error diffusion', () => {
+    const pixels = new Uint8ClampedArray(32 * 4);
+    for (let pixel = 0; pixel < 32; pixel += 1) {
+      pixels[pixel * 4] = 128;
+      pixels[pixel * 4 + 1] = 128;
+      pixels[pixel * 4 + 2] = 128;
+      pixels[pixel * 4 + 3] = 255;
+    }
+    const image = createRaster(32, 1, pixels);
+    const plain = new Uint8Array(encodeGif(image, 0, { dither: 'none' }));
+    const dithered = new Uint8Array(encodeGif(image, 0, { dither: 'floyd-steinberg' }));
+    expect(dithered).not.toEqual(plain);
+    expect(new Uint8Array(encodeGif(image, 0, { dither: 'floyd-steinberg' }))).toEqual(dithered);
+    expect(decodeGif(dithered)).toMatchObject({ width: 32, height: 1 });
+  });
 });

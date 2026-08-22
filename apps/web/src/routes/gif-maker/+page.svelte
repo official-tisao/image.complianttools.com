@@ -6,6 +6,7 @@
   let optimizeLevel = $state<0 | 1 | 2 | 3>(2);
   let lossy = $state(0);
   let quantizer = $state<'fixed-332' | 'median-cut'>('median-cut');
+  let dither = $state<'none' | 'floyd-steinberg'>('floyd-steinberg');
 
   async function convert(file: File | undefined) {
     status = '';
@@ -25,14 +26,14 @@
         canvas.height,
         context.getImageData(0, 0, canvas.width, canvas.height).data,
       );
-      const bytes = encodeGif(image, 0, { optimizeLevel, lossy, quantizer });
+      const bytes = encodeGif(image, 0, { optimizeLevel, lossy, quantizer, dither });
       const url = URL.createObjectURL(new Blob([bytes], { type: 'image/gif' }));
       const download = document.createElement('a');
       download.href = url;
       download.download = `${file.name.replace(/\.[^.]+$/u, '')}.gif`;
       download.click();
       URL.revokeObjectURL(url);
-      status = `Created a ${canvas.width}×${canvas.height} GIF locally (${bytes.byteLength.toLocaleString()} bytes; ${quantizer}, optimization ${optimizeLevel}, palette reduction ${lossy}).`;
+      status = `Created a ${canvas.width}×${canvas.height} GIF locally (${bytes.byteLength.toLocaleString()} bytes; ${quantizer}, ${dither} dithering, optimization ${optimizeLevel}, palette reduction ${lossy}).`;
     } catch (reason) {
       error = reason instanceof Error ? reason.message : 'Unable to create a GIF.';
     }
@@ -56,6 +57,13 @@
       <option value={1}>1 — merge duplicate frames</option>
       <option value={2}>2 — transparent unchanged pixels</option>
       <option value={3}>3 — maximum local frame optimization</option>
+    </select>
+  </label>
+  <label>
+    Dithering
+    <select bind:value={dither}>
+      <option value="floyd-steinberg">Floyd–Steinberg</option>
+      <option value="none">None</option>
     </select>
   </label>
   <label>
