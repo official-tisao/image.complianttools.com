@@ -404,9 +404,10 @@ upstreams are permissive (BSD-3, BSD-2), so the obstacle is a build we do not ow
 - **Spec:** README §5.3 · **Done when:** DNG develops correctly vs a reference; unsupported formats report honestly
 
 #### P2-08 · HEIC via platform decoder
-- [ ] `ImageDecoder` (WebCodecs) wrapper; capability-probed
-- [ ] **Encode permanently excluded** — UI states this as a decision, not a missing feature
-- [ ] Unsupported platforms get the specific message from README §11.8
+- [x] `ImageDecoder` (WebCodecs) wrapper; capability-probed
+- [x] **Encode permanently excluded** — UI states this as a decision, not a missing feature
+- [x] Unsupported platforms get the specific message from README §11.8
+- [ ] Record real-device decode evidence on macOS/iOS Safari and recent Windows Chrome
 - **Spec:** README §5.2, §25.3.2 · **Done when:** decodes on macOS/iOS Safari + recent Windows Chrome; degrades with a named reason elsewhere
 
 #### P2-09 · Vector and document formats
