@@ -104,6 +104,12 @@ const supportedFormats = {
     summary: 'CUR is the Windows cursor counterpart to ICO and adds a pixel hotspot.',
     notes: 'The local codec reads BMP and PNG payloads and validates the hotspot when exporting.',
   },
+  dds: {
+    name: 'DDS',
+    summary: 'DirectDraw Surface stores GPU-oriented block-compressed texture data.',
+    notes:
+      'The local codec reads and writes single-mip BC1, BC2, BC3, BC4, and BC5 textures. BC7, mip chains, and cubemaps remain unavailable and are not advertised as complete support.',
+  },
   pcx: {
     name: 'PCX',
     summary: 'PCX is a legacy indexed raster format using scanline run-length encoding.',

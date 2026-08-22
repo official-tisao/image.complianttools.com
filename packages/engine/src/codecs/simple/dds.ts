@@ -203,9 +203,12 @@ export function encodeDdsBc1(image: RasterImage): ArrayBuffer {
       const hasTransparency = pixels.some((pixel) => pixel[3] < 128);
       if (hasTransparency) {
         if (first > second) [first, second] = [second, first];
-      } else if (first <= second) {
-        if (second < 0xffff) first = second + 1;
-        else second = first - 1;
+      } else {
+        if (first < second) [first, second] = [second, first];
+        if (first === second) {
+          if (first < 0xffff) first += 1;
+          else second -= 1;
+        }
       }
       const [r0, g0, b0] = rgb565(first);
       const [r1, g1, b1] = rgb565(second);
@@ -254,5 +257,126 @@ export function encodeDdsBc1(image: RasterImage): ArrayBuffer {
       view.setUint32(offset + 4, indexes >>> 0, true);
     }
   }
+  return output.buffer;
+}
+
+export type DdsEncodeVariant = 'bc1' | 'bc2' | 'bc3' | 'bc4' | 'bc5';
+
+function ddsHeader(width: number, height: number, fourCc: string, blockBytes: number): Uint8Array {
+  const blocksWide = Math.ceil(width / 4);
+  const blocksHigh = Math.ceil(height / 4);
+  const output = new Uint8Array(128 + blocksWide * blocksHigh * blockBytes);
+  const view = new DataView(output.buffer);
+  output.set(new TextEncoder().encode('DDS '));
+  view.setUint32(4, 124, true);
+  view.setUint32(8, 0x0008_1007, true);
+  view.setUint32(12, height, true);
+  view.setUint32(16, width, true);
+  view.setUint32(20, blocksWide * blocksHigh * blockBytes, true);
+  view.setUint32(76, 32, true);
+  view.setUint32(80, 4, true);
+  output.set(new TextEncoder().encode(fourCc), 84);
+  view.setUint32(108, 0x1000, true);
+  return output;
+}
+
+function channelBlock(values: readonly number[]): Uint8Array {
+  let high = 0;
+  let low = 255;
+  for (const value of values) {
+    high = Math.max(high, value);
+    low = Math.min(low, value);
+  }
+  const palette = [high, low];
+  for (let index = 1; index <= 6; index += 1)
+    palette.push(Math.round(((7 - index) * high + index * low) / 7));
+  let indexes = 0n;
+  for (let index = 0; index < 16; index += 1) {
+    let selected = 0;
+    let distance = Number.POSITIVE_INFINITY;
+    for (let candidate = 0; candidate < palette.length; candidate += 1) {
+      const next = Math.abs(values[index]! - palette[candidate]!);
+      if (next < distance) {
+        distance = next;
+        selected = candidate;
+      }
+    }
+    indexes |= BigInt(selected) << BigInt(index * 3);
+  }
+  const block = new Uint8Array(8);
+  block[0] = high;
+  block[1] = low;
+  for (let index = 0; index < 6; index += 1)
+    block[index + 2] = Number((indexes >> BigInt(index * 8)) & 255n);
+  return block;
+}
+
+function blockChannels(
+  image: RasterImage,
+  blockX: number,
+  blockY: number,
+): { red: number[]; green: number[]; alpha: number[] } {
+  const source = image.frames[0]!.data;
+  const red: number[] = [];
+  const green: number[] = [];
+  const alpha: number[] = [];
+  for (let y = 0; y < 4; y += 1)
+    for (let x = 0; x < 4; x += 1) {
+      const sourceX = Math.min(image.width - 1, blockX * 4 + x);
+      const sourceY = Math.min(image.height - 1, blockY * 4 + y);
+      const offset = (sourceY * image.width + sourceX) * 4;
+      red.push(source[offset]!);
+      green.push(source[offset + 1]!);
+      alpha.push(source[offset + 3]!);
+    }
+  return { red, green, alpha };
+}
+
+/** Encodes a single-mip DDS texture using BC1, BC2, BC3, BC4, or BC5 compression. */
+export function encodeDds(image: RasterImage, variant: DdsEncodeVariant = 'bc1'): ArrayBuffer {
+  if (variant === 'bc1') return encodeDdsBc1(image);
+  if (image.width < 1 || image.height < 1 || image.width * image.height > 100_000_000)
+    throw new Error('DDS dimensions exceed the safe encode limit.');
+  const source = image.frames[0]?.data;
+  if (!source || source.length !== image.width * image.height * 4)
+    throw new Error('DDS requires a complete RGBA raster frame.');
+
+  const blocksWide = Math.ceil(image.width / 4);
+  const blocksHigh = Math.ceil(image.height / 4);
+  if (variant === 'bc4' || variant === 'bc5') {
+    const blockBytes = variant === 'bc4' ? 8 : 16;
+    const output = ddsHeader(
+      image.width,
+      image.height,
+      variant === 'bc4' ? 'ATI1' : 'ATI2',
+      blockBytes,
+    );
+    for (let blockY = 0; blockY < blocksHigh; blockY += 1)
+      for (let blockX = 0; blockX < blocksWide; blockX += 1) {
+        const channels = blockChannels(image, blockX, blockY);
+        const offset = 128 + (blockY * blocksWide + blockX) * blockBytes;
+        output.set(channelBlock(channels.red), offset);
+        if (variant === 'bc5') output.set(channelBlock(channels.green), offset + 8);
+      }
+    return output.buffer;
+  }
+
+  const opaque = new Uint8ClampedArray(source);
+  for (let offset = 3; offset < opaque.length; offset += 4) opaque[offset] = 255;
+  const colour = new Uint8Array(encodeDdsBc1(createRaster(image.width, image.height, opaque)));
+  const output = ddsHeader(image.width, image.height, variant === 'bc2' ? 'DXT3' : 'DXT5', 16);
+  for (let blockY = 0; blockY < blocksHigh; blockY += 1)
+    for (let blockX = 0; blockX < blocksWide; blockX += 1) {
+      const block = blockY * blocksWide + blockX;
+      const target = 128 + block * 16;
+      const channels = blockChannels(image, blockX, blockY);
+      if (variant === 'bc2') {
+        for (let index = 0; index < 16; index += 2)
+          output[target + index / 2] =
+            Math.round(channels.alpha[index]! / 17) |
+            (Math.round(channels.alpha[index + 1]! / 17) << 4);
+      } else output.set(channelBlock(channels.alpha), target);
+      output.set(colour.subarray(128 + block * 8, 136 + block * 8), target + 8);
+    }
   return output.buffer;
 }

@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { createRaster, decodeDds, encodeDdsBc1 } from '../src/index.js';
+import {
+  createRaster,
+  decodeDds,
+  decodeWithTypedErrors,
+  encodeDds,
+  encodeDdsBc1,
+  isEngineError,
+} from '../src/index.js';
 
 function dxt1Fixture(): Uint8Array {
   const bytes = new Uint8Array(136);
@@ -92,6 +99,20 @@ describe('DDS DXT1 codec', () => {
     expect(() => decodeDds(unsupported)).toThrow('Only safe');
   });
 
+  it('normalizes malformed DDS input into a typed remediable error', async () => {
+    try {
+      await decodeWithTypedErrors('dds', () => decodeDds(new Uint8Array([0x44, 0x44, 0x53])));
+      throw new Error('DDS unexpectedly accepted malformed input.');
+    } catch (error) {
+      expect(isEngineError(error)).toBe(true);
+      expect(error).toMatchObject({
+        kind: 'decode-failed',
+        format: 'dds',
+        remedy: expect.any(String),
+      });
+    }
+  });
+
   it('encodes an opaque BC1 texture that decodes to its quantized colours', () => {
     const red = new Uint8ClampedArray(4 * 4 * 4);
     for (let offset = 0; offset < red.length; offset += 4) red.set([255, 0, 0, 255], offset);
@@ -108,5 +129,26 @@ describe('DDS DXT1 codec', () => {
     const decoded = decodeDds(encodeDdsBc1(createRaster(4, 4, pixels)));
     expect(decoded.frames[0].data.subarray(0, 4)).toEqual(new Uint8ClampedArray([0, 0, 0, 0]));
     expect(decoded.frames[0].data.subarray(4, 8)).toEqual(new Uint8ClampedArray([0, 255, 0, 255]));
+  });
+
+  it.each([
+    ['bc2', 'DXT3'],
+    ['bc3', 'DXT5'],
+    ['bc4', 'ATI1'],
+    ['bc5', 'ATI2'],
+  ] as const)('encodes and decodes %s blocks', (variant, fourCc) => {
+    const pixels = new Uint8ClampedArray(4 * 4 * 4);
+    for (let index = 0; index < 16; index += 1)
+      pixels.set([index * 17, 255 - index * 17, 0, index * 17], index * 4);
+    const encoded = encodeDds(createRaster(4, 4, pixels), variant);
+    expect(new TextDecoder().decode(new Uint8Array(encoded, 84, 4))).toBe(fourCc);
+    const decoded = decodeDds(encoded).frames[0].data;
+    expect(decoded).toHaveLength(pixels.length);
+    expect(decoded[0]).toBeLessThanOrEqual(36);
+    if (variant === 'bc2' || variant === 'bc3') {
+      expect(decoded[3]).toBe(0);
+      expect(decoded[63]).toBe(255);
+    } else expect(decoded[3]).toBe(255);
+    if (variant === 'bc5') expect(decoded[1]).toBeGreaterThanOrEqual(219);
   });
 });
