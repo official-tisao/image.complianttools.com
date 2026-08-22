@@ -142,6 +142,38 @@ describe('EXIF IFD0 reader', () => {
     expect(grown.subarray(128, 136)).toEqual(new Uint8Array(8));
   });
 
+  it('adds absent root, Exif sub-IFD, and GPS fields through append-only IFD rebuilds', () => {
+    const source = new Uint8Array(14);
+    const view = new DataView(source.buffer);
+    source.set([0x49, 0x49, 42, 0]);
+    view.setUint32(4, 8, true);
+    const edited = editExifFields(source, {
+      artist: 'Ada',
+      copyright: 'CC0',
+      imageDescription: 'Fixture',
+      software: 'ICT',
+      rating: 5,
+      keywords: 'local',
+      orientation: 6,
+      dateTimeOriginal: '2026:08:22 19:00:00',
+      userComment: 'created locally',
+      gpsCoordinates: { latitude: 12.5, longitude: -45.25 },
+    });
+    const fields = readExifAllIfds(edited);
+    const values = new Map(fields.map((field) => [field.name, field.value]));
+    expect(values.get('artist')).toBe('Ada');
+    expect(values.get('copyright')).toBe('CC0');
+    expect(values.get('image-description')).toBe('Fixture');
+    expect(values.get('software')).toBe('ICT');
+    expect(values.get('rating')).toBe('5');
+    expect(values.get('orientation')).toBe('6');
+    expect(values.get('date-time-original')).toBe('2026:08:22 19:00:00');
+    expect(fields.some((field) => field.name === 'user-comment')).toBe(true);
+    expect(fields.some((field) => field.name === 'keywords')).toBe(true);
+    expect(readExifGps(edited)).toMatchObject({ latitude: 12.5, longitude: -45.25 });
+    expect(source).toEqual(new Uint8Array([0x49, 0x49, 42, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0]));
+  });
+
   it('reads standard GPS coordinates as decimal values and a geo URI', () => {
     const bytes = new Uint8Array(200);
     const view = new DataView(bytes.buffer);

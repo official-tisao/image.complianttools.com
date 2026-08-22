@@ -507,7 +507,16 @@ export function editJpegExifFields(
     }
     offset += length + 2;
   }
-  throw new Error('JPEG does not contain editable EXIF metadata.');
+  const emptyTiff = new Uint8Array([0x49, 0x49, 42, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+  const rewritten = editExifFields(emptyTiff, edits);
+  const payloadLength = 6 + rewritten.length;
+  if (payloadLength + 2 > 0xffff)
+    throw new Error('Edited EXIF metadata exceeds the JPEG APP1 segment size limit.');
+  const segment = new Uint8Array(payloadLength + 4);
+  segment.set([0xff, 0xe1, (payloadLength + 2) >>> 8, (payloadLength + 2) & 255]);
+  segment.set(new TextEncoder().encode('Exif\0\0'), 4);
+  segment.set(rewritten, 10);
+  return Uint8Array.from([...source.subarray(0, 2), ...segment, ...source.subarray(2)]);
 }
 
 /** Removes EXIF, XMP, and ICC chunks while retaining the WebP image payload byte-for-byte. */

@@ -58,15 +58,16 @@
     try {
       inputBytes = new Uint8Array(await file.arrayBuffer());
       tags = readContainerMetadata(inputBytes).tags;
-      if (/\.jpe?g$/iu.test(file.name))
+      if (/\.jpe?g$/iu.test(file.name)) {
+        available = editSpecs.map((spec) => spec.key);
         for (const spec of editSpecs) {
           const namespace = spec.key === 'latitude' || spec.key === 'longitude' ? 'GPS' : 'EXIF';
           const field = tags.find((tag) => tag.namespace === namespace && tag.name === spec.name);
           if (!field) continue;
-          available = [...available, spec.key];
           values[spec.key] =
             spec.key === 'userComment' || spec.key === 'keywords' ? '' : field.value;
         }
+      }
     } catch (reason) {
       error =
         reason instanceof Error
@@ -88,8 +89,10 @@
         edits[key] = key === 'rating' || key === 'orientation' ? Number(values[key]) : values[key];
       }
       if (selected.includes('latitude') || selected.includes('longitude')) {
-        if (!available.includes('latitude') || !available.includes('longitude'))
-          throw new Error('Both existing GPS coordinate fields are required.');
+        if (!selected.includes('latitude') || !selected.includes('longitude'))
+          throw new Error(
+            'Select both GPS latitude and longitude when adding or editing coordinates.',
+          );
         edits.gpsCoordinates = {
           latitude: Number(values.latitude),
           longitude: Number(values.longitude),
@@ -142,10 +145,10 @@
     </table>{/if}
   {#if available.length}
     <section aria-labelledby="edit-fields-heading">
-      <h2 id="edit-fields-heading">Edit existing EXIF fields</h2>
+      <h2 id="edit-fields-heading">Add or edit EXIF fields</h2>
       <p>
-        Choose existing fields to change. Longer values are relocated into expanded EXIF storage;
-        fields that are absent are not silently invented.
+        Choose fields to add or change. Longer values and new fields are appended through a rebuilt
+        EXIF structure; unchecked metadata remains untouched.
       </p>
       {#each editSpecs.filter((spec) => available.includes(spec.key)) as spec}
         <label

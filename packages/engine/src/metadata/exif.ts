@@ -479,9 +479,160 @@ function entryStorage(bytes: Uint8Array, entry: TiffIfdEntry, unit: number): [nu
   return [start, capacity];
 }
 
+type NewIfdEntry = { readonly tag: number; readonly type: number; readonly data: Uint8Array };
+
+function appendIfd(
+  input: Uint8Array,
+  oldOffset: number | undefined,
+  additions: readonly NewIfdEntry[],
+): { readonly bytes: Uint8Array; readonly offset: number } {
+  const { little, u16, u32 } = tiffReader(input);
+  const oldCount = oldOffset === undefined ? 0 : u16(oldOffset);
+  const oldEnd = oldOffset === undefined ? 0 : oldOffset + 2 + oldCount * 12;
+  if (oldOffset !== undefined && oldEnd + 4 > input.length)
+    throw new Error('EXIF IFD entries are truncated.');
+  const offset = input.length + (input.length & 1);
+  const count = oldCount + additions.length;
+  const tableEnd = offset + 2 + count * 12 + 4;
+  const externalBytes = additions.reduce(
+    (total, entry) =>
+      total + (entry.data.length > 4 ? entry.data.length + (entry.data.length & 1) : 0),
+    0,
+  );
+  const bytes = new Uint8Array(tableEnd + externalBytes);
+  bytes.set(input);
+  const view = new DataView(bytes.buffer);
+  view.setUint16(offset, count, little);
+  if (oldOffset !== undefined) {
+    bytes.set(input.subarray(oldOffset + 2, oldEnd), offset + 2);
+    view.setUint32(offset + 2 + count * 12, u32(oldEnd), little);
+  }
+  let payload = tableEnd;
+  additions.forEach((addition, index) => {
+    const entry = offset + 2 + (oldCount + index) * 12;
+    view.setUint16(entry, addition.tag, little);
+    view.setUint16(entry + 2, addition.type, little);
+    const unit = exifTypeBytes[addition.type];
+    if (!unit || addition.data.length % unit !== 0)
+      throw new Error(
+        `Cannot insert EXIF tag 0x${addition.tag.toString(16)} with invalid storage.`,
+      );
+    view.setUint32(entry + 4, addition.data.length / unit, little);
+    if (addition.data.length <= 4) bytes.set(addition.data, entry + 8);
+    else {
+      view.setUint32(entry + 8, payload, little);
+      bytes.set(addition.data, payload);
+      payload += addition.data.length + (addition.data.length & 1);
+    }
+  });
+  return { bytes, offset };
+}
+
+function ensureEditableExifEntries(input: Uint8Array, edits: ExifFieldEdits): Uint8Array {
+  let bytes = input;
+  const { little } = tiffReader(bytes);
+  const encodeU16 = (value: number) => {
+    const data = new Uint8Array(2);
+    new DataView(data.buffer).setUint16(0, value, little);
+    return data;
+  };
+  const encodeU32 = (value: number) => {
+    const data = new Uint8Array(4);
+    new DataView(data.buffer).setUint32(0, value, little);
+    return data;
+  };
+  const encodeText = (value: unknown) => new TextEncoder().encode(`${String(value)}\0`);
+  const encodeKeywords = (value: unknown) => {
+    const text = String(value),
+      data = new Uint8Array((text.length + 1) * 2),
+      view = new DataView(data.buffer);
+    for (let index = 0; index < text.length; index += 1)
+      view.setUint16(index * 2, text.charCodeAt(index), true);
+    return data;
+  };
+  const encodeComment = (value: unknown) => {
+    const text = new TextEncoder().encode(String(value)),
+      data = new Uint8Array(8 + text.length + 1);
+    data.set(new TextEncoder().encode('ASCII\0\0\0'));
+    data.set(text, 8);
+    return data;
+  };
+  let ifds = walkExifIfds(bytes);
+  let root = ifds[0]!;
+  const allEntries = () => ifds.flatMap((ifd) => [...ifd.entries]);
+  const rootAdditions: NewIfdEntry[] = [];
+  for (const name of [
+    'artist',
+    'copyright',
+    'imageDescription',
+    'software',
+    'rating',
+    'keywords',
+    'orientation',
+  ] as const) {
+    const value = edits[name];
+    if (value === undefined || allEntries().some((entry) => entry.tag === editableExifTags[name]))
+      continue;
+    const type = name === 'rating' || name === 'orientation' ? 3 : name === 'keywords' ? 1 : 2;
+    const data =
+      type === 3
+        ? encodeU16(Number(value))
+        : name === 'keywords'
+          ? encodeKeywords(value)
+          : encodeText(value);
+    rootAdditions.push({ tag: editableExifTags[name], type, data });
+  }
+  const exifAdditions: NewIfdEntry[] = [];
+  for (const name of ['dateTimeOriginal', 'userComment'] as const) {
+    const value = edits[name];
+    if (value === undefined || allEntries().some((entry) => entry.tag === editableExifTags[name]))
+      continue;
+    exifAdditions.push({
+      tag: editableExifTags[name],
+      type: name === 'userComment' ? 7 : 2,
+      data: name === 'userComment' ? encodeComment(value) : encodeText(value),
+    });
+  }
+  if (exifAdditions.length) {
+    const pointer = root.entries.find(
+      (entry) => entry.tag === 0x8769 && entry.type === 4 && entry.count === 1,
+    );
+    const appended = appendIfd(bytes, pointer?.value, exifAdditions);
+    bytes = appended.bytes;
+    if (pointer) new DataView(bytes.buffer).setUint32(pointer.offset + 8, appended.offset, little);
+    else rootAdditions.push({ tag: 0x8769, type: 4, data: encodeU32(appended.offset) });
+  }
+  if (edits.gpsCoordinates) {
+    ifds = walkExifIfds(bytes);
+    root = ifds[0]!;
+    const pointer = root.entries.find(
+      (entry) => entry.tag === 0x8825 && entry.type === 4 && entry.count === 1,
+    );
+    if (!pointer) {
+      const emptyRationals = new Uint8Array(24);
+      const appended = appendIfd(bytes, undefined, [
+        { tag: 1, type: 2, data: new Uint8Array([78, 0]) },
+        { tag: 2, type: 5, data: emptyRationals },
+        { tag: 3, type: 2, data: new Uint8Array([69, 0]) },
+        { tag: 4, type: 5, data: emptyRationals },
+      ]);
+      bytes = appended.bytes;
+      rootAdditions.push({ tag: 0x8825, type: 4, data: encodeU32(appended.offset) });
+    }
+  }
+  if (rootAdditions.length) {
+    const currentRoot = new DataView(bytes.buffer).getUint32(4, little);
+    const appended = appendIfd(bytes, currentRoot, rootAdditions);
+    bytes = appended.bytes;
+    new DataView(bytes.buffer).setUint32(4, appended.offset, little);
+  }
+  return bytes;
+}
+
 /** Edits existing EXIF fields, appending relocated value storage when a replacement grows. */
 export function editExifFields(input: ArrayBuffer | Uint8Array, edits: ExifFieldEdits): Uint8Array {
-  const source = input instanceof Uint8Array ? input : new Uint8Array(input);
+  const initial = input instanceof Uint8Array ? input : new Uint8Array(input);
+  const source = ensureEditableExifEntries(initial, edits);
   let bytes = source.slice();
   let { view } = tiffReader(bytes);
   const { little } = tiffReader(bytes);
@@ -516,8 +667,7 @@ export function editExifFields(input: ArrayBuffer | Uint8Array, edits: ExifField
     if (name === 'gpsCoordinates' || rawValue === undefined) continue;
     const tag = editableExifTags[name];
     const entry = entries.find((candidate) => candidate.tag === tag);
-    if (!entry)
-      throw new Error(`EXIF ${name} does not exist; adding it requires a metadata rebuild.`);
+    if (!entry) throw new Error(`EXIF ${name} could not be created safely.`);
     if (name === 'orientation' || name === 'rating') {
       const value = Number(rawValue);
       const maximum = name === 'orientation' ? 8 : 5;
@@ -580,8 +730,7 @@ export function editExifFields(input: ArrayBuffer | Uint8Array, edits: ExifField
       (entry) => entry.tag === 0x8825 && entry.type === 4 && entry.count === 1,
     );
     const gps = gpsPointer ? ifds.find((ifd) => ifd.offset === gpsPointer.value) : undefined;
-    if (!gps)
-      throw new Error('EXIF GPS fields do not exist; adding them requires a metadata rebuild.');
+    if (!gps) throw new Error('EXIF GPS fields could not be created safely.');
     const coordinate = (absolute: number) => {
       const degrees = Math.floor(absolute),
         minutesFloat = (absolute - degrees) * 60;

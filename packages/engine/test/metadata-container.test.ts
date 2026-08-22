@@ -226,6 +226,24 @@ describe('container metadata', () => {
     expect(edited.subarray(-2)).toEqual(new Uint8Array([0xff, 0xd9]));
   });
 
+  it('creates a new EXIF APP1 segment when an editable JPEG has no metadata', () => {
+    const jpeg = new Uint8Array([0xff, 0xd8, 0xff, 0xd9]);
+    const edited = editJpegExifFields(jpeg, {
+      artist: 'Ada',
+      orientation: 6,
+      gpsCoordinates: { latitude: 1.5, longitude: -2.25 },
+    });
+    expect(readContainerMetadata(edited).tags).toEqual(
+      expect.arrayContaining([
+        { namespace: 'EXIF', name: 'artist', value: 'Ada' },
+        { namespace: 'EXIF', name: 'orientation', value: '6' },
+        { namespace: 'GPS', name: 'latitude', value: '1.5' },
+        { namespace: 'GPS', name: 'longitude', value: '-2.25' },
+      ]),
+    );
+    expect(edited.subarray(-2)).toEqual(new Uint8Array([0xff, 0xd9]));
+  });
+
   it('removes JPEG APP metadata while preserving image markers', () => {
     const jpeg = new Uint8Array([
       0xff, 0xd8, 0xff, 0xe1, 0, 4, 1, 2, 0xff, 0xdb, 0, 3, 9, 0xff, 0xd9,
