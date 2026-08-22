@@ -131,10 +131,10 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     id: 'dds',
     animation: false,
     lazyBytes: 8_000,
-    supports: ['decode'],
+    supports: ['decode', 'encode'],
     load: () => import('./simple/dds.js'),
-    unavailableReason: 'DDS encoding and BC6H/BC7 variants are not implemented.',
-    encodeUnavailableReason: 'DDS encoding and BC6H/BC7 variants are not implemented.',
+    unavailableReason:
+      'BC6H and BC7 DDS variants are not implemented; BC1 through BC5 are supported.',
   },
   {
     id: 'qoi',

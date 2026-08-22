@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { decodeDds } from '../src/index.js';
+import { createRaster, decodeDds, encodeDdsBc1 } from '../src/index.js';
 
 function dxt1Fixture(): Uint8Array {
   const bytes = new Uint8Array(136);
@@ -90,5 +90,23 @@ describe('DDS DXT1 codec', () => {
     const unsupported = dxt1Fixture();
     unsupported.set(new TextEncoder().encode('BC7 '), 84);
     expect(() => decodeDds(unsupported)).toThrow('Only safe');
+  });
+
+  it('encodes an opaque BC1 texture that decodes to its quantized colours', () => {
+    const red = new Uint8ClampedArray(4 * 4 * 4);
+    for (let offset = 0; offset < red.length; offset += 4) red.set([255, 0, 0, 255], offset);
+    const encoded = encodeDdsBc1(createRaster(4, 4, red));
+    const bytes = new Uint8Array(encoded);
+    expect(new TextDecoder().decode(bytes.subarray(84, 88))).toBe('DXT1');
+    expect(decodeDds(encoded).frames[0].data).toEqual(red);
+  });
+
+  it('preserves binary transparency through BC1 encoding', () => {
+    const pixels = new Uint8ClampedArray(4 * 4 * 4);
+    for (let offset = 0; offset < pixels.length; offset += 4)
+      pixels.set(offset === 0 ? [0, 0, 0, 0] : [0, 255, 0, 255], offset);
+    const decoded = decodeDds(encodeDdsBc1(createRaster(4, 4, pixels)));
+    expect(decoded.frames[0].data.subarray(0, 4)).toEqual(new Uint8ClampedArray([0, 0, 0, 0]));
+    expect(decoded.frames[0].data.subarray(4, 8)).toEqual(new Uint8ClampedArray([0, 255, 0, 255]));
   });
 });

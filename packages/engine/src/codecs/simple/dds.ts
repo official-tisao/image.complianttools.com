@@ -9,6 +9,21 @@ function rgb565(value: number): readonly [number, number, number] {
   ];
 }
 
+function toRgb565(red: number, green: number, blue: number): number {
+  return (
+    ((Math.round((red / 255) * 31) & 31) << 11) |
+    ((Math.round((green / 255) * 63) & 63) << 5) |
+    (Math.round((blue / 255) * 31) & 31)
+  );
+}
+
+function colourDistance(
+  pixel: readonly number[],
+  colour: readonly [number, number, number],
+): number {
+  return (pixel[0]! - colour[0]) ** 2 + (pixel[1]! - colour[1]) ** 2 + (pixel[2]! - colour[2]) ** 2;
+}
+
 function dxt5Alpha(bytes: Uint8Array, offset: number): number[] {
   const first = bytes[offset]!;
   const second = bytes[offset + 1]!;
@@ -132,4 +147,112 @@ export function decodeDds(input: ArrayBuffer | Uint8Array): RasterImage {
         }
     }
   return createRaster(width, height, pixels);
+}
+
+/** Encodes the first raster frame as a single-mip BC1/DXT1 DDS texture. */
+export function encodeDdsBc1(image: RasterImage): ArrayBuffer {
+  if (image.width < 1 || image.height < 1 || image.width * image.height > 100_000_000)
+    throw new Error('DDS dimensions exceed the safe encode limit.');
+  const source = image.frames[0]?.data;
+  if (!source || source.length !== image.width * image.height * 4)
+    throw new Error('DDS requires a complete RGBA raster frame.');
+  const blocksWide = Math.ceil(image.width / 4);
+  const blocksHigh = Math.ceil(image.height / 4);
+  const output = new Uint8Array(128 + blocksWide * blocksHigh * 8);
+  const view = new DataView(output.buffer);
+  output.set(new TextEncoder().encode('DDS '));
+  view.setUint32(4, 124, true);
+  view.setUint32(8, 0x0008_1007, true); // caps, dimensions, pixel format, linear size
+  view.setUint32(12, image.height, true);
+  view.setUint32(16, image.width, true);
+  view.setUint32(20, blocksWide * blocksHigh * 8, true);
+  view.setUint32(76, 32, true);
+  view.setUint32(80, 4, true); // DDPF_FOURCC
+  output.set(new TextEncoder().encode('DXT1'), 84);
+  view.setUint32(108, 0x1000, true); // DDSCAPS_TEXTURE
+
+  for (let blockY = 0; blockY < blocksHigh; blockY += 1) {
+    for (let blockX = 0; blockX < blocksWide; blockX += 1) {
+      const pixels: Array<readonly [number, number, number, number]> = [];
+      for (let y = 0; y < 4; y += 1) {
+        for (let x = 0; x < 4; x += 1) {
+          const sourceX = Math.min(image.width - 1, blockX * 4 + x);
+          const sourceY = Math.min(image.height - 1, blockY * 4 + y);
+          const offset = (sourceY * image.width + sourceX) * 4;
+          pixels.push([
+            source[offset]!,
+            source[offset + 1]!,
+            source[offset + 2]!,
+            source[offset + 3]!,
+          ]);
+        }
+      }
+      const opaque = pixels.filter((pixel) => pixel[3] >= 128);
+      const candidates = opaque.length > 0 ? opaque : pixels;
+      let darkest = candidates[0]!;
+      let lightest = candidates[0]!;
+      for (const pixel of candidates) {
+        const luminance = pixel[0] * 299 + pixel[1] * 587 + pixel[2] * 114;
+        const darkLuminance = darkest[0] * 299 + darkest[1] * 587 + darkest[2] * 114;
+        const lightLuminance = lightest[0] * 299 + lightest[1] * 587 + lightest[2] * 114;
+        if (luminance < darkLuminance) darkest = pixel;
+        if (luminance > lightLuminance) lightest = pixel;
+      }
+      let first = toRgb565(lightest[0], lightest[1], lightest[2]);
+      let second = toRgb565(darkest[0], darkest[1], darkest[2]);
+      const hasTransparency = pixels.some((pixel) => pixel[3] < 128);
+      if (hasTransparency) {
+        if (first > second) [first, second] = [second, first];
+      } else if (first <= second) {
+        if (second < 0xffff) first = second + 1;
+        else second = first - 1;
+      }
+      const [r0, g0, b0] = rgb565(first);
+      const [r1, g1, b1] = rgb565(second);
+      const palette: Array<readonly [number, number, number]> = [
+        [r0, g0, b0],
+        [r1, g1, b1],
+      ];
+      if (first > second)
+        palette.push(
+          [
+            Math.round((2 * r0 + r1) / 3),
+            Math.round((2 * g0 + g1) / 3),
+            Math.round((2 * b0 + b1) / 3),
+          ],
+          [
+            Math.round((r0 + 2 * r1) / 3),
+            Math.round((g0 + 2 * g1) / 3),
+            Math.round((b0 + 2 * b1) / 3),
+          ],
+        );
+      else
+        palette.push([
+          Math.round((r0 + r1) / 2),
+          Math.round((g0 + g1) / 2),
+          Math.round((b0 + b1) / 2),
+        ]);
+      let indexes = 0;
+      for (let index = 0; index < pixels.length; index += 1) {
+        const pixel = pixels[index]!;
+        let selected = hasTransparency && pixel[3] < 128 ? 3 : 0;
+        if (selected !== 3) {
+          let distance = Number.POSITIVE_INFINITY;
+          for (let paletteIndex = 0; paletteIndex < palette.length; paletteIndex += 1) {
+            const candidate = colourDistance(pixel, palette[paletteIndex]!);
+            if (candidate < distance) {
+              distance = candidate;
+              selected = paletteIndex;
+            }
+          }
+        }
+        indexes |= selected << (index * 2);
+      }
+      const offset = 128 + (blockY * blocksWide + blockX) * 8;
+      view.setUint16(offset, first, true);
+      view.setUint16(offset + 2, second, true);
+      view.setUint32(offset + 4, indexes >>> 0, true);
+    }
+  }
+  return output.buffer;
 }

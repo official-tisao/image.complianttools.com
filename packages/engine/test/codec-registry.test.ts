@@ -53,7 +53,7 @@ describe('P2 codec registry', () => {
     expect(capabilities.find((entry) => entry.id === 'cur')).toMatchObject({ decode: 'lazy' });
     expect(capabilities.find((entry) => entry.id === 'dds')).toMatchObject({
       decode: 'lazy',
-      encode: 'unavailable',
+      encode: 'lazy',
     });
     expect(capabilities.find((entry) => entry.id === 'sun-raster')).toMatchObject({
       decode: 'lazy',
