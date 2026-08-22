@@ -1,4 +1,5 @@
 export * from './capabilities.js';
+export * from './errors.js';
 export * from './codecs/jsquash.js';
 export * from './codecs/encode.js';
 export * from './codecs/registry.js';

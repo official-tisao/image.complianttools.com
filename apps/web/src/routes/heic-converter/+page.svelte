@@ -2,6 +2,8 @@
   import {
     HEIC_UNSUPPORTED_MESSAGE,
     decodeHeic,
+    decodeWithTypedErrors,
+    engineErrorMessage,
     supportsHeicDecode,
   } from '@complianttools/image-engine';
 
@@ -14,7 +16,8 @@
     if (!file) return;
     try {
       if (!(await supportsHeicDecode())) throw new Error(HEIC_UNSUPPORTED_MESSAGE);
-      const image = await decodeHeic(await file.arrayBuffer());
+      const bytes = await file.arrayBuffer();
+      const image = await decodeWithTypedErrors('heic', () => decodeHeic(bytes));
       const frame = image.frames[0];
       if (!frame) throw new Error('The HEIC decoder returned no image frame.');
       const canvas = document.createElement('canvas');
@@ -37,7 +40,7 @@
       URL.revokeObjectURL(url);
       status = `Converted ${image.width}×${image.height} HEIC image to PNG locally.`;
     } catch (reason) {
-      error = reason instanceof Error ? reason.message : 'Unable to convert this HEIC image.';
+      error = engineErrorMessage(reason);
     }
   }
 </script>

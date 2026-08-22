@@ -4,15 +4,46 @@ import {
   SVG_EXTERNAL_REFERENCE_MESSAGE,
   assertSafeSvg,
   decodeBmp,
+  decodeCur,
+  decodeDds,
+  decodeFits,
+  decodeHdr,
+  decodeIco,
   decodePcx,
+  decodePfm,
   decodePnm,
   decodeQoi,
+  decodeSgi,
+  decodeSunRaster,
   decodeTga,
+  decodeWbmp,
+  decodeWithTypedErrors,
+  decodeXbm,
+  decodeXpm,
   detectImageFormat,
+  isEngineError,
   readExifIfd0,
 } from '../src/index.js';
+import type { FormatId, RasterImage } from '../src/types.js';
 
-const decoders = [decodeBmp, decodePcx, decodePnm, decodeQoi, decodeTga];
+const decoders: ReadonlyArray<readonly [FormatId, (input: Uint8Array) => RasterImage]> = [
+  ['bmp', decodeBmp],
+  ['cur', decodeCur],
+  ['dds', decodeDds],
+  ['fits', decodeFits],
+  ['hdr', decodeHdr],
+  ['ico', decodeIco],
+  ['pcx', decodePcx],
+  ['pfm', decodePfm],
+  ['pnm', decodePnm],
+  ['qoi', decodeQoi],
+  ['sgi', decodeSgi],
+  ['sun-raster', decodeSunRaster],
+  ['tga', decodeTga],
+  ['wbmp', decodeWbmp],
+  ['xbm', decodeXbm],
+  ['xbm', decodeXpm],
+];
 
 function qoiHeader(width: number, height: number): number[] {
   return [
@@ -34,10 +65,17 @@ function qoiHeader(width: number, height: number): number[] {
 }
 
 describe('Phase 2 adversarial codec corpus', () => {
-  it('rejects zero-byte, wrong-magic, and truncated inputs without hanging', () => {
-    for (const decode of decoders) {
-      expect(() => decode(new Uint8Array())).toThrow();
-      expect(() => decode(new Uint8Array([0xde, 0xad, 0xbe, 0xef]))).toThrow();
+  it('rejects zero-byte and wrong-magic inputs with typed remedies without hanging', async () => {
+    for (const [format, decode] of decoders) {
+      for (const input of [new Uint8Array(), new Uint8Array([0xde, 0xad, 0xbe, 0xef])]) {
+        try {
+          await decodeWithTypedErrors(format, () => decode(input));
+          throw new Error(`${format} unexpectedly accepted malformed input.`);
+        } catch (error) {
+          expect(isEngineError(error), `${format} must return an EngineError`).toBe(true);
+          expect((error as { remedy: string }).remedy.length).toBeGreaterThan(0);
+        }
+      }
     }
   });
 

@@ -1,4 +1,4 @@
-import type { ExportOptions, FormatId, RasterImage } from '../types.js';
+import type { EngineError, ExportOptions, FormatId, RasterImage } from '../types.js';
 import { encodeRasterAsJpeg, encodeRasterAsPng, encodeRasterAsWebp } from './jsquash.js';
 import { getCodec } from './registry.js';
 
@@ -9,9 +9,13 @@ export async function encodeRaster(
 ): Promise<ArrayBuffer> {
   const codec = getCodec(format);
   if (!codec.supports.includes('encode')) {
-    throw new Error(
-      `${format} encoding is unavailable: ${codec.encodeUnavailableReason ?? 'No production browser encoder is available.'}`,
-    );
+    const reason = codec.encodeUnavailableReason ?? 'No production browser encoder is available.';
+    throw {
+      kind: 'codec-unavailable',
+      format,
+      reason,
+      remedy: `Choose a supported export format. ${reason}`,
+    } satisfies EngineError;
   }
 
   switch (format) {
@@ -28,8 +32,11 @@ export async function encodeRaster(
         ...(options.lossless ? { lossless: 1 } : {}),
       });
     default:
-      throw new Error(
-        `${format} encoding is unavailable: ${codec.encodeUnavailableReason ?? 'No production browser encoder is available.'}`,
-      );
+      throw {
+        kind: 'codec-unavailable',
+        format,
+        reason: codec.encodeUnavailableReason ?? 'No production browser encoder is available.',
+        remedy: 'Choose JPEG, PNG, or WebP for browser export.',
+      } satisfies EngineError;
   }
 }

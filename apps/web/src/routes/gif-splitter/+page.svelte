@@ -1,5 +1,10 @@
 <script lang="ts">
-  import { decodeGif, encodeApng } from '@complianttools/image-engine';
+  import {
+    decodeGif,
+    decodeWithTypedErrors,
+    encodeApng,
+    engineErrorMessage,
+  } from '@complianttools/image-engine';
 
   let status = $state('');
   let error = $state('');
@@ -10,7 +15,8 @@
     error = '';
     if (!file) return;
     try {
-      const image = decodeGif(await file.arrayBuffer());
+      const bytes = await file.arrayBuffer();
+      const image = await decodeWithTypedErrors('gif', () => decodeGif(bytes));
       if (output === 'apng') {
         const bytes = await encodeApng(image);
         const url = URL.createObjectURL(new Blob([bytes], { type: 'image/png' }));
@@ -44,7 +50,7 @@
       }
       status = `Exported ${image.frames.length} GIF frame${image.frames.length === 1 ? '' : 's'} locally.`;
     } catch (reason) {
-      error = reason instanceof Error ? reason.message : 'Unable to split this GIF.';
+      error = engineErrorMessage(reason);
     }
   }
 </script>

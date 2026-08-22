@@ -40,9 +40,12 @@ describe('production raster encoder', () => {
   });
 
   it('rejects unavailable formats with the registry reason', async () => {
-    await expect(encodeRaster(createRaster(1, 1), 'qoi')).rejects.toThrow(
-      'QOI encoding is not available in the production browser export path.',
-    );
+    await expect(encodeRaster(createRaster(1, 1), 'qoi')).rejects.toMatchObject({
+      kind: 'codec-unavailable',
+      format: 'qoi',
+      reason: 'QOI encoding is not available in the production browser export path.',
+      remedy: expect.any(String),
+    });
   });
 
   it('keeps the advertised encoder set equal to the dispatcher set', () => {

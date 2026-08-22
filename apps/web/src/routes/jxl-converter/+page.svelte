@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { getCodec } from '@complianttools/image-engine';
+  import { engineErrorMessage, getCodec } from '@complianttools/image-engine';
 
   const lazyBytes = getCodec('jxl').lazyBytes;
   let status = $state('');
@@ -10,8 +10,10 @@
     error = '';
     if (!file) return;
     try {
-      const { decodeJxlToRaster } = await import('@complianttools/image-engine');
-      const image = await decodeJxlToRaster(await file.arrayBuffer());
+      const { decodeJxlToRaster, decodeWithTypedErrors } =
+        await import('@complianttools/image-engine');
+      const bytes = await file.arrayBuffer();
+      const image = await decodeWithTypedErrors('jxl', () => decodeJxlToRaster(bytes));
       const frame = image.frames[0];
       if (!frame) throw new Error('The JPEG XL decoder returned no image frame.');
       const canvas = document.createElement('canvas');
@@ -34,7 +36,7 @@
       URL.revokeObjectURL(url);
       status = `Converted ${image.width}×${image.height} JPEG XL image to PNG locally.`;
     } catch (reason) {
-      error = reason instanceof Error ? reason.message : 'Unable to convert this JPEG XL image.';
+      error = engineErrorMessage(reason);
     }
   }
 </script>
