@@ -116,6 +116,12 @@ const supportedFormats = {
       'The Netpbm family provides deliberately simple monochrome, grayscale, and RGB raster interchange.',
     notes: 'The local decoder supports ASCII and binary P1–P6 variants; export provides RGB PPM.',
   },
+  png: {
+    name: 'PNG',
+    summary: 'PNG provides lossless raster compression with full alpha transparency.',
+    notes:
+      'The pinned local WASM codec round-trips RGBA pixels exactly. The generic exporter also offers local lossless PNG optimization.',
+  },
   pam: {
     name: 'PAM',
     summary: 'PAM extends Netpbm with explicit tuple types and alpha channels.',
@@ -157,6 +163,12 @@ const supportedFormats = {
     summary: 'Wireless Bitmap is a compact one-bit monochrome format.',
     notes:
       'The local Type-0 codec uses MSB-first rows and rejects unsupported headers and hostile dimensions.',
+  },
+  webp: {
+    name: 'WebP',
+    summary: 'WebP supports compact lossy and lossless still images with alpha transparency.',
+    notes:
+      'The pinned local WASM codec is round-trip tested and the generic exporter exposes quality and lossless modes without uploading source pixels.',
   },
   xbm: {
     name: 'XBM/XPM',

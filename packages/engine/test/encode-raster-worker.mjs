@@ -1,9 +1,19 @@
 import { readFile } from 'node:fs/promises';
 import { parentPort } from 'node:worker_threads';
 import { init as initJpegEncode } from '@jsquash/jpeg/encode.js';
+import { init as initJpegDecode } from '@jsquash/jpeg/decode.js';
+import { init as initPngDecode } from '@jsquash/png/decode.js';
 import { init as initPngEncode } from '@jsquash/png/encode.js';
+import { init as initWebpDecode } from '@jsquash/webp/decode.js';
 import { init as initWebpEncode } from '@jsquash/webp/encode.js';
-import { createRaster, encodeRaster } from '../dist/index.js';
+import {
+  createRaster,
+  decodeJpegToRaster,
+  decodePngToRaster,
+  decodeWebpToRaster,
+  decodeWithTypedErrors,
+  encodeRaster,
+} from '../dist/index.js';
 
 globalThis.ImageData = class ImageData {
   constructor(data, width, height) {
@@ -15,12 +25,15 @@ globalThis.ImageData = class ImageData {
 };
 const wasmBytes = (specifier, relativePath) =>
   readFile(new URL(relativePath, import.meta.resolve(specifier)));
-const [jpegEncoder, pngEncoder, webpEncoder, webpEncoderFallback] = await Promise.all([
-  wasmBytes('@jsquash/jpeg', './codec/enc/mozjpeg_enc.wasm'),
-  wasmBytes('@jsquash/png', './codec/pkg/squoosh_png_bg.wasm'),
-  wasmBytes('@jsquash/webp', './codec/enc/webp_enc_simd.wasm'),
-  wasmBytes('@jsquash/webp', './codec/enc/webp_enc.wasm'),
-]);
+const [jpegDecoder, jpegEncoder, pngCodec, webpDecoder, webpEncoder, webpEncoderFallback] =
+  await Promise.all([
+    wasmBytes('@jsquash/jpeg', './codec/dec/mozjpeg_dec.wasm'),
+    wasmBytes('@jsquash/jpeg', './codec/enc/mozjpeg_enc.wasm'),
+    wasmBytes('@jsquash/png', './codec/pkg/squoosh_png_bg.wasm'),
+    wasmBytes('@jsquash/webp', './codec/dec/webp_dec.wasm'),
+    wasmBytes('@jsquash/webp', './codec/enc/webp_enc_simd.wasm'),
+    wasmBytes('@jsquash/webp', './codec/enc/webp_enc.wasm'),
+  ]);
 let compiledWebp;
 try {
   compiledWebp = await WebAssembly.compile(webpEncoder);
@@ -29,7 +42,10 @@ try {
 }
 await Promise.all([
   initJpegEncode(await WebAssembly.compile(jpegEncoder)),
-  initPngEncode(pngEncoder),
+  initJpegDecode(await WebAssembly.compile(jpegDecoder)),
+  initPngDecode(pngCodec),
+  initPngEncode(pngCodec),
+  initWebpDecode(await WebAssembly.compile(webpDecoder)),
   initWebpEncode(compiledWebp),
 ]);
 
@@ -45,7 +61,37 @@ parentPort.on('message', async () => {
       encodeRaster(image, 'png'),
       encodeRaster(image, 'webp', { quality: 82 }),
     ]);
-    parentPort.postMessage({ jpeg, png, webp }, [jpeg, png, webp]);
+    const [decodedJpeg, decodedPng, decodedWebp] = await Promise.all([
+      decodeJpegToRaster(jpeg.slice(0)),
+      decodePngToRaster(png.slice(0)),
+      decodeWebpToRaster(webp.slice(0)),
+    ]);
+    const typedErrors = [];
+    for (const [format, decode] of [
+      ['jpeg', decodeJpegToRaster],
+      ['png', decodePngToRaster],
+      ['webp', decodeWebpToRaster],
+    ]) {
+      try {
+        await decodeWithTypedErrors(format, () => decode(new ArrayBuffer(0)));
+      } catch (error) {
+        typedErrors.push(error);
+      }
+    }
+    parentPort.postMessage(
+      {
+        jpeg,
+        png,
+        webp,
+        decoded: {
+          jpeg: decodedJpeg,
+          png: decodedPng,
+          webp: decodedWebp,
+        },
+        typedErrors,
+      },
+      [jpeg, png, webp],
+    );
   } catch (error) {
     parentPort.postMessage({ error: error instanceof Error ? error.stack : String(error) });
   }

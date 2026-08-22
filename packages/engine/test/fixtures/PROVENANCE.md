@@ -8,6 +8,9 @@ The AVIF and JPEG XL round-trip fixtures are one-pixel rasters generated locally
 encoded/decoded with the exact pinned WASM assets in the installed `@jsquash/avif` and
 `@jsquash/jxl` packages. Their malformed cases are zero-byte self-generated inputs.
 
+The JPEG, PNG, and WebP production fixtures are a generated 2×2 RGBA colour grid. Tests encode and
+decode it inside a worker using the exact pinned jSquash WASM assets; malformed cases use zero bytes.
+
 The adversarial corpus in `adversarial-codecs.test.ts` is also self-generated. Empty input and wrong
 magic are exercised through the typed error boundary for BMP, CUR, DDS, FITS, GIF, Radiance HDR,
 ICO, PCX, PFM, PNM/PAM, QOI, SGI, Sun Raster, TGA, TIFF, WBMP, XBM, and XPM. The remaining cases include

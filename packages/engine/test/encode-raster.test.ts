@@ -7,7 +7,16 @@ const worker = new Worker(new URL('./encode-raster-worker.mjs', import.meta.url)
 });
 afterAll(() => worker.terminate());
 
-function encodeInWorker(): Promise<Record<'jpeg' | 'png' | 'webp', ArrayBuffer>> {
+function encodeInWorker(): Promise<{
+  jpeg: ArrayBuffer;
+  png: ArrayBuffer;
+  webp: ArrayBuffer;
+  decoded: Record<
+    'jpeg' | 'png' | 'webp',
+    { width: number; height: number; frames: [{ data: Uint8ClampedArray }] }
+  >;
+  typedErrors: Array<{ kind: string; format: string; remedy: string }>;
+}> {
   return new Promise((resolve, reject) => {
     worker.once('error', reject);
     worker.once('message', (message) =>
@@ -26,6 +35,26 @@ describe('production raster encoder', () => {
     );
     expect(new TextDecoder().decode(new Uint8Array(output.webp).subarray(0, 4))).toBe('RIFF');
     expect(new TextDecoder().decode(new Uint8Array(output.webp).subarray(8, 12))).toBe('WEBP');
+    for (const format of ['jpeg', 'png', 'webp'] as const) {
+      expect(output.decoded[format]).toMatchObject({ width: 2, height: 2 });
+      expect(output.decoded[format].frames[0].data).toHaveLength(16);
+    }
+    expect(output.decoded.png.frames[0].data).toEqual(
+      new Uint8ClampedArray([255, 0, 0, 255, 0, 255, 0, 255, 0, 0, 255, 255, 255, 255, 255, 255]),
+    );
+    expect(output.typedErrors).toEqual([
+      expect.objectContaining({
+        kind: 'decode-failed',
+        format: 'jpeg',
+        remedy: expect.any(String),
+      }),
+      expect.objectContaining({ kind: 'decode-failed', format: 'png', remedy: expect.any(String) }),
+      expect.objectContaining({
+        kind: 'decode-failed',
+        format: 'webp',
+        remedy: expect.any(String),
+      }),
+    ]);
   });
 
   it('rejects unavailable formats with the registry reason', async () => {
