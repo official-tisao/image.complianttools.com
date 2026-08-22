@@ -103,7 +103,11 @@ export interface Plan {
   readonly steps: readonly PlanStep[];
   readonly tier: ExecutionTier;
   readonly estimatedPeakBytes: number;
-  readonly lazyDownloads: readonly { readonly id: string; readonly bytes: number }[];
+  readonly lazyDownloads: readonly {
+    readonly id: string;
+    readonly bytes: number;
+    readonly requiresConsent: boolean;
+  }[];
   readonly warnings: readonly string[];
   readonly memoryStrategy: 'whole' | 'reduced-concurrency' | 'tiled' | 'opfs-spill' | 'refuse';
   readonly tileSize?: number;

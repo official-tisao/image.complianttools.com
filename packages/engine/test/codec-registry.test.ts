@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { codecCapabilities, getCodec, loadCodec } from '../src/index.js';
+import {
+  codecCapabilities,
+  codecDownloadDisclosure,
+  getCodec,
+  loadCodec,
+  productionEncoderFormats,
+  requiresCodecDownloadConsent,
+} from '../src/index.js';
 import './encode-raster.test.js';
 
 describe('P2 codec registry', () => {
@@ -122,6 +129,27 @@ describe('P2 codec registry', () => {
     await expect(loadCodec('gif')).resolves.toBeDefined();
     expect(getCodec('webp').supports).toEqual(['decode', 'encode']);
     expect(getCodec('qoi').supports).toEqual(['decode', 'encode']);
+    await expect(loadCodec('jp2')).rejects.toThrow(
+      'JPEG 2000 is unavailable in v1 because no verified permissive browser package exists',
+    );
+  });
+
+  it('exposes download cost before loading and never advertises an unavailable generic encoder', () => {
+    expect(codecDownloadDisclosure('jpeg')).toEqual({
+      id: 'codec:jpeg',
+      bytes: 195_000,
+      requiresConsent: false,
+    });
+    for (const id of productionEncoderFormats()) {
+      const codec = getCodec(id);
+      expect(codec.supports).toContain('encode');
+      expect(codec.load).toBeTypeOf('function');
+      expect(codecDownloadDisclosure(id).bytes).toBe(codec.lazyBytes);
+    }
+    expect(productionEncoderFormats()).not.toContain('avif');
+    expect(productionEncoderFormats()).not.toContain('heic');
+    expect(requiresCodecDownloadConsent(5_000_000)).toBe(false);
+    expect(requiresCodecDownloadConsent(5_000_001)).toBe(true);
   });
 
   it('enables platform media decoders only when WebCodecs is present', () => {

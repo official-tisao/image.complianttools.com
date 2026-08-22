@@ -355,8 +355,8 @@ mega-dependency was replaced by a framework of our own (README §25.3.1).
 **Spec:** README §5, §7.3, §25.4.
 
 #### P2-01 · Codec registry + lazy loading
-- [ ] Registry with per-format decode/encode capability and lazy loaders
-- [ ] **Download cost disclosed before any lazy fetch**; consent step for anything > 5 MB
+- [x] Registry with per-format decode/encode capability and lazy loaders
+- [x] **Download cost disclosed before any lazy fetch**; consent step for anything > 5 MB
 - **Spec:** README §5.7, §7.3 · **Done when:** the UI never offers an `unavailable` encode target, and always shows `lazyBytes` first
 
 #### P2-02 · Simple-format codec framework (**ours**)

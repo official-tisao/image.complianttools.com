@@ -16,6 +16,18 @@ export interface CodecDescriptor {
   readonly requiresWebCodecsDecode?: boolean;
 }
 
+export const LARGE_CODEC_DOWNLOAD_BYTES = 5_000_000;
+
+export interface CodecDownloadDisclosure {
+  readonly id: string;
+  readonly bytes: number;
+  readonly requiresConsent: boolean;
+}
+
+export function requiresCodecDownloadConsent(bytes: number): boolean {
+  return bytes > LARGE_CODEC_DOWNLOAD_BYTES;
+}
+
 export const codecRegistry: readonly CodecDescriptor[] = [
   {
     id: 'apng',
@@ -370,6 +382,15 @@ export function productionEncoderFormats(): FormatId[] {
   return codecRegistry.filter((codec) => codec.productionEncode).map((codec) => codec.id);
 }
 
+export function codecDownloadDisclosure(id: FormatId): CodecDownloadDisclosure {
+  const codec = getCodec(id);
+  return {
+    id: `codec:${id}`,
+    bytes: codec.lazyBytes,
+    requiresConsent: requiresCodecDownloadConsent(codec.lazyBytes),
+  };
+}
+
 export function codecCapabilities(runtime: RuntimeCapabilities): FormatCapability[] {
   return codecRegistry.map((codec) => {
     const browserDecode = runtime.webCodecs && ['jpeg', 'png', 'webp', 'avif'].includes(codec.id);
@@ -415,10 +436,18 @@ export function codecCapabilities(runtime: RuntimeCapabilities): FormatCapabilit
 
 export async function loadCodec(id: FormatId, consentLargeDownload = false): Promise<unknown> {
   const codec = getCodec(id);
-  if (!codec.load) throw new Error(`${id} is unavailable: ${codec.unavailableReason}`);
-  if (codec.lazyBytes > 5_000_000 && !consentLargeDownload) {
+  if (!codec.load) {
+    const reason =
+      codec.decodeUnavailableReason ??
+      codec.encodeUnavailableReason ??
+      codec.unavailableReason ??
+      'No local codec implementation is available.';
+    throw new Error(`${id} is unavailable: ${reason}`);
+  }
+  const disclosure = codecDownloadDisclosure(id);
+  if (disclosure.requiresConsent && !consentLargeDownload) {
     throw new Error(
-      `${id} requires a ${(codec.lazyBytes / 1_000_000).toFixed(1)} MB download; explicit consent is required.`,
+      `${id} requires a ${(disclosure.bytes / 1_000_000).toFixed(1)} MB download; explicit consent is required.`,
     );
   }
   return codec.load();

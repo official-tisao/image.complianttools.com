@@ -104,6 +104,16 @@ describe('P1 pipeline and fusion', () => {
       { numRuns: 1000 },
     );
   });
+
+  it('reports the authoritative lazy codec cost before execution', async () => {
+    const plan = await compile(
+      { ...baseRecipe, export: { ...baseRecipe.export, format: 'png' } },
+      { width: 7, height: 5, format: 'jpeg' },
+    );
+    expect(plan.lazyDownloads).toEqual([
+      { id: 'codec:png', bytes: 165_000, requiresConsent: false },
+    ]);
+  });
 });
 
 describe('P1 memory, tiling, and proxy', () => {
