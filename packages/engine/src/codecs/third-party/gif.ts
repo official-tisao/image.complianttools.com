@@ -9,6 +9,12 @@ export interface GifEncodeOptions {
   readonly lossy?: number;
   /** Palette construction strategy. Median-cut uses a weighted histogram over all frames. */
   readonly quantizer?: 'fixed-332' | 'median-cut' | 'octree' | 'wu' | 'neural';
+  /** Requested total colour-table entries, including a transparency slot when needed. */
+  readonly paletteSize?: number;
+  /** One shared palette, one palette per frame, or automatic selection based on combined colours. */
+  readonly paletteMode?: 'global' | 'per-frame' | 'adaptive';
+  /** Palette index used for pixels below the alpha threshold. */
+  readonly transparencyIndex?: number;
   /** Optional palette-error diffusion. */
   readonly dither?: 'none' | 'ordered' | 'floyd-steinberg' | 'atkinson' | 'sierra';
   /** Dither strength from 0 (disabled) through 100 (full error/threshold amplitude). */
@@ -23,13 +29,15 @@ function push16(bytes: number[], value: number): void {
   bytes.push(value & 255, value >> 8);
 }
 
-function lzwStream(indexes: Uint8Array): Uint8Array {
+function lzwStream(indexes: Uint8Array, minimumCodeSize = 8): Uint8Array {
   if (indexes.length === 0) return Uint8Array.of(0);
   const bytes: number[] = [];
   let bits = 0;
   let count = 0;
-  let codeSize = 9;
-  let nextCode = 258;
+  const clearCode = 1 << minimumCodeSize;
+  const endCode = clearCode + 1;
+  let codeSize = minimumCodeSize + 1;
+  let nextCode = endCode + 1;
   let dictionary = new Map<string, number>();
   const write = (code: number) => {
     bits |= code << count;
@@ -42,9 +50,9 @@ function lzwStream(indexes: Uint8Array): Uint8Array {
   };
   const reset = () => {
     dictionary = new Map<string, number>();
-    codeSize = 9;
-    nextCode = 258;
-    write(256);
+    codeSize = minimumCodeSize + 1;
+    nextCode = endCode + 1;
+    write(clearCode);
   };
   reset();
   let prefix = String(indexes[0]!);
@@ -66,7 +74,7 @@ function lzwStream(indexes: Uint8Array): Uint8Array {
     prefix = String(value);
   }
   write(dictionary.get(prefix) ?? Number(prefix));
-  write(257);
+  write(endCode);
   if (count) bytes.push(bits & 255);
   return Uint8Array.from(bytes);
 }
@@ -77,13 +85,6 @@ function reduceChannel(value: number, lossy = 0): number {
   return strength === 0
     ? value
     : Math.round((Math.round((value * (levels - 1)) / 255) * 255) / (levels - 1));
-}
-
-function fixedPaletteIndex(red: number, green: number, blue: number, lossy = 0): number {
-  red = reduceChannel(red, lossy);
-  green = reduceChannel(green, lossy);
-  blue = reduceChannel(blue, lossy);
-  return 1 + (Math.min(6, red >> 5) << 5) + ((green >> 5) << 2) + (blue >> 6);
 }
 
 type HistogramColour = {
@@ -111,7 +112,7 @@ function colourRanges(box: readonly HistogramColour[]): readonly [number, number
   return [maxRed - minRed, maxGreen - minGreen, maxBlue - minBlue];
 }
 
-function medianCutPalette(image: RasterImage, lossy = 0): Uint8Array {
+function medianCutPalette(image: RasterImage, lossy = 0, colourLimit = 255): Uint8Array {
   const histogram = new Map<number, number>();
   for (const frame of image.frames)
     for (let offset = 0; offset < frame.data.length; offset += 4) {
@@ -130,7 +131,7 @@ function medianCutPalette(image: RasterImage, lossy = 0): Uint8Array {
   }));
   if (colours.length === 0) colours.push({ red: 0, green: 0, blue: 0, count: 1 });
   let boxes: HistogramColour[][] = [colours];
-  while (boxes.length < 255) {
+  while (boxes.length < colourLimit) {
     let selected = -1;
     let selectedRange = -1;
     for (let index = 0; index < boxes.length; index += 1) {
@@ -168,7 +169,7 @@ function medianCutPalette(image: RasterImage, lossy = 0): Uint8Array {
       ...boxes.slice(selected + 1),
     ];
   }
-  const palette = new Uint8Array(256 * 3);
+  const palette = new Uint8Array((colourLimit + 1) * 3);
   for (let index = 0; index < boxes.length; index += 1) {
     const box = boxes[index]!;
     const total = box.reduce((sum, colour) => sum + colour.count, 0);
@@ -183,12 +184,12 @@ function medianCutPalette(image: RasterImage, lossy = 0): Uint8Array {
     );
   }
   const last = Math.max(1, boxes.length) * 3;
-  for (let index = boxes.length + 1; index < 256; index += 1)
+  for (let index = boxes.length + 1; index <= colourLimit; index += 1)
     palette.set(palette.subarray(last, last + 3), index * 3);
   return palette;
 }
 
-function octreePalette(image: RasterImage, lossy = 0): Uint8Array {
+function octreePalette(image: RasterImage, lossy = 0, colourLimit = 255): Uint8Array {
   const histogram = new Map<number, HistogramColour>();
   for (const frame of image.frames)
     for (let offset = 0; offset < frame.data.length; offset += 4) {
@@ -215,9 +216,9 @@ function octreePalette(image: RasterImage, lossy = 0): Uint8Array {
       else next.set(key, [colour]);
     }
     leaves = next;
-    if (leaves.size <= 255) break;
+    if (leaves.size <= colourLimit) break;
   }
-  const palette = new Uint8Array(256 * 3);
+  const palette = new Uint8Array((colourLimit + 1) * 3);
   let index = 1;
   for (const leaf of leaves.values()) {
     const total = leaf.reduce((sum, colour) => sum + colour.count, 0);
@@ -233,7 +234,7 @@ function octreePalette(image: RasterImage, lossy = 0): Uint8Array {
     index += 1;
   }
   const last = Math.max(1, index - 1) * 3;
-  while (index < 256) {
+  while (index <= colourLimit) {
     palette.set(palette.subarray(last, last + 3), index * 3);
     index += 1;
   }
@@ -314,7 +315,7 @@ function wuCut(
   ];
 }
 
-function wuPalette(image: RasterImage, lossy = 0): Uint8Array {
+function wuPalette(image: RasterImage, lossy = 0, colourLimit = 255): Uint8Array {
   const size = wuSide ** 3;
   const moments = Array.from({ length: 5 }, () => new Float64Array(size));
   for (const frame of image.frames)
@@ -346,7 +347,7 @@ function wuPalette(image: RasterImage, lossy = 0): Uint8Array {
             moment[wuIndex(red - 1, green - 1, blue - 1)]!;
         }
   let cubes: WuCube[] = [{ red0: 0, red1: 32, green0: 0, green1: 32, blue0: 0, blue1: 32 }];
-  while (cubes.length < 255) {
+  while (cubes.length < colourLimit) {
     let selected = -1;
     let variance = 0;
     for (let index = 0; index < cubes.length; index += 1) {
@@ -361,7 +362,7 @@ function wuPalette(image: RasterImage, lossy = 0): Uint8Array {
     if (!cut) break;
     cubes = [...cubes.slice(0, selected), ...cut, ...cubes.slice(selected + 1)];
   }
-  const palette = new Uint8Array(256 * 3);
+  const palette = new Uint8Array((colourLimit + 1) * 3);
   for (let index = 0; index < cubes.length; index += 1) {
     const weight = wuVolume(cubes[index]!, moments[0]!);
     if (weight === 0) continue;
@@ -370,13 +371,13 @@ function wuPalette(image: RasterImage, lossy = 0): Uint8Array {
     palette[(index + 1) * 3 + 2] = Math.round(wuVolume(cubes[index]!, moments[3]!) / weight);
   }
   const last = Math.max(1, cubes.length) * 3;
-  for (let index = cubes.length + 1; index < 256; index += 1)
+  for (let index = cubes.length + 1; index <= colourLimit; index += 1)
     palette.set(palette.subarray(last, last + 3), index * 3);
   return palette;
 }
 
 /** Independent deterministic self-organizing-map quantizer; no NeuQuant code is used. */
-function neuralPalette(image: RasterImage, lossy = 0): Uint8Array {
+function neuralPalette(image: RasterImage, lossy = 0, colourLimit = 255): Uint8Array {
   const samples: number[] = [];
   const opaquePixels = image.frames.reduce(
     (total, frame) =>
@@ -401,10 +402,10 @@ function neuralPalette(image: RasterImage, lossy = 0): Uint8Array {
       seen += 1;
     }
   if (samples.length === 0) samples.push(0, 0, 0);
-  const neurons = new Float64Array(255 * 3);
+  const neurons = new Float64Array(colourLimit * 3);
   const sampleCount = samples.length / 3;
-  for (let neuron = 0; neuron < 255; neuron += 1) {
-    const sample = Math.min(sampleCount - 1, Math.floor((neuron * sampleCount) / 255));
+  for (let neuron = 0; neuron < colourLimit; neuron += 1) {
+    const sample = Math.min(sampleCount - 1, Math.floor((neuron * sampleCount) / colourLimit));
     neurons.set(samples.slice(sample * 3, sample * 3 + 3), neuron * 3);
   }
   for (let epoch = 0; epoch < 10; epoch += 1) {
@@ -416,7 +417,7 @@ function neuralPalette(image: RasterImage, lossy = 0): Uint8Array {
       const source = sample * 3;
       let winner = 0;
       let distance = Number.POSITIVE_INFINITY;
-      for (let neuron = 0; neuron < 255; neuron += 1) {
+      for (let neuron = 0; neuron < colourLimit; neuron += 1) {
         const target = neuron * 3;
         const next =
           (samples[source]! - neurons[target]!) ** 2 +
@@ -428,7 +429,7 @@ function neuralPalette(image: RasterImage, lossy = 0): Uint8Array {
         }
       }
       const first = Math.max(0, winner - radius);
-      const last = Math.min(254, winner + radius);
+      const last = Math.min(colourLimit - 1, winner + radius);
       for (let neuron = first; neuron <= last; neuron += 1) {
         const influence = learningRate * (1 - Math.abs(neuron - winner) / (radius + 1));
         const target = neuron * 3;
@@ -441,8 +442,8 @@ function neuralPalette(image: RasterImage, lossy = 0): Uint8Array {
       sample = (sample + step) % sampleCount;
     }
   }
-  const palette = new Uint8Array(256 * 3);
-  for (let neuron = 0; neuron < 255; neuron += 1)
+  const palette = new Uint8Array((colourLimit + 1) * 3);
+  for (let neuron = 0; neuron < colourLimit; neuron += 1)
     for (let channel = 0; channel < 3; channel += 1)
       palette[(neuron + 1) * 3 + channel] = Math.round(neurons[neuron * 3 + channel]!);
   return palette;
@@ -456,7 +457,7 @@ function nearestPaletteIndex(
 ): number {
   let selected = 1;
   let distance = Number.POSITIVE_INFINITY;
-  for (let index = 1; index < 256; index += 1) {
+  for (let index = 1; index < palette.length / 3; index += 1) {
     const offset = index * 3;
     const next =
       (red - palette[offset]!) ** 2 +
@@ -526,13 +527,7 @@ function paletteIndexes(
       const cacheKey = (Math.round(red) << 16) | (Math.round(green) << 8) | Math.round(blue);
       let index = cacheable ? nearestCache.get(cacheKey) : undefined;
       if (index === undefined) {
-        index =
-          options.quantizer === 'median-cut' ||
-          options.quantizer === 'octree' ||
-          options.quantizer === 'wu' ||
-          options.quantizer === 'neural'
-            ? nearestPaletteIndex(palette, red, green, blue)
-            : fixedPaletteIndex(red, green, blue);
+        index = nearestPaletteIndex(palette, red, green, blue);
         if (cacheable) nearestCache.set(cacheKey, index);
       }
       indexes[pixel] = index;
@@ -577,6 +572,73 @@ function paletteIndexes(
     laterErrors = new Float64Array((width + 4) * 3);
   }
   return indexes;
+}
+
+function fixedPalette(colourLimit: number): Uint8Array {
+  const canonical: number[][] = [];
+  for (let red = 0; red < 7; red += 1)
+    for (let green = 0; green < 8; green += 1)
+      for (let blue = 0; blue < 4; blue += 1) canonical.push([red * 36, green * 36, blue * 85]);
+  const palette = new Uint8Array((colourLimit + 1) * 3);
+  for (let index = 0; index < colourLimit; index += 1) {
+    const colour = canonical[Math.floor((index * canonical.length) / colourLimit)]!;
+    palette.set(colour, (index + 1) * 3);
+  }
+  return palette;
+}
+
+function buildPalette(
+  image: RasterImage,
+  options: GifEncodeOptions,
+  colourLimit: number,
+): Uint8Array {
+  if (options.quantizer === 'median-cut')
+    return medianCutPalette(image, options.lossy, colourLimit);
+  if (options.quantizer === 'octree') return octreePalette(image, options.lossy, colourLimit);
+  if (options.quantizer === 'wu') return wuPalette(image, options.lossy, colourLimit);
+  if (options.quantizer === 'neural') return neuralPalette(image, options.lossy, colourLimit);
+  return fixedPalette(colourLimit);
+}
+
+function padPalette(palette: Uint8Array, entries: number): Uint8Array {
+  if (palette.length === entries * 3) return palette;
+  const output = new Uint8Array(entries * 3);
+  output.set(palette);
+  const last = Math.max(0, palette.length - 3);
+  for (let index = palette.length / 3; index < entries; index += 1)
+    output.set(palette.subarray(last, last + 3), index * 3);
+  return output;
+}
+
+function remapTransparency(
+  palette: Uint8Array,
+  indexes: Uint8Array,
+  transparencyIndex: number,
+): { readonly palette: Uint8Array; readonly indexes: Uint8Array } {
+  if (transparencyIndex === 0) return { palette, indexes };
+  const mappedPalette = palette.slice();
+  const transparentColour = mappedPalette.slice(0, 3);
+  mappedPalette.copyWithin(0, transparencyIndex * 3, transparencyIndex * 3 + 3);
+  mappedPalette.set(transparentColour, transparencyIndex * 3);
+  const mappedIndexes = indexes.slice();
+  for (let index = 0; index < mappedIndexes.length; index += 1) {
+    if (mappedIndexes[index] === 0) mappedIndexes[index] = transparencyIndex;
+    else if (mappedIndexes[index] === transparencyIndex) mappedIndexes[index] = 0;
+  }
+  return { palette: mappedPalette, indexes: mappedIndexes };
+}
+
+function distinctOpaqueColours(image: RasterImage, stopAfter: number): number {
+  const colours = new Set<number>();
+  for (const frame of image.frames)
+    for (let offset = 0; offset < frame.data.length; offset += 4) {
+      if (frame.data[offset + 3]! < 128) continue;
+      colours.add(
+        (frame.data[offset]! << 16) | (frame.data[offset + 1]! << 8) | frame.data[offset + 2]!,
+      );
+      if (colours.size > stopAfter) return colours.size;
+    }
+  return colours.size;
 }
 
 function disposalCode(options: GifEncodeOptions, hasTransparency: boolean): number {
@@ -639,7 +701,7 @@ function frameRectangle(
   return { left, top, width: patchWidth, height: patchHeight, data: patch };
 }
 
-/** Encodes local 8-bit frames as an animated GIF89a with a deterministic 3:3:2 global palette. */
+/** Encodes local 8-bit frames as an animated GIF89a with configurable palette generation. */
 export function encodeGif(
   image: RasterImage,
   loopCount = 0,
@@ -652,46 +714,61 @@ export function encodeGif(
   if (source.width < 1 || source.height < 1 || source.width * source.height > 100_000_000)
     throw new Error('GIF dimensions exceed the safe encode limit.');
   if (source.frames.length > 10_000) throw new Error('GIF exceeds the safe frame-count limit.');
-  const bytes: number[] = [...new TextEncoder().encode('GIF89a')];
-  push16(bytes, source.width);
-  push16(bytes, source.height);
-  bytes.push(0xf7, 0, 0); // 256-colour global palette
-  const palette =
-    options.quantizer === 'median-cut'
-      ? medianCutPalette(source, options.lossy)
-      : options.quantizer === 'octree'
-        ? octreePalette(source, options.lossy)
-        : options.quantizer === 'wu'
-          ? wuPalette(source, options.lossy)
-          : options.quantizer === 'neural'
-            ? neuralPalette(source, options.lossy)
-            : new Uint8Array(256 * 3);
-  if (
-    options.quantizer !== 'median-cut' &&
-    options.quantizer !== 'octree' &&
-    options.quantizer !== 'wu' &&
-    options.quantizer !== 'neural'
-  ) {
-    for (let red = 0; red < 7; red += 1) {
-      for (let green = 0; green < 8; green += 1) {
-        for (let blue = 0; blue < 4; blue += 1) {
-          const index = 1 + red * 32 + green * 4 + blue;
-          palette[index * 3] = red * 36;
-          palette[index * 3 + 1] = green * 36;
-          palette[index * 3 + 2] = blue * 85;
-        }
-      }
-    }
-  }
-  bytes.push(...palette);
-  bytes.push(0x21, 0xff, 11, ...new TextEncoder().encode('NETSCAPE2.0'), 3, 1);
-  push16(bytes, loopCount);
-  bytes.push(0);
-  for (const frame of source.frames) {
+  const requestedEntries = Math.max(2, Math.min(256, Math.round(options.paletteSize ?? 256)));
+  const tableEntries = 2 ** Math.ceil(Math.log2(requestedEntries));
+  const tableSizeCode = Math.log2(tableEntries) - 1;
+  const minimumCodeSize = Math.max(2, Math.log2(tableEntries));
+  const colourLimit = requestedEntries - 1;
+  const requestedMode = options.paletteMode ?? 'global';
+  const paletteMode =
+    requestedMode === 'adaptive'
+      ? distinctOpaqueColours(source, colourLimit) <= colourLimit
+        ? 'global'
+        : 'per-frame'
+      : requestedMode;
+  const transparencyIndex = Math.max(
+    0,
+    Math.min(tableEntries - 1, Math.round(options.transparencyIndex ?? 0)),
+  );
+  const globalPalette =
+    paletteMode === 'global'
+      ? padPalette(buildPalette(source, options, colourLimit), tableEntries)
+      : undefined;
+  const prepared = source.frames.map((frame) => {
     const rectangle =
       options.optimizeLevel && options.optimizeLevel >= 2
         ? frameRectangle(frame.data, source.width, source.height)
         : { left: 0, top: 0, width: source.width, height: source.height, data: frame.data };
+    const frameImage = {
+      ...source,
+      width: rectangle.width,
+      height: rectangle.height,
+      frames: [{ data: rectangle.data, durationMs: frame.durationMs }],
+    } as RasterImage;
+    const palette =
+      globalPalette ?? padPalette(buildPalette(frameImage, options, colourLimit), tableEntries);
+    let indexes = paletteIndexes(
+      rectangle.data,
+      rectangle.width,
+      rectangle.height,
+      palette,
+      options,
+    );
+    const remapped = remapTransparency(palette, indexes, transparencyIndex);
+    indexes = remapped.indexes;
+    if (options.interlace) indexes = interlaceIndexes(indexes, rectangle.width, rectangle.height);
+    return { frame, rectangle, palette: remapped.palette, indexes };
+  });
+  const bytes: number[] = [...new TextEncoder().encode('GIF89a')];
+  push16(bytes, source.width);
+  push16(bytes, source.height);
+  bytes.push(globalPalette ? 0xf0 | tableSizeCode : 0x70, 0, 0);
+  if (globalPalette)
+    bytes.push(...remapTransparency(globalPalette, new Uint8Array(), transparencyIndex).palette);
+  bytes.push(0x21, 0xff, 11, ...new TextEncoder().encode('NETSCAPE2.0'), 3, 1);
+  push16(bytes, loopCount);
+  bytes.push(0);
+  for (const { frame, rectangle, palette, indexes } of prepared) {
     const hasTransparentPixels = frame.data.some(
       (_, index) => index % 4 === 3 && frame.data[index]! < 128,
     );
@@ -702,22 +779,16 @@ export function encodeGif(
       (disposalCode(options, hasTransparentPixels) << 2) | (hasTransparentPixels ? 1 : 0),
     );
     push16(bytes, Math.max(1, Math.round(frame.durationMs / 10)));
-    bytes.push(0, 0);
+    bytes.push(transparencyIndex, 0);
     bytes.push(0x2c);
     push16(bytes, rectangle.left);
     push16(bytes, rectangle.top);
     push16(bytes, rectangle.width);
     push16(bytes, rectangle.height);
-    bytes.push(options.interlace ? 0x40 : 0, 8);
-    let indexes = paletteIndexes(
-      rectangle.data,
-      rectangle.width,
-      rectangle.height,
-      palette,
-      options,
-    );
-    if (options.interlace) indexes = interlaceIndexes(indexes, rectangle.width, rectangle.height);
-    const data = lzwStream(indexes);
+    bytes.push((globalPalette ? 0 : 0x80 | tableSizeCode) | (options.interlace ? 0x40 : 0));
+    if (!globalPalette) bytes.push(...palette);
+    bytes.push(minimumCodeSize);
+    const data = lzwStream(indexes, minimumCodeSize);
     for (let offset = 0; offset < data.length; offset += 255) {
       const block = data.subarray(offset, offset + 255);
       bytes.push(block.length, ...block);

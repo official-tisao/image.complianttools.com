@@ -6,6 +6,9 @@
   let optimizeLevel = $state<0 | 1 | 2 | 3>(2);
   let lossy = $state(0);
   let quantizer = $state<'fixed-332' | 'median-cut' | 'octree' | 'wu' | 'neural'>('median-cut');
+  let paletteSize = $state(256);
+  let paletteMode = $state<'global' | 'per-frame' | 'adaptive'>('adaptive');
+  let transparencyIndex = $state(0);
   let dither = $state<'none' | 'ordered' | 'floyd-steinberg' | 'atkinson' | 'sierra'>(
     'floyd-steinberg',
   );
@@ -35,6 +38,9 @@
         optimizeLevel,
         lossy,
         quantizer,
+        paletteSize,
+        paletteMode,
+        transparencyIndex,
         dither,
         ditherAmount,
         disposal,
@@ -46,7 +52,7 @@
       download.download = `${file.name.replace(/\.[^.]+$/u, '')}.gif`;
       download.click();
       URL.revokeObjectURL(url);
-      status = `Created a ${canvas.width}×${canvas.height} GIF locally (${bytes.byteLength.toLocaleString()} bytes; ${quantizer}, ${dither} dithering at ${ditherAmount}%, ${disposal} disposal, ${interlace ? 'interlaced' : 'sequential'}, optimization ${optimizeLevel}, palette reduction ${lossy}).`;
+      status = `Created a ${canvas.width}×${canvas.height} GIF locally (${bytes.byteLength.toLocaleString()} bytes; ${quantizer}, ${paletteMode} palette up to ${paletteSize} entries, transparency index ${transparencyIndex}, ${dither} dithering at ${ditherAmount}%, ${disposal} disposal, ${interlace ? 'interlaced' : 'sequential'}, optimization ${optimizeLevel}, palette reduction ${lossy}).`;
     } catch (reason) {
       error = reason instanceof Error ? reason.message : 'Unable to create a GIF.';
     }
@@ -71,6 +77,22 @@
       <option value={2}>2 — transparent unchanged pixels</option>
       <option value={3}>3 — maximum local frame optimization</option>
     </select>
+  </label>
+  <label>
+    Palette mode
+    <select bind:value={paletteMode}>
+      <option value="adaptive">Adaptive</option>
+      <option value="global">Global</option>
+      <option value="per-frame">Per frame</option>
+    </select>
+  </label>
+  <label>
+    Palette size (2–256)
+    <input type="number" min="2" max="256" step="1" bind:value={paletteSize} />
+  </label>
+  <label>
+    Transparency index (0–255)
+    <input type="number" min="0" max="255" step="1" bind:value={transparencyIndex} />
   </label>
   <label>
     Dithering

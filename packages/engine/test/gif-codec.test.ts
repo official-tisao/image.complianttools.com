@@ -202,4 +202,73 @@ describe('GIF encoder', () => {
     expect(encoded[descriptor + 9]! & 0x40).toBe(0x40);
     expect(decodeGif(encoded).frames[0].data).toEqual(pixels);
   });
+
+  it('writes the requested legal palette table size and matching LZW code size', () => {
+    const pixels = new Uint8ClampedArray(16 * 4);
+    for (let pixel = 0; pixel < 16; pixel += 1)
+      pixels.set([pixel * 16, 255 - pixel * 16, pixel * 7, 255], pixel * 4);
+    const encoded = new Uint8Array(
+      encodeGif(createRaster(16, 1, pixels), 0, {
+        paletteSize: 16,
+        quantizer: 'median-cut',
+      }),
+    );
+    expect(encoded[10]! & 7).toBe(3); // 2^(3 + 1) = 16 table entries
+    const descriptor = encoded.indexOf(0x2c, 13 + 16 * 3);
+    expect(encoded[descriptor + 10]).toBe(4);
+    expect(decodeGif(encoded)).toMatchObject({ width: 16, height: 1 });
+  });
+
+  it('writes local per-frame colour tables without a global table', () => {
+    const image = createRaster(2, 1, new Uint8ClampedArray([255, 0, 0, 255, 0, 255, 0, 255]));
+    const animated = {
+      ...image,
+      frames: [
+        image.frames[0],
+        { data: new Uint8ClampedArray([0, 0, 255, 255, 255, 255, 0, 255]), durationMs: 40 },
+      ],
+    } as typeof image;
+    const encoded = new Uint8Array(
+      encodeGif(animated, 0, { paletteMode: 'per-frame', paletteSize: 4, quantizer: 'median-cut' }),
+    );
+    expect(encoded[10]! & 0x80).toBe(0);
+    const descriptor = encoded.indexOf(0x2c, 13);
+    expect(encoded[descriptor + 9]! & 0x80).toBe(0x80);
+    expect(decodeGif(encoded).frames).toHaveLength(2);
+  });
+
+  it('adaptively chooses global or per-frame palettes from the combined colour budget', () => {
+    const low = createRaster(2, 1, new Uint8ClampedArray([255, 0, 0, 255, 0, 255, 0, 255]));
+    const highPixels = new Uint8ClampedArray(8 * 4);
+    for (let pixel = 0; pixel < 8; pixel += 1)
+      highPixels.set([pixel * 31, pixel * 17, pixel * 11, 255], pixel * 4);
+    const lowEncoded = new Uint8Array(
+      encodeGif(low, 0, { paletteMode: 'adaptive', paletteSize: 4, quantizer: 'median-cut' }),
+    );
+    const highEncoded = new Uint8Array(
+      encodeGif(createRaster(8, 1, highPixels), 0, {
+        paletteMode: 'adaptive',
+        paletteSize: 4,
+        quantizer: 'median-cut',
+      }),
+    );
+    expect(lowEncoded[10]! & 0x80).toBe(0x80);
+    expect(highEncoded[10]! & 0x80).toBe(0);
+  });
+
+  it('remaps transparency to the requested palette index without changing opaque pixels', () => {
+    const pixels = new Uint8ClampedArray([0, 0, 0, 0, 250, 10, 20, 255]);
+    const encoded = new Uint8Array(
+      encodeGif(createRaster(2, 1, pixels), 0, {
+        paletteSize: 8,
+        quantizer: 'median-cut',
+        transparencyIndex: 5,
+      }),
+    );
+    const extension = encoded.findIndex(
+      (value, index) => value === 0x21 && encoded[index + 1] === 0xf9 && encoded[index + 2] === 4,
+    );
+    expect(encoded[extension + 6]).toBe(5);
+    expect(decodeGif(encoded).frames[0].data).toEqual(pixels);
+  });
 });
