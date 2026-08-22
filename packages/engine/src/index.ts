@@ -38,6 +38,7 @@ export * from './documents/pdf.js';
 export * from './documents/cbz.js';
 export * from './documents/eps.js';
 export * from './documents/dxf.js';
+export * from './documents/metafile.js';
 export * from './documents/pdf-read.js';
 export * from './documents/psd.js';
 export * from './export/filename.js';

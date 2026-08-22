@@ -94,6 +94,18 @@ const supportedFormats = {
     notes:
       'The pinned local parser converts bounded LINE, LWPOLYLINE, POLYLINE, CIRCLE, and ARC entities to SVG. Other records are counted and surfaced as warnings; a drawing with no renderable 2D geometry is refused rather than shown as an empty success.',
   },
+  wmf: {
+    name: 'WMF',
+    summary: 'Windows Metafile stores drawing commands in a compact legacy binary stream.',
+    notes:
+      'The bounded local reader supports core move, line, polygon, rectangle, and ellipse records. Unsupported records are counted and shown as warnings; malformed sizes and empty partial renders are refused.',
+  },
+  emf: {
+    name: 'EMF',
+    summary: 'Enhanced Metafile is the 32-bit successor to WMF for Windows drawing records.',
+    notes:
+      'The bounded local reader supports core 2D geometry records and validates every record boundary. Unsupported records are counted and shown as warnings; a file with no supported geometry is refused.',
+  },
   fits: {
     name: 'FITS',
     summary: 'FITS is a block-aligned scientific image container widely used in astronomy.',

@@ -243,6 +243,22 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     encodeUnavailableReason: 'DXF writing is outside this bounded local drawing reader.',
   },
   {
+    id: 'wmf',
+    animation: false,
+    lazyBytes: 12_000,
+    supports: ['decode'],
+    load: () => import('../documents/metafile.js'),
+    encodeUnavailableReason: 'WMF writing is outside this bounded local metafile reader.',
+  },
+  {
+    id: 'emf',
+    animation: false,
+    lazyBytes: 12_000,
+    supports: ['decode'],
+    load: () => import('../documents/metafile.js'),
+    encodeUnavailableReason: 'EMF writing is outside this bounded local metafile reader.',
+  },
+  {
     id: 'wbmp',
     animation: false,
     lazyBytes: 4_000,

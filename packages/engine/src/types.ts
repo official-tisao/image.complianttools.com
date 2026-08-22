@@ -11,6 +11,7 @@ export type FormatId =
   | 'dwg'
   | 'dxf'
   | 'eps'
+  | 'emf'
   | 'exr'
   | 'fits'
   | 'gif'
@@ -40,7 +41,8 @@ export type FormatId =
   | 'wbmp'
   | 'xbm'
   | 'webm'
-  | 'webp';
+  | 'webp'
+  | 'wmf';
 
 export type ColorSpaceId = 'srgb' | 'display-p3' | 'adobe-rgb' | 'gray' | 'cmyk';
 
