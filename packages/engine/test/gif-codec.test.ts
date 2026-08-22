@@ -35,6 +35,21 @@ describe('GIF encoder', () => {
     expect(result.frames[0].durationMs).toBe(50);
   });
 
+  it('uses level 3 to merge frames that differ only in invisible RGB', () => {
+    const image = createRaster(1, 1, new Uint8ClampedArray([255, 0, 0, 0]));
+    const animated = {
+      ...image,
+      frames: [image.frames[0], { data: new Uint8ClampedArray([0, 255, 0, 0]), durationMs: 40 }],
+    } as typeof image;
+    expect(optimiseGifFrames(animated, 2).frames).toHaveLength(2);
+    const level3 = optimiseGifFrames(animated, 3);
+    expect(level3.frames).toHaveLength(1);
+    expect(level3.frames[0].durationMs).toBe(40);
+    expect(encodeGif(animated, 0, { optimizeLevel: 3 }).byteLength).toBeLessThan(
+      encodeGif(animated, 0, { optimizeLevel: 2 }).byteLength,
+    );
+  });
+
   it('preserves transparent GIF pixels with a reserved palette index', () => {
     const image = createRaster(1, 1, new Uint8ClampedArray([0, 0, 0, 0]));
     expect(decodeGif(encodeGif(image)).frames[0].data[3]).toBe(0);

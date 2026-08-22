@@ -802,7 +802,8 @@ export function encodeGif(
 /**
  * Applies deterministic lossless GIF frame optimisation. Level 1 merges duplicate
  * frames; levels 2 and 3 additionally make pixels unchanged from the preceding
- * frame transparent, which GIF89a composites over the existing canvas.
+ * frame transparent. Level 3 also canonicalizes invisible RGB beneath zero alpha
+ * so visually identical transparent frames can merge.
  */
 export function optimiseGifFrames(
   image: RasterImage,
@@ -811,15 +812,19 @@ export function optimiseGifFrames(
   if (optimizeLevel === 0) return image;
   const frames: { data: Uint8ClampedArray; durationMs: number }[] = [];
   for (const frame of image.frames) {
+    const sourceData = frame.data.slice();
+    if (optimizeLevel >= 3)
+      for (let offset = 0; offset < sourceData.length; offset += 4)
+        if (sourceData[offset + 3] === 0) sourceData.fill(0, offset, offset + 3);
     const previous = frames.at(-1);
     if (
       previous &&
-      previous.data.length === frame.data.length &&
-      previous.data.every((value, index) => value === frame.data[index])
+      previous.data.length === sourceData.length &&
+      previous.data.every((value, index) => value === sourceData[index])
     ) {
       previous.durationMs += frame.durationMs;
     } else {
-      frames.push({ data: frame.data.slice(), durationMs: frame.durationMs });
+      frames.push({ data: sourceData, durationMs: frame.durationMs });
     }
   }
   if (optimizeLevel < 2) return { ...image, frames: frames as unknown as RasterImage['frames'] };
