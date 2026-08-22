@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { createRaster, encodeApng } from '../src/index.js';
+import { createRaster, decodeApng, encodeApng } from '../src/index.js';
 
 function pngChunk(type: string, data: readonly number[]): number[] {
   return [
@@ -61,5 +61,31 @@ describe('APNG muxer', () => {
 
   it('rejects an invalid loop count before encoding frames', async () => {
     await expect(encodeApng(createRaster(1, 1), -1)).rejects.toThrow('loop count');
+  });
+
+  it('round-trips animated RGBA frames through injected PNG frame codecs', async () => {
+    const first = new Uint8ClampedArray([255, 0, 0, 255]);
+    const second = new Uint8ClampedArray([0, 0, 255, 128]);
+    const image = {
+      ...createRaster(1, 1, first),
+      frames: [
+        { data: first, durationMs: 25 },
+        { data: second, durationMs: 40 },
+      ] as const,
+    };
+    const encoded = await encodeApng(image, 0, async () => fixturePng.buffer.slice(0));
+    let decodedFrame = 0;
+    const decoded = await decodeApng(encoded, async () => {
+      const data = [first, second][decodedFrame++]!;
+      return createRaster(1, 1, data);
+    });
+    expect([decoded.width, decoded.height]).toEqual([1, 1]);
+    expect(decoded.frames.map((frame) => frame.durationMs)).toEqual([25, 40]);
+    expect(decoded.frames[0].data).toEqual(first);
+    expect(decoded.frames[1].data).toEqual(second);
+  });
+
+  it('rejects a plain PNG without animation control', async () => {
+    await expect(decodeApng(fixturePng)).rejects.toThrow('animation control');
   });
 });

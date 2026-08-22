@@ -1,6 +1,7 @@
 import decodeJpeg from '@jsquash/jpeg/decode.js';
 import encodeJpeg from '@jsquash/jpeg/encode.js';
 import optimisePng from '@jsquash/oxipng/optimise.js';
+import decodePng from '@jsquash/png/decode.js';
 import encodePng from '@jsquash/png/encode.js';
 import encodeWebp from '@jsquash/webp/encode.js';
 
@@ -18,6 +19,18 @@ function toImageData(image: RasterImage): ImageData {
 
 export async function decodeJpegToRaster(bytes: ArrayBuffer): Promise<RasterImage> {
   const decoded = await decodeJpeg(bytes);
+  return {
+    width: decoded.width,
+    height: decoded.height,
+    colorSpace: decoded.colorSpace === 'display-p3' ? 'display-p3' : 'srgb',
+    bitDepth: 8,
+    premultipliedAlpha: false,
+    frames: [{ data: decoded.data, durationMs: 0 }],
+  };
+}
+
+export async function decodePngToRaster(bytes: ArrayBuffer): Promise<RasterImage> {
+  const decoded = await decodePng(bytes);
   return {
     width: decoded.width,
     height: decoded.height,
