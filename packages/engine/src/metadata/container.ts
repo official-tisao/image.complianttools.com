@@ -4,7 +4,7 @@ export type MetadataTag = {
   readonly value: string;
 };
 export type ReadableMetadata = {
-  readonly format: 'png' | 'gif' | 'jpeg' | 'webp';
+  readonly format: 'png' | 'gif' | 'jpeg' | 'webp' | 'avif' | 'heif';
   readonly tags: readonly MetadataTag[];
 };
 
@@ -225,6 +225,72 @@ function readWebp(input: Uint8Array): ReadableMetadata {
   return { format: 'webp', tags };
 }
 
+function readIsoBmff(input: Uint8Array): ReadableMetadata {
+  if (input.length < 16 || latin1.decode(input.subarray(4, 8)) !== 'ftyp')
+    throw new Error('AVIF/HEIF metadata requires a valid ISO-BMFF file type box.');
+  const view = new DataView(input.buffer, input.byteOffset, input.byteLength);
+  const brands = latin1.decode(input.subarray(8, Math.min(input.length, view.getUint32(0))));
+  const format = /(?:avif|avis)/u.test(brands) ? 'avif' : 'heif';
+  if (!/(?:avif|avis|heic|heix|hevc|hevx|mif1|msf1)/u.test(brands))
+    throw new Error('ISO-BMFF file does not declare an AVIF or HEIF compatible brand.');
+  const tags: MetadataTag[] = [];
+  const containers = new Set([
+    'meta',
+    'iprp',
+    'ipco',
+    'iinf',
+    'moov',
+    'trak',
+    'mdia',
+    'minf',
+    'stbl',
+  ]);
+  let boxes = 0;
+  const walk = (start: number, end: number, depth: number): void => {
+    if (depth > 12) throw new Error('AVIF/HEIF metadata nesting exceeds the safe limit.');
+    for (let offset = start; offset < end;) {
+      if (++boxes > 10_000) throw new Error('AVIF/HEIF metadata contains too many boxes.');
+      if (offset > end - 8) throw new Error('AVIF/HEIF metadata contains a truncated box header.');
+      let size = view.getUint32(offset);
+      const type = latin1.decode(input.subarray(offset + 4, offset + 8));
+      let header = 8;
+      if (size === 1) {
+        if (offset > end - 16)
+          throw new Error('AVIF/HEIF metadata contains a truncated large box.');
+        const large = view.getBigUint64(offset + 8);
+        if (large > BigInt(Number.MAX_SAFE_INTEGER))
+          throw new Error('AVIF/HEIF metadata box exceeds the safe size limit.');
+        size = Number(large);
+        header = 16;
+      } else if (size === 0) size = end - offset;
+      if (size < header || offset + size > end)
+        throw new Error('AVIF/HEIF metadata contains a truncated box payload.');
+      const payloadStart = offset + header;
+      const payloadBytes = size - header;
+      if (type === 'Exif')
+        tags.push({ namespace: 'EXIF', name: 'embedded', value: `${payloadBytes} bytes` });
+      if (type === 'xml ' || type === 'mime')
+        tags.push({ namespace: 'XMP', name: 'packet', value: `${payloadBytes} bytes` });
+      if (
+        type === 'colr' &&
+        latin1.decode(input.subarray(payloadStart, payloadStart + 4)) === 'prof'
+      )
+        tags.push({
+          namespace: 'ICC',
+          name: 'embedded',
+          value: `${Math.max(0, payloadBytes - 4)} bytes`,
+        });
+      if (type === 'jumb')
+        tags.push({ namespace: 'C2PA', name: 'jumbf', value: `${payloadBytes} bytes` });
+      if (containers.has(type))
+        walk(payloadStart + (type === 'meta' ? 4 : 0), offset + size, depth + 1);
+      offset += size;
+    }
+  };
+  walk(0, input.length, 0);
+  return { format, tags };
+}
+
 export function readContainerMetadata(input: ArrayBuffer | Uint8Array): ReadableMetadata {
   const bytes = input instanceof Uint8Array ? input : new Uint8Array(input);
   if (matches(bytes, pngSignature)) return readPng(bytes);
@@ -234,6 +300,7 @@ export function readContainerMetadata(input: ArrayBuffer | Uint8Array): Readable
     latin1.decode(bytes.subarray(8, 12)) === 'WEBP'
   )
     return readWebp(bytes);
+  if (latin1.decode(bytes.subarray(4, 8)) === 'ftyp') return readIsoBmff(bytes);
   return readGif(bytes);
 }
 

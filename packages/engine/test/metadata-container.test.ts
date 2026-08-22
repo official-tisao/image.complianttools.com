@@ -54,6 +54,18 @@ function webpChunk(type: string, data: readonly number[]): number[] {
   ];
 }
 
+function bmffBox(type: string, data: readonly number[]): number[] {
+  const size = data.length + 8;
+  return [
+    size >>> 24,
+    size >>> 16,
+    size >>> 8,
+    size,
+    ...[...type].map((value) => value.charCodeAt(0)),
+    ...data,
+  ];
+}
+
 describe('container metadata', () => {
   it('reads PNG text and strips metadata without touching image chunks', () => {
     expect(readContainerMetadata(png)).toEqual({
@@ -284,5 +296,51 @@ describe('container metadata', () => {
     const stripped = stripWebpMetadata(webp);
     expect(readContainerMetadata(stripped)).toEqual({ format: 'webp', tags: [] });
     expect(new TextDecoder('latin1').decode(stripped)).toContain('VP8 ');
+  });
+
+  it('reads AVIF/HEIF EXIF, XMP, ICC, and C2PA boxes with bounded nesting', () => {
+    const metadata = [
+      0,
+      0,
+      0,
+      0, // meta full-box version/flags
+      ...bmffBox('Exif', [1, 2]),
+      ...bmffBox('xml ', [3, 4, 5]),
+      ...bmffBox('colr', [...new TextEncoder().encode('prof'), 6, 7]),
+      ...bmffBox('jumb', [8, 9, 10, 11]),
+    ];
+    const avif = new Uint8Array([
+      ...bmffBox('ftyp', [
+        ...new TextEncoder().encode('avif'),
+        0,
+        0,
+        0,
+        0,
+        ...new TextEncoder().encode('mif1'),
+      ]),
+      ...bmffBox('meta', metadata),
+    ]);
+    expect(readContainerMetadata(avif)).toEqual({
+      format: 'avif',
+      tags: [
+        { namespace: 'EXIF', name: 'embedded', value: '2 bytes' },
+        { namespace: 'XMP', name: 'packet', value: '3 bytes' },
+        { namespace: 'ICC', name: 'embedded', value: '2 bytes' },
+        { namespace: 'C2PA', name: 'jumbf', value: '4 bytes' },
+      ],
+    });
+  });
+
+  it('rejects truncated and non-image ISO-BMFF metadata containers', () => {
+    const invalidBrand = new Uint8Array(
+      bmffBox('ftyp', [...new TextEncoder().encode('isom'), 0, 0, 0, 0]),
+    );
+    expect(() => readContainerMetadata(invalidBrand)).toThrow('AVIF or HEIF');
+    const truncated = new Uint8Array(
+      bmffBox('ftyp', [...new TextEncoder().encode('avif'), 0, 0, 0, 0]),
+    );
+    truncated[truncated.length - 1] = 0;
+    truncated.set([0, 0, 0, 20], 0);
+    expect(() => readContainerMetadata(truncated)).toThrow('truncated');
   });
 });
