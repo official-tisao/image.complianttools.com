@@ -106,6 +106,30 @@ export const codecRegistry: readonly CodecDescriptor[] = [
       'HEIC encoding is deliberately excluded because HEVC has active patent pools and available browser encoders are GPL or commercial.',
   },
   {
+    id: 'mp4',
+    animation: true,
+    lazyBytes: 0,
+    supports: ['decode'],
+    load: () => import('./platform/video.js'),
+    requiresWebCodecsDecode: true,
+    decodeUnavailableReason:
+      'MP4 frame extraction requires a browser WebCodecs VideoDecoder that supports the file’s video codec.',
+    encodeUnavailableReason:
+      'Video encoding is outside this image tool; extracted frames can be exported as standard images.',
+  },
+  {
+    id: 'webm',
+    animation: true,
+    lazyBytes: 0,
+    supports: ['decode'],
+    load: () => import('./platform/video.js'),
+    requiresWebCodecsDecode: true,
+    decodeUnavailableReason:
+      'WebM frame extraction requires a browser WebCodecs VideoDecoder that supports the file’s video codec.',
+    encodeUnavailableReason:
+      'Video encoding is outside this image tool; extracted frames can be exported as standard images.',
+  },
+  {
     id: 'jpeg',
     animation: false,
     lazyBytes: 195_000,

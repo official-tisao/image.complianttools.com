@@ -15,7 +15,7 @@ describe('P2 codec registry', () => {
       opfs: false,
       webCodecs: false,
     });
-    expect(capabilities).toHaveLength(38);
+    expect(capabilities).toHaveLength(40);
     expect(capabilities.find((entry) => entry.id === 'jpeg')).toMatchObject({
       decode: 'lazy',
       encode: 'lazy',
@@ -98,6 +98,13 @@ describe('P2 codec registry', () => {
       encode: 'lazy',
       animation: true,
     });
+    for (const id of ['mp4', 'webm'] as const)
+      expect(capabilities.find((entry) => entry.id === id)).toMatchObject({
+        decode: 'unavailable',
+        encode: 'unavailable',
+        decodeUnavailableReason: expect.stringContaining('VideoDecoder'),
+        encodeUnavailableReason: expect.stringContaining('Video encoding is outside'),
+      });
     for (const id of ['jp2', 'pict', 'mng', 'flif', 'cdr', 'dwg', 'djvu'] as const) {
       expect(capabilities.find((entry) => entry.id === id)).toMatchObject({
         decode: 'unavailable',
@@ -115,5 +122,20 @@ describe('P2 codec registry', () => {
     await expect(loadCodec('gif')).resolves.toBeDefined();
     expect(getCodec('webp').supports).toEqual(['decode', 'encode']);
     expect(getCodec('qoi').supports).toEqual(['decode', 'encode']);
+  });
+
+  it('enables platform media decoders only when WebCodecs is present', () => {
+    const capabilities = codecCapabilities({
+      wasmSimd: false,
+      wasmThreads: false,
+      webGpu: false,
+      webGl2: false,
+      offscreenCanvas: false,
+      fileSystemAccess: false,
+      opfs: false,
+      webCodecs: true,
+    });
+    for (const id of ['heic', 'mp4', 'webm'] as const)
+      expect(capabilities.find((entry) => entry.id === id)?.decode).toBe('lazy');
   });
 });

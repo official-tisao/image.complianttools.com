@@ -20,6 +20,7 @@ export type FormatId =
   | 'jp2'
   | 'jxl'
   | 'mng'
+  | 'mp4'
   | 'pcx'
   | 'pdf'
   | 'pfm'
@@ -36,6 +37,7 @@ export type FormatId =
   | 'tiff'
   | 'wbmp'
   | 'xbm'
+  | 'webm'
   | 'webp';
 
 export type ColorSpaceId = 'srgb' | 'display-p3' | 'adobe-rgb' | 'gray' | 'cmyk';

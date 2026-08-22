@@ -99,6 +99,13 @@ const supportedFormats = {
     notes:
       'The pinned local WASM decoder is fixture-tested. Browser export remains hidden until its worker delivery path is build-verified.',
   },
+  mp4: {
+    name: 'MP4/M4V/MOV',
+    summary:
+      'ISO base media containers can carry video streams that browsers expose through WebCodecs.',
+    notes:
+      'The local MP4Box demuxer adds no codec download. Frame extraction is offered only when the browser’s VideoDecoder supports the stream codec; video encoding is outside this image workflow.',
+  },
   hdr: {
     name: 'Radiance HDR',
     summary: 'Radiance RGBE stores high-dynamic-range colour using a shared exponent.',
@@ -205,6 +212,12 @@ const supportedFormats = {
     summary: 'WebP supports compact lossy and lossless still images with alpha transparency.',
     notes:
       'The pinned local WASM codec is round-trip tested and the generic exporter exposes quality and lossless modes without uploading source pixels.',
+  },
+  webm: {
+    name: 'WebM',
+    summary: 'WebM is a media container commonly carrying VP8, VP9, or AV1 video.',
+    notes:
+      'Frame extraction uses the browser’s capability-probed WebCodecs decoder and never downloads a bundled video codec. Unsupported stream codecs are reported by name.',
   },
   xbm: {
     name: 'XBM/XPM',
