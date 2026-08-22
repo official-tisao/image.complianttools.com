@@ -15,7 +15,7 @@ describe('P2 codec registry', () => {
       opfs: false,
       webCodecs: false,
     });
-    expect(capabilities).toHaveLength(26);
+    expect(capabilities).toHaveLength(33);
     expect(capabilities.find((entry) => entry.id === 'jpeg')).toMatchObject({
       decode: 'lazy',
       encode: 'lazy',
@@ -64,6 +64,15 @@ describe('P2 codec registry', () => {
       encode: 'unavailable',
       lazyBytes: 350_000,
     });
+    for (const id of ['jp2', 'pict', 'mng', 'flif', 'cdr', 'dwg', 'djvu'] as const) {
+      expect(capabilities.find((entry) => entry.id === id)).toMatchObject({
+        decode: 'unavailable',
+        encode: 'unavailable',
+        decodeUnavailableReason: expect.any(String),
+        encodeUnavailableReason: expect.any(String),
+        lazyBytes: 0,
+      });
+    }
   });
 
   it('loads implemented codecs and rejects a codec with no implementation', async () => {

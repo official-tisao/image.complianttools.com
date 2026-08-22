@@ -17,6 +17,75 @@ export interface CodecDescriptor {
 
 export const codecRegistry: readonly CodecDescriptor[] = [
   {
+    id: 'jp2',
+    animation: false,
+    lazyBytes: 0,
+    supports: [],
+    decodeUnavailableReason:
+      'JPEG 2000 is unavailable in v1 because no verified permissive browser package exists and a vendored OpenJPEG WASM build has not been produced.',
+    encodeUnavailableReason:
+      'JPEG 2000 encoding is unavailable in v1 because a reproducible, licence-recorded OpenJPEG WASM build has not been produced.',
+  },
+  {
+    id: 'pict',
+    animation: false,
+    lazyBytes: 0,
+    supports: [],
+    decodeUnavailableReason:
+      'PICT is a complex legacy Mac format whose viable decoders are copyleft, so it is deliberately unsupported.',
+    encodeUnavailableReason:
+      'PICT export is deliberately unsupported for the same licensing reason.',
+  },
+  {
+    id: 'mng',
+    animation: true,
+    lazyBytes: 0,
+    supports: [],
+    decodeUnavailableReason:
+      'MNG is a dormant legacy animation format and is deliberately unsupported; use APNG instead.',
+    encodeUnavailableReason: 'MNG export is deliberately unsupported; use APNG instead.',
+  },
+  {
+    id: 'flif',
+    animation: true,
+    lazyBytes: 0,
+    supports: [],
+    decodeUnavailableReason:
+      'FLIF is superseded by JPEG XL and its reference decoder is copyleft, so it is deliberately unsupported.',
+    encodeUnavailableReason:
+      'FLIF export is deliberately unsupported; use PNG, WebP, AVIF, or JPEG XL instead.',
+  },
+  {
+    id: 'cdr',
+    animation: false,
+    lazyBytes: 0,
+    supports: [],
+    decodeUnavailableReason:
+      'CDR is proprietary and undocumented, so a reliable local decoder cannot be shipped.',
+    encodeUnavailableReason:
+      'CDR export is unavailable because the format is proprietary and undocumented.',
+  },
+  {
+    id: 'dwg',
+    animation: false,
+    lazyBytes: 0,
+    supports: [],
+    decodeUnavailableReason:
+      'DWG is proprietary and no verified permissive browser decoder is available, so it is unsupported.',
+    encodeUnavailableReason:
+      'DWG export is unavailable because no verified permissive encoder is available.',
+  },
+  {
+    id: 'djvu',
+    animation: false,
+    lazyBytes: 0,
+    supports: [],
+    decodeUnavailableReason:
+      'DjVu is unsupported because DjVuLibre is GPL-2.0 and no permissive decoder with verified provenance is available.',
+    encodeUnavailableReason:
+      'DjVu export is unsupported because no permissive encoder with verified provenance is available.',
+  },
+  {
     id: 'heic',
     animation: true,
     lazyBytes: 0,

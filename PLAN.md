@@ -1079,10 +1079,10 @@ and the format's `/docs/formats/` page exists. **Or** when honestly marked unava
 **Standard raster** — [ ] JPEG · [ ] PNG · [ ] APNG · [ ] WebP · [ ] AVIF · [ ] JPEG XL · [ ] GIF ·
 [ ] BMP/DIB · [ ] TIFF · [ ] ICO · [ ] CUR · [ ] HEIC/HEIF (decode only) · [ ] TGA · [ ] PCX ·
 [ ] PPM/PGM/PBM/PNM · [ ] PAM · [ ] WBMP · [ ] XBM/XPM · [ ] DDS · [ ] KTX/KTX2 · [ ] Radiance HDR ·
-[ ] OpenEXR · [ ] PFM · [ ] FITS · [ ] JPEG 2000 · [ ] SGI/RGB · [ ] Sun Raster · [ ] QOI
+[ ] OpenEXR · [ ] PFM · [ ] FITS · [x] JPEG 2000 · [ ] SGI/RGB · [ ] Sun Raster · [ ] QOI
 
-**Explicitly unsupported (page explaining why)** — [ ] PICT · [ ] MNG · [ ] FLIF · [ ] CDR ·
-[ ] DWG · [ ] DjVu · [ ] HEIC encode
+**Explicitly unsupported (page explaining why)** — [x] PICT · [x] MNG · [x] FLIF · [x] CDR ·
+[x] DWG · [x] DjVu · [x] HEIC encode
 
 **RAW (Stage 1 preview)** — [ ] Canon CR2/CR3/CRW · [ ] Nikon NEF/NRW · [ ] Sony ARW/SRF/SR2 ·
 [ ] Fujifilm RAF · [ ] Olympus ORF · [ ] Panasonic RW2 · [ ] Pentax PEF/PTX · [ ] Leica RWL/DRF ·
