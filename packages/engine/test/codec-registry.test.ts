@@ -15,7 +15,7 @@ describe('P2 codec registry', () => {
       opfs: false,
       webCodecs: false,
     });
-    expect(capabilities).toHaveLength(35);
+    expect(capabilities).toHaveLength(36);
     expect(capabilities.find((entry) => entry.id === 'jpeg')).toMatchObject({
       decode: 'lazy',
       encode: 'lazy',
@@ -77,6 +77,11 @@ describe('P2 codec registry', () => {
       encode: 'unavailable',
       encodeUnavailableReason:
         'Camera RAW encoding is not offered; export the extracted preview or developed pixels to a standard image format.',
+    });
+    expect(capabilities.find((entry) => entry.id === 'cbz')).toMatchObject({
+      decode: 'lazy',
+      encode: 'lazy',
+      lazyBytes: 42_000,
     });
     for (const id of ['jp2', 'pict', 'mng', 'flif', 'cdr', 'dwg', 'djvu'] as const) {
       expect(capabilities.find((entry) => entry.id === id)).toMatchObject({

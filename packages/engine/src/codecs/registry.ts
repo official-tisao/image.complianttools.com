@@ -284,6 +284,13 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     load: () => import('./simple/bmp.js'),
   },
   {
+    id: 'cbz',
+    animation: false,
+    lazyBytes: 42_000,
+    supports: ['decode', 'encode'],
+    load: () => import('../documents/cbz.js'),
+  },
+  {
     id: 'raw',
     animation: false,
     lazyBytes: 28_000,

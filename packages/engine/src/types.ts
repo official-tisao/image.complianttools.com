@@ -2,6 +2,7 @@ export type FormatId =
   | 'apng'
   | 'avif'
   | 'bmp'
+  | 'cbz'
   | 'cdr'
   | 'cur'
   | 'dds'

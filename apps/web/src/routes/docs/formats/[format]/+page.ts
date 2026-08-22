@@ -63,6 +63,12 @@ const supportedFormats = {
     notes:
       'The local codec reads and writes 32-bit RGBA pixels. BMP files are usually much larger than PNG.',
   },
+  cbz: {
+    name: 'CBZ',
+    summary: 'CBZ is a ZIP archive whose naturally ordered image files form comic-book pages.',
+    notes:
+      'The local codec reads and writes bounded CBZ archives, rejects traversal paths, and orders numbered pages naturally. CBR/RAR remains unavailable pending verified permissive RAR provenance.',
+  },
   fits: {
     name: 'FITS',
     summary: 'FITS is a block-aligned scientific image container widely used in astronomy.',
