@@ -8,7 +8,7 @@ export interface GifEncodeOptions {
   /** Deterministic colour reduction from 0 (off) through 200 (strongest). */
   readonly lossy?: number;
   /** Palette construction strategy. Median-cut uses a weighted histogram over all frames. */
-  readonly quantizer?: 'fixed-332' | 'median-cut' | 'octree';
+  readonly quantizer?: 'fixed-332' | 'median-cut' | 'octree' | 'wu';
   /** Optional palette-error diffusion. */
   readonly dither?: 'none' | 'ordered' | 'floyd-steinberg';
   /** GIF89a disposal method. Automatic uses background disposal for transparent full frames. */
@@ -236,6 +236,141 @@ function octreePalette(image: RasterImage, lossy = 0): Uint8Array {
   return palette;
 }
 
+type WuCube = {
+  red0: number;
+  red1: number;
+  green0: number;
+  green1: number;
+  blue0: number;
+  blue1: number;
+};
+
+const wuSide = 33;
+const wuIndex = (red: number, green: number, blue: number) =>
+  (red * wuSide + green) * wuSide + blue;
+
+function wuVolume(cube: WuCube, moment: Float64Array): number {
+  const { red0, red1, green0, green1, blue0, blue1 } = cube;
+  return (
+    moment[wuIndex(red1, green1, blue1)]! -
+    moment[wuIndex(red1, green1, blue0)]! -
+    moment[wuIndex(red1, green0, blue1)]! +
+    moment[wuIndex(red1, green0, blue0)]! -
+    moment[wuIndex(red0, green1, blue1)]! +
+    moment[wuIndex(red0, green1, blue0)]! +
+    moment[wuIndex(red0, green0, blue1)]! -
+    moment[wuIndex(red0, green0, blue0)]!
+  );
+}
+
+function wuVariance(cube: WuCube, moments: readonly Float64Array[]): number {
+  const weight = wuVolume(cube, moments[0]!);
+  if (weight === 0) return 0;
+  const red = wuVolume(cube, moments[1]!);
+  const green = wuVolume(cube, moments[2]!);
+  const blue = wuVolume(cube, moments[3]!);
+  return wuVolume(cube, moments[4]!) - (red * red + green * green + blue * blue) / weight;
+}
+
+function wuCut(
+  cube: WuCube,
+  moments: readonly Float64Array[],
+): readonly [WuCube, WuCube] | undefined {
+  let bestScore = Number.NEGATIVE_INFINITY;
+  let best: readonly [keyof WuCube, number] | undefined;
+  for (const [low, high] of [
+    ['red0', 'red1'],
+    ['green0', 'green1'],
+    ['blue0', 'blue1'],
+  ] as const)
+    for (let position = cube[low] + 1; position < cube[high]; position += 1) {
+      const first = { ...cube, [high]: position };
+      const second = { ...cube, [low]: position };
+      const firstWeight = wuVolume(first, moments[0]!);
+      const secondWeight = wuVolume(second, moments[0]!);
+      if (firstWeight === 0 || secondWeight === 0) continue;
+      let score = 0;
+      for (let channel = 1; channel <= 3; channel += 1) {
+        const firstMoment = wuVolume(first, moments[channel]!);
+        const secondMoment = wuVolume(second, moments[channel]!);
+        score +=
+          (firstMoment * firstMoment) / firstWeight + (secondMoment * secondMoment) / secondWeight;
+      }
+      if (score > bestScore) {
+        bestScore = score;
+        best = [high, position];
+      }
+    }
+  if (!best) return undefined;
+  const [high, position] = best;
+  const low = high.replace('1', '0') as keyof WuCube;
+  return [
+    { ...cube, [high]: position },
+    { ...cube, [low]: position },
+  ];
+}
+
+function wuPalette(image: RasterImage, lossy = 0): Uint8Array {
+  const size = wuSide ** 3;
+  const moments = Array.from({ length: 5 }, () => new Float64Array(size));
+  for (const frame of image.frames)
+    for (let offset = 0; offset < frame.data.length; offset += 4) {
+      if (frame.data[offset + 3]! < 128) continue;
+      const red = reduceChannel(frame.data[offset]!, lossy);
+      const green = reduceChannel(frame.data[offset + 1]!, lossy);
+      const blue = reduceChannel(frame.data[offset + 2]!, lossy);
+      const index = wuIndex((red >> 3) + 1, (green >> 3) + 1, (blue >> 3) + 1);
+      moments[0]![index] = moments[0]![index]! + 1;
+      moments[1]![index] = moments[1]![index]! + red;
+      moments[2]![index] = moments[2]![index]! + green;
+      moments[3]![index] = moments[3]![index]! + blue;
+      moments[4]![index] = moments[4]![index]! + red * red + green * green + blue * blue;
+    }
+  for (const moment of moments)
+    for (let red = 1; red < wuSide; red += 1)
+      for (let green = 1; green < wuSide; green += 1)
+        for (let blue = 1; blue < wuSide; blue += 1) {
+          const index = wuIndex(red, green, blue);
+          moment[index] =
+            moment[index]! +
+            moment[wuIndex(red - 1, green, blue)]! +
+            moment[wuIndex(red, green - 1, blue)]! +
+            moment[wuIndex(red, green, blue - 1)]! -
+            moment[wuIndex(red - 1, green - 1, blue)]! -
+            moment[wuIndex(red - 1, green, blue - 1)]! -
+            moment[wuIndex(red, green - 1, blue - 1)]! +
+            moment[wuIndex(red - 1, green - 1, blue - 1)]!;
+        }
+  let cubes: WuCube[] = [{ red0: 0, red1: 32, green0: 0, green1: 32, blue0: 0, blue1: 32 }];
+  while (cubes.length < 255) {
+    let selected = -1;
+    let variance = 0;
+    for (let index = 0; index < cubes.length; index += 1) {
+      const next = wuVariance(cubes[index]!, moments);
+      if (next > variance) {
+        selected = index;
+        variance = next;
+      }
+    }
+    if (selected < 0) break;
+    const cut = wuCut(cubes[selected]!, moments);
+    if (!cut) break;
+    cubes = [...cubes.slice(0, selected), ...cut, ...cubes.slice(selected + 1)];
+  }
+  const palette = new Uint8Array(256 * 3);
+  for (let index = 0; index < cubes.length; index += 1) {
+    const weight = wuVolume(cubes[index]!, moments[0]!);
+    if (weight === 0) continue;
+    palette[(index + 1) * 3] = Math.round(wuVolume(cubes[index]!, moments[1]!) / weight);
+    palette[(index + 1) * 3 + 1] = Math.round(wuVolume(cubes[index]!, moments[2]!) / weight);
+    palette[(index + 1) * 3 + 2] = Math.round(wuVolume(cubes[index]!, moments[3]!) / weight);
+  }
+  const last = Math.max(1, cubes.length) * 3;
+  for (let index = cubes.length + 1; index < 256; index += 1)
+    palette.set(palette.subarray(last, last + 3), index * 3);
+  return palette;
+}
+
 function nearestPaletteIndex(
   palette: Uint8Array,
   red: number,
@@ -306,7 +441,9 @@ function paletteIndexes(
         ),
       );
       const index =
-        options.quantizer === 'median-cut' || options.quantizer === 'octree'
+        options.quantizer === 'median-cut' ||
+        options.quantizer === 'octree' ||
+        options.quantizer === 'wu'
           ? nearestPaletteIndex(palette, red, green, blue)
           : fixedPaletteIndex(red, green, blue);
       indexes[pixel] = index;
@@ -390,8 +527,14 @@ export function encodeGif(
       ? medianCutPalette(source, options.lossy)
       : options.quantizer === 'octree'
         ? octreePalette(source, options.lossy)
-        : new Uint8Array(256 * 3);
-  if (options.quantizer !== 'median-cut' && options.quantizer !== 'octree') {
+        : options.quantizer === 'wu'
+          ? wuPalette(source, options.lossy)
+          : new Uint8Array(256 * 3);
+  if (
+    options.quantizer !== 'median-cut' &&
+    options.quantizer !== 'octree' &&
+    options.quantizer !== 'wu'
+  ) {
     for (let red = 0; red < 7; red += 1) {
       for (let green = 0; green < 8; green += 1) {
         for (let blue = 0; blue < 4; blue += 1) {

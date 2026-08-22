@@ -5,7 +5,7 @@
   let error = $state('');
   let optimizeLevel = $state<0 | 1 | 2 | 3>(2);
   let lossy = $state(0);
-  let quantizer = $state<'fixed-332' | 'median-cut' | 'octree'>('median-cut');
+  let quantizer = $state<'fixed-332' | 'median-cut' | 'octree' | 'wu'>('median-cut');
   let dither = $state<'none' | 'ordered' | 'floyd-steinberg'>('floyd-steinberg');
   let disposal = $state<'auto' | 'keep' | 'background' | 'previous'>('auto');
 
@@ -82,6 +82,7 @@
     <select bind:value={quantizer}>
       <option value="median-cut">Weighted median cut</option>
       <option value="octree">Weighted octree</option>
+      <option value="wu">Wu variance</option>
       <option value="fixed-332">Fixed RGB 3:3:2</option>
     </select>
   </label>

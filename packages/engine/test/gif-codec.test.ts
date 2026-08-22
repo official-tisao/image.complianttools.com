@@ -95,6 +95,17 @@ describe('GIF encoder', () => {
     expect(decodeGif(octree)).toMatchObject({ width: 300, height: 1 });
   });
 
+  it('uses deterministic Wu variance partitioning', () => {
+    const pixels = new Uint8ClampedArray(512 * 4);
+    for (let pixel = 0; pixel < 512; pixel += 1)
+      pixels.set([(pixel * 29) & 255, (pixel * 61) & 255, (pixel * 113) & 255, 255], pixel * 4);
+    const image = createRaster(512, 1, pixels);
+    const wu = new Uint8Array(encodeGif(image, 0, { quantizer: 'wu' }));
+    expect(wu).not.toEqual(new Uint8Array(encodeGif(image, 0, { quantizer: 'fixed-332' })));
+    expect(new Uint8Array(encodeGif(image, 0, { quantizer: 'wu' }))).toEqual(wu);
+    expect(decodeGif(wu)).toMatchObject({ width: 512, height: 1 });
+  });
+
   it('offers deterministic Floyd-Steinberg palette-error diffusion', () => {
     const pixels = new Uint8ClampedArray(32 * 4);
     for (let pixel = 0; pixel < 32; pixel += 1) {
