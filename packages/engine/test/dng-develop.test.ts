@@ -50,8 +50,16 @@ describe('DNG develop orchestration', () => {
     }
   });
 
-  it('rejects unsupported depth and out-of-range controls explicitly', () => {
-    expect(() => developDngMosaic(mosaic, { outputBitDepth: 16 })).toThrow('not implemented');
+  it('retains full linear precision in true 16-bit RGBA output', () => {
+    const output = developDngMosaic(mosaic, { outputBitDepth: 16, gamma: 1 });
+    expect(output.bitDepth).toBe(16);
+    expect(output.frames[0].data16).toBeInstanceOf(Uint16Array);
+    expect(output.frames[0].data16).toHaveLength(100);
+    expect(output.frames[0].data16?.[3]).toBe(65535);
+    expect(output.frames[0].data16?.some((value) => value % 257 !== 0)).toBe(true);
+  });
+
+  it('rejects out-of-range controls explicitly', () => {
     expect(() => developDngMosaic(mosaic, { exposureEv: 4 })).toThrow('-3 through +3');
     expect(() =>
       developDngMosaic(mosaic, { whiteBalance: 'custom', temperatureKelvin: 1000 }),

@@ -20,6 +20,7 @@ export function demosaicBilinear(
   if (width < 1 || height < 1 || samples.length !== width * height || whiteLevel <= blackLevel)
     throw new Error('Invalid Bayer mosaic dimensions or levels.');
   const output = new Uint8ClampedArray(width * height * 4);
+  const linearRgb = new Float64Array(width * height * 3);
   const sample = (x: number, y: number) => samples[y * width + x]!;
   const channel = (x: number, y: number, wanted: 'r' | 'g' | 'b') => {
     let total = 0;
@@ -39,18 +40,25 @@ export function demosaicBilinear(
           count += 1;
         }
       }
-    return Math.round(
-      ((Math.max(blackLevel, Math.min(whiteLevel, total / Math.max(1, count))) - blackLevel) *
-        255) /
-        (whiteLevel - blackLevel),
+    return (
+      (Math.max(blackLevel, Math.min(whiteLevel, total / Math.max(1, count))) - blackLevel) /
+      (whiteLevel - blackLevel)
     );
   };
   for (let y = 0; y < height; y += 1)
     for (let x = 0; x < width; x += 1) {
       const target = (y * width + x) * 4;
-      output.set([channel(x, y, 'r'), channel(x, y, 'g'), channel(x, y, 'b'), 255], target);
+      const red = channel(x, y, 'r');
+      const green = channel(x, y, 'g');
+      const blue = channel(x, y, 'b');
+      linearRgb.set([red, green, blue], (y * width + x) * 3);
+      output.set(
+        [Math.round(red * 255), Math.round(green * 255), Math.round(blue * 255), 255],
+        target,
+      );
     }
-  return createRaster(width, height, output);
+  const raster = createRaster(width, height, output);
+  return { ...raster, frames: [{ ...raster.frames[0], linearRgb }] };
 }
 
 type DemosaicAlgorithm = 'vng' | 'ahd';
@@ -196,6 +204,7 @@ function demosaicDirectional(
     return cost;
   };
   const output = new Uint8ClampedArray(count * 4);
+  const linearRgb = new Float64Array(count * 3);
   for (let y = 0; y < height; y += 1)
     for (let x = 0; x < width; x += 1) {
       const index = y * width + x;
@@ -203,12 +212,14 @@ function demosaicDirectional(
         algorithm === 'ahd' && homogeneityCost(vertical, x, y) < homogeneityCost(horizontal, x, y)
           ? vertical
           : horizontal;
+      linearRgb.set(candidate.subarray(index * 3, index * 3 + 3), index * 3);
       output[index * 4] = Math.round(candidate[index * 3]! * 255);
       output[index * 4 + 1] = Math.round(candidate[index * 3 + 1]! * 255);
       output[index * 4 + 2] = Math.round(candidate[index * 3 + 2]! * 255);
       output[index * 4 + 3] = 255;
     }
-  return createRaster(width, height, output);
+  const raster = createRaster(width, height, output);
+  return { ...raster, frames: [{ ...raster.frames[0], linearRgb }] };
 }
 
 /** Variable Number of Gradients demosaic with per-pixel directional selection. */
@@ -256,7 +267,8 @@ function rasterFromLinearRgb(rgb: Float64Array, width: number, height: number): 
     output[index * 4 + 2] = Math.round(Math.max(0, Math.min(1, rgb[index * 3 + 2]!)) * 255);
     output[index * 4 + 3] = 255;
   }
-  return createRaster(width, height, output);
+  const raster = createRaster(width, height, output);
+  return { ...raster, frames: [{ ...raster.frames[0], linearRgb: rgb }] };
 }
 
 /** Patterned Pixel Grouping demosaic with directional green and colour-difference interpolation. */
@@ -381,19 +393,29 @@ export function applyRawColourTransform(
   )
     throw new Error('Invalid RAW colour transform.');
   const pixels = image.frames[0].data.slice();
-  for (let offset = 0; offset < pixels.length; offset += 4) {
-    const red = (pixels[offset]! / 255) * gains[0];
-    const green = (pixels[offset + 1]! / 255) * gains[1];
-    const blue = (pixels[offset + 2]! / 255) * gains[2];
-    pixels[offset] = Math.round(
-      Math.max(0, Math.min(1, matrix[0] * red + matrix[1] * green + matrix[2] * blue)) * 255,
-    );
-    pixels[offset + 1] = Math.round(
-      Math.max(0, Math.min(1, matrix[3] * red + matrix[4] * green + matrix[5] * blue)) * 255,
-    );
-    pixels[offset + 2] = Math.round(
-      Math.max(0, Math.min(1, matrix[6] * red + matrix[7] * green + matrix[8] * blue)) * 255,
-    );
+  const linearRgb =
+    image.frames[0].linearRgb?.slice() ?? new Float64Array(image.width * image.height * 3);
+  if (!image.frames[0].linearRgb)
+    for (let index = 0; index < image.width * image.height; index += 1)
+      linearRgb.set(
+        [pixels[index * 4]! / 255, pixels[index * 4 + 1]! / 255, pixels[index * 4 + 2]! / 255],
+        index * 3,
+      );
+  for (let index = 0; index < image.width * image.height; index += 1) {
+    const offset = index * 4;
+    const source = index * 3;
+    const red = linearRgb[source]! * gains[0];
+    const green = linearRgb[source + 1]! * gains[1];
+    const blue = linearRgb[source + 2]! * gains[2];
+    const transformed = [
+      Math.max(0, matrix[0] * red + matrix[1] * green + matrix[2] * blue),
+      Math.max(0, matrix[3] * red + matrix[4] * green + matrix[5] * blue),
+      Math.max(0, matrix[6] * red + matrix[7] * green + matrix[8] * blue),
+    ];
+    linearRgb.set(transformed, source);
+    pixels[offset] = Math.round(Math.min(1, transformed[0]!) * 255);
+    pixels[offset + 1] = Math.round(Math.min(1, transformed[1]!) * 255);
+    pixels[offset + 2] = Math.round(Math.min(1, transformed[2]!) * 255);
   }
-  return { ...image, frames: [{ ...image.frames[0], data: pixels }] };
+  return { ...image, frames: [{ ...image.frames[0], data: pixels, linearRgb }] };
 }

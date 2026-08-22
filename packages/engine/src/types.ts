@@ -49,6 +49,10 @@ export type ColorSpaceId = 'srgb' | 'display-p3' | 'adobe-rgb' | 'gray' | 'cmyk'
 
 export interface Frame {
   readonly data: Uint8ClampedArray;
+  /** Full-precision RGBA samples when the parent raster has `bitDepth: 16`. */
+  readonly data16?: Uint16Array;
+  /** Linear-light RGB working values retained by RAW development before output quantization. */
+  readonly linearRgb?: Float64Array;
   readonly durationMs: number;
   readonly disposal?: 'none' | 'background' | 'previous';
 }

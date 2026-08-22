@@ -115,54 +115,89 @@ function applyDevelopOptions(image: RasterImage, options: DngDevelopOptions): Ra
     throw new Error('RAW gamma must be from 0.1 through 5.');
   if (!Number.isFinite(noiseThreshold) || noiseThreshold < 0 || noiseThreshold > 100)
     throw new Error('RAW noise-reduction threshold must be from 0 through 100.');
-  if ((options.outputBitDepth ?? 8) === 16)
-    throw new Error('16-bit DNG output is not implemented; choose 8-bit output explicitly.');
-  const pixels = image.frames[0].data.slice();
+  const outputBitDepth = options.outputBitDepth ?? 8;
+  const linearRgb =
+    image.frames[0].linearRgb?.slice() ?? new Float64Array(image.width * image.height * 3);
+  if (!image.frames[0].linearRgb)
+    for (let index = 0; index < image.width * image.height; index += 1)
+      linearRgb.set(
+        [
+          image.frames[0].data[index * 4]! / 255,
+          image.frames[0].data[index * 4 + 1]! / 255,
+          image.frames[0].data[index * 4 + 2]! / 255,
+        ],
+        index * 3,
+      );
   const exposure = 2 ** exposureEv;
   const highlight = options.highlightRecovery ?? 'clip';
-  for (let offset = 0; offset < pixels.length; offset += 4) {
+  for (let offset = 0; offset < linearRgb.length; offset += 3) {
     const recovered = recoverHighlights(
-      (pixels[offset]! / 255) * exposure,
-      (pixels[offset + 1]! / 255) * exposure,
-      (pixels[offset + 2]! / 255) * exposure,
+      linearRgb[offset]! * exposure,
+      linearRgb[offset + 1]! * exposure,
+      linearRgb[offset + 2]! * exposure,
       highlight,
     );
     for (let channel = 0; channel < 3; channel += 1)
-      pixels[offset + channel] = Math.round(recovered[channel]! ** (1 / gamma) * 255);
+      linearRgb[offset + channel] = recovered[channel]! ** (1 / gamma);
   }
   if (noiseThreshold > 0 && image.width > 2 && image.height > 2) {
-    const source = pixels.slice();
+    const source = linearRgb.slice();
+    const normalizedThreshold = noiseThreshold / 255;
     for (let y = 1; y < image.height - 1; y += 1)
       for (let x = 1; x < image.width - 1; x += 1)
         for (let channel = 0; channel < 3; channel += 1) {
           const values: number[] = [];
           for (let dy = -1; dy <= 1; dy += 1)
             for (let dx = -1; dx <= 1; dx += 1)
-              values.push(source[((y + dy) * image.width + x + dx) * 4 + channel]!);
+              values.push(source[((y + dy) * image.width + x + dx) * 3 + channel]!);
           values.sort((left, right) => left - right);
-          const target = (y * image.width + x) * 4 + channel;
+          const target = (y * image.width + x) * 3 + channel;
           const median = values[4]!;
-          if (Math.abs(source[target]! - median) <= noiseThreshold) pixels[target] = median;
+          if (Math.abs(source[target]! - median) <= normalizedThreshold) linearRgb[target] = median;
         }
   }
   if (options.chromaticAberrationCorrection && image.width > 2) {
-    const source = pixels.slice();
+    const source = linearRgb.slice();
     for (let y = 0; y < image.height; y += 1)
       for (let x = 1; x < image.width - 1; x += 1) {
-        const target = (y * image.width + x) * 4;
-        pixels[target] = Math.round((source[target]! + source[target + 4]!) / 2);
-        pixels[target + 2] = Math.round((source[target + 2]! + source[target - 2]!) / 2);
+        const target = (y * image.width + x) * 3;
+        linearRgb[target] = (source[target]! + source[target + 3]!) / 2;
+        linearRgb[target + 2] = (source[target + 2]! + source[target - 1]!) / 2;
       }
   }
   const colorSpace = options.outputColorSpace ?? 'srgb';
   if (colorSpace === 'gray')
-    for (let offset = 0; offset < pixels.length; offset += 4) {
-      const gray = Math.round(
-        pixels[offset]! * 0.2126 + pixels[offset + 1]! * 0.7152 + pixels[offset + 2]! * 0.0722,
-      );
-      pixels.fill(gray, offset, offset + 3);
+    for (let offset = 0; offset < linearRgb.length; offset += 3) {
+      const gray =
+        linearRgb[offset]! * 0.2126 +
+        linearRgb[offset + 1]! * 0.7152 +
+        linearRgb[offset + 2]! * 0.0722;
+      linearRgb.fill(gray, offset, offset + 3);
     }
-  return { ...image, colorSpace, frames: [{ ...image.frames[0], data: pixels }] };
+  const pixels = new Uint8ClampedArray(image.width * image.height * 4);
+  const data16 = outputBitDepth === 16 ? new Uint16Array(pixels.length) : undefined;
+  for (let index = 0; index < image.width * image.height; index += 1) {
+    for (let channel = 0; channel < 3; channel += 1) {
+      const value = Math.max(0, Math.min(1, linearRgb[index * 3 + channel]!));
+      pixels[index * 4 + channel] = Math.round(value * 255);
+      if (data16) data16[index * 4 + channel] = Math.round(value * 65535);
+    }
+    pixels[index * 4 + 3] = 255;
+    if (data16) data16[index * 4 + 3] = 65535;
+  }
+  return {
+    ...image,
+    bitDepth: outputBitDepth,
+    colorSpace,
+    frames: [
+      {
+        ...image.frames[0],
+        data: pixels,
+        ...(data16 ? { data16 } : {}),
+        linearRgb,
+      },
+    ],
+  };
 }
 
 export function developDngMosaic(mosaic: DngMosaic, options: DngDevelopOptions = {}): RasterImage {
