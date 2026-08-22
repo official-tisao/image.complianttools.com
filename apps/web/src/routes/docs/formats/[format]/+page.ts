@@ -82,6 +82,12 @@ const supportedFormats = {
     notes:
       'The local codec reads and writes bounded CBZ archives, rejects traversal paths, and orders numbered pages naturally. CBR/RAR remains unavailable pending verified permissive RAR provenance.',
   },
+  eps: {
+    name: 'EPS / PostScript',
+    summary: 'EPS is a bounded PostScript document intended for placed vector artwork.',
+    notes:
+      'The local decoder extracts TIFF or WMF previews from EPSF binary headers. Preview-less files are accepted only when every executable token belongs to the documented path, transform, colour, fill, and stroke subset; any other operator is refused instead of partially rendered.',
+  },
   fits: {
     name: 'FITS',
     summary: 'FITS is a block-aligned scientific image container widely used in astronomy.',

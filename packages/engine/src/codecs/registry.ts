@@ -226,6 +226,15 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     load: () => Promise.all([import('../documents/pdf-read.js'), import('../documents/pdf.js')]),
   },
   {
+    id: 'eps',
+    animation: false,
+    lazyBytes: 10_000,
+    supports: ['decode'],
+    load: () => import('../documents/eps.js'),
+    encodeUnavailableReason:
+      'EPS export is not offered; export SVG or PDF for a safer, fully specified vector output.',
+  },
+  {
     id: 'wbmp',
     animation: false,
     lazyBytes: 4_000,

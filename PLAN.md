@@ -414,7 +414,7 @@ upstreams are permissive (BSD-3, BSD-2), so the obstacle is a build we do not ow
 - [x] SVG rasterize (`@resvg/resvg-wasm`, **unmodified** — wrap, never patch, per MPL note)
 - [x] Vectorize (`imagetracerjs`)
 - [x] PDF read (`pdfjs-dist`), PDF write (`pdf-lib`), PSD (`ag-psd`)
-- [ ] EPS preview extractor + PS operator subset (**ours**); outside the subset → unsupported, never partially rendered
+- [x] EPS preview extractor + PS operator subset (**ours**); outside the subset → unsupported, never partially rendered
 - [ ] WMF/EMF parser (**ours**), best-effort with warnings; DXF (`dxf-parser`)
 - [ ] XCF composite reader (**ours**)
 - **Spec:** README §5.4, §25.4 · **Done when:** each has a fixture test; CDR/DWG/DjVu/PICT/MNG/FLIF show their specific "not supported and why" page
@@ -1093,7 +1093,7 @@ and the format's `/docs/formats/` page exists. **Or** when honestly marked unava
 
 **RAW (Stage 2 develop)** — [ ] DNG · [ ] Canon · [ ] Nikon · [ ] Sony · [ ] Fujifilm
 
-**Vector & document** — [ ] SVG in · [ ] SVG out · [ ] PDF in · [ ] PDF out · [ ] EPS/PS (preview +
+**Vector & document** — [ ] SVG in · [ ] SVG out · [ ] PDF in · [ ] PDF out · [x] EPS/PS (preview +
 subset) · [ ] AI (PDF-compatible) · [ ] PSD/PSB · [ ] XCF · [ ] WMF/EMF · [ ] DXF · [x] CBZ · [x] CBR
 
 **Embedded** — [ ] LVGL v9 C array · [ ] LVGL v9 binary · [ ] LVGL v8 C array · [ ] LVGL v8 binary ·
