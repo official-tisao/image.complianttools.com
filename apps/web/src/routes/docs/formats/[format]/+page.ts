@@ -69,6 +69,12 @@ const supportedFormats = {
     notes:
       'The local codec reads and writes safe 8-bit primary grayscale images; higher-dimensional scientific datasets are outside this raster workflow.',
   },
+  exr: {
+    name: 'OpenEXR',
+    summary: 'OpenEXR stores high-dynamic-range half- and floating-point image channels.',
+    notes:
+      'The local parser is file-fixture tested for uncompressed scanlines and can read several compressed variants. Encoding and complete ZIP/PIZ interoperability evidence are not yet available, so OpenEXR remains incomplete for v1.',
+  },
   gif: {
     name: 'GIF',
     summary: 'GIF stores indexed still images and animations with LZW compression.',
