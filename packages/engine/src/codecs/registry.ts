@@ -8,6 +8,7 @@ export interface CodecDescriptor {
   readonly animation: boolean;
   readonly lazyBytes: number;
   readonly supports: readonly CodecOperation[];
+  readonly productionEncode?: boolean;
   readonly load?: () => Promise<unknown>;
   readonly unavailableReason?: string;
   readonly decodeUnavailableReason?: string;
@@ -16,6 +17,13 @@ export interface CodecDescriptor {
 }
 
 export const codecRegistry: readonly CodecDescriptor[] = [
+  {
+    id: 'apng',
+    animation: true,
+    lazyBytes: 165_000,
+    supports: ['decode', 'encode'],
+    load: () => import('./simple/apng.js'),
+  },
   {
     id: 'jp2',
     animation: false,
@@ -102,25 +110,22 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     animation: false,
     lazyBytes: 195_000,
     supports: ['decode', 'encode'],
+    productionEncode: true,
     load: () => import('./jsquash.js'),
   },
   {
     id: 'ico',
     animation: false,
     lazyBytes: 5_000,
-    supports: ['decode'],
+    supports: ['decode', 'encode'],
     load: () => import('./simple/ico.js'),
-    unavailableReason: 'PNG-backed ICO entries are not implemented.',
-    encodeUnavailableReason: 'ICO encoding is not available in the production browser export path.',
   },
   {
     id: 'cur',
     animation: false,
     lazyBytes: 5_000,
-    supports: ['decode'],
+    supports: ['decode', 'encode'],
     load: () => import('./simple/ico.js'),
-    unavailableReason: 'PNG-backed CUR entries are not implemented.',
-    encodeUnavailableReason: 'CUR encoding is not available in the production browser export path.',
   },
   {
     id: 'dds',
@@ -135,33 +140,29 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     id: 'qoi',
     animation: false,
     lazyBytes: 12_000,
-    supports: ['decode'],
+    supports: ['decode', 'encode'],
     load: () => import('./simple/qoi.js'),
-    encodeUnavailableReason: 'QOI encoding is not available in the production browser export path.',
   },
   {
     id: 'pnm',
     animation: false,
     lazyBytes: 8_000,
-    supports: ['decode'],
+    supports: ['decode', 'encode'],
     load: () => import('./simple/pnm.js'),
-    encodeUnavailableReason: 'PNM encoding is not available in the production browser export path.',
   },
   {
     id: 'pcx',
     animation: false,
     lazyBytes: 8_000,
-    supports: ['decode'],
+    supports: ['decode', 'encode'],
     load: () => import('./simple/pcx.js'),
-    encodeUnavailableReason: 'PCX encoding is not available in the production browser export path.',
   },
   {
     id: 'pfm',
     animation: false,
     lazyBytes: 5_000,
-    supports: ['decode'],
+    supports: ['decode', 'encode'],
     load: () => import('./simple/pfm.js'),
-    encodeUnavailableReason: 'PFM encoding is not available in the production browser export path.',
   },
   {
     id: 'psd',
@@ -185,44 +186,37 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     id: 'wbmp',
     animation: false,
     lazyBytes: 4_000,
-    supports: ['decode'],
+    supports: ['decode', 'encode'],
     load: () => import('./simple/wbmp.js'),
-    encodeUnavailableReason:
-      'WBMP encoding is not available in the production browser export path.',
   },
   {
     id: 'xbm',
     animation: false,
     lazyBytes: 4_000,
-    supports: ['decode'],
+    supports: ['decode', 'encode'],
     load: () => import('./simple/xbm.js'),
-    encodeUnavailableReason: 'XBM encoding is not available in the production browser export path.',
   },
   {
     id: 'tga',
     animation: false,
     lazyBytes: 18_000,
-    supports: ['decode'],
+    supports: ['decode', 'encode'],
     load: () => import('./simple/tga.js'),
-    encodeUnavailableReason: 'TGA encoding is not available in the production browser export path.',
   },
   {
     id: 'sun-raster',
     animation: false,
     lazyBytes: 6_000,
-    supports: ['decode'],
+    supports: ['decode', 'encode'],
     load: () => import('./simple/sun-raster.js'),
-    encodeUnavailableReason:
-      'Sun Raster encoding is not available in the production browser export path.',
   },
   {
     id: 'sgi',
     animation: false,
     lazyBytes: 7_000,
-    supports: ['decode'],
+    supports: ['decode', 'encode'],
     load: () => import('./simple/sgi.js'),
     unavailableReason: 'SGI RLE decoding is not implemented.',
-    encodeUnavailableReason: 'SGI encoding is not available in the production browser export path.',
   },
   {
     id: 'exr',
@@ -238,24 +232,22 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     id: 'fits',
     animation: false,
     lazyBytes: 7_000,
-    supports: ['decode'],
+    supports: ['decode', 'encode'],
     load: () => import('./simple/fits.js'),
-    encodeUnavailableReason:
-      'FITS encoding is not available in the production browser export path.',
   },
   {
     id: 'hdr',
     animation: false,
     lazyBytes: 7_000,
-    supports: ['decode'],
+    supports: ['decode', 'encode'],
     load: () => import('./simple/hdr.js'),
-    encodeUnavailableReason: 'HDR encoding is not available in the production browser export path.',
   },
   {
     id: 'png',
     animation: false,
     lazyBytes: 165_000,
     supports: ['decode', 'encode'],
+    productionEncode: true,
     load: () => import('./jsquash.js'),
   },
   {
@@ -263,6 +255,7 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     animation: true,
     lazyBytes: 210_000,
     supports: ['decode', 'encode'],
+    productionEncode: true,
     load: () => import('./jsquash.js'),
   },
   {
@@ -288,9 +281,8 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     id: 'bmp',
     animation: false,
     lazyBytes: 45_000,
-    supports: ['decode'],
+    supports: ['decode', 'encode'],
     load: () => import('./simple/bmp.js'),
-    encodeUnavailableReason: 'BMP encoding is not available in the production browser export path.',
   },
   {
     id: 'tiff',
@@ -321,9 +313,7 @@ export function getCodec(id: FormatId): CodecDescriptor {
 }
 
 export function productionEncoderFormats(): FormatId[] {
-  return codecRegistry
-    .filter((codec) => codec.supports.includes('encode'))
-    .map((codec) => codec.id);
+  return codecRegistry.filter((codec) => codec.productionEncode).map((codec) => codec.id);
 }
 
 export function codecCapabilities(runtime: RuntimeCapabilities): FormatCapability[] {

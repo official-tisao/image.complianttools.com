@@ -1,6 +1,6 @@
 import { Worker } from 'node:worker_threads';
 import { afterAll, describe, expect, it } from 'vitest';
-import { codecCapabilities, createRaster, encodeRaster } from '../src/index.js';
+import { createRaster, encodeRaster, productionEncoderFormats } from '../src/index.js';
 
 const worker = new Worker(new URL('./encode-raster-worker.mjs', import.meta.url), {
   type: 'module',
@@ -17,17 +17,6 @@ function encodeInWorker(): Promise<Record<'jpeg' | 'png' | 'webp', ArrayBuffer>>
   });
 }
 
-const runtime = {
-  wasmSimd: false,
-  wasmThreads: false,
-  webGpu: false,
-  webGl2: false,
-  offscreenCanvas: false,
-  fileSystemAccess: false,
-  opfs: false,
-  webCodecs: false,
-};
-
 describe('production raster encoder', () => {
   it('executes JPEG, PNG, and WebP through the central dispatcher', async () => {
     const output = await encodeInWorker();
@@ -43,16 +32,12 @@ describe('production raster encoder', () => {
     await expect(encodeRaster(createRaster(1, 1), 'qoi')).rejects.toMatchObject({
       kind: 'codec-unavailable',
       format: 'qoi',
-      reason: 'QOI encoding is not available in the production browser export path.',
+      reason: 'The QOI encoder is not wired to the generic production browser exporter.',
       remedy: expect.any(String),
     });
   });
 
   it('keeps the advertised encoder set equal to the dispatcher set', () => {
-    expect(
-      codecCapabilities(runtime)
-        .filter((capability) => capability.encode !== 'unavailable')
-        .map(({ id }) => id),
-    ).toEqual(['jpeg', 'png', 'webp']);
+    expect(productionEncoderFormats()).toEqual(['jpeg', 'png', 'webp']);
   });
 });

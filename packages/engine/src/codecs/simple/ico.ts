@@ -1,5 +1,6 @@
 import { createRaster } from '../../ops/raster.js';
 import type { RasterImage } from '../../types.js';
+import { decodePngToRaster } from '../jsquash.js';
 
 export { encodeCur, encodeIco } from '../../export/ico.js';
 
@@ -86,4 +87,57 @@ export function decodeIco(bytes: ArrayBuffer | Uint8Array): RasterImage {
 /** Decodes a BMP-backed Windows cursor; cursor hotspots are intentionally ignored for raster export. */
 export function decodeCur(bytes: ArrayBuffer | Uint8Array): RasterImage {
   return decodeIcon(bytes, 2);
+}
+
+export type IconPngDecoder = (bytes: ArrayBuffer) => Promise<RasterImage>;
+
+async function decodeIconWithPng(
+  bytes: ArrayBuffer | Uint8Array,
+  kind: 1 | 2,
+  pngDecoder: IconPngDecoder,
+): Promise<RasterImage> {
+  const input = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+  const view = readView(input);
+  if (view.byteLength < 22 || view.getUint16(0, true) !== 0 || view.getUint16(2, true) !== kind)
+    throw new Error(`Invalid ${kind === 1 ? 'ICO' : 'CUR'} header.`);
+  const count = view.getUint16(4, true);
+  if (count < 1 || view.byteLength < 6 + count * 16) throw new Error('Truncated ICO directory.');
+  let selected:
+    { offset: number; length: number; width: number; height: number; pixels: number } | undefined;
+  for (let index = 0; index < count; index += 1) {
+    const directoryOffset = 6 + index * 16;
+    const width = view.getUint8(directoryOffset) || 256;
+    const height = view.getUint8(directoryOffset + 1) || 256;
+    const length = view.getUint32(directoryOffset + 8, true);
+    const offset = view.getUint32(directoryOffset + 12, true);
+    if (length < 8 || offset > input.length - length) continue;
+    const png = [137, 80, 78, 71, 13, 10, 26, 10].every(
+      (value, signatureOffset) => input[offset + signatureOffset] === value,
+    );
+    const pixels = width * height;
+    if (png && (!selected || pixels > selected.pixels))
+      selected = { offset, length, width, height, pixels };
+  }
+  if (!selected) return decodeIcon(input, kind);
+  const payload = input.slice(selected.offset, selected.offset + selected.length).buffer;
+  const image = await pngDecoder(payload);
+  if (image.width !== selected.width || image.height !== selected.height)
+    throw new Error('PNG-backed ICO dimensions do not match its directory entry.');
+  return image;
+}
+
+/** Decodes the largest PNG- or 32-bit BMP-backed ICO entry. */
+export function decodeIcoWithPng(
+  bytes: ArrayBuffer | Uint8Array,
+  pngDecoder: IconPngDecoder = decodePngToRaster,
+): Promise<RasterImage> {
+  return decodeIconWithPng(bytes, 1, pngDecoder);
+}
+
+/** Decodes the largest PNG- or 32-bit BMP-backed CUR entry. */
+export function decodeCurWithPng(
+  bytes: ArrayBuffer | Uint8Array,
+  pngDecoder: IconPngDecoder = decodePngToRaster,
+): Promise<RasterImage> {
+  return decodeIconWithPng(bytes, 2, pngDecoder);
 }

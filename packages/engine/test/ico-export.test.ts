@@ -1,6 +1,28 @@
 import { describe, expect, it } from 'vitest';
 
-import { createRaster, decodeCur, decodeIco, encodeCur, encodeIco } from '../src/index.js';
+import {
+  createRaster,
+  decodeCur,
+  decodeCurWithPng,
+  decodeIco,
+  decodeIcoWithPng,
+  encodeCur,
+  encodeIco,
+} from '../src/index.js';
+
+function pngBackedIcon(kind: 1 | 2): Uint8Array {
+  const png = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10, 1, 2, 3]);
+  const output = new Uint8Array(22 + png.length);
+  const view = new DataView(output.buffer);
+  view.setUint16(2, kind, true);
+  view.setUint16(4, 1, true);
+  output[6] = 1;
+  output[7] = 1;
+  view.setUint32(14, png.length, true);
+  view.setUint32(18, 22, true);
+  output.set(png, 22);
+  return output;
+}
 
 describe('ICO exporter', () => {
   it('writes a one-image 32-bit ICO with an alpha AND mask', () => {
@@ -46,5 +68,23 @@ describe('ICO exporter', () => {
 
   it('rejects cursor hotspots outside the image', () => {
     expect(() => encodeCur(createRaster(1, 1), { x: 1 })).toThrow('hotspot');
+  });
+
+  it('decodes PNG-backed ICO and CUR payload variants through the PNG codec seam', async () => {
+    const expected = createRaster(1, 1, new Uint8ClampedArray([9, 8, 7, 6]));
+    const decoder = async (payload: ArrayBuffer) => {
+      expect([...new Uint8Array(payload).subarray(0, 8)]).toEqual([
+        137, 80, 78, 71, 13, 10, 26, 10,
+      ]);
+      return expected;
+    };
+    await expect(decodeIcoWithPng(pngBackedIcon(1), decoder)).resolves.toEqual(expected);
+    await expect(decodeCurWithPng(pngBackedIcon(2), decoder)).resolves.toEqual(expected);
+  });
+
+  it('rejects a PNG payload whose decoded dimensions contradict the icon directory', async () => {
+    await expect(
+      decodeIcoWithPng(pngBackedIcon(1), async () => createRaster(2, 1)),
+    ).rejects.toThrow('dimensions');
   });
 });

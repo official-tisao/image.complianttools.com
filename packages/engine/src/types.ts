@@ -1,4 +1,5 @@
 export type FormatId =
+  | 'apng'
   | 'avif'
   | 'bmp'
   | 'cdr'

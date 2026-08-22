@@ -8,8 +8,10 @@ export async function encodeRaster(
   options: Omit<ExportOptions, 'format'> = {},
 ): Promise<ArrayBuffer> {
   const codec = getCodec(format);
-  if (!codec.supports.includes('encode')) {
-    const reason = codec.encodeUnavailableReason ?? 'No production browser encoder is available.';
+  if (!codec.productionEncode) {
+    const reason =
+      codec.encodeUnavailableReason ??
+      `The ${format.toUpperCase()} encoder is not wired to the generic production browser exporter.`;
     throw {
       kind: 'codec-unavailable',
       format,

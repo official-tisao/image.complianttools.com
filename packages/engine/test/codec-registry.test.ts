@@ -15,7 +15,7 @@ describe('P2 codec registry', () => {
       opfs: false,
       webCodecs: false,
     });
-    expect(capabilities).toHaveLength(33);
+    expect(capabilities).toHaveLength(34);
     expect(capabilities.find((entry) => entry.id === 'jpeg')).toMatchObject({
       decode: 'lazy',
       encode: 'lazy',
@@ -42,13 +42,13 @@ describe('P2 codec registry', () => {
     });
     expect(capabilities.find((entry) => entry.id === 'pfm')).toMatchObject({
       decode: 'lazy',
-      encode: 'unavailable',
+      encode: 'lazy',
     });
     expect(capabilities.find((entry) => entry.id === 'fits')).toMatchObject({ decode: 'lazy' });
     expect(capabilities.find((entry) => entry.id === 'hdr')).toMatchObject({ decode: 'lazy' });
     expect(capabilities.find((entry) => entry.id === 'ico')).toMatchObject({
       decode: 'lazy',
-      encode: 'unavailable',
+      encode: 'lazy',
     });
     expect(capabilities.find((entry) => entry.id === 'cur')).toMatchObject({ decode: 'lazy' });
     expect(capabilities.find((entry) => entry.id === 'dds')).toMatchObject({
@@ -63,6 +63,11 @@ describe('P2 codec registry', () => {
       decode: 'lazy',
       encode: 'unavailable',
       lazyBytes: 350_000,
+    });
+    expect(capabilities.find((entry) => entry.id === 'apng')).toMatchObject({
+      decode: 'lazy',
+      encode: 'lazy',
+      animation: true,
     });
     for (const id of ['jp2', 'pict', 'mng', 'flif', 'cdr', 'dwg', 'djvu'] as const) {
       expect(capabilities.find((entry) => entry.id === id)).toMatchObject({
@@ -80,6 +85,6 @@ describe('P2 codec registry', () => {
     await expect(loadCodec('exr')).resolves.toBeDefined();
     await expect(loadCodec('gif')).resolves.toBeDefined();
     expect(getCodec('webp').supports).toEqual(['decode', 'encode']);
-    expect(getCodec('qoi').supports).toEqual(['decode']);
+    expect(getCodec('qoi').supports).toEqual(['decode', 'encode']);
   });
 });
