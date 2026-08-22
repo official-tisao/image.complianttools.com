@@ -27,10 +27,12 @@
     | 'rgb332'
     | 'rgb565'
     | 'rgb565be'
+    | 'rgb565a8'
     | 'rgb888'
     | 'bgr888'
     | 'argb8888'
     | 'rgba8888'
+    | 'xrgb8888'
     | 'gray8'
     | 'mono1'
   >('rgb565');
@@ -159,10 +161,12 @@
       <option value="rgb332">RGB332</option>
       <option value="rgb565">RGB565</option>
       <option value="rgb565be">RGB565 big-endian</option>
+      <option value="rgb565a8">RGB565 + separate alpha plane (LVGL v9)</option>
       <option value="rgb888">RGB888</option>
       <option value="bgr888">BGR888</option>
       <option value="argb8888">ARGB8888</option>
       <option value="rgba8888">RGBA8888</option>
+      <option value="xrgb8888">XRGB8888 (LVGL v9)</option>
       <option value="gray8">Gray8</option>
       <option value="mono1">Mono1</option>
     </select>

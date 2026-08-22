@@ -9,6 +9,7 @@ import {
   emitLvglUsageSnippet,
   emitLvglV8CArray,
   emitLvglV9CArray,
+  packLvglV9Pixels,
   packEmbeddedPixels,
   validateEmbeddedOutputName,
 } from '../src/index.js';
@@ -78,6 +79,24 @@ describe('embedded exporter', () => {
     expect(output).toContain('lv_image_dsc_t logo');
     expect(output).toContain('LV_IMAGE_DECLARE(logo);');
     expect(output).toContain('lv_image_set_src(image, &logo);');
+    expect(output).not.toContain('\n}\/* In a separate translation unit');
+  });
+
+  it('packs all five LVGL v9 formats in LVGL memory order', () => {
+    expect(packLvglV9Pixels(image, 'rgb565')).toEqual(new Uint8Array([0x00, 0xf8]));
+    expect(packLvglV9Pixels(image, 'rgb565a8')).toEqual(new Uint8Array([0x00, 0xf8, 128]));
+    expect(packLvglV9Pixels(image, 'rgb888')).toEqual(new Uint8Array([0, 0, 255]));
+    expect(packLvglV9Pixels(image, 'xrgb8888')).toEqual(new Uint8Array([0, 0, 255, 255]));
+    expect(packLvglV9Pixels(image, 'argb8888')).toEqual(new Uint8Array([0, 0, 255, 128]));
+    for (const [format, constant] of [
+      ['rgb565a8', 'LV_COLOR_FORMAT_RGB565A8'],
+      ['rgb888', 'LV_COLOR_FORMAT_RGB888'],
+      ['xrgb8888', 'LV_COLOR_FORMAT_XRGB8888'],
+      ['argb8888', 'LV_COLOR_FORMAT_ARGB8888'],
+    ] as const)
+      expect(emitLvglV9CArray(image, { outputName: 'logo', format })).toContain(
+        `.cf = ${constant}`,
+      );
   });
 
   it('emits a version-specific LVGL v8 descriptor', () => {
@@ -86,6 +105,7 @@ describe('embedded exporter', () => {
     expect(output).toContain('LV_IMG_CF_TRUE_COLOR_ALPHA');
     expect(output).toContain('LV_IMG_DECLARE(logo);');
     expect(output).toContain('lv_img_set_src(image, &logo);');
+    expect(output).not.toContain('\n}\/* In a separate translation unit');
   });
 
   it('emits version-specific LVGL usage snippets with a validated public symbol', () => {

@@ -4,10 +4,12 @@ export type EmbeddedPixelFormat =
   | 'rgb332'
   | 'rgb565'
   | 'rgb565be'
+  | 'rgb565a8'
   | 'rgb888'
   | 'bgr888'
   | 'argb8888'
   | 'rgba8888'
+  | 'xrgb8888'
   | 'gray8'
   | 'mono1';
 
@@ -73,10 +75,12 @@ export function packEmbeddedPixels(image: RasterImage, options: EmbeddedExportOp
     rgb332: 1,
     rgb565: 2,
     rgb565be: 2,
+    rgb565a8: 3,
     rgb888: 3,
     bgr888: 3,
     argb8888: 4,
     rgba8888: 4,
+    xrgb8888: 4,
     gray8: 1,
   };
   const output = new Uint8Array(
@@ -94,11 +98,16 @@ export function packEmbeddedPixels(image: RasterImage, options: EmbeddedExportOp
     );
     if (options.format === 'rgb332') {
       output[target++] = (red & 0xe0) | ((green >> 3) & 0x1c) | (blue >> 6);
-    } else if (options.format === 'rgb565' || options.format === 'rgb565be') {
+    } else if (
+      options.format === 'rgb565' ||
+      options.format === 'rgb565be' ||
+      options.format === 'rgb565a8'
+    ) {
       const value = rgb565(red, green, blue);
       const bigEndian = options.bigEndian || options.format === 'rgb565be';
       output[target++] = bigEndian ? value >> 8 : value & 255;
       output[target++] = bigEndian ? value & 255 : value >> 8;
+      if (options.format === 'rgb565a8') output[target++] = transparent ? 0 : alpha!;
     } else if (options.format === 'rgb888') {
       output.set([red, green, blue], target);
       target += 3;
@@ -109,6 +118,9 @@ export function packEmbeddedPixels(image: RasterImage, options: EmbeddedExportOp
       output[target++] = Math.round(luminance(red, green, blue));
     } else if (options.format === 'argb8888') {
       output.set([transparent ? 0 : alpha!, red, green, blue], target);
+      target += 4;
+    } else if (options.format === 'xrgb8888') {
+      output.set([255, red, green, blue], target);
       target += 4;
     } else {
       output.set([red, green, blue, transparent ? 0 : alpha!], target);
@@ -148,6 +160,14 @@ export function embeddedByteSize(image: RasterImage, options: EmbeddedExportOpti
 
 export function emitEmbeddedCArray(image: RasterImage, options: EmbeddedExportOptions): string {
   const bytes = packEmbeddedPixels(image, options);
+  return emitByteCArray(image, options, bytes);
+}
+
+function emitByteCArray(
+  image: RasterImage,
+  options: EmbeddedExportOptions,
+  bytes: Uint8Array,
+): string {
   const width = Math.max(1, options.lineWidth ?? 12);
   const rows = Array.from({ length: Math.ceil(bytes.length / width) }, (_, row) => {
     const values = bytes.slice(row * width, row * width + width);
@@ -169,6 +189,36 @@ export function emitEmbeddedCArray(image: RasterImage, options: EmbeddedExportOp
   ].join('\n');
 }
 
+/** Packs the exact byte layouts consumed by LVGL v9's five project formats. */
+export function packLvglV9Pixels(image: RasterImage, format: EmbeddedPixelFormat): Uint8Array {
+  const rgba = image.frames[0].data;
+  if (format === 'rgb565' || format === 'rgb565be')
+    return packEmbeddedPixels(image, { outputName: 'lvgl_image', format });
+  if (format === 'rgb565a8') {
+    const pixels = image.width * image.height;
+    const output = new Uint8Array(pixels * 3);
+    for (let index = 0; index < pixels; index += 1) {
+      const source = index * 4;
+      const value = rgb565(rgba[source]!, rgba[source + 1]!, rgba[source + 2]!);
+      output[index * 2] = value & 255;
+      output[index * 2 + 1] = value >> 8;
+      output[pixels * 2 + index] = rgba[source + 3]!;
+    }
+    return output;
+  }
+  const bytesPerPixel = format === 'rgb888' ? 3 : 4;
+  if (format !== 'rgb888' && format !== 'xrgb8888' && format !== 'argb8888')
+    throw new Error(`LVGL v9 does not support ${format} in this exporter.`);
+  const output = new Uint8Array(image.width * image.height * bytesPerPixel);
+  for (let source = 0, target = 0; source < rgba.length; source += 4) {
+    output[target++] = rgba[source + 2]!;
+    output[target++] = rgba[source + 1]!;
+    output[target++] = rgba[source]!;
+    if (bytesPerPixel === 4) output[target++] = format === 'argb8888' ? rgba[source + 3]! : 255;
+  }
+  return output;
+}
+
 /** Returns the declaration and widget binding needed by an LVGL v8 or v9 caller. */
 export function emitLvglUsageSnippet(outputName: string, version: 8 | 9): string {
   const name = validateEmbeddedOutputName(outputName);
@@ -182,14 +232,17 @@ export function emitLvglV9CArray(image: RasterImage, options: EmbeddedExportOpti
   const colourFormat: Partial<Record<EmbeddedPixelFormat, string>> = {
     rgb565: 'LV_COLOR_FORMAT_RGB565',
     rgb565be: 'LV_COLOR_FORMAT_RGB565',
+    rgb565a8: 'LV_COLOR_FORMAT_RGB565A8',
     rgb888: 'LV_COLOR_FORMAT_RGB888',
+    xrgb8888: 'LV_COLOR_FORMAT_XRGB8888',
     argb8888: 'LV_COLOR_FORMAT_ARGB8888',
   };
   if (!colourFormat[options.format]) {
     throw new Error(`LVGL v9 does not support ${options.format} in this exporter.`);
   }
   const mapName = `${validateEmbeddedOutputName(options.outputName)}_map`;
-  const array = emitEmbeddedCArray(image, { ...options, outputName: mapName });
+  const mapOptions = { ...options, outputName: mapName };
+  const array = emitByteCArray(image, mapOptions, packLvglV9Pixels(image, options.format));
   const descriptorStorage =
     options.storage === 'static'
       ? 'static'
@@ -201,7 +254,7 @@ export function emitLvglV9CArray(image: RasterImage, options: EmbeddedExportOpti
   .data_size = sizeof(${mapName}),
   .data = ${mapName},
 };
-}${emitLvglUsageSnippet(options.outputName, 9)}`;
+${emitLvglUsageSnippet(options.outputName, 9)}`;
 }
 
 /** Emits an LVGL v8 descriptor and matching map for supported true-colour formats. */
@@ -228,7 +281,7 @@ export function emitLvglV8CArray(image: RasterImage, options: EmbeddedExportOpti
   .data_size = sizeof(${mapName}),
   .data = ${mapName},
 };
-}${emitLvglUsageSnippet(options.outputName, 8)}`;
+${emitLvglUsageSnippet(options.outputName, 8)}`;
 }
 
 /** Emits a 1-bit MSB-first Adafruit GFX bitmap in a PROGMEM C array. */
