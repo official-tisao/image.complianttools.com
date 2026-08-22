@@ -262,9 +262,8 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     id: 'gif',
     animation: true,
     lazyBytes: 180_000,
-    supports: ['decode'],
+    supports: ['decode', 'encode'],
     load: () => import('./third-party/gif.js'),
-    encodeUnavailableReason: 'GIF encoding is not available in the production browser export path.',
   },
   {
     id: 'avif',
@@ -288,10 +287,8 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     id: 'tiff',
     animation: true,
     lazyBytes: 620_000,
-    supports: ['decode'],
+    supports: ['decode', 'encode'],
     load: () => import('./third-party/tiff.js'),
-    encodeUnavailableReason:
-      'TIFF encoding is not available in the production browser export path.',
   },
   {
     id: 'jxl',

@@ -23,8 +23,7 @@ describe('P2 codec registry', () => {
     });
     expect(capabilities.find((entry) => entry.id === 'gif')).toMatchObject({
       decode: 'lazy',
-      encode: 'unavailable',
-      unavailableReason: 'GIF encoding is not available in the production browser export path.',
+      encode: 'lazy',
     });
     expect(capabilities.find((entry) => entry.id === 'heic')).toMatchObject({
       decode: 'unavailable',
@@ -63,6 +62,10 @@ describe('P2 codec registry', () => {
       decode: 'lazy',
       encode: 'unavailable',
       lazyBytes: 350_000,
+    });
+    expect(capabilities.find((entry) => entry.id === 'tiff')).toMatchObject({
+      decode: 'lazy',
+      encode: 'lazy',
     });
     expect(capabilities.find((entry) => entry.id === 'apng')).toMatchObject({
       decode: 'lazy',

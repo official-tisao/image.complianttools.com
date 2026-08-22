@@ -63,6 +63,12 @@ const supportedFormats = {
     notes:
       'The local codec reads and writes safe 8-bit primary grayscale images; higher-dimensional scientific datasets are outside this raster workflow.',
   },
+  gif: {
+    name: 'GIF',
+    summary: 'GIF stores indexed still images and animations with LZW compression.',
+    notes:
+      'The local codec decodes animation and encodes GIF89a frames with transparency, looping, frame differencing, and deterministic palette reduction. Advanced quantizer choices remain under development.',
+  },
   hdr: {
     name: 'Radiance HDR',
     summary: 'Radiance RGBE stores high-dynamic-range colour using a shared exponent.',
@@ -126,6 +132,13 @@ const supportedFormats = {
     summary: 'TGA is a straightforward raster format common in texture and game-asset workflows.',
     notes:
       'The local codec round-trips RGBA and reads true-colour run-length packets with strict packet bounds.',
+  },
+  tiff: {
+    name: 'TIFF',
+    summary:
+      'TIFF is a flexible tagged raster container used in scanning, publishing, and archival workflows.',
+    notes:
+      'The local UTIF-backed codec round-trips RGBA raster pages. Preserve an original when relying on specialized TIFF tags or uncommon compression variants.',
   },
   wbmp: {
     name: 'WBMP',
