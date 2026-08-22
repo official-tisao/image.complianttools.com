@@ -1094,7 +1094,7 @@ and the format's `/docs/formats/` page exists. **Or** when honestly marked unava
 **RAW (Stage 2 develop)** — [ ] DNG · [ ] Canon · [ ] Nikon · [ ] Sony · [ ] Fujifilm
 
 **Vector & document** — [ ] SVG in · [ ] SVG out · [ ] PDF in · [ ] PDF out · [x] EPS/PS (preview +
-subset) · [ ] AI (PDF-compatible) · [ ] PSD/PSB · [ ] XCF · [ ] WMF/EMF · [ ] DXF · [x] CBZ · [x] CBR
+subset) · [ ] AI (PDF-compatible) · [ ] PSD/PSB · [ ] XCF · [ ] WMF/EMF · [x] DXF · [x] CBZ · [x] CBR
 
 **Embedded** — [ ] LVGL v9 C array · [ ] LVGL v9 binary · [ ] LVGL v8 C array · [ ] LVGL v8 binary ·
 [ ] Generic raw · [ ] Adafruit GFX · [ ] ESP-IDF/TFT_eSPI
@@ -1216,6 +1216,7 @@ Every README change gets a row here, per §0.3. Newest first.
 | 2026-08-09 | §23.6 | **Waiver.** Required-check enforcement deferred; harnesses exist and pass, but branch protection needs repository settings access that is unavailable. Substance satisfied, mechanism deferred | P0-03 and P0-15 → `[~]`; Gate 0 row waived; added P7-15 as the re-entry trigger and a Gate 7 row that blocks launch on it |
 | 2026-08-18 | §25.3.4 | Graduated `utif` 3.1.0, `gifuct-js` 2.1.2, `@jsquash/avif` 2.1.1, `@jsquash/jxl` 1.3.0 and transitive `pako` 1.0.11 into the shipping register; rewrote the OpenEXR and JPEG 2000 rows to state that no distributable package exists rather than implying a licence problem | Unblocked P2-04; added P2-04a for the two vendored WASM builds |
 | 2026-08-19 | §5.6, §25.3.4 | Pinned and clearance-verified `mediabunny` 1.25.1 (MPL-2.0) for browser-local MP4/WebM container reading over platform WebCodecs; split AVIF/JXL browser decoders from worker-based encoders so the production bundle remains buildable | Advanced P2-10 implementation; AVIF/JXL browser decode delivery is build-verified, while encode delivery remains explicitly unavailable pending a compatible worker build |
+| 2026-08-22 | §25.3.4 | Pinned and clearance-verified `dxf-parser` 1.1.2 and transitive `loglevel` 1.9.2 (both MIT) from installed manifests and licence files | Unblocked the DXF portion of P2-09 |
 | 2026-08-18 | — | Fixed the licence-expression parser: SPDX `AND` was parsed as a choice, so a conjunction was allowed whenever any one term was allowlisted. Now every term of an `AND` must be allowlisted | Gate correctness; no plan task |
 | 2026-08-09 | §25.3.4 | Split the positive register into a shipping register (installed, verified, enforced) and a candidate register (not installed, unverified, unenforced); added a build gate requiring every direct dependency to appear in the shipping register | P0-08 unblocked and completed; Gate 0 §25.3.4 row satisfied |
 | 2026-08-09 | §25.3, §25.3.3 | Counsel recipient set (Festus Ogun / FOLEGAL); packet expanded to a full engagement brief with threshold questions and a response-record table; cover email drafted | P0-07 send subtasks moved `[!]` → `[~]`; added a response-recording subtask |

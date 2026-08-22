@@ -9,6 +9,7 @@ export type FormatId =
   | 'dds'
   | 'djvu'
   | 'dwg'
+  | 'dxf'
   | 'eps'
   | 'exr'
   | 'fits'

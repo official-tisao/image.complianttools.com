@@ -54,6 +54,7 @@
     "@jsquash/webp": "1.5.0",
     "@resvg/resvg-wasm": "2.6.2",
     "ag-psd": "31.0.2",
+    "dxf-parser": "1.1.2",
     "fflate": "0.8.3",
     "gifuct-js": "2.1.2",
     "imagetracerjs": "1.2.6",

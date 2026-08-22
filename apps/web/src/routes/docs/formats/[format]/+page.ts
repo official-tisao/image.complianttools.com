@@ -88,6 +88,12 @@ const supportedFormats = {
     notes:
       'The local decoder extracts TIFF or WMF previews from EPSF binary headers. Preview-less files are accepted only when every executable token belongs to the documented path, transform, colour, fill, and stroke subset; any other operator is refused instead of partially rendered.',
   },
+  dxf: {
+    name: 'DXF',
+    summary: 'DXF is an exchange format for CAD drawing geometry and metadata.',
+    notes:
+      'The pinned local parser converts bounded LINE, LWPOLYLINE, POLYLINE, CIRCLE, and ARC entities to SVG. Other records are counted and surfaced as warnings; a drawing with no renderable 2D geometry is refused rather than shown as an empty success.',
+  },
   fits: {
     name: 'FITS',
     summary: 'FITS is a block-aligned scientific image container widely used in astronomy.',

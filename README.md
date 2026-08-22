@@ -3600,6 +3600,7 @@ unreviewed by being absent from both.
 | `mp4box` 2.4.1 | **BSD-3-Clause — verified 2026-08-19** | Browser-local MP4 container demuxing before WebCodecs decoding; no bundled video codec |
 | `mediabunny` 1.25.1 | **MPL-2.0 — verified 2026-08-19** | Browser-local MP4 and WebM container reading over platform WebCodecs; its TypeScript source is used unmodified and no media is uploaded |
 | `ag-psd` 31.0.2 | **MIT — verified 2026-08-19** | Browser-local PSD/PSB read and write; no upload or external service |
+| `dxf-parser` 1.1.2, transitive `loglevel` 1.9.2 | **MIT — verified 2026-08-22** | Browser-local DXF parsing; both installed manifests and bundled MIT licence files verified |
 | `pako` 1.0.11 | **MIT AND Zlib — verified 2026-08-18** | Deflate, pulled in by `utif`. Both terms of the conjunction are allowlisted |
 
 ##### Candidate register — not installed, licences unverified
@@ -3622,7 +3623,6 @@ meaningless.
 | `pdf-lib` | MIT | PDF write |
 | `imagetracerjs` | Unlicense (public domain) | Vectorize |
 | `libarchive.js` → libarchive | BSD-2 | CBZ/CBR. ⚠ Confirm the RAR reader used is libarchive's own BSD implementation and **not** derived from the `unrar` source, whose licence forbids reuse |
-| `dxf-parser` | MIT | DXF |
 | OpenCV (custom build: `core`, `imgproc`, `photo`) | Apache-2.0 (since 4.5.0) | Tier 1 CV heavy ops. Licence ✅; **algorithm patents cleared separately** in §25.3.2 |
 | `onnxruntime-web` | MIT | Tier 2 model runtime |
 | `tesseract.js` | Apache-2.0 | OCR engine |

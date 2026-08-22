@@ -203,6 +203,7 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `devtools-protocol` | `0.0.1608973` | BSD-3-Clause | [source](https://github.com/ChromeDevTools/devtools-protocol#readme) |
 | `dot-prop` | `5.3.0` | MIT | [source](https://github.com/sindresorhus/dot-prop#readme) |
 | `dunder-proto` | `1.0.1` | MIT | [source](https://github.com/es-shims/dunder-proto#readme) |
+| `dxf-parser` | `1.1.2` | MIT | [source](https://github.com/gdsestimating/dxf-parser) |
 | `ee-first` | `1.1.1` | MIT | [source](https://github.com/jonathanong/ee-first#readme) |
 | `emoji-regex` | `8.0.0` | MIT | [source](https://mths.be/emoji-regex) |
 | `encodeurl` | `2.0.0` | MIT | [source](https://github.com/pillarjs/encodeurl#readme) |
@@ -339,6 +340,7 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `lodash` | `4.18.1` | MIT | [source](https://lodash.com/) |
 | `lodash-es` | `4.18.1` | MIT | [source](https://lodash.com/custom-builds) |
 | `lodash.merge` | `4.6.2` | MIT | [source](https://lodash.com/) |
+| `loglevel` | `1.9.2` | MIT | [source](https://github.com/pimterry/loglevel) |
 | `lookup-closest-locale` | `6.2.0` | MIT | [source](https://github.com/format-message/format-message/tree/master/packages/lookup-closest-locale) |
 | `lru-cache` | `7.18.3` | ISC | [source](https://github.com/isaacs/node-lru-cache#readme) |
 | `magic-string` | `0.30.21` | MIT | [source](https://github.com/Rich-Harris/magic-string#readme) |

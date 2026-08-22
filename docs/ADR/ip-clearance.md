@@ -105,7 +105,7 @@ surface a format-specific reason for both decode and encode; neither format is o
 | `ag-psd` | Approved at 31.0.2 — MIT verified from the installed package manifest and npm metadata 2026-08-19; browser-local PSD/PSB read and write. Its `base64-js` and `pako` transitives are covered by the dependency licence gate. |
 | `@resvg/resvg-wasm` 2.6.2 | Approved — MPL-2.0 verified 2026-08-19. The upstream renderer and WASM binary are used unmodified behind our local SVG safety wrapper; any modification to MPL-covered source would require publishing that source. |
 | `libarchive.js` | Excluded until pinned and RAR provenance is verified; CBZ-only fallback |
-| `dxf-parser` | Excluded until pinned and verified |
+| `dxf-parser` | Approved at 1.1.2 — MIT verified from the installed manifest and bundled licence 2026-08-22. Its sole runtime dependency, `loglevel` 1.9.2, is also MIT with an installed bundled licence. |
 | OpenCV | Excluded until pinned and verified; algorithm review remains separate |
 | `onnxruntime-web` | Excluded until pinned and verified |
 | `tesseract.js` | Excluded until pinned and verified |

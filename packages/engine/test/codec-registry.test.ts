@@ -22,7 +22,7 @@ describe('P2 codec registry', () => {
       opfs: false,
       webCodecs: false,
     });
-    expect(capabilities).toHaveLength(41);
+    expect(capabilities).toHaveLength(42);
     expect(capabilities.find((entry) => entry.id === 'jpeg')).toMatchObject({
       decode: 'lazy',
       encode: 'lazy',
@@ -110,6 +110,11 @@ describe('P2 codec registry', () => {
       encode: 'unavailable',
       lazyBytes: 10_000,
       encodeUnavailableReason: expect.stringContaining('SVG or PDF'),
+    });
+    expect(capabilities.find((entry) => entry.id === 'dxf')).toMatchObject({
+      decode: 'lazy',
+      encode: 'unavailable',
+      lazyBytes: 90_000,
     });
     for (const id of ['mp4', 'webm'] as const)
       expect(capabilities.find((entry) => entry.id === id)).toMatchObject({

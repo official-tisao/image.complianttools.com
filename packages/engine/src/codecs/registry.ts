@@ -235,6 +235,14 @@ export const codecRegistry: readonly CodecDescriptor[] = [
       'EPS export is not offered; export SVG or PDF for a safer, fully specified vector output.',
   },
   {
+    id: 'dxf',
+    animation: false,
+    lazyBytes: 90_000,
+    supports: ['decode'],
+    load: () => import('../documents/dxf.js'),
+    encodeUnavailableReason: 'DXF writing is outside this bounded local drawing reader.',
+  },
+  {
     id: 'wbmp',
     animation: false,
     lazyBytes: 4_000,
