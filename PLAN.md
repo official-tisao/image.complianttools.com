@@ -365,7 +365,7 @@ mega-dependency was replaced by a framework of our own (README §25.3.1).
 - **Spec:** README §25.4 · **Done when:** two formats are implemented on it and share ≥ 60 % of their test scaffolding
 
 #### P2-03 · Simple formats (**ours**) — 16 formats
-- [ ] BMP/DIB · TGA · PCX · PPM/PGM/PBM/PNM · PAM · WBMP · XBM/XPM · ICO · CUR · DDS (BCn) · QOI · SGI/RGB · Sun Raster · Radiance HDR · PFM · FITS · APNG muxer
+- [x] BMP/DIB · TGA · PCX · PPM/PGM/PBM/PNM · PAM · WBMP · XBM/XPM · ICO · CUR · DDS (BCn) · QOI · SGI/RGB · Sun Raster · Radiance HDR · PFM · FITS · APNG muxer
 - **Spec:** README §5.2, §25.4 · **Done when:** each has a fixture round-trip test and an adversarial test
 
 #### P2-04 · Permissive third-party codecs
