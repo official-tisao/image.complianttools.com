@@ -475,6 +475,8 @@ function paletteIndexes(
 ): Uint8Array {
   const bayer4 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5] as const;
   const indexes = new Uint8Array(width * height);
+  const nearestCache = new Map<number, number>();
+  const cacheable = !options.dither || options.dither === 'none';
   let currentErrors = new Float64Array((width + 2) * 3);
   let nextErrors = new Float64Array((width + 2) * 3);
   for (let y = 0; y < height; y += 1) {
@@ -513,13 +515,18 @@ function paletteIndexes(
             orderedError,
         ),
       );
-      const index =
-        options.quantizer === 'median-cut' ||
-        options.quantizer === 'octree' ||
-        options.quantizer === 'wu' ||
-        options.quantizer === 'neural'
-          ? nearestPaletteIndex(palette, red, green, blue)
-          : fixedPaletteIndex(red, green, blue);
+      const cacheKey = (Math.round(red) << 16) | (Math.round(green) << 8) | Math.round(blue);
+      let index = cacheable ? nearestCache.get(cacheKey) : undefined;
+      if (index === undefined) {
+        index =
+          options.quantizer === 'median-cut' ||
+          options.quantizer === 'octree' ||
+          options.quantizer === 'wu' ||
+          options.quantizer === 'neural'
+            ? nearestPaletteIndex(palette, red, green, blue)
+            : fixedPaletteIndex(red, green, blue);
+        if (cacheable) nearestCache.set(cacheKey, index);
+      }
       indexes[pixel] = index;
       if (options.dither !== 'floyd-steinberg') continue;
       for (let channel = 0; channel < 3; channel += 1) {
