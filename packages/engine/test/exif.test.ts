@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { readExifGps, readExifIfd0 } from '../src/index.js';
+import { readExifGps, readExifIfd0, readExifMakerNote, stripExifGps } from '../src/index.js';
 
 function tiff(): Uint8Array {
   const bytes = new Uint8Array(64);
@@ -70,5 +70,47 @@ describe('EXIF IFD0 reader', () => {
       longitudeDms: '74° 0′ 0″ W',
       geoUri: 'geo:40,-74',
     });
+  });
+
+  it('reports a bounded opaque MakerNote without interpreting proprietary bytes', () => {
+    const bytes = new Uint8Array(80);
+    const view = new DataView(bytes.buffer);
+    bytes.set([0x49, 0x49, 42, 0]);
+    view.setUint32(4, 8, true);
+    view.setUint16(8, 1, true);
+    view.setUint16(10, 0x8769, true);
+    view.setUint16(12, 4, true);
+    view.setUint32(14, 1, true);
+    view.setUint32(18, 32, true);
+    view.setUint16(32, 1, true);
+    view.setUint16(34, 0x927c, true);
+    view.setUint16(36, 7, true);
+    view.setUint32(38, 5, true);
+    view.setUint32(42, 64, true);
+    bytes.set([0xde, 0xad, 0xbe, 0xef, 1], 64);
+    expect(readExifMakerNote(bytes)).toEqual({ byteLength: 5, previewHex: 'deadbeef01' });
+  });
+
+  it('destructively wipes a GPS IFD, its pointer, and referenced coordinate values', () => {
+    const bytes = new Uint8Array(96);
+    const view = new DataView(bytes.buffer);
+    bytes.set([0x49, 0x49, 42, 0]);
+    view.setUint32(4, 8, true);
+    view.setUint16(8, 1, true);
+    view.setUint16(10, 0x8825, true);
+    view.setUint16(12, 4, true);
+    view.setUint32(14, 1, true);
+    view.setUint32(18, 32, true);
+    view.setUint16(32, 1, true);
+    view.setUint16(34, 2, true);
+    view.setUint16(36, 5, true);
+    view.setUint32(38, 3, true);
+    view.setUint32(42, 64, true);
+    bytes.fill(0xaa, 64, 88);
+    const stripped = stripExifGps(bytes);
+    expect(stripped.subarray(10, 22)).toEqual(new Uint8Array(12));
+    expect(stripped.subarray(32, 50)).toEqual(new Uint8Array(18));
+    expect(stripped.subarray(64, 88)).toEqual(new Uint8Array(24));
+    expect(bytes[64]).toBe(0xaa);
   });
 });

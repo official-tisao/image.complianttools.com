@@ -5,6 +5,7 @@ import {
   readContainerMetadata,
   stripGifMetadata,
   stripJpegMetadata,
+  stripJpegGpsMetadata,
   stripPngMetadata,
   stripWebpMetadata,
 } from '../src/index.js';
@@ -196,6 +197,57 @@ describe('container metadata', () => {
     expect(stripJpegMetadata(jpeg)).toEqual(
       new Uint8Array([0xff, 0xd8, 0xff, 0xdb, 0, 3, 9, 0xff, 0xd9]),
     );
+  });
+
+  it('wipes JPEG EXIF GPS storage while preserving the container length and non-GPS bytes', () => {
+    const tiff = new Uint8Array(96);
+    const view = new DataView(tiff.buffer);
+    tiff.set([0x49, 0x49, 42, 0]);
+    view.setUint32(4, 8, true);
+    view.setUint16(8, 1, true);
+    view.setUint16(10, 0x8825, true);
+    view.setUint16(12, 4, true);
+    view.setUint32(14, 1, true);
+    view.setUint32(18, 32, true);
+    view.setUint16(32, 1, true);
+    view.setUint16(34, 2, true);
+    view.setUint16(36, 5, true);
+    view.setUint32(38, 3, true);
+    view.setUint32(42, 64, true);
+    tiff.fill(0xaa, 64, 88);
+    const payload = new Uint8Array([...new TextEncoder().encode('Exif\0\0'), ...tiff]);
+    const jpeg = new Uint8Array([
+      0xff,
+      0xd8,
+      0xff,
+      0xe1,
+      (payload.length + 2) >>> 8,
+      (payload.length + 2) & 255,
+      ...payload,
+      0xff,
+      0xd9,
+    ]);
+    const stripped = stripJpegGpsMetadata(jpeg);
+    expect(stripped).toHaveLength(jpeg.length);
+    expect(stripped.subarray(22, 34)).toEqual(new Uint8Array(12));
+    expect(stripped.subarray(76, 100)).toEqual(new Uint8Array(24));
+    expect(jpeg[76]).toBe(0xaa);
+  });
+
+  it('refuses GPS-only claims when opaque JPEG XMP may also contain location fields', () => {
+    const prefix = new TextEncoder().encode('http://ns.adobe.com/xap/1.0/\0');
+    const jpeg = new Uint8Array([
+      0xff,
+      0xd8,
+      0xff,
+      0xe1,
+      0,
+      prefix.length + 2,
+      ...prefix,
+      0xff,
+      0xd9,
+    ]);
+    expect(() => stripJpegGpsMetadata(jpeg)).toThrow('Remove all metadata');
   });
 
   it('reads JFIF pixel density units and values', () => {

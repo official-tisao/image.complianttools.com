@@ -2,6 +2,7 @@
   import {
     stripGifMetadata,
     stripJpegMetadata,
+    stripJpegGpsMetadata,
     stripPngMetadata,
     stripWebpMetadata,
   } from '@complianttools/image-engine';
@@ -9,6 +10,7 @@
   let fileName = $state('');
   let status = $state('');
   let error = $state('');
+  let preset = $state<'all' | 'gps'>('all');
 
   async function strip(file: File | undefined) {
     fileName = file?.name ?? '';
@@ -19,6 +21,9 @@
       const isPng = file.type === 'image/png' || /\.png$/iu.test(file.name);
       const isWebp = file.type === 'image/webp' || /\.webp$/iu.test(file.name);
       const isGif = file.type === 'image/gif' || /\.gif$/iu.test(file.name);
+      const isJpeg = file.type === 'image/jpeg' || /\.jpe?g$/iu.test(file.name);
+      if (preset === 'gps' && !isJpeg)
+        throw new Error('GPS-only removal is currently verified for JPEG files only.');
       const input = await file.arrayBuffer();
       const output = isPng
         ? stripPngMetadata(input)
@@ -26,7 +31,9 @@
           ? stripWebpMetadata(input)
           : isGif
             ? stripGifMetadata(input)
-            : stripJpegMetadata(input);
+            : preset === 'gps'
+              ? stripJpegGpsMetadata(input)
+              : stripJpegMetadata(input);
       const extension = isPng ? 'png' : isWebp ? 'webp' : isGif ? 'gif' : 'jpg';
       const url = URL.createObjectURL(
         new Blob([output], {
@@ -62,6 +69,13 @@
     PNG, JPEG, GIF, and WebP metadata is stripped locally. Other format-specific stripping options
     are not offered until they are implemented and verified.
   </p>
+  <label>
+    Removal preset
+    <select bind:value={preset}>
+      <option value="all">Remove all metadata</option>
+      <option value="gps">Remove EXIF GPS only (JPEG)</option>
+    </select>
+  </label>
   <label>
     Choose a PNG, JPEG, GIF, or WebP
     <input

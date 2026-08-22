@@ -9,7 +9,7 @@ export type ReadableMetadata = {
 };
 
 const pngSignature = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]);
-const metadataChunks = new Set(['tEXt', 'iTXt', 'zTXt', 'eXIf', 'iCCP']);
+const metadataChunks = new Set(['tEXt', 'iTXt', 'zTXt', 'eXIf', 'iCCP', 'caBX']);
 const latin1 = new TextDecoder('latin1');
 const utf8 = new TextDecoder();
 
@@ -164,6 +164,13 @@ function readJpeg(input: Uint8Array): ReadableMetadata {
         tags.push({ namespace: 'GPS', name: 'longitude-dms', value: gps.longitudeDms });
         tags.push({ namespace: 'GPS', name: 'geo-uri', value: gps.geoUri });
       }
+      const makerNote = readExifMakerNote(data.subarray(6));
+      if (makerNote)
+        tags.push({
+          namespace: 'MakerNote',
+          name: 'opaque',
+          value: `${makerNote.byteLength} bytes (${makerNote.previewHex})`,
+        });
     }
     const xmpPrefix = 'http://ns.adobe.com/xap/1.0/\0';
     if (marker === 0xe1 && latin1.decode(data.subarray(0, xmpPrefix.length)) === xmpPrefix) {
@@ -317,7 +324,7 @@ export function stripPngMetadata(input: ArrayBuffer | Uint8Array): Uint8Array {
   return Uint8Array.from(retained.flatMap((part) => [...part]));
 }
 
-/** Removes APP1 (EXIF/XMP), APP2 (ICC/FlashPix), and APP13 (IPTC) JPEG metadata segments. */
+/** Removes APP1 (EXIF/XMP), APP2 (ICC/FlashPix), APP11 (C2PA), and APP13 (IPTC). */
 export function stripJpegMetadata(input: ArrayBuffer | Uint8Array): Uint8Array {
   const bytes = input instanceof Uint8Array ? input : new Uint8Array(input);
   if (bytes[0] !== 0xff || bytes[1] !== 0xd8)
@@ -343,11 +350,37 @@ export function stripJpegMetadata(input: ArrayBuffer | Uint8Array): Uint8Array {
     const length = (bytes[offset + 2]! << 8) | bytes[offset + 3]!;
     if (length < 2 || offset + 2 + length > bytes.length)
       throw new Error('JPEG contains a truncated metadata segment.');
-    if (![0xe1, 0xe2, 0xed].includes(marker))
+    if (![0xe1, 0xe2, 0xeb, 0xed].includes(marker))
       retained.push(bytes.subarray(offset, offset + 2 + length));
     offset += 2 + length;
   }
   return Uint8Array.from(retained.flatMap((part) => [...part]));
+}
+
+/** Wipes EXIF GPS storage while preserving all other JPEG segments byte-for-byte. */
+export function stripJpegGpsMetadata(input: ArrayBuffer | Uint8Array): Uint8Array {
+  const source = input instanceof Uint8Array ? input : new Uint8Array(input);
+  if (source[0] !== 0xff || source[1] !== 0xd8)
+    throw new Error('JPEG metadata requires a valid JPEG signature.');
+  const output = source.slice();
+  const xmpPrefix = 'http://ns.adobe.com/xap/1.0/\0';
+  for (let offset = 2; offset + 4 <= source.length;) {
+    if (source[offset] !== 0xff) break;
+    const marker = source[offset + 1]!;
+    if (marker === 0xd9 || marker === 0xda) break;
+    const length = (source[offset + 2]! << 8) | source[offset + 3]!;
+    if (length < 2 || offset + 2 + length > source.length)
+      throw new Error('JPEG contains a truncated metadata segment.');
+    const data = source.subarray(offset + 4, offset + 2 + length);
+    if (marker === 0xe1 && latin1.decode(data.subarray(0, xmpPrefix.length)) === xmpPrefix)
+      throw new Error(
+        'GPS-only removal cannot verify opaque XMP location fields; choose Remove all metadata.',
+      );
+    if (marker === 0xe1 && latin1.decode(data.subarray(0, 6)) === 'Exif\0\0')
+      output.set(stripExifGps(data.subarray(6)), offset + 10);
+    offset += length + 2;
+  }
+  return output;
 }
 
 /** Removes EXIF, XMP, and ICC chunks while retaining the WebP image payload byte-for-byte. */
@@ -355,7 +388,7 @@ export function stripWebpMetadata(input: ArrayBuffer | Uint8Array): Uint8Array {
   const bytes = input instanceof Uint8Array ? input : new Uint8Array(input);
   const chunks = webpChunks(bytes);
   const retained = chunks
-    .filter((chunk) => !['EXIF', 'XMP ', 'ICCP'].includes(chunk.type))
+    .filter((chunk) => !['EXIF', 'XMP ', 'ICCP', 'C2PA'].includes(chunk.type))
     .map((chunk) => bytes.subarray(chunk.start, chunk.end));
   const output = new Uint8Array(12 + retained.reduce((size, chunk) => size + chunk.length, 0));
   output.set(bytes.subarray(0, 12));
@@ -413,5 +446,5 @@ export function stripGifMetadata(input: ArrayBuffer | Uint8Array): Uint8Array {
   }
   return Uint8Array.from(retained.flatMap((part) => [...part]));
 }
-import { readExifGps, readExifIfd0 } from './exif.js';
+import { readExifGps, readExifIfd0, readExifMakerNote, stripExifGps } from './exif.js';
 import { unzlibSync } from 'fflate';
