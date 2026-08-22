@@ -392,8 +392,8 @@ upstreams are permissive (BSD-3, BSD-2), so the obstacle is a build we do not ow
 - **Spec:** README §6.10, §25.4 · **Done when:** output size is within 10 % of the GPL reference on a 20-file corpus, with zero GPL code
 
 #### P2-06 · RAW pipeline Stage 1 (**ours**)
-- [ ] Embedded full-size JPEG preview extraction via IFD walk, reusing the EXIF parser
-- [ ] Labelled **"camera preview"** in the UI — never passed off as a raw develop
+- [x] Embedded full-size JPEG preview extraction via IFD walk, reusing the EXIF parser
+- [x] Labelled **"camera preview"** in the UI — never passed off as a raw develop
 - [ ] Covers every vendor in README §5.3
 - **Spec:** README §5.3, §25.4 · **Done when:** preview extracts from ≥ 15 real camera files across ≥ 8 vendors
 

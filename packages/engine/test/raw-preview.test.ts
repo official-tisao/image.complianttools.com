@@ -20,9 +20,39 @@ function littleEndianPreviewTiff(): Uint8Array {
   return bytes;
 }
 
+function subIfdPreviewTiff(): Uint8Array {
+  const bytes = new Uint8Array(96);
+  const view = new DataView(bytes.buffer);
+  bytes.set([0x49, 0x49, 42, 0]);
+  view.setUint32(4, 8, true);
+  view.setUint16(8, 1, true);
+  view.setUint16(10, 0x014a, true);
+  view.setUint16(12, 4, true);
+  view.setUint32(14, 1, true);
+  view.setUint32(18, 40, true);
+  view.setUint16(40, 2, true);
+  view.setUint16(42, 0x0201, true);
+  view.setUint16(44, 4, true);
+  view.setUint32(46, 1, true);
+  view.setUint32(50, 80, true);
+  view.setUint16(54, 0x0202, true);
+  view.setUint16(56, 4, true);
+  view.setUint32(58, 1, true);
+  view.setUint32(62, 4, true);
+  bytes.set([0xff, 0xd8, 0xff, 0xd9], 80);
+  return bytes;
+}
+
 describe('RAW Stage 1 camera preview extraction', () => {
   it('extracts and labels an embedded JPEG preview from a TIFF IFD', () => {
     expect(extractRawCameraPreview(littleEndianPreviewTiff())).toEqual({
+      bytes: new Uint8Array([0xff, 0xd8, 0xff, 0xd9]),
+      label: 'camera preview',
+    });
+  });
+
+  it('reuses the EXIF walker to find a preview in a TIFF SubIFD', () => {
+    expect(extractRawCameraPreview(subIfdPreviewTiff())).toEqual({
       bytes: new Uint8Array([0xff, 0xd8, 0xff, 0xd9]),
       label: 'camera preview',
     });

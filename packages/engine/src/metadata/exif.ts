@@ -29,6 +29,63 @@ function tiffReader(bytes: Uint8Array) {
   return { view, little, u16, u32 };
 }
 
+export type TiffIfdEntry = {
+  readonly tag: number;
+  readonly type: number;
+  readonly count: number;
+  readonly value: number;
+  readonly longValues: readonly number[];
+};
+
+export type TiffIfd = {
+  readonly offset: number;
+  readonly entries: readonly TiffIfdEntry[];
+};
+
+/** Bounded TIFF/EXIF IFD traversal shared by metadata and TIFF-based RAW readers. */
+export function walkExifIfds(
+  input: ArrayBuffer | Uint8Array,
+  followPointerTags: readonly number[] = [0x014a, 0x8769, 0x8825],
+): readonly TiffIfd[] {
+  const bytes = input instanceof Uint8Array ? input : new Uint8Array(input);
+  const { view, u16, u32 } = tiffReader(bytes);
+  const pointers = new Set(followPointerTags);
+  const pending = [u32(4)];
+  const visited = new Set<number>();
+  const ifds: TiffIfd[] = [];
+
+  while (pending.length && ifds.length < 4096) {
+    const offset = pending.pop()!;
+    if (visited.has(offset) || offset > view.byteLength - 2) continue;
+    visited.add(offset);
+    const count = u16(offset);
+    const end = offset + 2 + count * 12;
+    if (count > 4096 || end + 4 > view.byteLength) continue;
+    const entries: TiffIfdEntry[] = [];
+    for (let index = 0; index < count; index += 1) {
+      const entryOffset = offset + 2 + index * 12;
+      const tag = u16(entryOffset);
+      const type = u16(entryOffset + 2);
+      const values = u32(entryOffset + 4);
+      const value = u32(entryOffset + 8);
+      const longValues =
+        type !== 4 || values === 0 || values > 4096
+          ? []
+          : values === 1
+            ? [value]
+            : value <= view.byteLength - values * 4
+              ? Array.from({ length: values }, (_, valueIndex) => u32(value + valueIndex * 4))
+              : [];
+      entries.push({ tag, type, count: values, value, longValues });
+      if (pointers.has(tag)) pending.push(...longValues);
+    }
+    const next = u32(end);
+    if (next) pending.push(next);
+    ifds.push({ offset, entries });
+  }
+  return ifds;
+}
+
 function ascii(bytes: Uint8Array): string {
   return new TextDecoder().decode(bytes).replace(/\0+$/u, '');
 }
