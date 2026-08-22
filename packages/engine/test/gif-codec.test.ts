@@ -73,4 +73,14 @@ describe('GIF encoder', () => {
     expect(high).not.toEqual(zero);
     expect(() => encodeGif(image, 0, { lossy: 999 })).not.toThrow();
   });
+
+  it('uses a weighted median-cut palette that preserves exact small palettes', () => {
+    const pixels = new Uint8ClampedArray([250, 10, 130, 255, 7, 201, 33, 255, 250, 10, 130, 255]);
+    const image = createRaster(3, 1, pixels);
+    const encoded = encodeGif(image, 0, { quantizer: 'median-cut' });
+    expect(decodeGif(encoded).frames[0].data).toEqual(pixels);
+    expect(new Uint8Array(encodeGif(image, 0, { quantizer: 'median-cut' }))).toEqual(
+      new Uint8Array(encoded),
+    );
+  });
 });

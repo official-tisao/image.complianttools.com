@@ -7,6 +7,8 @@ export interface GifEncodeOptions {
   readonly optimizeLevel?: 0 | 1 | 2 | 3;
   /** Deterministic colour reduction from 0 (off) through 200 (strongest). */
   readonly lossy?: number;
+  /** Palette construction strategy. Median-cut uses a weighted histogram over all frames. */
+  readonly quantizer?: 'fixed-332' | 'median-cut';
 }
 
 function push16(bytes: number[], value: number): void {
@@ -61,17 +63,143 @@ function lzwStream(indexes: Uint8Array): Uint8Array {
   return Uint8Array.from(bytes);
 }
 
-function paletteIndex(red: number, green: number, blue: number, lossy = 0): number {
+function reduceChannel(value: number, lossy = 0): number {
   const strength = Math.max(0, Math.min(200, Math.round(lossy)));
   const levels = Math.max(2, 8 - Math.floor(strength / 34));
-  const reduce = (value: number) =>
-    strength === 0
-      ? value
-      : Math.round((Math.round((value * (levels - 1)) / 255) * 255) / (levels - 1));
-  red = reduce(red);
-  green = reduce(green);
-  blue = reduce(blue);
+  return strength === 0
+    ? value
+    : Math.round((Math.round((value * (levels - 1)) / 255) * 255) / (levels - 1));
+}
+
+function fixedPaletteIndex(red: number, green: number, blue: number, lossy = 0): number {
+  red = reduceChannel(red, lossy);
+  green = reduceChannel(green, lossy);
+  blue = reduceChannel(blue, lossy);
   return 1 + (Math.min(6, red >> 5) << 5) + ((green >> 5) << 2) + (blue >> 6);
+}
+
+type HistogramColour = {
+  readonly red: number;
+  readonly green: number;
+  readonly blue: number;
+  readonly count: number;
+};
+
+function colourRanges(box: readonly HistogramColour[]): readonly [number, number, number] {
+  let minRed = 255,
+    minGreen = 255,
+    minBlue = 255,
+    maxRed = 0,
+    maxGreen = 0,
+    maxBlue = 0;
+  for (const colour of box) {
+    minRed = Math.min(minRed, colour.red);
+    minGreen = Math.min(minGreen, colour.green);
+    minBlue = Math.min(minBlue, colour.blue);
+    maxRed = Math.max(maxRed, colour.red);
+    maxGreen = Math.max(maxGreen, colour.green);
+    maxBlue = Math.max(maxBlue, colour.blue);
+  }
+  return [maxRed - minRed, maxGreen - minGreen, maxBlue - minBlue];
+}
+
+function medianCutPalette(image: RasterImage, lossy = 0): Uint8Array {
+  const histogram = new Map<number, number>();
+  for (const frame of image.frames)
+    for (let offset = 0; offset < frame.data.length; offset += 4) {
+      if (frame.data[offset + 3]! < 128) continue;
+      const red = reduceChannel(frame.data[offset]!, lossy);
+      const green = reduceChannel(frame.data[offset + 1]!, lossy);
+      const blue = reduceChannel(frame.data[offset + 2]!, lossy);
+      const key = (red << 16) | (green << 8) | blue;
+      histogram.set(key, (histogram.get(key) ?? 0) + 1);
+    }
+  const colours: HistogramColour[] = [...histogram].map(([key, count]) => ({
+    red: key >> 16,
+    green: (key >> 8) & 255,
+    blue: key & 255,
+    count,
+  }));
+  if (colours.length === 0) colours.push({ red: 0, green: 0, blue: 0, count: 1 });
+  let boxes: HistogramColour[][] = [colours];
+  while (boxes.length < 255) {
+    let selected = -1;
+    let selectedRange = -1;
+    for (let index = 0; index < boxes.length; index += 1) {
+      const box = boxes[index]!;
+      if (box.length < 2) continue;
+      const range = Math.max(...colourRanges(box));
+      if (range > selectedRange) {
+        selected = index;
+        selectedRange = range;
+      }
+    }
+    if (selected < 0) break;
+    const box = boxes[selected]!;
+    const ranges = colourRanges(box);
+    const channel = ranges.indexOf(Math.max(...ranges));
+    box.sort((left, right) =>
+      channel === 0
+        ? left.red - right.red
+        : channel === 1
+          ? left.green - right.green
+          : left.blue - right.blue,
+    );
+    const total = box.reduce((sum, colour) => sum + colour.count, 0);
+    let accumulated = 0;
+    let split = 0;
+    while (split < box.length - 1) {
+      accumulated += box[split]!.count;
+      split += 1;
+      if (accumulated >= total / 2) break;
+    }
+    boxes = [
+      ...boxes.slice(0, selected),
+      box.slice(0, split),
+      box.slice(split),
+      ...boxes.slice(selected + 1),
+    ];
+  }
+  const palette = new Uint8Array(256 * 3);
+  for (let index = 0; index < boxes.length; index += 1) {
+    const box = boxes[index]!;
+    const total = box.reduce((sum, colour) => sum + colour.count, 0);
+    palette[(index + 1) * 3] = Math.round(
+      box.reduce((sum, colour) => sum + colour.red * colour.count, 0) / total,
+    );
+    palette[(index + 1) * 3 + 1] = Math.round(
+      box.reduce((sum, colour) => sum + colour.green * colour.count, 0) / total,
+    );
+    palette[(index + 1) * 3 + 2] = Math.round(
+      box.reduce((sum, colour) => sum + colour.blue * colour.count, 0) / total,
+    );
+  }
+  const last = Math.max(1, boxes.length) * 3;
+  for (let index = boxes.length + 1; index < 256; index += 1)
+    palette.set(palette.subarray(last, last + 3), index * 3);
+  return palette;
+}
+
+function nearestPaletteIndex(
+  palette: Uint8Array,
+  red: number,
+  green: number,
+  blue: number,
+): number {
+  let selected = 1;
+  let distance = Number.POSITIVE_INFINITY;
+  for (let index = 1; index < 256; index += 1) {
+    const offset = index * 3;
+    const next =
+      (red - palette[offset]!) ** 2 +
+      (green - palette[offset + 1]!) ** 2 +
+      (blue - palette[offset + 2]!) ** 2;
+    if (next < distance) {
+      distance = next;
+      selected = index;
+    }
+  }
+  return selected;
 }
 
 function frameRectangle(
@@ -120,18 +248,26 @@ export function encodeGif(
     options.optimizeLevel && options.optimizeLevel > 0
       ? optimiseGifFrames(image, options.optimizeLevel)
       : image;
+  if (source.width < 1 || source.height < 1 || source.width * source.height > 100_000_000)
+    throw new Error('GIF dimensions exceed the safe encode limit.');
+  if (source.frames.length > 10_000) throw new Error('GIF exceeds the safe frame-count limit.');
   const bytes: number[] = [...new TextEncoder().encode('GIF89a')];
   push16(bytes, source.width);
   push16(bytes, source.height);
   bytes.push(0xf7, 0, 0); // 256-colour global palette
-  const palette = new Uint8Array(256 * 3);
-  for (let red = 0; red < 7; red += 1) {
-    for (let green = 0; green < 8; green += 1) {
-      for (let blue = 0; blue < 4; blue += 1) {
-        const index = 1 + red * 32 + green * 4 + blue;
-        palette[index * 3] = red * 36;
-        palette[index * 3 + 1] = green * 36;
-        palette[index * 3 + 2] = blue * 85;
+  const palette =
+    options.quantizer === 'median-cut'
+      ? medianCutPalette(source, options.lossy)
+      : new Uint8Array(256 * 3);
+  if (options.quantizer !== 'median-cut') {
+    for (let red = 0; red < 7; red += 1) {
+      for (let green = 0; green < 8; green += 1) {
+        for (let blue = 0; blue < 4; blue += 1) {
+          const index = 1 + red * 32 + green * 4 + blue;
+          palette[index * 3] = red * 36;
+          palette[index * 3 + 1] = green * 36;
+          palette[index * 3 + 2] = blue * 85;
+        }
       }
     }
   }
@@ -159,12 +295,20 @@ export function encodeGif(
     const indexes = new Uint8Array(rectangle.width * rectangle.height);
     for (let pixel = 0; pixel < indexes.length; pixel += 1) {
       const offset = pixel * 4;
-      indexes[pixel] = paletteIndex(
-        rectangle.data[offset]!,
-        rectangle.data[offset + 1]!,
-        rectangle.data[offset + 2]!,
-        options.lossy,
-      );
+      indexes[pixel] =
+        options.quantizer === 'median-cut'
+          ? nearestPaletteIndex(
+              palette,
+              reduceChannel(rectangle.data[offset]!, options.lossy),
+              reduceChannel(rectangle.data[offset + 1]!, options.lossy),
+              reduceChannel(rectangle.data[offset + 2]!, options.lossy),
+            )
+          : fixedPaletteIndex(
+              rectangle.data[offset]!,
+              rectangle.data[offset + 1]!,
+              rectangle.data[offset + 2]!,
+              options.lossy,
+            );
       if (rectangle.data[offset + 3]! < 128) indexes[pixel] = 0;
     }
     const data = lzwStream(indexes);
