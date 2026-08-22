@@ -105,6 +105,7 @@ test('metadata viewer edits an existing JPEG copyright field without relocating 
   const fixture = copyrightJpeg();
   await page.locator('input[type=file]').setInputFiles(fixture);
   await expect(page.getByRole('cell', { name: 'Original' })).toBeVisible();
+  await page.getByRole('checkbox', { name: 'Copyright' }).check();
   await page.getByRole('textbox', { name: 'Copyright', exact: true }).fill('Mine');
   const pending = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Download edited JPEG' }).click();

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   editExifCopyright,
+  editExifFields,
   readExifAllIfds,
   readExifGps,
   readExifIfd0,
@@ -9,6 +10,7 @@ import {
   stripExifExceptOrientationCopyright,
   stripExifGps,
   stripExifMakerNotes,
+  stripExifTags,
 } from '../src/index.js';
 
 function tiff(): Uint8Array {
@@ -71,6 +73,70 @@ describe('EXIF IFD0 reader', () => {
     expect(() => editExifCopyright(source, 'M\u00e9')).toThrow('ASCII');
   });
 
+  it('edits existing standard text, short, UserComment, and XPKeywords fields in place', () => {
+    const bytes = new Uint8Array(320);
+    const view = new DataView(bytes.buffer);
+    bytes.set([0x49, 0x49, 42, 0]);
+    view.setUint32(4, 8, true);
+    const entries = [
+      [0x0112, 3, 1, 1],
+      [0x013b, 2, 8, 128],
+      [0x8298, 2, 8, 136],
+      [0x010e, 2, 8, 144],
+      [0x0131, 2, 8, 152],
+      [0x4746, 3, 1, 1],
+      [0x9c9e, 1, 16, 160],
+      [0x8769, 4, 1, 192],
+    ] as const;
+    view.setUint16(8, entries.length, true);
+    entries.forEach(([tag, type, count, value], index) => {
+      const offset = 10 + index * 12;
+      view.setUint16(offset, tag, true);
+      view.setUint16(offset + 2, type, true);
+      view.setUint32(offset + 4, count, true);
+      if (type === 3 && count === 1) view.setUint16(offset + 8, value, true);
+      else view.setUint32(offset + 8, value, true);
+    });
+    view.setUint16(192, 2, true);
+    view.setUint16(194, 0x9003, true);
+    view.setUint16(196, 2, true);
+    view.setUint32(198, 20, true);
+    view.setUint32(202, 220, true);
+    view.setUint16(206, 0x9286, true);
+    view.setUint16(208, 7, true);
+    view.setUint32(210, 16, true);
+    view.setUint32(214, 248, true);
+    for (const [offset, value] of [
+      [128, 'Old'],
+      [136, 'Old'],
+      [144, 'Old'],
+      [152, 'Old'],
+    ] as const)
+      bytes.set(new TextEncoder().encode(`${value}\0`), offset);
+    bytes.set(new TextEncoder().encode('2000:01:01 00:00:00\0'), 220);
+    const edited = editExifFields(bytes, {
+      artist: 'Ada',
+      copyright: 'CC0',
+      imageDescription: 'Photo',
+      software: 'ICT',
+      orientation: 6,
+      rating: 5,
+      keywords: 'tag',
+      userComment: 'hello',
+      dateTimeOriginal: '2026:08:22 19:00:00',
+    });
+    const values = new Map(readExifAllIfds(edited).map((field) => [field.name, field.value]));
+    expect(values.get('artist')).toBe('Ada');
+    expect(values.get('copyright')).toBe('CC0');
+    expect(values.get('image-description')).toBe('Photo');
+    expect(values.get('software')).toBe('ICT');
+    expect(values.get('orientation')).toBe('6');
+    expect(values.get('rating')).toBe('5');
+    expect(values.get('date-time-original')).toBe('2026:08:22 19:00:00');
+    expect(new TextDecoder().decode(edited.subarray(248, 264))).toContain('hello');
+    expect(() => editExifFields(bytes, { artist: 'This value cannot fit' })).toThrow('rebuild');
+  });
+
   it('reads standard GPS coordinates as decimal values and a geo URI', () => {
     const bytes = new Uint8Array(200);
     const view = new DataView(bytes.buffer);
@@ -108,6 +174,11 @@ describe('EXIF IFD0 reader', () => {
       longitudeDms: '74° 0′ 0″ W',
       geoUri: 'geo:40,-74',
     });
+    const edited = editExifFields(bytes, { gpsCoordinates: { latitude: -12.5, longitude: 45.25 } });
+    expect(readExifGps(edited)).toMatchObject({ latitude: -12.5, longitude: 45.25 });
+    const customStripped = stripExifTags(bytes, [0x8825]);
+    expect(readExifGps(customStripped)).toBeUndefined();
+    expect(customStripped.subarray(128, 176)).toEqual(new Uint8Array(48));
   });
 
   it('reports a bounded opaque MakerNote without interpreting proprietary bytes', () => {
@@ -160,6 +231,9 @@ describe('EXIF IFD0 reader', () => {
       { name: 'copyright', value: 'Mine' },
     ]);
     expect(stripped.subarray(68, 76)).toEqual(new Uint8Array(8));
+    const custom = stripExifTags(bytes, [0x0131]);
+    expect(readExifAllIfds(custom).some((field) => field.name === 'software')).toBe(false);
+    expect(readExifAllIfds(custom).some((field) => field.name === 'copyright')).toBe(true);
   });
 
   it('destructively wipes a GPS IFD, its pointer, and referenced coordinate values', () => {

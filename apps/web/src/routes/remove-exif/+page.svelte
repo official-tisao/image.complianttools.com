@@ -1,6 +1,7 @@
 <script lang="ts">
   import {
     stripGifMetadata,
+    stripJpegExifTags,
     stripJpegGpsMetadata,
     stripJpegMakerNotes,
     stripJpegMetadata,
@@ -12,9 +13,29 @@
   let fileName = $state('');
   let status = $state('');
   let error = $state('');
-  let preset = $state<'keep' | 'all' | 'gps' | 'except-orientation-copyright' | 'maker-notes'>(
-    'all',
-  );
+  let preset = $state<
+    'keep' | 'all' | 'gps' | 'except-orientation-copyright' | 'maker-notes' | 'custom'
+  >('all');
+  let selectedTags = $state<number[]>([]);
+  const customFields = [
+    [0x013b, 'Artist'],
+    [0x8298, 'Copyright'],
+    [0x010e, 'ImageDescription'],
+    [0x9286, 'UserComment'],
+    [0x9003, 'DateTimeOriginal'],
+    [0x0131, 'Software'],
+    [0x4746, 'Rating'],
+    [0x9c9e, 'Keywords'],
+    [0x8825, 'GPS coordinates'],
+    [0x0112, 'Orientation'],
+    [0x927c, 'MakerNotes'],
+  ] as const;
+
+  function selectTag(tag: number, checked: boolean) {
+    selectedTags = checked
+      ? [...new Set([...selectedTags, tag])]
+      : selectedTags.filter((value) => value !== tag);
+  }
 
   async function strip(file: File | undefined) {
     fileName = file?.name ?? '';
@@ -26,10 +47,15 @@
       const isWebp = file.type === 'image/webp' || /\.webp$/iu.test(file.name);
       const isGif = file.type === 'image/gif' || /\.gif$/iu.test(file.name);
       const isJpeg = file.type === 'image/jpeg' || /\.jpe?g$/iu.test(file.name);
-      if (['gps', 'except-orientation-copyright', 'maker-notes'].includes(preset) && !isJpeg)
+      if (
+        ['gps', 'except-orientation-copyright', 'maker-notes', 'custom'].includes(preset) &&
+        !isJpeg
+      )
         throw new Error(
           'This selective metadata preset is currently verified for JPEG files only.',
         );
+      if (preset === 'custom' && selectedTags.length === 0)
+        throw new Error('Select at least one EXIF field to remove.');
       const input = await file.arrayBuffer();
       const output =
         preset === 'keep'
@@ -46,7 +72,9 @@
                     ? stripJpegMetadataExceptOrientationCopyright(input)
                     : preset === 'maker-notes'
                       ? stripJpegMakerNotes(input)
-                      : stripJpegMetadata(input);
+                      : preset === 'custom'
+                        ? stripJpegExifTags(input, selectedTags)
+                        : stripJpegMetadata(input);
       const extension = isPng ? 'png' : isWebp ? 'webp' : isGif ? 'gif' : 'jpg';
       const url = URL.createObjectURL(
         new Blob([output], {
@@ -95,8 +123,24 @@
       >
       <option value="maker-notes">Remove MakerNotes only (JPEG)</option>
       <option value="keep">Keep everything (byte-identical)</option>
+      <option value="custom">Custom fields (JPEG)</option>
     </select>
   </label>
+  {#if preset === 'custom'}
+    <fieldset>
+      <legend>EXIF fields to remove</legend>
+      {#each customFields as [tag, label]}
+        <label
+          ><input
+            type="checkbox"
+            checked={selectedTags.includes(tag)}
+            onchange={(event) => selectTag(tag, event.currentTarget.checked)}
+          />
+          {label}</label
+        >
+      {/each}
+    </fieldset>
+  {/if}
   <label>
     Choose a PNG, JPEG, GIF, or WebP
     <input

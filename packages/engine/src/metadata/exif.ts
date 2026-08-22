@@ -104,10 +104,14 @@ const exifTagNames: Readonly<Record<number, string>> = {
   0x0131: 'software',
   0x0132: 'date-time',
   0x013b: 'artist',
+  0x4746: 'rating',
   0x8298: 'copyright',
   0x8769: 'exif-ifd-pointer',
   0x8825: 'gps-ifd-pointer',
+  0x9003: 'date-time-original',
+  0x9286: 'user-comment',
   0x927c: 'maker-note',
+  0x9c9e: 'keywords',
 };
 
 /** Reads every entry in every reachable standard EXIF IFD with bounded, non-executing values. */
@@ -389,6 +393,16 @@ function stripExifEntries(
   return bytes;
 }
 
+/** Wipes selected numeric EXIF tags and any out-of-line payloads without relocating the TIFF. */
+export function stripExifTags(
+  input: ArrayBuffer | Uint8Array,
+  tags: readonly number[],
+): Uint8Array {
+  const selected = new Set(tags);
+  const source = selected.has(0x8825) ? stripExifGps(input) : input;
+  return stripExifEntries(source, (entry) => selected.has(entry.tag));
+}
+
 /** Removes proprietary MakerNote entries and payloads while preserving all other EXIF bytes. */
 export function stripExifMakerNotes(input: ArrayBuffer | Uint8Array): Uint8Array {
   return stripExifEntries(input, (entry) => entry.tag === 0x927c);
@@ -428,4 +442,162 @@ export function editExifCopyright(input: ArrayBuffer | Uint8Array, copyright: st
     return bytes;
   }
   throw new Error('EXIF does not contain an editable copyright field.');
+}
+
+export type EditableExifFieldName =
+  | 'artist'
+  | 'copyright'
+  | 'imageDescription'
+  | 'userComment'
+  | 'dateTimeOriginal'
+  | 'software'
+  | 'rating'
+  | 'keywords'
+  | 'orientation';
+
+export type ExifFieldEdits = Partial<Record<EditableExifFieldName, string | number>> & {
+  readonly gpsCoordinates?: { readonly latitude: number; readonly longitude: number };
+};
+
+const editableExifTags: Readonly<Record<EditableExifFieldName, number>> = {
+  artist: 0x013b,
+  copyright: 0x8298,
+  imageDescription: 0x010e,
+  userComment: 0x9286,
+  dateTimeOriginal: 0x9003,
+  software: 0x0131,
+  rating: 0x4746,
+  keywords: 0x9c9e,
+  orientation: 0x0112,
+};
+
+function entryStorage(bytes: Uint8Array, entry: TiffIfdEntry, unit: number): [number, number] {
+  const capacity = unit * entry.count;
+  const start = capacity <= 4 ? entry.offset + 8 : entry.value;
+  if (!Number.isSafeInteger(capacity) || start > bytes.length - capacity)
+    throw new Error(`EXIF tag 0x${entry.tag.toString(16)} points outside the file.`);
+  return [start, capacity];
+}
+
+/** Edits existing EXIF fields in place; values that do not fit require a deliberate metadata rebuild. */
+export function editExifFields(input: ArrayBuffer | Uint8Array, edits: ExifFieldEdits): Uint8Array {
+  const source = input instanceof Uint8Array ? input : new Uint8Array(input);
+  const bytes = source.slice();
+  const { view, little } = tiffReader(bytes);
+  const ifds = walkExifIfds(source);
+  const entries = ifds.flatMap((ifd) => [...ifd.entries]);
+  const writeBytes = (entry: TiffIfdEntry, encoded: Uint8Array, unit = 1) => {
+    const [start, capacity] = entryStorage(source, entry, unit);
+    if (encoded.length > capacity)
+      throw new Error(
+        `Edited EXIF ${exifTagNames[entry.tag] ?? 'field'} requires ${encoded.length} bytes but the existing field has ${capacity}; shortening is safe, growing requires a metadata rebuild.`,
+      );
+    bytes.fill(0, start, start + capacity);
+    bytes.set(encoded, start);
+  };
+  for (const [name, rawValue] of Object.entries(edits) as Array<[keyof ExifFieldEdits, unknown]>) {
+    if (name === 'gpsCoordinates' || rawValue === undefined) continue;
+    const tag = editableExifTags[name];
+    const entry = entries.find((candidate) => candidate.tag === tag);
+    if (!entry)
+      throw new Error(`EXIF ${name} does not exist; adding it requires a metadata rebuild.`);
+    if (name === 'orientation' || name === 'rating') {
+      const value = Number(rawValue);
+      const maximum = name === 'orientation' ? 8 : 5;
+      if (
+        entry.type !== 3 ||
+        entry.count !== 1 ||
+        !Number.isInteger(value) ||
+        value < 0 ||
+        value > maximum
+      )
+        throw new Error(`EXIF ${name} must be an existing SHORT from 0 through ${maximum}.`);
+      view.setUint16(entry.offset + 8, value, little);
+      continue;
+    }
+    if (typeof rawValue !== 'string') throw new Error(`EXIF ${name} must be text.`);
+    if (name === 'keywords') {
+      if (entry.type !== 1)
+        throw new Error('EXIF keywords must use the existing XPKeywords BYTE field.');
+      const encoded = new Uint8Array((rawValue.length + 1) * 2);
+      const encodedView = new DataView(encoded.buffer);
+      for (let index = 0; index < rawValue.length; index += 1)
+        encodedView.setUint16(index * 2, rawValue.charCodeAt(index), true);
+      writeBytes(entry, encoded);
+      continue;
+    }
+    if (name === 'userComment') {
+      if (entry.type !== 7 || entry.count < 8)
+        throw new Error(
+          'EXIF UserComment must use an existing UNDEFINED field with an encoding prefix.',
+        );
+      const encoded = new TextEncoder().encode(rawValue);
+      if (encoded.some((value) => value > 0x7f))
+        throw new Error('EXIF UserComment editing currently accepts ASCII text only.');
+      const value = new Uint8Array(8 + encoded.length + 1);
+      value.set(new TextEncoder().encode('ASCII\0\0\0'));
+      value.set(encoded, 8);
+      writeBytes(entry, value);
+      continue;
+    }
+    if (entry.type !== 2) throw new Error(`EXIF ${name} must use an existing ASCII field.`);
+    const encoded = new TextEncoder().encode(`${rawValue}\0`);
+    if (encoded.some((value) => value > 0x7f))
+      throw new Error(`EXIF ${name} editing currently accepts ASCII text only.`);
+    writeBytes(entry, encoded);
+  }
+
+  if (edits.gpsCoordinates) {
+    const { latitude, longitude } = edits.gpsCoordinates;
+    if (
+      !Number.isFinite(latitude) ||
+      latitude < -90 ||
+      latitude > 90 ||
+      !Number.isFinite(longitude) ||
+      longitude < -180 ||
+      longitude > 180
+    )
+      throw new Error('EXIF GPS coordinates must be within latitude ±90 and longitude ±180.');
+    const root = ifds[0];
+    const gpsPointer = root?.entries.find(
+      (entry) => entry.tag === 0x8825 && entry.type === 4 && entry.count === 1,
+    );
+    const gps = gpsPointer ? ifds.find((ifd) => ifd.offset === gpsPointer.value) : undefined;
+    if (!gps)
+      throw new Error('EXIF GPS fields do not exist; adding them requires a metadata rebuild.');
+    const coordinate = (absolute: number) => {
+      const degrees = Math.floor(absolute),
+        minutesFloat = (absolute - degrees) * 60;
+      const minutes = Math.floor(minutesFloat),
+        seconds = Math.round((minutesFloat - minutes) * 60 * 1_000_000);
+      return [
+        [degrees, 1],
+        [minutes, 1],
+        [seconds, 1_000_000],
+      ] as const;
+    };
+    for (const [refTag, valueTag, signed, positive, negative] of [
+      [1, 2, latitude, 'N', 'S'],
+      [3, 4, longitude, 'E', 'W'],
+    ] as const) {
+      const ref = gps.entries.find((entry) => entry.tag === refTag);
+      const value = gps.entries.find((entry) => entry.tag === valueTag);
+      if (
+        !ref ||
+        ref.type !== 2 ||
+        ref.count < 2 ||
+        !value ||
+        value.type !== 5 ||
+        value.count !== 3
+      )
+        throw new Error('EXIF GPS coordinate fields are incomplete; rebuilding is required.');
+      writeBytes(ref, new Uint8Array([(signed < 0 ? negative : positive).charCodeAt(0), 0]));
+      const [start] = entryStorage(source, value, 8);
+      coordinate(Math.abs(signed)).forEach(([numerator, denominator], index) => {
+        view.setUint32(start + index * 8, numerator, little);
+        view.setUint32(start + index * 8 + 4, denominator, little);
+      });
+    }
+  }
+  return bytes;
 }

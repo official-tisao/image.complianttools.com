@@ -402,6 +402,14 @@ export function stripJpegMakerNotes(input: ArrayBuffer | Uint8Array): Uint8Array
   return transformJpegExif(input, stripExifMakerNotes, false);
 }
 
+/** Removes selected EXIF tags from JPEG while preserving every other segment byte-for-byte. */
+export function stripJpegExifTags(
+  input: ArrayBuffer | Uint8Array,
+  tags: readonly number[],
+): Uint8Array {
+  return transformJpegExif(input, (tiff) => stripExifTags(tiff, tags), false);
+}
+
 /** Removes all JPEG metadata except EXIF Orientation and Copyright. */
 export function stripJpegMetadataExceptOrientationCopyright(
   input: ArrayBuffer | Uint8Array,
@@ -454,6 +462,32 @@ export function editJpegCopyrightMetadata(
     const data = source.subarray(offset + 4, offset + 2 + length);
     if (marker === 0xe1 && latin1.decode(data.subarray(0, 6)) === 'Exif\0\0') {
       output.set(editExifCopyright(data.subarray(6), copyright), offset + 10);
+      return output;
+    }
+    offset += length + 2;
+  }
+  throw new Error('JPEG does not contain editable EXIF metadata.');
+}
+
+/** Edits any supported existing JPEG EXIF fields while preserving every other byte. */
+export function editJpegExifFields(
+  input: ArrayBuffer | Uint8Array,
+  edits: ExifFieldEdits,
+): Uint8Array {
+  const source = input instanceof Uint8Array ? input : new Uint8Array(input);
+  if (source[0] !== 0xff || source[1] !== 0xd8)
+    throw new Error('JPEG metadata requires a valid JPEG signature.');
+  const output = source.slice();
+  for (let offset = 2; offset + 4 <= source.length;) {
+    if (source[offset] !== 0xff) break;
+    const marker = source[offset + 1]!;
+    if (marker === 0xd9 || marker === 0xda) break;
+    const length = (source[offset + 2]! << 8) | source[offset + 3]!;
+    if (length < 2 || offset + 2 + length > source.length)
+      throw new Error('JPEG contains a truncated metadata segment.');
+    const data = source.subarray(offset + 4, offset + 2 + length);
+    if (marker === 0xe1 && latin1.decode(data.subarray(0, 6)) === 'Exif\0\0') {
+      output.set(editExifFields(data.subarray(6), edits), offset + 10);
       return output;
     }
     offset += length + 2;
@@ -526,11 +560,14 @@ export function stripGifMetadata(input: ArrayBuffer | Uint8Array): Uint8Array {
 }
 import {
   editExifCopyright,
+  editExifFields,
+  type ExifFieldEdits,
   readExifAllIfds,
   readExifGps,
   readExifMakerNote,
   stripExifExceptOrientationCopyright,
   stripExifGps,
   stripExifMakerNotes,
+  stripExifTags,
 } from './exif.js';
 import { unzlibSync } from 'fflate';
