@@ -31,6 +31,7 @@ export * from './codecs/platform/heic.js';
 export * from './codecs/platform/video.js';
 export * from './codecs/raw/preview.js';
 export * from './codecs/raw/demosaic.js';
+export * from './codecs/raw/dng.js';
 export * from './codecs/third-party/gif.js';
 export * from './documents/pdf.js';
 export * from './documents/pdf-read.js';
