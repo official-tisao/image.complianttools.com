@@ -472,7 +472,7 @@ upstreams are permissive (BSD-3, BSD-2), so the obstacle is a build we do not ow
 
 - [ ] Every §5 row: passing fixture test, or unavailable with a specific reason surfaced in the UI
 - [ ] Adversarial corpus: zero crashes, zero hangs, every error typed with a `remedy`
-- [ ] `verify:licenses` still green — **no copyleft dependency was introduced during this phase**
+- [x] `verify:licenses` still green — **no copyleft dependency was introduced during this phase**
 - [ ] Appendix B fully checked
 
 ---
