@@ -8,7 +8,7 @@ export interface GifEncodeOptions {
   /** Deterministic colour reduction from 0 (off) through 200 (strongest). */
   readonly lossy?: number;
   /** Palette construction strategy. Median-cut uses a weighted histogram over all frames. */
-  readonly quantizer?: 'fixed-332' | 'median-cut';
+  readonly quantizer?: 'fixed-332' | 'median-cut' | 'octree';
   /** Optional palette-error diffusion. */
   readonly dither?: 'none' | 'ordered' | 'floyd-steinberg';
   /** GIF89a disposal method. Automatic uses background disposal for transparent full frames. */
@@ -184,6 +184,58 @@ function medianCutPalette(image: RasterImage, lossy = 0): Uint8Array {
   return palette;
 }
 
+function octreePalette(image: RasterImage, lossy = 0): Uint8Array {
+  const histogram = new Map<number, HistogramColour>();
+  for (const frame of image.frames)
+    for (let offset = 0; offset < frame.data.length; offset += 4) {
+      if (frame.data[offset + 3]! < 128) continue;
+      const red = reduceChannel(frame.data[offset]!, lossy);
+      const green = reduceChannel(frame.data[offset + 1]!, lossy);
+      const blue = reduceChannel(frame.data[offset + 2]!, lossy);
+      const key = (red << 16) | (green << 8) | blue;
+      const previous = histogram.get(key);
+      histogram.set(key, { red, green, blue, count: (previous?.count ?? 0) + 1 });
+    }
+  if (histogram.size === 0) histogram.set(0, { red: 0, green: 0, blue: 0, count: 1 });
+  let leaves = new Map<number, HistogramColour[]>();
+  for (let depth = 8; depth >= 1; depth -= 1) {
+    const shift = 8 - depth;
+    const next = new Map<number, HistogramColour[]>();
+    for (const colour of histogram.values()) {
+      const key =
+        ((colour.red >> shift) << (depth * 2)) |
+        ((colour.green >> shift) << depth) |
+        (colour.blue >> shift);
+      const leaf = next.get(key);
+      if (leaf) leaf.push(colour);
+      else next.set(key, [colour]);
+    }
+    leaves = next;
+    if (leaves.size <= 255) break;
+  }
+  const palette = new Uint8Array(256 * 3);
+  let index = 1;
+  for (const leaf of leaves.values()) {
+    const total = leaf.reduce((sum, colour) => sum + colour.count, 0);
+    palette[index * 3] = Math.round(
+      leaf.reduce((sum, colour) => sum + colour.red * colour.count, 0) / total,
+    );
+    palette[index * 3 + 1] = Math.round(
+      leaf.reduce((sum, colour) => sum + colour.green * colour.count, 0) / total,
+    );
+    palette[index * 3 + 2] = Math.round(
+      leaf.reduce((sum, colour) => sum + colour.blue * colour.count, 0) / total,
+    );
+    index += 1;
+  }
+  const last = Math.max(1, index - 1) * 3;
+  while (index < 256) {
+    palette.set(palette.subarray(last, last + 3), index * 3);
+    index += 1;
+  }
+  return palette;
+}
+
 function nearestPaletteIndex(
   palette: Uint8Array,
   red: number,
@@ -254,7 +306,7 @@ function paletteIndexes(
         ),
       );
       const index =
-        options.quantizer === 'median-cut'
+        options.quantizer === 'median-cut' || options.quantizer === 'octree'
           ? nearestPaletteIndex(palette, red, green, blue)
           : fixedPaletteIndex(red, green, blue);
       indexes[pixel] = index;
@@ -336,8 +388,10 @@ export function encodeGif(
   const palette =
     options.quantizer === 'median-cut'
       ? medianCutPalette(source, options.lossy)
-      : new Uint8Array(256 * 3);
-  if (options.quantizer !== 'median-cut') {
+      : options.quantizer === 'octree'
+        ? octreePalette(source, options.lossy)
+        : new Uint8Array(256 * 3);
+  if (options.quantizer !== 'median-cut' && options.quantizer !== 'octree') {
     for (let red = 0; red < 7; red += 1) {
       for (let green = 0; green < 8; green += 1) {
         for (let blue = 0; blue < 4; blue += 1) {

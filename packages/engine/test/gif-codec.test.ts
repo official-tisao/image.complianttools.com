@@ -84,6 +84,17 @@ describe('GIF encoder', () => {
     );
   });
 
+  it('uses a deterministic weighted octree palette', () => {
+    const pixels = new Uint8ClampedArray(300 * 4);
+    for (let pixel = 0; pixel < 300; pixel += 1)
+      pixels.set([(pixel * 47) & 255, (pixel * 89) & 255, (pixel * 131) & 255, 255], pixel * 4);
+    const image = createRaster(300, 1, pixels);
+    const octree = new Uint8Array(encodeGif(image, 0, { quantizer: 'octree' }));
+    expect(octree).not.toEqual(new Uint8Array(encodeGif(image, 0, { quantizer: 'fixed-332' })));
+    expect(new Uint8Array(encodeGif(image, 0, { quantizer: 'octree' }))).toEqual(octree);
+    expect(decodeGif(octree)).toMatchObject({ width: 300, height: 1 });
+  });
+
   it('offers deterministic Floyd-Steinberg palette-error diffusion', () => {
     const pixels = new Uint8ClampedArray(32 * 4);
     for (let pixel = 0; pixel < 32; pixel += 1) {

@@ -7,12 +7,13 @@ const fixture = Buffer.from(
   'base64',
 );
 
-test('GIF maker exposes and uses weighted median-cut quantization', async ({ page }) => {
+test('GIF maker exposes and uses local quantization and animation controls', async ({ page }) => {
   await page.goto('/gif-maker');
   await page.waitForLoadState('networkidle');
   await expect(page.getByLabel('Quantizer')).toHaveValue('median-cut');
   await expect(page.getByLabel('Dithering')).toHaveValue('floyd-steinberg');
   await expect(page.getByLabel('Frame disposal')).toHaveValue('auto');
+  await page.getByLabel('Quantizer').selectOption('octree');
   const pending = page.waitForEvent('download');
   await page.locator('input[type=file]').setInputFiles({
     name: 'pixel.png',
@@ -23,7 +24,7 @@ test('GIF maker exposes and uses weighted median-cut quantization', async ({ pag
   const path = await download.path();
   expect(path).not.toBeNull();
   expect((await readFile(path!)).subarray(0, 6).toString('ascii')).toBe('GIF89a');
-  await expect(page.getByRole('status')).toContainText('median-cut');
+  await expect(page.getByRole('status')).toContainText('octree');
   await expect(page.getByRole('status')).toContainText('floyd-steinberg');
   await expect(page.getByRole('status')).toContainText('auto disposal');
 });
