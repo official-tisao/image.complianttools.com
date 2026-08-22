@@ -284,6 +284,15 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     load: () => import('./simple/bmp.js'),
   },
   {
+    id: 'raw',
+    animation: false,
+    lazyBytes: 28_000,
+    supports: ['decode'],
+    load: () => import('./raw/preview.js'),
+    encodeUnavailableReason:
+      'Camera RAW encoding is not offered; export the extracted preview or developed pixels to a standard image format.',
+  },
+  {
     id: 'tiff',
     animation: true,
     lazyBytes: 620_000,

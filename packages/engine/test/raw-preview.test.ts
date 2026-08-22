@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { extractRawCameraPreview } from '../src/index.js';
+import { decodeWithTypedErrors, extractRawCameraPreview, isEngineError } from '../src/index.js';
 
 function littleEndianPreviewTiff(): Uint8Array {
   const bytes = new Uint8Array(80);
@@ -33,5 +33,30 @@ describe('RAW Stage 1 camera preview extraction', () => {
     const withoutPreview = littleEndianPreviewTiff();
     withoutPreview[64] = 0;
     expect(() => extractRawCameraPreview(withoutPreview)).toThrow('No embedded JPEG');
+  });
+
+  it('finds the largest embedded JPEG in a non-TIFF vendor container', () => {
+    const container = new Uint8Array(64);
+    container.set([0x46, 0x55, 0x4a, 0x49], 0); // representative opaque vendor header
+    container.set([0xff, 0xd8, 0xff, 0xe0, 0xff, 0xd9], 8);
+    container.set([0xff, 0xd8, 0xff, 0xe1, 1, 2, 3, 4, 5, 6, 0xff, 0xd9], 32);
+    expect(extractRawCameraPreview(container)).toEqual({
+      bytes: new Uint8Array([0xff, 0xd8, 0xff, 0xe1, 1, 2, 3, 4, 5, 6, 0xff, 0xd9]),
+      label: 'camera preview',
+    });
+  });
+
+  it('normalizes missing-preview failures into a typed remediable error', async () => {
+    try {
+      await decodeWithTypedErrors('raw', () => extractRawCameraPreview(new Uint8Array(16)));
+      throw new Error('RAW unexpectedly produced a preview.');
+    } catch (error) {
+      expect(isEngineError(error)).toBe(true);
+      expect(error).toMatchObject({
+        kind: 'decode-failed',
+        format: 'raw',
+        remedy: expect.any(String),
+      });
+    }
   });
 });

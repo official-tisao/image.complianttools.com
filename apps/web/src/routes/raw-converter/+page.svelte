@@ -1,5 +1,9 @@
 <script lang="ts">
-  import { extractRawCameraPreview } from '@complianttools/image-engine';
+  import {
+    decodeWithTypedErrors,
+    engineErrorMessage,
+    extractRawCameraPreview,
+  } from '@complianttools/image-engine';
 
   let status = $state('');
   let error = $state('');
@@ -9,7 +13,8 @@
     error = '';
     if (!file) return;
     try {
-      const preview = extractRawCameraPreview(await file.arrayBuffer());
+      const bytes = await file.arrayBuffer();
+      const preview = await decodeWithTypedErrors('raw', () => extractRawCameraPreview(bytes));
       const url = URL.createObjectURL(new Blob([preview.bytes], { type: 'image/jpeg' }));
       const download = document.createElement('a');
       download.href = url;
@@ -18,10 +23,7 @@
       URL.revokeObjectURL(url);
       status = `Extracted ${preview.label}. This is the camera's embedded JPEG preview, not a RAW develop.`;
     } catch (reason) {
-      error =
-        reason instanceof Error
-          ? reason.message
-          : 'Unable to extract a camera preview from this RAW file.';
+      error = engineErrorMessage(reason);
     }
   }
 </script>
@@ -39,7 +41,7 @@
   <label
     >Choose a TIFF-based RAW file <input
       type="file"
-      accept=".dng,.cr2,.nef,.arw,.rw2,.orf,.raf,.pef"
+      accept=".3fr,.arw,.bay,.cap,.cr2,.cr3,.crf,.crw,.cs1,.dcr,.dcs,.dng,.drf,.erf,.fff,.iiq,.k25,.kdc,.mdc,.mef,.mos,.mrw,.nef,.nrw,.orf,.pef,.ptx,.raf,.raw,.rw2,.rwl,.rwz,.sr2,.srf,.srw,.x3f"
       onchange={(event) => void extract(event.currentTarget.files?.[0])}
     /></label
   >
