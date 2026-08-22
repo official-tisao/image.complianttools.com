@@ -329,6 +329,18 @@ describe('container metadata', () => {
         { namespace: 'C2PA', name: 'jumbf', value: '4 bytes' },
       ],
     });
+    const heif = new Uint8Array([
+      ...bmffBox('ftyp', [
+        ...new TextEncoder().encode('heic'),
+        0,
+        0,
+        0,
+        0,
+        ...new TextEncoder().encode('mif1'),
+      ]),
+      ...bmffBox('meta', metadata),
+    ]);
+    expect(readContainerMetadata(heif)).toMatchObject({ format: 'heif' });
   });
 
   it('rejects truncated and non-image ISO-BMFF metadata containers', () => {
