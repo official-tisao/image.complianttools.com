@@ -6,6 +6,8 @@ import {
   stripGifMetadata,
   stripJpegMetadata,
   stripJpegGpsMetadata,
+  stripJpegMakerNotes,
+  stripJpegMetadataExceptOrientationCopyright,
   stripPngMetadata,
   stripWebpMetadata,
 } from '../src/index.js';
@@ -197,6 +199,56 @@ describe('container metadata', () => {
     expect(stripJpegMetadata(jpeg)).toEqual(
       new Uint8Array([0xff, 0xd8, 0xff, 0xdb, 0, 3, 9, 0xff, 0xd9]),
     );
+  });
+
+  it('applies selective JPEG EXIF presets without changing retained fields', () => {
+    const tiff = new Uint8Array(72);
+    const view = new DataView(tiff.buffer);
+    tiff.set([0x49, 0x49, 42, 0]);
+    view.setUint32(4, 8, true);
+    view.setUint16(8, 2, true);
+    view.setUint16(10, 0x0112, true);
+    view.setUint16(12, 3, true);
+    view.setUint32(14, 1, true);
+    view.setUint16(18, 6, true);
+    view.setUint16(22, 0x8769, true);
+    view.setUint16(24, 4, true);
+    view.setUint32(26, 1, true);
+    view.setUint32(30, 40, true);
+    view.setUint16(40, 1, true);
+    view.setUint16(42, 0x927c, true);
+    view.setUint16(44, 7, true);
+    view.setUint32(46, 5, true);
+    view.setUint32(50, 64, true);
+    tiff.set([1, 2, 3, 4, 5], 64);
+    const exif = new Uint8Array([...new TextEncoder().encode('Exif\0\0'), ...tiff]);
+    const xmp = new TextEncoder().encode('http://ns.adobe.com/xap/1.0/\0<x/>');
+    const jpeg = new Uint8Array([
+      0xff,
+      0xd8,
+      0xff,
+      0xe1,
+      (exif.length + 2) >>> 8,
+      (exif.length + 2) & 255,
+      ...exif,
+      0xff,
+      0xe1,
+      (xmp.length + 2) >>> 8,
+      (xmp.length + 2) & 255,
+      ...xmp,
+      0xff,
+      0xd9,
+    ]);
+    const noMakerNotes = stripJpegMakerNotes(jpeg);
+    const noMakerTags = readContainerMetadata(noMakerNotes).tags;
+    expect(noMakerTags).toContainEqual({ namespace: 'EXIF', name: 'orientation', value: '6' });
+    expect(noMakerTags.some((tag) => tag.namespace === 'MakerNote')).toBe(false);
+    expect(noMakerNotes).toHaveLength(jpeg.length);
+    const retained = stripJpegMetadataExceptOrientationCopyright(jpeg);
+    expect(readContainerMetadata(retained).tags).toEqual([
+      { namespace: 'EXIF', name: 'orientation', value: '6' },
+    ]);
+    expect(new TextDecoder('latin1').decode(retained)).not.toContain('xap/1.0');
   });
 
   it('wipes JPEG EXIF GPS storage while preserving the container length and non-GPS bytes', () => {

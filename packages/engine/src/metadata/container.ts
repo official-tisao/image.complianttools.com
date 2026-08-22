@@ -357,6 +357,58 @@ export function stripJpegMetadata(input: ArrayBuffer | Uint8Array): Uint8Array {
   return Uint8Array.from(retained.flatMap((part) => [...part]));
 }
 
+function transformJpegExif(
+  input: ArrayBuffer | Uint8Array,
+  transform: (tiff: Uint8Array) => Uint8Array,
+  removeOtherMetadata: boolean,
+): Uint8Array {
+  const bytes = input instanceof Uint8Array ? input : new Uint8Array(input);
+  if (bytes[0] !== 0xff || bytes[1] !== 0xd8)
+    throw new Error('JPEG metadata requires a valid JPEG signature.');
+  const retained: Uint8Array[] = [bytes.subarray(0, 2)];
+  for (let offset = 2; offset < bytes.length;) {
+    if (bytes[offset] !== 0xff) {
+      retained.push(bytes.subarray(offset));
+      break;
+    }
+    const marker = bytes[offset + 1];
+    if (marker === undefined) throw new Error('JPEG contains a truncated marker.');
+    if (marker === 0xd9 || marker === 0xda) {
+      retained.push(bytes.subarray(offset));
+      break;
+    }
+    if (offset + 4 > bytes.length) throw new Error('JPEG contains a truncated metadata segment.');
+    const length = (bytes[offset + 2]! << 8) | bytes[offset + 3]!;
+    if (length < 2 || offset + 2 + length > bytes.length)
+      throw new Error('JPEG contains a truncated metadata segment.');
+    const segment = bytes.subarray(offset, offset + 2 + length);
+    const data = segment.subarray(4);
+    const isExif = marker === 0xe1 && latin1.decode(data.subarray(0, 6)) === 'Exif\0\0';
+    if (isExif) {
+      const rewritten = transform(data.subarray(6));
+      const copy = segment.slice();
+      copy.set(rewritten, 10);
+      retained.push(copy);
+    } else if (!removeOtherMetadata || ![0xe1, 0xe2, 0xeb, 0xed].includes(marker)) {
+      retained.push(segment);
+    }
+    offset += 2 + length;
+  }
+  return Uint8Array.from(retained.flatMap((part) => [...part]));
+}
+
+/** Removes only EXIF MakerNotes from JPEG while preserving every other segment byte-for-byte. */
+export function stripJpegMakerNotes(input: ArrayBuffer | Uint8Array): Uint8Array {
+  return transformJpegExif(input, stripExifMakerNotes, false);
+}
+
+/** Removes all JPEG metadata except EXIF Orientation and Copyright. */
+export function stripJpegMetadataExceptOrientationCopyright(
+  input: ArrayBuffer | Uint8Array,
+): Uint8Array {
+  return transformJpegExif(input, stripExifExceptOrientationCopyright, true);
+}
+
 /** Wipes EXIF GPS storage while preserving all other JPEG segments byte-for-byte. */
 export function stripJpegGpsMetadata(input: ArrayBuffer | Uint8Array): Uint8Array {
   const source = input instanceof Uint8Array ? input : new Uint8Array(input);
@@ -477,6 +529,8 @@ import {
   readExifAllIfds,
   readExifGps,
   readExifMakerNote,
+  stripExifExceptOrientationCopyright,
   stripExifGps,
+  stripExifMakerNotes,
 } from './exif.js';
 import { unzlibSync } from 'fflate';

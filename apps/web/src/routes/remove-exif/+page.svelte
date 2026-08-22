@@ -1,8 +1,10 @@
 <script lang="ts">
   import {
     stripGifMetadata,
-    stripJpegMetadata,
     stripJpegGpsMetadata,
+    stripJpegMakerNotes,
+    stripJpegMetadata,
+    stripJpegMetadataExceptOrientationCopyright,
     stripPngMetadata,
     stripWebpMetadata,
   } from '@complianttools/image-engine';
@@ -10,7 +12,9 @@
   let fileName = $state('');
   let status = $state('');
   let error = $state('');
-  let preset = $state<'all' | 'gps'>('all');
+  let preset = $state<'keep' | 'all' | 'gps' | 'except-orientation-copyright' | 'maker-notes'>(
+    'all',
+  );
 
   async function strip(file: File | undefined) {
     fileName = file?.name ?? '';
@@ -22,18 +26,27 @@
       const isWebp = file.type === 'image/webp' || /\.webp$/iu.test(file.name);
       const isGif = file.type === 'image/gif' || /\.gif$/iu.test(file.name);
       const isJpeg = file.type === 'image/jpeg' || /\.jpe?g$/iu.test(file.name);
-      if (preset === 'gps' && !isJpeg)
-        throw new Error('GPS-only removal is currently verified for JPEG files only.');
+      if (['gps', 'except-orientation-copyright', 'maker-notes'].includes(preset) && !isJpeg)
+        throw new Error(
+          'This selective metadata preset is currently verified for JPEG files only.',
+        );
       const input = await file.arrayBuffer();
-      const output = isPng
-        ? stripPngMetadata(input)
-        : isWebp
-          ? stripWebpMetadata(input)
-          : isGif
-            ? stripGifMetadata(input)
-            : preset === 'gps'
-              ? stripJpegGpsMetadata(input)
-              : stripJpegMetadata(input);
+      const output =
+        preset === 'keep'
+          ? new Uint8Array(input)
+          : isPng
+            ? stripPngMetadata(input)
+            : isWebp
+              ? stripWebpMetadata(input)
+              : isGif
+                ? stripGifMetadata(input)
+                : preset === 'gps'
+                  ? stripJpegGpsMetadata(input)
+                  : preset === 'except-orientation-copyright'
+                    ? stripJpegMetadataExceptOrientationCopyright(input)
+                    : preset === 'maker-notes'
+                      ? stripJpegMakerNotes(input)
+                      : stripJpegMetadata(input);
       const extension = isPng ? 'png' : isWebp ? 'webp' : isGif ? 'gif' : 'jpg';
       const url = URL.createObjectURL(
         new Blob([output], {
@@ -45,7 +58,10 @@
       anchor.download = `${file.name.replace(/\.[^.]+$/u, '')}-stripped.${extension}`;
       anchor.click();
       URL.revokeObjectURL(url);
-      status = `Removed metadata locally: ${file.size} bytes → ${output.byteLength} bytes.`;
+      status =
+        preset === 'keep'
+          ? `Kept every byte locally (${output.byteLength} bytes).`
+          : `Removed metadata locally: ${file.size} bytes → ${output.byteLength} bytes.`;
     } catch (reason) {
       error =
         reason instanceof Error ? reason.message : 'Unable to remove metadata from this file.';
@@ -74,6 +90,11 @@
     <select bind:value={preset}>
       <option value="all">Remove all metadata</option>
       <option value="gps">Remove EXIF GPS only (JPEG)</option>
+      <option value="except-orientation-copyright"
+        >Remove all except Orientation + Copyright (JPEG)</option
+      >
+      <option value="maker-notes">Remove MakerNotes only (JPEG)</option>
+      <option value="keep">Keep everything (byte-identical)</option>
     </select>
   </label>
   <label>

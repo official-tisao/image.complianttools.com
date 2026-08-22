@@ -127,6 +127,7 @@ export function readExifAllIfds(input: ArrayBuffer | Uint8Array): readonly ExifD
   const fields: ExifDirectoryField[] = [];
   for (const ifd of walkExifIfds(bytes))
     for (const entry of ifd.entries) {
+      if (entry.tag === 0 && entry.type === 0 && entry.count === 0) continue;
       const unit = typeSize[entry.type];
       if (!unit || entry.count > 1_000_000)
         throw new Error(`EXIF tag 0x${entry.tag.toString(16)} has an unsupported type or count.`);
@@ -353,6 +354,49 @@ export function stripExifGps(input: ArrayBuffer | Uint8Array): Uint8Array {
     bytes.fill(0, rootEntry, rootEntry + 12);
   }
   return bytes;
+}
+
+const exifTypeBytes: Readonly<Record<number, number>> = {
+  1: 1,
+  2: 1,
+  3: 2,
+  4: 4,
+  5: 8,
+  7: 1,
+  9: 4,
+  10: 8,
+};
+
+function stripExifEntries(
+  input: ArrayBuffer | Uint8Array,
+  remove: (entry: TiffIfdEntry) => boolean,
+): Uint8Array {
+  const source = input instanceof Uint8Array ? input : new Uint8Array(input);
+  const bytes = source.slice();
+  for (const ifd of walkExifIfds(source))
+    for (const entry of ifd.entries) {
+      if (!remove(entry)) continue;
+      const unit = exifTypeBytes[entry.type] ?? 0;
+      const byteLength = unit * entry.count;
+      if (unit && byteLength > 4 && Number.isSafeInteger(byteLength)) {
+        const start = entry.value;
+        if (start > source.length - byteLength)
+          throw new Error(`EXIF tag 0x${entry.tag.toString(16)} points outside the file.`);
+        bytes.fill(0, start, start + byteLength);
+      }
+      bytes.fill(0, entry.offset, entry.offset + 12);
+    }
+  return bytes;
+}
+
+/** Removes proprietary MakerNote entries and payloads while preserving all other EXIF bytes. */
+export function stripExifMakerNotes(input: ArrayBuffer | Uint8Array): Uint8Array {
+  return stripExifEntries(input, (entry) => entry.tag === 0x927c);
+}
+
+/** Retains only Orientation and Copyright entries; every other reachable EXIF entry is wiped. */
+export function stripExifExceptOrientationCopyright(input: ArrayBuffer | Uint8Array): Uint8Array {
+  return stripExifEntries(input, (entry) => entry.tag !== 0x0112 && entry.tag !== 0x8298);
 }
 
 /** Rewrites an existing IFD0 copyright field without relocating any EXIF structures. */

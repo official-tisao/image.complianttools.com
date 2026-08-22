@@ -6,7 +6,9 @@ import {
   readExifGps,
   readExifIfd0,
   readExifMakerNote,
+  stripExifExceptOrientationCopyright,
   stripExifGps,
+  stripExifMakerNotes,
 } from '../src/index.js';
 
 function tiff(): Uint8Array {
@@ -125,6 +127,39 @@ describe('EXIF IFD0 reader', () => {
     view.setUint32(42, 64, true);
     bytes.set([0xde, 0xad, 0xbe, 0xef, 1], 64);
     expect(readExifMakerNote(bytes)).toEqual({ byteLength: 5, previewHex: 'deadbeef01' });
+    const stripped = stripExifMakerNotes(bytes);
+    expect(readExifMakerNote(stripped)).toBeUndefined();
+    expect(stripped.subarray(64, 69)).toEqual(new Uint8Array(5));
+    expect(stripped.subarray(0, 34)).toEqual(bytes.subarray(0, 34));
+  });
+
+  it('keeps only Orientation and Copyright while wiping other entry payloads', () => {
+    const bytes = new Uint8Array(80);
+    const view = new DataView(bytes.buffer);
+    bytes.set([0x49, 0x49, 42, 0]);
+    view.setUint32(4, 8, true);
+    view.setUint16(8, 3, true);
+    const entries = [
+      [0x0112, 3, 1, 6],
+      [0x8298, 2, 5, 60],
+      [0x0131, 2, 8, 68],
+    ] as const;
+    entries.forEach(([tag, type, count, value], index) => {
+      const offset = 10 + index * 12;
+      view.setUint16(offset, tag, true);
+      view.setUint16(offset + 2, type, true);
+      view.setUint32(offset + 4, count, true);
+      if (type === 3 && count === 1) view.setUint16(offset + 8, value, true);
+      else view.setUint32(offset + 8, value, true);
+    });
+    bytes.set(new TextEncoder().encode('Mine\0'), 60);
+    bytes.set(new TextEncoder().encode('Tooling\0'), 68);
+    const stripped = stripExifExceptOrientationCopyright(bytes);
+    expect(readExifAllIfds(stripped).map(({ name, value }) => ({ name, value }))).toEqual([
+      { name: 'orientation', value: '6' },
+      { name: 'copyright', value: 'Mine' },
+    ]);
+    expect(stripped.subarray(68, 76)).toEqual(new Uint8Array(8));
   });
 
   it('destructively wipes a GPS IFD, its pointer, and referenced coordinate values', () => {
