@@ -1,7 +1,51 @@
 import { describe, expect, it } from 'vitest';
-import { createRaster, decodeGif, encodeGif, optimiseGifFrames } from '../src/index.js';
+import {
+  createRaster,
+  decodeGif,
+  encodeGif,
+  generateGifFrames,
+  optimiseGifFrames,
+} from '../src/index.js';
 
 describe('GIF encoder', () => {
+  it('generates reverse, bounce, and crossfade animation sequences', () => {
+    const image = createRaster(1, 1, new Uint8ClampedArray([0, 0, 0, 255]));
+    const animated = {
+      ...image,
+      frames: [
+        { data: new Uint8ClampedArray([0, 0, 0, 255]), durationMs: 100 },
+        { data: new Uint8ClampedArray([120, 60, 30, 255]), durationMs: 100 },
+        { data: new Uint8ClampedArray([240, 120, 60, 255]), durationMs: 100 },
+      ],
+    } as typeof image;
+    expect(generateGifFrames(animated, 'reverse').frames[0].data[0]).toBe(240);
+    expect(generateGifFrames(animated, 'bounce').frames.map((frame) => frame.data[0])).toEqual([
+      0, 120, 240, 120,
+    ]);
+    const crossfade = generateGifFrames(animated, 'crossfade', 1);
+    expect(crossfade.frames).toHaveLength(5);
+    expect([...crossfade.frames[1].data]).toEqual([60, 30, 15, 255]);
+    expect([...crossfade.frames[3].data]).toEqual([180, 90, 45, 255]);
+    expect(decodeGif(encodeGif(crossfade)).frames).toHaveLength(5);
+  });
+
+  it('writes loop count and validates animation timing ranges', () => {
+    const image = createRaster(1, 1, new Uint8ClampedArray([1, 2, 3, 255]));
+    const encoded = new Uint8Array(encodeGif(image, 513));
+    const signature = new TextEncoder().encode('NETSCAPE2.0');
+    const netscape = encoded.findIndex((_, index) =>
+      signature.every((value, offset) => encoded[index + offset] === value),
+    );
+    expect(netscape).toBeGreaterThan(0);
+    expect(encoded[netscape + 13]).toBe(1);
+    expect(encoded[netscape + 14]).toBe(2);
+    expect(() => encodeGif(image, 65_536)).toThrow(/loop count/u);
+    const invalid = {
+      ...image,
+      frames: [{ ...image.frames[0], durationMs: 700_000 }],
+    } as typeof image;
+    expect(() => encodeGif(invalid)).toThrow(/frame delays/u);
+  });
   it('encodes an animated GIF that decodes to its original frame count', () => {
     const image = createRaster(2, 1, new Uint8ClampedArray([255, 0, 0, 255, 0, 255, 0, 255]));
     const animated = {

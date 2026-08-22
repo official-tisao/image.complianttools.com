@@ -25,6 +25,51 @@ export interface GifEncodeOptions {
   readonly interlace?: boolean;
 }
 
+export type GifFrameGenerator = 'forward' | 'reverse' | 'bounce' | 'crossfade';
+
+/** Generates deterministic animation frame sequences without mutating the input raster. */
+export function generateGifFrames(
+  image: RasterImage,
+  mode: GifFrameGenerator = 'forward',
+  crossfadeFrames = 2,
+): RasterImage {
+  if (mode === 'forward') return image;
+  if (mode === 'reverse')
+    return {
+      ...image,
+      frames: image.frames.slice().reverse() as unknown as RasterImage['frames'],
+    };
+  if (mode === 'bounce')
+    return {
+      ...image,
+      frames: [
+        ...image.frames,
+        ...image.frames.slice(1, -1).reverse(),
+      ] as unknown as RasterImage['frames'],
+    };
+  const count = Math.max(1, Math.min(30, Math.round(crossfadeFrames)));
+  const frames: RasterImage['frames'][number][] = [];
+  for (let index = 0; index < image.frames.length; index += 1) {
+    const current = image.frames[index]!;
+    frames.push(current);
+    const next = image.frames[index + 1];
+    if (!next) continue;
+    for (let intermediate = 1; intermediate <= count; intermediate += 1) {
+      const amount = intermediate / (count + 1);
+      const data = new Uint8ClampedArray(current.data.length);
+      for (let offset = 0; offset < data.length; offset += 1)
+        data[offset] = Math.round(
+          current.data[offset]! * (1 - amount) + next.data[offset]! * amount,
+        );
+      frames.push({
+        data,
+        durationMs: Math.max(10, Math.round((current.durationMs + next.durationMs) / 2 / count)),
+      });
+    }
+  }
+  return { ...image, frames: frames as unknown as RasterImage['frames'] };
+}
+
 function push16(bytes: number[], value: number): void {
   bytes.push(value & 255, value >> 8);
 }
@@ -707,6 +752,8 @@ export function encodeGif(
   loopCount = 0,
   options: GifEncodeOptions = {},
 ): ArrayBuffer {
+  if (!Number.isInteger(loopCount) || loopCount < 0 || loopCount > 65_535)
+    throw new Error('GIF loop count must be an integer from 0 through 65535.');
   const source =
     options.optimizeLevel && options.optimizeLevel > 0
       ? optimiseGifFrames(image, options.optimizeLevel)
@@ -714,6 +761,13 @@ export function encodeGif(
   if (source.width < 1 || source.height < 1 || source.width * source.height > 100_000_000)
     throw new Error('GIF dimensions exceed the safe encode limit.');
   if (source.frames.length > 10_000) throw new Error('GIF exceeds the safe frame-count limit.');
+  if (
+    source.frames.some(
+      (frame) =>
+        !Number.isFinite(frame.durationMs) || frame.durationMs < 0 || frame.durationMs > 655_350,
+    )
+  )
+    throw new Error('GIF frame delays must be between 0 and 655350 milliseconds.');
   const requestedEntries = Math.max(2, Math.min(256, Math.round(options.paletteSize ?? 256)));
   const tableEntries = 2 ** Math.ceil(Math.log2(requestedEntries));
   const tableSizeCode = Math.log2(tableEntries) - 1;

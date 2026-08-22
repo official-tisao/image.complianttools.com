@@ -1,5 +1,10 @@
 <script lang="ts">
-  import { createRaster, encodeGif } from '@complianttools/image-engine';
+  import {
+    createRaster,
+    encodeGif,
+    generateGifFrames,
+    type GifFrameGenerator,
+  } from '@complianttools/image-engine';
 
   let status = $state('');
   let error = $state('');
@@ -15,26 +20,42 @@
   let ditherAmount = $state(100);
   let disposal = $state<'auto' | 'unspecified' | 'none' | 'background' | 'previous'>('auto');
   let interlace = $state(false);
+  let delayMs = $state(100);
+  let loopCount = $state(0);
+  let frameGenerator = $state<GifFrameGenerator>('forward');
+  let crossfadeFrames = $state(2);
 
-  async function convert(file: File | undefined) {
+  async function convert(fileList: FileList | null) {
     status = '';
     error = '';
-    if (!file) return;
+    const files = [...(fileList ?? [])];
+    if (files.length === 0) return;
     try {
-      const bitmap = await createImageBitmap(file);
       const canvas = document.createElement('canvas');
-      canvas.width = bitmap.width;
-      canvas.height = bitmap.height;
       const context = canvas.getContext('2d', { willReadFrequently: true });
       if (!context) throw new Error('Your browser cannot create a local canvas.');
-      context.drawImage(bitmap, 0, 0);
-      bitmap.close();
-      const image = createRaster(
-        canvas.width,
-        canvas.height,
-        context.getImageData(0, 0, canvas.width, canvas.height).data,
+      const frames = [];
+      for (const [index, file] of files.entries()) {
+        const bitmap = await createImageBitmap(file);
+        if (index === 0) {
+          canvas.width = bitmap.width;
+          canvas.height = bitmap.height;
+        }
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+        bitmap.close();
+        frames.push({
+          data: new Uint8ClampedArray(context.getImageData(0, 0, canvas.width, canvas.height).data),
+          durationMs: delayMs,
+        });
+      }
+      const base = createRaster(canvas.width, canvas.height, frames[0]!.data);
+      const image = generateGifFrames(
+        { ...base, frames: frames as unknown as typeof base.frames },
+        frameGenerator,
+        crossfadeFrames,
       );
-      const bytes = encodeGif(image, 0, {
+      const bytes = encodeGif(image, loopCount, {
         optimizeLevel,
         lossy,
         quantizer,
@@ -49,10 +70,10 @@
       const url = URL.createObjectURL(new Blob([bytes], { type: 'image/gif' }));
       const download = document.createElement('a');
       download.href = url;
-      download.download = `${file.name.replace(/\.[^.]+$/u, '')}.gif`;
+      download.download = `${files[0]!.name.replace(/\.[^.]+$/u, '')}.gif`;
       download.click();
       URL.revokeObjectURL(url);
-      status = `Created a ${canvas.width}×${canvas.height} GIF locally (${bytes.byteLength.toLocaleString()} bytes; ${quantizer}, ${paletteMode} palette up to ${paletteSize} entries, transparency index ${transparencyIndex}, ${dither} dithering at ${ditherAmount}%, ${disposal} disposal, ${interlace ? 'interlaced' : 'sequential'}, optimization ${optimizeLevel}, palette reduction ${lossy}).`;
+      status = `Created a ${canvas.width}×${canvas.height} GIF with ${image.frames.length} frame(s) locally (${bytes.byteLength.toLocaleString()} bytes; loop ${loopCount}, ${frameGenerator}, ${quantizer}, ${paletteMode} palette up to ${paletteSize} entries, transparency index ${transparencyIndex}, ${dither} dithering at ${ditherAmount}%, ${disposal} disposal, ${interlace ? 'interlaced' : 'sequential'}, optimization ${optimizeLevel}, palette reduction ${lossy}).`;
     } catch (reason) {
       error = reason instanceof Error ? reason.message : 'Unable to create a GIF.';
     }
@@ -68,7 +89,30 @@
 <main>
   <a href="/convert">← Convert</a>
   <h1>GIF Maker</h1>
-  <p>Create a GIF locally from an image. Nothing is uploaded.</p>
+  <p>Create an animated GIF locally from one or more images. Nothing is uploaded.</p>
+  <label>
+    Frame delay (ms)
+    <input type="number" min="10" max="60000" step="10" bind:value={delayMs} />
+  </label>
+  <label>
+    Loop count (0 = infinite)
+    <input type="number" min="0" max="65535" step="1" bind:value={loopCount} />
+  </label>
+  <label>
+    Frame generator
+    <select bind:value={frameGenerator}>
+      <option value="forward">Forward</option>
+      <option value="reverse">Reverse</option>
+      <option value="bounce">Bounce</option>
+      <option value="crossfade">Crossfade</option>
+    </select>
+  </label>
+  {#if frameGenerator === 'crossfade'}
+    <label>
+      Crossfade frames
+      <input type="number" min="1" max="30" step="1" bind:value={crossfadeFrames} />
+    </label>
+  {/if}
   <label>
     Optimization level
     <select bind:value={optimizeLevel}>
@@ -136,10 +180,11 @@
     {lossy}
   </label>
   <label
-    >Choose an image <input
+    >Choose images <input
       type="file"
       accept="image/*"
-      onchange={(event) => void convert(event.currentTarget.files?.[0])}
+      multiple
+      onchange={(event) => void convert(event.currentTarget.files)}
     /></label
   >
   {#if status}<p role="status">{status}</p>{/if}

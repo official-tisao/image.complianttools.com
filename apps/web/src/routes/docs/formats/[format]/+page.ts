@@ -91,7 +91,7 @@ const supportedFormats = {
     name: 'GIF',
     summary: 'GIF stores indexed still images and animations with LZW compression.',
     notes:
-      'The local codec decodes animation and encodes GIF89a with configurable global, per-frame, or adaptive palettes; Wu, median-cut, octree, and independent neural quantizers; five dither modes; transparency, disposal, interlacing, looping, and frame differencing.',
+      'The local codec decodes animation and encodes GIF89a with configurable global, per-frame, or adaptive palettes; Wu, median-cut, octree, and independent neural quantizers; five dither modes; transparency, disposal, interlacing, looping, frame differencing, and reverse, bounce, or crossfade frame generation.',
   },
   jxl: {
     name: 'JPEG XL',
