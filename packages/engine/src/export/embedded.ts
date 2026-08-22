@@ -1,6 +1,10 @@
 import type { RasterImage } from '../types.js';
 
 export type EmbeddedPixelFormat =
+  | 'alpha1'
+  | 'alpha2'
+  | 'alpha4'
+  | 'alpha8'
   | 'rgb332'
   | 'rgb565'
   | 'rgb565be'
@@ -22,6 +26,12 @@ export interface EmbeddedExportOptions {
   readonly storage?: 'const' | 'static' | 'static-const';
   readonly lineWidth?: number;
   readonly dithering?: 'none' | 'ordered';
+}
+
+type AlphaPixelFormat = 'alpha1' | 'alpha2' | 'alpha4' | 'alpha8';
+
+function isAlphaPixelFormat(format: EmbeddedPixelFormat): format is AlphaPixelFormat {
+  return format === 'alpha1' || format === 'alpha2' || format === 'alpha4' || format === 'alpha8';
 }
 
 export function validateEmbeddedOutputName(value: string): string {
@@ -60,6 +70,20 @@ export function packEmbeddedPixels(image: RasterImage, options: EmbeddedExportOp
     throw new Error('Mono1 output cannot append an alpha byte.');
   }
   const rgba = image.frames[0].data;
+  if (isAlphaPixelFormat(options.format)) {
+    const bits = Number(options.format.slice(5));
+    const rowBytes = Math.ceil((image.width * bits) / 8);
+    const output = new Uint8Array(rowBytes * image.height);
+    const levels = (1 << bits) - 1;
+    for (let y = 0; y < image.height; y += 1)
+      for (let x = 0; x < image.width; x += 1) {
+        const alpha = rgba[(y * image.width + x) * 4 + 3]!;
+        const quantized = Math.round((alpha / 255) * levels);
+        const bit = x * bits;
+        output[y * rowBytes + Math.floor(bit / 8)]! |= quantized << (8 - bits - (bit % 8));
+      }
+    return output;
+  }
   if (options.format === 'mono1') {
     const rowBytes = Math.ceil(image.width / 8);
     const output = new Uint8Array(rowBytes * image.height);
@@ -71,7 +95,10 @@ export function packEmbeddedPixels(image: RasterImage, options: EmbeddedExportOp
       }
     return output;
   }
-  const bytesPerPixel: Record<Exclude<EmbeddedPixelFormat, 'mono1'>, number> = {
+  const bytesPerPixel: Record<
+    Exclude<EmbeddedPixelFormat, 'alpha1' | 'alpha2' | 'alpha4' | 'alpha8' | 'mono1'>,
+    number
+  > = {
     rgb332: 1,
     rgb565: 2,
     rgb565be: 2,
@@ -219,6 +246,23 @@ export function packLvglV9Pixels(image: RasterImage, format: EmbeddedPixelFormat
   return output;
 }
 
+/** Packs LVGL v8 alpha-only, RGB565A8, and explicit 32-bit true-colour-alpha layouts. */
+export function packLvglV8Pixels(image: RasterImage, format: EmbeddedPixelFormat): Uint8Array {
+  if (isAlphaPixelFormat(format))
+    return packEmbeddedPixels(image, { outputName: 'lvgl_image', format });
+  if (format === 'rgb565a8') return packLvglV9Pixels(image, format);
+  if (format === 'argb8888') {
+    const rgba = image.frames[0].data;
+    const output = new Uint8Array(rgba.length);
+    for (let source = 0; source < rgba.length; source += 4)
+      output.set([rgba[source + 2]!, rgba[source + 1]!, rgba[source]!, rgba[source + 3]!], source);
+    return output;
+  }
+  if (format === 'rgb565' || format === 'rgb565be' || format === 'rgb888')
+    return packEmbeddedPixels(image, { outputName: 'lvgl_image', format });
+  throw new Error(`LVGL v8 does not support ${format} in this exporter.`);
+}
+
 /** Returns the declaration and widget binding needed by an LVGL v8 or v9 caller. */
 export function emitLvglUsageSnippet(outputName: string, version: 8 | 9): string {
   const name = validateEmbeddedOutputName(outputName);
@@ -260,16 +304,22 @@ ${emitLvglUsageSnippet(options.outputName, 9)}`;
 /** Emits an LVGL v8 descriptor and matching map for supported true-colour formats. */
 export function emitLvglV8CArray(image: RasterImage, options: EmbeddedExportOptions): string {
   const colourFormat: Partial<Record<EmbeddedPixelFormat, string>> = {
+    alpha1: 'LV_IMG_CF_ALPHA_1BIT',
+    alpha2: 'LV_IMG_CF_ALPHA_2BIT',
+    alpha4: 'LV_IMG_CF_ALPHA_4BIT',
+    alpha8: 'LV_IMG_CF_ALPHA_8BIT',
     rgb565: 'LV_IMG_CF_TRUE_COLOR',
     rgb565be: 'LV_IMG_CF_TRUE_COLOR',
     rgb888: 'LV_IMG_CF_TRUE_COLOR',
     argb8888: 'LV_IMG_CF_TRUE_COLOR_ALPHA',
+    rgb565a8: 'LV_IMG_CF_RGB565A8',
   };
   if (!colourFormat[options.format]) {
     throw new Error(`LVGL v8 does not support ${options.format} in this exporter.`);
   }
   const mapName = `${validateEmbeddedOutputName(options.outputName)}_map`;
-  const array = emitEmbeddedCArray(image, { ...options, outputName: mapName });
+  const mapOptions = { ...options, outputName: mapName };
+  const array = emitByteCArray(image, mapOptions, packLvglV8Pixels(image, options.format));
   const descriptorStorage =
     options.storage === 'static'
       ? 'static'

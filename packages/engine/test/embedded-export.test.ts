@@ -9,6 +9,7 @@ import {
   emitLvglUsageSnippet,
   emitLvglV8CArray,
   emitLvglV9CArray,
+  packLvglV8Pixels,
   packLvglV9Pixels,
   packEmbeddedPixels,
   validateEmbeddedOutputName,
@@ -106,6 +107,26 @@ describe('embedded exporter', () => {
     expect(output).toContain('LV_IMG_DECLARE(logo);');
     expect(output).toContain('lv_img_set_src(image, &logo);');
     expect(output).not.toContain('\n}\/* In a separate translation unit');
+  });
+
+  it('packs LVGL v8 alpha formats and RGB565A8 deterministically', () => {
+    const opacityRamp = createRaster(
+      4,
+      1,
+      new Uint8ClampedArray([0, 0, 0, 0, 0, 0, 0, 85, 0, 0, 0, 170, 0, 0, 0, 255]),
+    );
+    expect(packLvglV8Pixels(opacityRamp, 'alpha2')).toEqual(new Uint8Array([0x1b]));
+    expect(packLvglV8Pixels(image, 'rgb565a8')).toEqual(new Uint8Array([0x00, 0xf8, 128]));
+    for (const [format, constant] of [
+      ['alpha1', 'LV_IMG_CF_ALPHA_1BIT'],
+      ['alpha2', 'LV_IMG_CF_ALPHA_2BIT'],
+      ['alpha4', 'LV_IMG_CF_ALPHA_4BIT'],
+      ['alpha8', 'LV_IMG_CF_ALPHA_8BIT'],
+      ['rgb565a8', 'LV_IMG_CF_RGB565A8'],
+    ] as const)
+      expect(emitLvglV8CArray(image, { outputName: 'logo', format })).toContain(
+        `.cf = ${constant}`,
+      );
   });
 
   it('emits version-specific LVGL usage snippets with a validated public symbol', () => {

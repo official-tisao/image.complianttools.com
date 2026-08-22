@@ -24,6 +24,10 @@
   let lineWidth = $state(12);
   let dithering = $state<'none' | 'ordered'>('none');
   let format = $state<
+    | 'alpha1'
+    | 'alpha2'
+    | 'alpha4'
+    | 'alpha8'
     | 'rgb332'
     | 'rgb565'
     | 'rgb565be'
@@ -158,6 +162,10 @@
   <label>
     Pixel format
     <select bind:value={format}>
+      <option value="alpha1">Alpha 1-bit (LVGL v8)</option>
+      <option value="alpha2">Alpha 2-bit (LVGL v8)</option>
+      <option value="alpha4">Alpha 4-bit (LVGL v8)</option>
+      <option value="alpha8">Alpha 8-bit (LVGL v8)</option>
       <option value="rgb332">RGB332</option>
       <option value="rgb565">RGB565</option>
       <option value="rgb565be">RGB565 big-endian</option>
