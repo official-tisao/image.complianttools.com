@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   editExifCopyright,
+  readExifAllIfds,
   readExifGps,
   readExifIfd0,
   readExifMakerNote,
@@ -30,6 +31,21 @@ describe('EXIF IFD0 reader', () => {
     expect(readExifIfd0(tiff())).toEqual([
       { tag: 0x0112, name: 'orientation', value: 6 },
       { tag: 0x8298, name: 'copyright', value: 'CC0' },
+    ]);
+  });
+  it('enumerates every entry across linked IFDs with typed values', () => {
+    const bytes = tiff();
+    const view = new DataView(bytes.buffer);
+    view.setUint32(34, 40, true);
+    view.setUint16(40, 1, true);
+    view.setUint16(42, 0x010f, true);
+    view.setUint16(44, 2, true);
+    view.setUint32(46, 4, true);
+    bytes.set([65, 67, 77, 0], 50);
+    expect(readExifAllIfds(bytes)).toEqual([
+      { ifdOffset: 8, tag: 0x0112, name: 'orientation', type: 3, count: 1, value: '6' },
+      { ifdOffset: 8, tag: 0x8298, name: 'copyright', type: 2, count: 4, value: 'CC0' },
+      { ifdOffset: 40, tag: 0x010f, name: 'make', type: 2, count: 4, value: 'ACM' },
     ]);
   });
   it('refuses bad TIFF headers and offsets', () => {

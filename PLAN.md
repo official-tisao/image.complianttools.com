@@ -432,9 +432,9 @@ upstreams are permissive (BSD-3, BSD-2), so the obstacle is a build we do not ow
 - **Spec:** README §5.5 · **Done when:** output compiles in a real LVGL v8 and v9 project
 
 #### P2-12 · Metadata subsystem
-- [ ] Read: EXIF (all IFDs + MakerNotes), IPTC, XMP, ICC, JFIF, PNG text chunks, GIF comment, WebP/AVIF/HEIF boxes, C2PA
+- [x] Read: EXIF (all IFDs + MakerNotes), IPTC, XMP, ICC, JFIF, PNG text chunks, GIF comment, WebP/AVIF/HEIF boxes, C2PA
 - [ ] Write/strip presets + per-field editing (README §6.9)
-- [ ] GPS shown as decimal + DMS + `geo:` URI — **no map tiles** (P5)
+- [x] GPS shown as decimal + DMS + `geo:` URI — **no map tiles** (P5)
 - [ ] Property test: `stripMetadata: 'none'` preserves every readable tag through a re-encode
 - **Spec:** README §6.9 · **Done when:** the preservation property test passes across all metadata-carrying formats
 

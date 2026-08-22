@@ -154,7 +154,7 @@ function readJpeg(input: Uint8Array): ReadableMetadata {
       tags.push({ namespace: 'JFIF', name: 'density', value: `${horizontal}×${vertical} ${unit}` });
     }
     if (marker === 0xe1 && latin1.decode(data.subarray(0, 6)) === 'Exif\0\0') {
-      for (const field of readExifIfd0(data.subarray(6)))
+      for (const field of readExifAllIfds(data.subarray(6)))
         tags.push({ namespace: 'EXIF', name: field.name, value: String(field.value) });
       const gps = readExifGps(data.subarray(6));
       if (gps) {
@@ -474,8 +474,8 @@ export function stripGifMetadata(input: ArrayBuffer | Uint8Array): Uint8Array {
 }
 import {
   editExifCopyright,
+  readExifAllIfds,
   readExifGps,
-  readExifIfd0,
   readExifMakerNote,
   stripExifGps,
 } from './exif.js';

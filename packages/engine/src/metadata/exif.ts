@@ -30,6 +30,7 @@ function tiffReader(bytes: Uint8Array) {
 }
 
 export type TiffIfdEntry = {
+  readonly offset: number;
   readonly tag: number;
   readonly type: number;
   readonly count: number;
@@ -76,7 +77,7 @@ export function walkExifIfds(
             : value <= view.byteLength - values * 4
               ? Array.from({ length: values }, (_, valueIndex) => u32(value + valueIndex * 4))
               : [];
-      entries.push({ tag, type, count: values, value, longValues });
+      entries.push({ offset: entryOffset, tag, type, count: values, value, longValues });
       if (pointers.has(tag)) pending.push(...longValues);
     }
     const next = u32(end);
@@ -84,6 +85,94 @@ export function walkExifIfds(
     ifds.push({ offset, entries });
   }
   return ifds;
+}
+
+export type ExifDirectoryField = {
+  readonly ifdOffset: number;
+  readonly tag: number;
+  readonly name: string;
+  readonly type: number;
+  readonly count: number;
+  readonly value: string;
+};
+
+const exifTagNames: Readonly<Record<number, string>> = {
+  0x010e: 'image-description',
+  0x010f: 'make',
+  0x0110: 'model',
+  0x0112: 'orientation',
+  0x0131: 'software',
+  0x0132: 'date-time',
+  0x013b: 'artist',
+  0x8298: 'copyright',
+  0x8769: 'exif-ifd-pointer',
+  0x8825: 'gps-ifd-pointer',
+  0x927c: 'maker-note',
+};
+
+/** Reads every entry in every reachable standard EXIF IFD with bounded, non-executing values. */
+export function readExifAllIfds(input: ArrayBuffer | Uint8Array): readonly ExifDirectoryField[] {
+  const bytes = input instanceof Uint8Array ? input : new Uint8Array(input);
+  const { view, little } = tiffReader(bytes);
+  const typeSize: Readonly<Record<number, number>> = {
+    1: 1,
+    2: 1,
+    3: 2,
+    4: 4,
+    5: 8,
+    7: 1,
+    9: 4,
+    10: 8,
+  };
+  const fields: ExifDirectoryField[] = [];
+  for (const ifd of walkExifIfds(bytes))
+    for (const entry of ifd.entries) {
+      const unit = typeSize[entry.type];
+      if (!unit || entry.count > 1_000_000)
+        throw new Error(`EXIF tag 0x${entry.tag.toString(16)} has an unsupported type or count.`);
+      const byteLength = unit * entry.count;
+      const start = byteLength <= 4 ? entry.offset + 8 : entry.value;
+      if (!Number.isSafeInteger(byteLength) || start > bytes.length - byteLength)
+        throw new Error(`EXIF tag 0x${entry.tag.toString(16)} points outside the file.`);
+      const shown = Math.min(entry.count, 64);
+      let values: string;
+      if (entry.type === 2) values = ascii(bytes.subarray(start, start + byteLength));
+      else if (entry.type === 7)
+        values = `${byteLength} opaque bytes (${[
+          ...bytes.subarray(start, start + Math.min(16, byteLength)),
+        ]
+          .map((value) => value.toString(16).padStart(2, '0'))
+          .join('')})`;
+      else {
+        const decoded: number[] = [];
+        for (let index = 0; index < shown; index += 1) {
+          const offset = start + index * unit;
+          if (entry.type === 1) decoded.push(view.getUint8(offset));
+          if (entry.type === 3) decoded.push(view.getUint16(offset, little));
+          if (entry.type === 4) decoded.push(view.getUint32(offset, little));
+          if (entry.type === 9) decoded.push(view.getInt32(offset, little));
+          if (entry.type === 5 || entry.type === 10) {
+            const numerator =
+              entry.type === 5 ? view.getUint32(offset, little) : view.getInt32(offset, little);
+            const denominator =
+              entry.type === 5
+                ? view.getUint32(offset + 4, little)
+                : view.getInt32(offset + 4, little);
+            decoded.push(denominator === 0 ? Number.NaN : numerator / denominator);
+          }
+        }
+        values = `${decoded.join(', ')}${entry.count > shown ? ', …' : ''}`;
+      }
+      fields.push({
+        ifdOffset: ifd.offset,
+        tag: entry.tag,
+        name: exifTagNames[entry.tag] ?? `tag-0x${entry.tag.toString(16).padStart(4, '0')}`,
+        type: entry.type,
+        count: entry.count,
+        value: values,
+      });
+    }
+  return fields;
 }
 
 function ascii(bytes: Uint8Array): string {
