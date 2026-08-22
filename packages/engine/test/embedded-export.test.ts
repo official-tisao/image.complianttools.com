@@ -129,6 +129,32 @@ describe('embedded exporter', () => {
       );
   });
 
+  it('writes LVGL v8 indexed palettes as BGRA followed by packed indices', () => {
+    const twoColours = createRaster(2, 1, new Uint8ClampedArray([255, 0, 0, 255, 0, 0, 255, 255]));
+    expect(packLvglV8Pixels(twoColours, 'indexed1')).toEqual(
+      new Uint8Array([
+        0,
+        0,
+        255,
+        255, // red BGRA palette entry
+        255,
+        0,
+        0,
+        255, // blue BGRA palette entry
+        0x40, // indexes 0, 1, padded MSB-first
+      ]),
+    );
+    for (const [format, constant] of [
+      ['indexed1', 'LV_IMG_CF_INDEXED_1BIT'],
+      ['indexed2', 'LV_IMG_CF_INDEXED_2BIT'],
+      ['indexed4', 'LV_IMG_CF_INDEXED_4BIT'],
+      ['indexed8', 'LV_IMG_CF_INDEXED_8BIT'],
+    ] as const)
+      expect(emitLvglV8CArray(twoColours, { outputName: 'logo', format })).toContain(
+        `.cf = ${constant}`,
+      );
+  });
+
   it('emits version-specific LVGL usage snippets with a validated public symbol', () => {
     expect(emitLvglUsageSnippet('logo', 8)).toContain('LV_IMG_DECLARE(logo)');
     expect(emitLvglUsageSnippet('logo', 9)).toContain('LV_IMAGE_DECLARE(logo)');

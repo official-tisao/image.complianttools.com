@@ -5,6 +5,10 @@ export type EmbeddedPixelFormat =
   | 'alpha2'
   | 'alpha4'
   | 'alpha8'
+  | 'indexed1'
+  | 'indexed2'
+  | 'indexed4'
+  | 'indexed8'
   | 'rgb332'
   | 'rgb565'
   | 'rgb565be'
@@ -32,6 +36,14 @@ type AlphaPixelFormat = 'alpha1' | 'alpha2' | 'alpha4' | 'alpha8';
 
 function isAlphaPixelFormat(format: EmbeddedPixelFormat): format is AlphaPixelFormat {
   return format === 'alpha1' || format === 'alpha2' || format === 'alpha4' || format === 'alpha8';
+}
+
+type IndexedPixelFormat = 'indexed1' | 'indexed2' | 'indexed4' | 'indexed8';
+
+function isIndexedPixelFormat(format: EmbeddedPixelFormat): format is IndexedPixelFormat {
+  return (
+    format === 'indexed1' || format === 'indexed2' || format === 'indexed4' || format === 'indexed8'
+  );
 }
 
 export function validateEmbeddedOutputName(value: string): string {
@@ -84,6 +96,7 @@ export function packEmbeddedPixels(image: RasterImage, options: EmbeddedExportOp
       }
     return output;
   }
+  if (isIndexedPixelFormat(options.format)) return packLvglV8Indexed(image, options.format);
   if (options.format === 'mono1') {
     const rowBytes = Math.ceil(image.width / 8);
     const output = new Uint8Array(rowBytes * image.height);
@@ -96,7 +109,18 @@ export function packEmbeddedPixels(image: RasterImage, options: EmbeddedExportOp
     return output;
   }
   const bytesPerPixel: Record<
-    Exclude<EmbeddedPixelFormat, 'alpha1' | 'alpha2' | 'alpha4' | 'alpha8' | 'mono1'>,
+    Exclude<
+      EmbeddedPixelFormat,
+      | 'alpha1'
+      | 'alpha2'
+      | 'alpha4'
+      | 'alpha8'
+      | 'indexed1'
+      | 'indexed2'
+      | 'indexed4'
+      | 'indexed8'
+      | 'mono1'
+    >,
     number
   > = {
     rgb332: 1,
@@ -250,6 +274,7 @@ export function packLvglV9Pixels(image: RasterImage, format: EmbeddedPixelFormat
 export function packLvglV8Pixels(image: RasterImage, format: EmbeddedPixelFormat): Uint8Array {
   if (isAlphaPixelFormat(format))
     return packEmbeddedPixels(image, { outputName: 'lvgl_image', format });
+  if (isIndexedPixelFormat(format)) return packLvglV8Indexed(image, format);
   if (format === 'rgb565a8') return packLvglV9Pixels(image, format);
   if (format === 'argb8888') {
     const rgba = image.frames[0].data;
@@ -261,6 +286,58 @@ export function packLvglV8Pixels(image: RasterImage, format: EmbeddedPixelFormat
   if (format === 'rgb565' || format === 'rgb565be' || format === 'rgb888')
     return packEmbeddedPixels(image, { outputName: 'lvgl_image', format });
   throw new Error(`LVGL v8 does not support ${format} in this exporter.`);
+}
+
+function packLvglV8Indexed(image: RasterImage, format: IndexedPixelFormat): Uint8Array {
+  const bits = Number(format.slice(7));
+  const paletteSize = 1 << bits;
+  const rgba = image.frames[0].data;
+  const unique = new Map<string, readonly [number, number, number, number]>();
+  for (let offset = 0; offset < rgba.length; offset += 4) {
+    const colour = [
+      rgba[offset]!,
+      rgba[offset + 1]!,
+      rgba[offset + 2]!,
+      rgba[offset + 3]!,
+    ] as const;
+    unique.set(colour.join(','), colour);
+  }
+  const colours = [...unique.values()];
+  const palette = Array.from({ length: Math.min(paletteSize, colours.length) }, (_, index) =>
+    colours.length <= paletteSize
+      ? colours[index]!
+      : colours[Math.floor((index * colours.length) / paletteSize)]!,
+  );
+  while (palette.length < paletteSize) palette.push([0, 0, 0, 0]);
+  const rowBytes = Math.ceil((image.width * bits) / 8);
+  const output = new Uint8Array(paletteSize * 4 + rowBytes * image.height);
+  for (let index = 0; index < palette.length; index += 1) {
+    const [red, green, blue, alpha] = palette[index]!;
+    output.set([blue, green, red, alpha], index * 4);
+  }
+  const indexStart = paletteSize * 4;
+  for (let y = 0; y < image.height; y += 1)
+    for (let x = 0; x < image.width; x += 1) {
+      const source = (y * image.width + x) * 4;
+      let selected = 0;
+      let distance = Number.POSITIVE_INFINITY;
+      for (let candidate = 0; candidate < palette.length; candidate += 1) {
+        const colour = palette[candidate]!;
+        const next =
+          (rgba[source]! - colour[0]) ** 2 +
+          (rgba[source + 1]! - colour[1]) ** 2 +
+          (rgba[source + 2]! - colour[2]) ** 2 +
+          (rgba[source + 3]! - colour[3]) ** 2;
+        if (next < distance) {
+          distance = next;
+          selected = candidate;
+        }
+      }
+      const bit = x * bits;
+      output[indexStart + y * rowBytes + Math.floor(bit / 8)]! |=
+        selected << (8 - bits - (bit % 8));
+    }
+  return output;
 }
 
 /** Returns the declaration and widget binding needed by an LVGL v8 or v9 caller. */
@@ -308,6 +385,10 @@ export function emitLvglV8CArray(image: RasterImage, options: EmbeddedExportOpti
     alpha2: 'LV_IMG_CF_ALPHA_2BIT',
     alpha4: 'LV_IMG_CF_ALPHA_4BIT',
     alpha8: 'LV_IMG_CF_ALPHA_8BIT',
+    indexed1: 'LV_IMG_CF_INDEXED_1BIT',
+    indexed2: 'LV_IMG_CF_INDEXED_2BIT',
+    indexed4: 'LV_IMG_CF_INDEXED_4BIT',
+    indexed8: 'LV_IMG_CF_INDEXED_8BIT',
     rgb565: 'LV_IMG_CF_TRUE_COLOR',
     rgb565be: 'LV_IMG_CF_TRUE_COLOR',
     rgb888: 'LV_IMG_CF_TRUE_COLOR',
