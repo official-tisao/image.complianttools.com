@@ -150,3 +150,17 @@ export function encodePpm(image: RasterImage): ArrayBuffer {
   output.set(payload, header.length);
   return output.buffer;
 }
+
+/** Encodes RGBA pixels as a binary PAM RGB_ALPHA tuple without losing alpha. */
+export function encodePam(image: RasterImage): ArrayBuffer {
+  const frame = image.frames[0];
+  if (!frame || frame.data.length !== image.width * image.height * 4)
+    throw new Error('Cannot encode malformed PAM raster data.');
+  const header = new TextEncoder().encode(
+    `P7\nWIDTH ${image.width}\nHEIGHT ${image.height}\nDEPTH 4\nMAXVAL 255\nTUPLTYPE RGB_ALPHA\nENDHDR\n`,
+  );
+  const output = new Uint8Array(header.length + frame.data.length);
+  output.set(header);
+  output.set(frame.data, header.length);
+  return output.buffer;
+}

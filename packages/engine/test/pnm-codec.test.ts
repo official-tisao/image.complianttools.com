@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { createRaster, decodePnm, encodePpm, rasterEquals } from '../src/index.js';
+import { createRaster, decodePnm, encodePam, encodePpm, rasterEquals } from '../src/index.js';
+import { expectSimpleCodecRejects, expectSimpleCodecRoundTrip } from './fixtures/simple-codec.js';
 
 describe('PNM codec', () => {
   it('round-trips an RGB raster as ASCII PPM', () => {
@@ -39,5 +40,11 @@ describe('PNM codec', () => {
     const pam = new Uint8Array([...header, 10, 20, 30, 40]);
     expect(decodePnm(pam).frames[0].data).toEqual(new Uint8ClampedArray([10, 20, 30, 40]));
     expect(() => decodePnm(pam.subarray(0, -1))).toThrow('Truncated');
+  });
+
+  it('round-trips RGBA through the shared PAM codec harness', () => {
+    const image = createRaster(2, 1, new Uint8ClampedArray([10, 20, 30, 40, 5, 6, 7, 255]));
+    expectSimpleCodecRoundTrip(image, encodePam, decodePnm);
+    expectSimpleCodecRejects(decodePnm, [new Uint8Array(), new TextEncoder().encode('P7\n')]);
   });
 });

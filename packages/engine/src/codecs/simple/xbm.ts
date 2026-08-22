@@ -131,3 +131,65 @@ export function decodeXpm(input: ArrayBuffer | Uint8Array): RasterImage {
   }
   return createRaster(width!, height!, rgba);
 }
+
+const XPM_KEY_ALPHABET =
+  'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!#$%&()*+,-./:;<=>?@[]^_`{|}~';
+
+/** Encodes an exact RGBA palette as portable XPM C source. Partial alpha is not representable. */
+export function encodeXpm(image: RasterImage, name = 'image'): Uint8Array {
+  if (!/^[A-Za-z_][A-Za-z0-9_]*$/u.test(name)) throw new Error('XPM name must be a C identifier.');
+  const frame = image.frames[0];
+  if (!frame || frame.data.length !== image.width * image.height * 4)
+    throw new Error('Cannot encode malformed XPM raster data.');
+  const colours: string[] = [];
+  const colourIndexes = new Map<string, number>();
+  const pixels: number[] = [];
+  for (let offset = 0; offset < frame.data.length; offset += 4) {
+    const alpha = frame.data[offset + 3]!;
+    if (alpha !== 0 && alpha !== 255)
+      throw new Error('XPM supports only fully transparent or fully opaque pixels.');
+    const colour =
+      alpha === 0
+        ? 'None'
+        : `#${[frame.data[offset]!, frame.data[offset + 1]!, frame.data[offset + 2]!]
+            .map((value) => value.toString(16).padStart(2, '0'))
+            .join('')}`;
+    let index = colourIndexes.get(colour);
+    if (index === undefined) {
+      index = colours.length;
+      if (index >= 65_536) throw new Error('XPM palette exceeds the supported 65,536 colours.');
+      colourIndexes.set(colour, index);
+      colours.push(colour);
+    }
+    pixels.push(index);
+  }
+  const charsPerPixel = Math.max(
+    1,
+    Math.ceil(Math.log(Math.max(1, colours.length)) / Math.log(XPM_KEY_ALPHABET.length)),
+  );
+  const key = (index: number) => {
+    let value = index;
+    let output = '';
+    for (let position = 0; position < charsPerPixel; position += 1) {
+      output = XPM_KEY_ALPHABET[value % XPM_KEY_ALPHABET.length]! + output;
+      value = Math.floor(value / XPM_KEY_ALPHABET.length);
+    }
+    return output;
+  };
+  const lines = [
+    '/* XPM */',
+    `static const char *${name}[] = {`,
+    `"${image.width} ${image.height} ${colours.length} ${charsPerPixel}",`,
+    ...colours.map((colour, index) => `"${key(index)} c ${colour}",`),
+    ...Array.from({ length: image.height }, (_, y) => {
+      const row = pixels
+        .slice(y * image.width, (y + 1) * image.width)
+        .map(key)
+        .join('');
+      return `"${row}"${y === image.height - 1 ? '' : ','}`;
+    }),
+    '};',
+    '',
+  ];
+  return new TextEncoder().encode(lines.join('\n'));
+}

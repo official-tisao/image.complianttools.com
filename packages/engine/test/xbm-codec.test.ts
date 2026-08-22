@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { createRaster, decodeXbm, decodeXpm, encodeXbm } from '../src/index.js';
+import { createRaster, decodeXbm, decodeXpm, encodeXbm, encodeXpm } from '../src/index.js';
 
 describe('XBM codec', () => {
   it('decodes LSB-first bitmap source data', () => {
@@ -55,6 +55,18 @@ describe('XBM codec', () => {
     );
     expect(() => decodeXpm(new TextEncoder().encode('"1 1 1 1", "a c #000000", "b"'))).toThrow(
       'undefined colour',
+    );
+  });
+
+  it('encodes opaque and transparent XPM pixels losslessly', () => {
+    const image = createRaster(
+      3,
+      1,
+      new Uint8ClampedArray([255, 0, 0, 255, 0, 255, 0, 255, 0, 0, 0, 0]),
+    );
+    expect(decodeXpm(encodeXpm(image, 'icon')).frames[0].data).toEqual(image.frames[0].data);
+    expect(() => encodeXpm(createRaster(1, 1, new Uint8ClampedArray([1, 2, 3, 128])))).toThrow(
+      'fully transparent or fully opaque',
     );
   });
 });
