@@ -373,16 +373,16 @@ mega-dependency was replaced by a framework of our own (README §25.3.1).
 - [x] TIFF (`utif`) decode/encode wired into the codec registry with fixture round-trip
 - [x] GIF decode (`gifuct-js`) wired in with fixture round-trip
 - [x] AVIF, JPEG XL via `@jsquash/*` wired in with fixture round-trip
-- [ ] OpenEXR and JPEG 2000 **moved to P2-04a** — no permissively-distributable package exists; not a clearance failure
+- [x] OpenEXR and JPEG 2000 **moved to P2-04a** — no permissively-distributable package exists; not a clearance failure
 - **Spec:** README §5.2, §25.3.4 · **Done when:** each of the four passes fixture round-trip and appears in `THIRD-PARTY-LICENSES.md`
 
 #### P2-04a · OpenEXR + JPEG 2000 — vendored WASM builds
 Neither format has a usable published package. `tinyexr` is a C++ single-header library with no npm
 distribution; npm `openjpeg` 0.2.3 ships **no licence field** and is an unaffiliated fork. Both
 upstreams are permissive (BSD-3, BSD-2), so the obstacle is a build we do not own yet, not licensing.
-- [ ] Decide: vendor + build WASM ourselves, or report both formats unsupported for v1
-- [ ] If vendoring: pin upstream by commit sha, record the licence file, add to the WASM asset lock, and treat the build as a first-class CI artefact
-- [ ] Until then, both formats report unsupported with the specific reason (README §11.8), never a generic failure
+- [x] Decide: vendor + build WASM ourselves, or report both formats unsupported for v1 — **v1 unsupported chosen; see `docs/ADR/ip-clearance.md`**
+- [x] If vendoring: pin upstream by commit sha, record the licence file, add to the WASM asset lock, and treat the build as a first-class CI artefact — **not applicable to the v1-unsupported decision**
+- [x] Until then, both formats report unsupported with the specific reason (README §11.8), never a generic failure
 - **Spec:** README §5.2, §25.3.4, §25.5 · **Done when:** either both decode from fixtures, or both are documented as v1-unsupported with a stated reason
 
 #### P2-05 · GIF encoder + optimizer (**ours**)
@@ -1079,7 +1079,7 @@ and the format's `/docs/formats/` page exists. **Or** when honestly marked unava
 **Standard raster** — [x] JPEG · [x] PNG · [x] APNG · [x] WebP · [x] AVIF · [x] JPEG XL · [x] GIF ·
 [x] BMP/DIB · [x] TIFF · [x] ICO · [x] CUR · [ ] HEIC/HEIF (decode only) · [x] TGA · [x] PCX ·
 [x] PPM/PGM/PBM/PNM · [x] PAM · [x] WBMP · [x] XBM/XPM · [ ] DDS · [ ] KTX/KTX2 · [x] Radiance HDR ·
-[ ] OpenEXR · [x] PFM · [x] FITS · [x] JPEG 2000 · [x] SGI/RGB · [x] Sun Raster · [x] QOI
+[x] OpenEXR · [x] PFM · [x] FITS · [x] JPEG 2000 · [x] SGI/RGB · [x] Sun Raster · [x] QOI
 
 **Explicitly unsupported (page explaining why)** — [x] PICT · [x] MNG · [x] FLIF · [x] CDR ·
 [x] DWG · [x] DjVu · [x] HEIC encode

@@ -11,6 +11,13 @@ const unavailableFormats = {
       'No verified permissive browser package exists, and a reproducible, licence-recorded OpenJPEG WASM build has not been produced.',
     alternative: 'Use PNG for lossless interchange or JPEG/AVIF for photographs.',
   },
+  exr: {
+    name: 'OpenEXR',
+    reason:
+      'The experimental parser does not establish complete ZIP/PIZ interoperability, and a reproducible, licence-recorded TinyEXR WASM build has not been produced.',
+    alternative:
+      'Export Radiance HDR, TIFF, or PNG from an application with complete OpenEXR support.',
+  },
   pict: {
     name: 'PICT',
     reason: 'PICT is a complex legacy Mac format and the viable decoders are copyleft.',
@@ -80,12 +87,6 @@ const supportedFormats = {
     summary: 'FITS is a block-aligned scientific image container widely used in astronomy.',
     notes:
       'The local codec reads and writes safe 8-bit primary grayscale images; higher-dimensional scientific datasets are outside this raster workflow.',
-  },
-  exr: {
-    name: 'OpenEXR',
-    summary: 'OpenEXR stores high-dynamic-range half- and floating-point image channels.',
-    notes:
-      'The local parser is file-fixture tested for uncompressed scanlines and can read several compressed variants. Encoding and complete ZIP/PIZ interoperability evidence are not yet available, so OpenEXR remains incomplete for v1.',
   },
   gif: {
     name: 'GIF',

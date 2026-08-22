@@ -448,10 +448,10 @@ degrades to something honest rather than to nothing.
 | DDS | `.dds` | D | E | — | custom + BCn codec | DXT1/3/5, BC4/5/7, mipmaps, cubemaps |
 | KTX / KTX2 | `.ktx .ktx2` | D | E | — | custom + basis | Basis Universal / UASTC / ETC1S |
 | Radiance HDR | `.hdr .pic` | D | E | — | our own (RGBE) | 32-bit RGBE; tone-map on export to SDR |
-| OpenEXR | `.exr` | D | E | — | tinyexr (BSD-3) | Half / float, ZIP / PIZ compression |
+| OpenEXR | `.exr` | — | — | — | **v1 unsupported** | A small experimental parser is fixture-tested but does not establish complete ZIP/PIZ interoperability. A reproducible, licence-recorded TinyEXR WASM build has not been produced, so production decode/encode are not offered |
 | PFM | `.pfm` | D | E | — | our own | |
 | FITS | `.fits .fit` | D | — | — | our own | Astronomy |
-| JPEG 2000 | `.jp2 .j2k .jpf .jpx .jpm` | D | E | — | OpenJPEG (BSD-2) | |
+| JPEG 2000 | `.jp2 .j2k .jpf .jpx .jpm` | — | — | — | **v1 unsupported** | No verified permissive browser package exists, and a reproducible, licence-recorded OpenJPEG WASM build has not been produced |
 | SGI / RGB | `.sgi .rgb .bw` | D | E | — | our own | |
 | Sun Raster | `.ras .sun` | D | — | — | our own | |
 | PICT | `.pct .pict` | — | — | — | **dropped** — legacy, complex, and the only viable decoders are copyleft. Reported unsupported with the reason | Legacy Mac |
@@ -827,8 +827,8 @@ own origin with long-lived immutable cache headers and SRI-equivalent integrity 
 | Resize (high quality) | `@jsquash/resize` + `pica` | `pica` for the interactive path (fast, WebGL/worker), jSquash for final export fidelity | eager |
 | **Simple raster long tail** — BMP, DIB, TGA, PCX, PPM/PGM/PBM/PNM/PAM, WBMP, XBM/XPM, ICO, CUR, DDS, QOI, SGI/RGB, Sun Raster, Radiance HDR, PFM, FITS | **our own**, `packages/engine/src/codecs/simple/` | These are byte-layout formats with public specifications — each is 100–400 lines, and writing them removes the need for any copyleft mega-dependency. See §25.4 | eager (tiny) |
 | TIFF | `UTIF.js` | MIT. Baseline + LZW/Deflate/PackBits, multipage | lazy |
-| OpenEXR | `tinyexr` (WASM) | BSD-3 | lazy |
-| JPEG 2000 | `OpenJPEG` (WASM) | BSD-2 | lazy |
+| OpenEXR | **v1 unsupported**; experimental `parse-exr` is not exposed as production support | A complete, reproducible TinyEXR WASM build has not been produced | none |
+| JPEG 2000 | **v1 unsupported** | No verified browser distribution or reproducible, licence-recorded OpenJPEG WASM build exists | none |
 | GIF decode | `gifuct-js` | MIT | eager |
 | GIF encode + optimize | **our own**, `codecs/gif/` | `gifsicle` is **GPL-2.0** and cannot ship. We implement LZW (patent expired 2004), palette quantization, frame differencing, transparency optimization, and the `-O1..3`-equivalent passes ourselves. See §25.4 | eager |
 | HEIC / HEIF decode | **platform `ImageDecoder`** (WebCodecs) | `libheif` is **LGPL-3.0** and HEVC carries active patent pools. We use the OS decoder where the platform provides one and report unavailable elsewhere. **No HEIC encode, ever** | none — platform |

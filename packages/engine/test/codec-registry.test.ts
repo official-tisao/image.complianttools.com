@@ -41,10 +41,10 @@ describe('P2 codec registry', () => {
         'HEIC encoding is deliberately excluded because HEVC has active patent pools and available browser encoders are GPL or commercial.',
     });
     expect(capabilities.find((entry) => entry.id === 'exr')).toMatchObject({
-      decode: 'lazy',
+      decode: 'unavailable',
       encode: 'unavailable',
       unavailableReason:
-        'OpenEXR encoding is unavailable in v1 because no maintained permissive browser WASM distribution is available; a vendored TinyEXR build has not been produced and verified.',
+        'OpenEXR is unavailable in v1 because the experimental parser does not provide verified complete ZIP/PIZ interoperability and a reproducible, licence-recorded TinyEXR WASM build has not been produced.',
     });
     expect(capabilities.find((entry) => entry.id === 'pfm')).toMatchObject({
       decode: 'lazy',
@@ -125,7 +125,7 @@ describe('P2 codec registry', () => {
 
   it('loads implemented codecs and rejects a codec with no implementation', async () => {
     await expect(loadCodec('jpeg')).resolves.toBeDefined();
-    await expect(loadCodec('exr')).resolves.toBeDefined();
+    await expect(loadCodec('exr')).rejects.toThrow('OpenEXR is unavailable in v1');
     await expect(loadCodec('gif')).resolves.toBeDefined();
     expect(getCodec('webp').supports).toEqual(['decode', 'encode']);
     expect(getCodec('qoi').supports).toEqual(['decode', 'encode']);

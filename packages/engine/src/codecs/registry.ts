@@ -264,10 +264,10 @@ export const codecRegistry: readonly CodecDescriptor[] = [
   {
     id: 'exr',
     animation: false,
-    lazyBytes: 72_000,
-    supports: ['decode'],
-    load: () => import('./third-party/exr.js'),
-    unavailableReason: 'OpenEXR encoding is not implemented.',
+    lazyBytes: 0,
+    supports: [],
+    decodeUnavailableReason:
+      'OpenEXR is unavailable in v1 because the experimental parser does not provide verified complete ZIP/PIZ interoperability and a reproducible, licence-recorded TinyEXR WASM build has not been produced.',
     encodeUnavailableReason:
       'OpenEXR encoding is unavailable in v1 because no maintained permissive browser WASM distribution is available; a vendored TinyEXR build has not been produced and verified.',
   },
