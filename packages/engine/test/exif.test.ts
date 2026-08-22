@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { readExifGps, readExifIfd0, readExifMakerNote, stripExifGps } from '../src/index.js';
+import {
+  editExifCopyright,
+  readExifGps,
+  readExifIfd0,
+  readExifMakerNote,
+  stripExifGps,
+} from '../src/index.js';
 
 function tiff(): Uint8Array {
   const bytes = new Uint8Array(64);
@@ -31,6 +37,20 @@ describe('EXIF IFD0 reader', () => {
     const invalid = tiff();
     new DataView(invalid.buffer).setUint32(4, 1000, true);
     expect(() => readExifIfd0(invalid)).toThrow('outside');
+  });
+
+  it('edits an existing copyright field without relocating EXIF data', () => {
+    const source = tiff();
+    const edited = editExifCopyright(source, 'Me');
+    expect(readExifIfd0(edited)).toContainEqual({
+      tag: 0x8298,
+      name: 'copyright',
+      value: 'Me',
+    });
+    expect(edited.subarray(0, 26)).toEqual(source.subarray(0, 26));
+    expect(source.subarray(30, 34)).toEqual(new Uint8Array([67, 67, 48, 0]));
+    expect(() => editExifCopyright(source, 'This does not fit')).toThrow('metadata rebuild');
+    expect(() => editExifCopyright(source, 'M\u00e9')).toThrow('ASCII');
   });
 
   it('reads standard GPS coordinates as decimal values and a geo URI', () => {

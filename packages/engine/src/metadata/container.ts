@@ -383,6 +383,32 @@ export function stripJpegGpsMetadata(input: ArrayBuffer | Uint8Array): Uint8Arra
   return output;
 }
 
+/** Edits an existing JPEG EXIF copyright field while preserving every other byte. */
+export function editJpegCopyrightMetadata(
+  input: ArrayBuffer | Uint8Array,
+  copyright: string,
+): Uint8Array {
+  const source = input instanceof Uint8Array ? input : new Uint8Array(input);
+  if (source[0] !== 0xff || source[1] !== 0xd8)
+    throw new Error('JPEG metadata requires a valid JPEG signature.');
+  const output = source.slice();
+  for (let offset = 2; offset + 4 <= source.length;) {
+    if (source[offset] !== 0xff) break;
+    const marker = source[offset + 1]!;
+    if (marker === 0xd9 || marker === 0xda) break;
+    const length = (source[offset + 2]! << 8) | source[offset + 3]!;
+    if (length < 2 || offset + 2 + length > source.length)
+      throw new Error('JPEG contains a truncated metadata segment.');
+    const data = source.subarray(offset + 4, offset + 2 + length);
+    if (marker === 0xe1 && latin1.decode(data.subarray(0, 6)) === 'Exif\0\0') {
+      output.set(editExifCopyright(data.subarray(6), copyright), offset + 10);
+      return output;
+    }
+    offset += length + 2;
+  }
+  throw new Error('JPEG does not contain editable EXIF metadata.');
+}
+
 /** Removes EXIF, XMP, and ICC chunks while retaining the WebP image payload byte-for-byte. */
 export function stripWebpMetadata(input: ArrayBuffer | Uint8Array): Uint8Array {
   const bytes = input instanceof Uint8Array ? input : new Uint8Array(input);
@@ -446,5 +472,11 @@ export function stripGifMetadata(input: ArrayBuffer | Uint8Array): Uint8Array {
   }
   return Uint8Array.from(retained.flatMap((part) => [...part]));
 }
-import { readExifGps, readExifIfd0, readExifMakerNote, stripExifGps } from './exif.js';
+import {
+  editExifCopyright,
+  readExifGps,
+  readExifIfd0,
+  readExifMakerNote,
+  stripExifGps,
+} from './exif.js';
 import { unzlibSync } from 'fflate';

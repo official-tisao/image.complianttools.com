@@ -1,22 +1,55 @@
 <script lang="ts">
-  import { readContainerMetadata, type MetadataTag } from '@complianttools/image-engine';
+  import {
+    editJpegCopyrightMetadata,
+    readContainerMetadata,
+    type MetadataTag,
+  } from '@complianttools/image-engine';
 
   let fileName = $state('');
   let tags = $state<readonly MetadataTag[]>([]);
   let error = $state('');
+  let status = $state('');
+  let inputBytes = $state<Uint8Array>();
+  let copyright = $state('');
+  let canEditCopyright = $state(false);
 
   async function inspect(file: File | undefined) {
     fileName = file?.name ?? '';
     tags = [];
     error = '';
+    status = '';
+    inputBytes = undefined;
+    canEditCopyright = false;
     if (!file) return;
     try {
-      tags = readContainerMetadata(await file.arrayBuffer()).tags;
+      inputBytes = new Uint8Array(await file.arrayBuffer());
+      tags = readContainerMetadata(inputBytes).tags;
+      const field = tags.find((tag) => tag.namespace === 'EXIF' && tag.name === 'copyright');
+      canEditCopyright = /\.jpe?g$/iu.test(file.name) && field !== undefined;
+      copyright = field?.value ?? '';
     } catch (reason) {
       error =
         reason instanceof Error
           ? reason.message
           : 'This local metadata reader could not inspect the file.';
+    }
+  }
+
+  function saveCopyright() {
+    error = '';
+    status = '';
+    if (!inputBytes) return;
+    try {
+      const output = editJpegCopyrightMetadata(inputBytes, copyright);
+      const url = URL.createObjectURL(new Blob([output], { type: 'image/jpeg' }));
+      const download = document.createElement('a');
+      download.href = url;
+      download.download = `${fileName.replace(/\.[^.]+$/u, '')}-metadata-edited.jpg`;
+      download.click();
+      URL.revokeObjectURL(url);
+      status = 'Edited the existing EXIF copyright field locally; all other bytes were preserved.';
+    } catch (reason) {
+      error = reason instanceof Error ? reason.message : 'Unable to edit this EXIF field.';
     }
   }
 </script>
@@ -49,6 +82,8 @@
   {/if}
   {#if error}
     <p role="alert">{error}</p>
+  {:else if status}
+    <p role="status">{status}</p>
   {:else if fileName && tags.length === 0}
     <p>No readable metadata was found.</p>
   {:else if tags.length}
@@ -60,5 +95,13 @@
           >{/each}</tbody
       >
     </table>
+  {/if}
+  {#if canEditCopyright}
+    <section aria-labelledby="edit-copyright-heading">
+      <h2 id="edit-copyright-heading">Edit existing copyright</h2>
+      <p>The replacement must fit in the existing EXIF field so no other metadata is relocated.</p>
+      <label>Copyright <input bind:value={copyright} /></label>
+      <button type="button" onclick={saveCopyright}>Download edited JPEG</button>
+    </section>
   {/if}
 </main>

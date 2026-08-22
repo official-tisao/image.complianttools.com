@@ -59,6 +59,20 @@ function gpsJpeg() {
   return jpegWithExif(tiff, 'gps.jpg');
 }
 
+function copyrightJpeg() {
+  const tiff = new Uint8Array(80);
+  const view = new DataView(tiff.buffer);
+  tiff.set([0x49, 0x49, 42, 0]);
+  view.setUint32(4, 8, true);
+  view.setUint16(8, 1, true);
+  view.setUint16(10, 0x8298, true);
+  view.setUint16(12, 2, true);
+  view.setUint32(14, 12, true);
+  view.setUint32(18, 48, true);
+  tiff.set(Buffer.from('Original\0', 'ascii'), 48);
+  return jpegWithExif(tiff, 'copyright.jpg');
+}
+
 test('metadata viewer reports an opaque MakerNote locally', async ({ page }) => {
   await page.goto('/exif-viewer');
   await page.waitForLoadState('networkidle');
@@ -81,4 +95,26 @@ test('GPS-only preset downloads a JPEG with coordinate storage wiped', async ({ 
   expect([...output.subarray(22, 34)]).toEqual(new Array(12).fill(0));
   expect([...output.subarray(76, 100)]).toEqual(new Array(24).fill(0));
   await expect(page.getByRole('status')).toContainText('Removed metadata locally');
+});
+
+test('metadata viewer edits an existing JPEG copyright field without relocating EXIF', async ({
+  page,
+}) => {
+  await page.goto('/exif-viewer');
+  await page.waitForLoadState('networkidle');
+  const fixture = copyrightJpeg();
+  await page.locator('input[type=file]').setInputFiles(fixture);
+  await expect(page.getByRole('cell', { name: 'Original' })).toBeVisible();
+  await page.getByRole('textbox', { name: 'Copyright', exact: true }).fill('Mine');
+  const pending = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Download edited JPEG' }).click();
+  const download = await pending;
+  const path = await download.path();
+  expect(path).not.toBeNull();
+  const output = await readFile(path!);
+  expect(output.subarray(60, 65)).toEqual(Buffer.from('Mine\0', 'ascii'));
+  expect(output.subarray(65, 72)).toEqual(Buffer.alloc(7));
+  expect(output.subarray(0, 26)).toEqual(fixture.buffer.subarray(0, 26));
+  expect(output.subarray(30, 60)).toEqual(fixture.buffer.subarray(30, 60));
+  await expect(page.getByRole('status')).toContainText('all other bytes were preserved');
 });

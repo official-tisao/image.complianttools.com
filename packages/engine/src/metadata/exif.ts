@@ -208,3 +208,34 @@ export function stripExifGps(input: ArrayBuffer | Uint8Array): Uint8Array {
   }
   return bytes;
 }
+
+/** Rewrites an existing IFD0 copyright field without relocating any EXIF structures. */
+export function editExifCopyright(input: ArrayBuffer | Uint8Array, copyright: string): Uint8Array {
+  const source = input instanceof Uint8Array ? input : new Uint8Array(input);
+  const bytes = source.slice();
+  const { view, little, u16, u32 } = tiffReader(bytes);
+  const encoded = new TextEncoder().encode(`${copyright}\0`);
+  if (encoded.some((value) => value > 0x7f))
+    throw new Error('EXIF copyright editing currently accepts ASCII text only.');
+  const root = u32(4);
+  if (root > bytes.length - 2) throw new Error('EXIF IFD offset is outside the file.');
+  const count = u16(root);
+  if (root + 2 + count * 12 > bytes.length) throw new Error('EXIF IFD entries are truncated.');
+  for (let index = 0; index < count; index += 1) {
+    const entry = root + 2 + index * 12;
+    if (u16(entry) !== 0x8298 || u16(entry + 2) !== 2) continue;
+    const capacity = u32(entry + 4);
+    if (encoded.length > capacity)
+      throw new Error(
+        `Edited EXIF copyright requires ${encoded.length} bytes but the existing field has ${capacity}; shortening is safe, growing requires a metadata rebuild.`,
+      );
+    const start = capacity <= 4 ? entry + 8 : u32(entry + 8);
+    if (start > bytes.length - capacity)
+      throw new Error('EXIF copyright offset is outside the file.');
+    bytes.fill(0, start, start + capacity);
+    bytes.set(encoded, start);
+    view.setUint32(entry + 4, encoded.length, little);
+    return bytes;
+  }
+  throw new Error('EXIF does not contain an editable copyright field.');
+}
