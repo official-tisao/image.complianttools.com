@@ -110,6 +110,23 @@ describe('embedded exporter', () => {
     expect(output).not.toContain('\n}\/* In a separate translation unit');
   });
 
+  it('selects truthful LVGL v8 alpha and chroma descriptors', () => {
+    const alpha = emitLvglV8CArray(image, {
+      outputName: 'logo',
+      format: 'rgb565',
+      alphaByte: true,
+    });
+    expect(alpha).toContain('.cf = LV_IMG_CF_TRUE_COLOR_ALPHA');
+    expect(alpha).toContain('0x00, 0xf8, 0x80');
+    const chroma = emitLvglV8CArray(image, {
+      outputName: 'logo',
+      format: 'rgb565',
+      chromaKey: [255, 0, 0],
+    });
+    expect(chroma).toContain('.cf = LV_IMG_CF_TRUE_COLOR_CHROMA_KEYED');
+    expect(chroma).toContain('0xe0, 0x07'); // LVGL transparent green in little-endian RGB565
+  });
+
   it('packs LVGL v8 alpha formats and RGB565A8 deterministically', () => {
     const opacityRamp = createRaster(
       4,

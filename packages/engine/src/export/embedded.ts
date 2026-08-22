@@ -155,34 +155,37 @@ export function packEmbeddedPixels(image: RasterImage, options: EmbeddedExportOp
     const transparent = options.chromaKey?.every(
       (value, index) => value === [sourceRed, sourceGreen, sourceBlue][index],
     );
+    const encodedRed = transparent ? 0 : red;
+    const encodedGreen = transparent ? 255 : green;
+    const encodedBlue = transparent ? 0 : blue;
     if (options.format === 'rgb332') {
-      output[target++] = (red & 0xe0) | ((green >> 3) & 0x1c) | (blue >> 6);
+      output[target++] = (encodedRed & 0xe0) | ((encodedGreen >> 3) & 0x1c) | (encodedBlue >> 6);
     } else if (
       options.format === 'rgb565' ||
       options.format === 'rgb565be' ||
       options.format === 'rgb565a8'
     ) {
-      const value = rgb565(red, green, blue);
+      const value = rgb565(encodedRed, encodedGreen, encodedBlue);
       const bigEndian = options.bigEndian || options.format === 'rgb565be';
       output[target++] = bigEndian ? value >> 8 : value & 255;
       output[target++] = bigEndian ? value & 255 : value >> 8;
       if (options.format === 'rgb565a8') output[target++] = transparent ? 0 : alpha!;
     } else if (options.format === 'rgb888') {
-      output.set([red, green, blue], target);
+      output.set([encodedRed, encodedGreen, encodedBlue], target);
       target += 3;
     } else if (options.format === 'bgr888') {
-      output.set([blue, green, red], target);
+      output.set([encodedBlue, encodedGreen, encodedRed], target);
       target += 3;
     } else if (options.format === 'gray8') {
-      output[target++] = Math.round(luminance(red, green, blue));
+      output[target++] = Math.round(luminance(encodedRed, encodedGreen, encodedBlue));
     } else if (options.format === 'argb8888') {
-      output.set([transparent ? 0 : alpha!, red, green, blue], target);
+      output.set([transparent ? 0 : alpha!, encodedRed, encodedGreen, encodedBlue], target);
       target += 4;
     } else if (options.format === 'xrgb8888') {
-      output.set([255, red, green, blue], target);
+      output.set([255, encodedRed, encodedGreen, encodedBlue], target);
       target += 4;
     } else {
-      output.set([red, green, blue, transparent ? 0 : alpha!], target);
+      output.set([encodedRed, encodedGreen, encodedBlue, transparent ? 0 : alpha!], target);
       target += 4;
     }
     if (options.alphaByte) output[target++] = transparent ? 0 : alpha!;
@@ -437,12 +440,23 @@ export function emitLvglV8CArray(image: RasterImage, options: EmbeddedExportOpti
     argb8888: 'LV_IMG_CF_TRUE_COLOR_ALPHA',
     rgb565a8: 'LV_IMG_CF_RGB565A8',
   };
-  if (!colourFormat[options.format]) {
+  let selectedColourFormat = colourFormat[options.format];
+  if (selectedColourFormat === 'LV_IMG_CF_TRUE_COLOR' && (options.alphaByte || options.chromaKey))
+    selectedColourFormat = options.alphaByte
+      ? 'LV_IMG_CF_TRUE_COLOR_ALPHA'
+      : 'LV_IMG_CF_TRUE_COLOR_CHROMA_KEYED';
+  if (!selectedColourFormat) {
     throw new Error(`LVGL v8 does not support ${options.format} in this exporter.`);
   }
   const mapName = `${validateEmbeddedOutputName(options.outputName)}_map`;
   const mapOptions = { ...options, outputName: mapName };
-  const array = emitByteCArray(image, mapOptions, packLvglV8Pixels(image, options.format));
+  const array = emitByteCArray(
+    image,
+    mapOptions,
+    options.format === 'rgb565' || options.format === 'rgb565be'
+      ? packEmbeddedPixels(image, options)
+      : packLvglV8Pixels(image, options.format),
+  );
   const descriptorStorage =
     options.storage === 'static'
       ? 'static'
@@ -450,7 +464,7 @@ export function emitLvglV8CArray(image: RasterImage, options: EmbeddedExportOpti
         ? 'const'
         : 'static const';
   return `${array.replace('#include <stdint.h>', '#include <stdint.h>\n#include "lvgl.h"')}${descriptorStorage} lv_img_dsc_t ${options.outputName} = {
-  .header = { .always_zero = 0, .w = ${image.width}, .h = ${image.height}, .cf = ${colourFormat[options.format]} },
+  .header = { .always_zero = 0, .w = ${image.width}, .h = ${image.height}, .cf = ${selectedColourFormat} },
   .data_size = sizeof(${mapName}),
   .data = ${mapName},
 };
