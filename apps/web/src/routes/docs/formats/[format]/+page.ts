@@ -1,4 +1,10 @@
 const unavailableFormats = {
+  ktx: {
+    name: 'KTX / KTX2',
+    reason:
+      'No pinned, verified Basis Universal transcoder is shipped for ETC1S or UASTC payloads, and the project has not recorded a reproducible encoder build or conformance corpus.',
+    alternative: 'Export DDS BC1–BC5 for GPU textures, or PNG for lossless interchange.',
+  },
   cbr: {
     name: 'CBR',
     reason:

@@ -22,7 +22,13 @@ describe('P2 codec registry', () => {
       opfs: false,
       webCodecs: false,
     });
-    expect(capabilities).toHaveLength(45);
+    expect(capabilities).toHaveLength(46);
+    expect(capabilities.find((entry) => entry.id === 'ktx')).toMatchObject({
+      decode: 'unavailable',
+      encode: 'unavailable',
+      decodeUnavailableReason: expect.stringContaining('Basis Universal'),
+      encodeUnavailableReason: expect.stringContaining('conformance corpus'),
+    });
     expect(capabilities.find((entry) => entry.id === 'jpeg')).toMatchObject({
       decode: 'lazy',
       encode: 'lazy',
@@ -134,7 +140,7 @@ describe('P2 codec registry', () => {
         decodeUnavailableReason: expect.stringContaining('VideoDecoder'),
         encodeUnavailableReason: expect.stringContaining('Video encoding is outside'),
       });
-    for (const id of ['jp2', 'pict', 'mng', 'flif', 'cdr', 'dwg', 'djvu'] as const) {
+    for (const id of ['jp2', 'pict', 'mng', 'flif', 'cdr', 'dwg', 'djvu', 'ktx'] as const) {
       expect(capabilities.find((entry) => entry.id === id)).toMatchObject({
         decode: 'unavailable',
         encode: 'unavailable',

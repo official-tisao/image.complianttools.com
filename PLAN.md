@@ -1079,7 +1079,7 @@ and the format's `/docs/formats/` page exists. **Or** when honestly marked unava
 
 **Standard raster** — [x] JPEG · [x] PNG · [x] APNG · [x] WebP · [x] AVIF · [x] JPEG XL · [x] GIF ·
 [x] BMP/DIB · [x] TIFF · [x] ICO · [x] CUR · [ ] HEIC/HEIF (decode only) · [x] TGA · [x] PCX ·
-[x] PPM/PGM/PBM/PNM · [x] PAM · [x] WBMP · [x] XBM/XPM · [ ] DDS · [ ] KTX/KTX2 · [x] Radiance HDR ·
+[x] PPM/PGM/PBM/PNM · [x] PAM · [x] WBMP · [x] XBM/XPM · [x] DDS · [x] KTX/KTX2 · [x] Radiance HDR ·
 [x] OpenEXR · [x] PFM · [x] FITS · [x] JPEG 2000 · [x] SGI/RGB · [x] Sun Raster · [x] QOI
 
 **Explicitly unsupported (page explaining why)** — [x] PICT · [x] MNG · [x] FLIF · [x] CDR ·

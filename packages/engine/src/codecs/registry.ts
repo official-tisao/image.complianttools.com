@@ -30,6 +30,16 @@ export function requiresCodecDownloadConsent(bytes: number): boolean {
 
 export const codecRegistry: readonly CodecDescriptor[] = [
   {
+    id: 'ktx',
+    animation: false,
+    lazyBytes: 0,
+    supports: [],
+    decodeUnavailableReason:
+      'KTX/KTX2 is unavailable in v1 because no pinned, verified Basis Universal transcoder is shipped for ETC1S/UASTC payloads.',
+    encodeUnavailableReason:
+      'KTX/KTX2 export is unavailable in v1 until a reproducible Basis Universal encoder build and conformance corpus are recorded.',
+  },
+  {
     id: 'apng',
     animation: true,
     lazyBytes: 165_000,

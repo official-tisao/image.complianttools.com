@@ -22,6 +22,7 @@ export type FormatId =
   | 'jpeg'
   | 'jp2'
   | 'jxl'
+  | 'ktx'
   | 'mng'
   | 'mp4'
   | 'pcx'

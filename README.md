@@ -446,7 +446,7 @@ degrades to something honest rather than to nothing.
 | WBMP | `.wbmp` | D | E | — | custom | 1-bit wireless bitmap (OC parity) |
 | XBM / XPM | `.xbm .xpm` | D | E | — | our own | |
 | DDS | `.dds` | D | E | — | custom + BCn codec | DXT1/3/5, BC4/5/7, mipmaps, cubemaps |
-| KTX / KTX2 | `.ktx .ktx2` | D | E | — | custom + basis | Basis Universal / UASTC / ETC1S |
+| KTX / KTX2 | `.ktx .ktx2` | — | — | — | **v1 unsupported** | No pinned, verified Basis Universal transcoder is shipped for ETC1S/UASTC; a reproducible encoder build and conformance corpus are still required |
 | Radiance HDR | `.hdr .pic` | D | E | — | our own (RGBE) | 32-bit RGBE; tone-map on export to SDR |
 | OpenEXR | `.exr` | — | — | — | **v1 unsupported** | A small experimental parser is fixture-tested but does not establish complete ZIP/PIZ interoperability. A reproducible, licence-recorded TinyEXR WASM build has not been produced, so production decode/encode are not offered |
 | PFM | `.pfm` | D | E | — | our own | |
