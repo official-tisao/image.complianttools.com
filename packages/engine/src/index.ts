@@ -3,6 +3,7 @@ export * from './errors.js';
 export * from './codecs/jsquash.js';
 export * from './codecs/encode.js';
 export * from './codecs/registry.js';
+export * from './codecs/jpeg-lossless.js';
 export * from './codecs/detect.js';
 export * from './codecs/simple/framework.js';
 export * from './codecs/simple/bmp.js';

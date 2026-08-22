@@ -24,7 +24,7 @@ test('downloads a smaller independently verified GIF without a network fallback'
   await page.goto('/lossless-optimize');
   await page.waitForLoadState('networkidle');
   const pending = page.waitForEvent('download');
-  await page.getByLabel('Choose a PNG or GIF').setInputFiles({
+  await page.getByLabel('Choose a PNG, GIF, or JPEG').setInputFiles({
     name: 'animation.gif',
     mimeType: 'image/gif',
     buffer: source,
@@ -40,15 +40,40 @@ test('downloads a smaller independently verified GIF without a network fallback'
   expect(crossOrigin).toEqual([]);
 });
 
-test('keeps unverified JPEG optimization unavailable with a named reason', async ({ page }) => {
+test('strips JPEG metadata only after independent browser pixel verification', async ({ page }) => {
   await page.goto('/lossless-optimize');
   await page.waitForLoadState('networkidle');
-  await page.getByLabel('Choose a PNG or GIF').setInputFiles({
+  const encoded = Buffer.from(
+    await page.evaluate(async () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 2;
+      canvas.height = 1;
+      const context = canvas.getContext('2d')!;
+      context.fillStyle = '#c83264';
+      context.fillRect(0, 0, 2, 1);
+      const blob = await new Promise<Blob>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.9));
+      return [...new Uint8Array(await blob.arrayBuffer())];
+    }),
+  );
+  const metadata = Buffer.from('pixel-neutral generated EXIF placeholder');
+  const source = Buffer.concat([
+    encoded.subarray(0, 2),
+    Buffer.from([0xff, 0xe1, (metadata.length + 2) >> 8, (metadata.length + 2) & 255]),
+    metadata,
+    encoded.subarray(2),
+  ]);
+  const pending = page.waitForEvent('download');
+  await page.getByLabel('Choose a PNG, GIF, or JPEG').setInputFiles({
     name: 'photo.jpg',
     mimeType: 'image/jpeg',
-    buffer: Buffer.from([0xff, 0xd8, 0xff, 0xd9]),
+    buffer: source,
   });
-  await expect(page.getByRole('alert')).toHaveText(
-    'JPEG lossless optimization remains unavailable until pixel-identity verification is complete.',
-  );
+  const download = await pending;
+  const path = await download.path();
+  expect(path).not.toBeNull();
+  const output = await readFile(path!);
+  expect(download.suggestedFilename()).toBe('photo-optimized.jpg');
+  expect(output.byteLength).toBeLessThan(source.byteLength);
+  expect(output.subarray(0, 2)).toEqual(Buffer.from([0xff, 0xd8]));
+  await expect(page.getByRole('status')).toContainText('Optimized and pixel-verified locally');
 });
