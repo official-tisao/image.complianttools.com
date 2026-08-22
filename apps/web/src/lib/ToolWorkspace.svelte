@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onDestroy, untrack } from 'svelte';
   import { searchTargetSize } from '@complianttools/image-engine/pipeline/target-size';
-  import { productionEncoderFormats } from '@complianttools/image-engine';
+  import { getCodec, productionEncoderFormats } from '@complianttools/image-engine';
   import { phaseOneOptionDescriptions } from '@complianttools/image-engine/schemas/options';
   import type { Recipe } from '@complianttools/image-engine/types';
   import CompareCanvas from './CompareCanvas.svelte';
@@ -42,12 +42,21 @@
   let latency = $state(0);
   let targetProgress = $state('');
   let updateTimer: ReturnType<typeof setTimeout> | undefined;
+  const encoderDisclosure = $derived(
+    productionEncoderFormats()
+      .map((format) => {
+        const codec = getCodec(format);
+        return `${format.toUpperCase()} ${formatBytes(codec.lazyBytes)}`;
+      })
+      .join(' · '),
+  );
   const relevant = $derived.by(() => {
     const localized = localizeOptions(locale, phaseOneOptionDescriptions);
     const descriptions = {
       ...localized,
       'export.format': {
         ...localized['export.format']!,
+        help: `Local encoder download before first use: ${encoderDisclosure}. The selected encoder is fetched only after you choose an image.`,
         options: ['same', ...productionEncoderFormats()],
       },
     };

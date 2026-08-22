@@ -17,6 +17,9 @@ const signatures = {
 
 test('selectable formats equal the production encoder set', async ({ page }) => {
   await page.goto('/convert');
+  await expect(page.getByText(/Local encoder download before first use:/)).toContainText(
+    'JPEG 195 KB · PNG 165 KB · WEBP 210 KB',
+  );
   const options = await page.getByLabel('Format').locator('option').allTextContents();
   expect(options).toEqual(['same', 'jpeg', 'png', 'webp']);
   expect(options).not.toContain('qoi');

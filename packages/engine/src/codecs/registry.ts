@@ -10,7 +10,9 @@ export interface CodecDescriptor {
   readonly supports: readonly CodecOperation[];
   readonly load?: () => Promise<unknown>;
   readonly unavailableReason?: string;
+  readonly decodeUnavailableReason?: string;
   readonly encodeUnavailableReason?: string;
+  readonly requiresWebCodecsDecode?: boolean;
 }
 
 export const codecRegistry: readonly CodecDescriptor[] = [
@@ -20,8 +22,11 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     lazyBytes: 0,
     supports: ['decode'],
     load: () => import('./platform/heic.js'),
-    unavailableReason:
+    requiresWebCodecsDecode: true,
+    decodeUnavailableReason:
       'This browser does not provide an HEIC decoder. Open the file on a device with HEIC support or export it as JPEG.',
+    encodeUnavailableReason:
+      'HEIC encoding is deliberately excluded because HEVC has active patent pools and available browser encoders are GPL or commercial.',
   },
   {
     id: 'jpeg',
@@ -55,6 +60,7 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     supports: ['decode'],
     load: () => import('./simple/dds.js'),
     unavailableReason: 'DDS encoding and BC6H/BC7 variants are not implemented.',
+    encodeUnavailableReason: 'DDS encoding and BC6H/BC7 variants are not implemented.',
   },
   {
     id: 'qoi',
@@ -95,6 +101,8 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     supports: ['decode'],
     load: () => import('../documents/psd.js'),
     unavailableReason:
+      'PSD/PSB export is not implemented; the flattened local composite can be read.',
+    encodeUnavailableReason:
       'PSD/PSB export is not implemented; the flattened local composite can be read.',
   },
   {
@@ -154,6 +162,8 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     supports: ['decode'],
     load: () => import('./third-party/exr.js'),
     unavailableReason: 'OpenEXR encoding is not implemented.',
+    encodeUnavailableReason:
+      'OpenEXR encoding is unavailable in v1 because no maintained permissive browser WASM distribution is available; a vendored TinyEXR build has not been produced and verified.',
   },
   {
     id: 'fits',
@@ -202,6 +212,8 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     load: () => import('./third-party/avif-decode.js'),
     unavailableReason:
       'AVIF encoding is not offered until its worker build can be delivered and verified in production.',
+    encodeUnavailableReason:
+      'AVIF encoding is not offered until its worker build can be delivered and verified in production.',
   },
   {
     id: 'bmp',
@@ -228,6 +240,8 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     load: () => import('./third-party/jxl-decode.js'),
     unavailableReason:
       'JPEG XL encoding is not offered until its worker build can be delivered and verified in production.',
+    encodeUnavailableReason:
+      'JPEG XL encoding is not offered until its worker build can be delivered and verified in production.',
   },
 ];
 
@@ -246,33 +260,42 @@ export function productionEncoderFormats(): FormatId[] {
 export function codecCapabilities(runtime: RuntimeCapabilities): FormatCapability[] {
   return codecRegistry.map((codec) => {
     const browserDecode = runtime.webCodecs && ['jpeg', 'png', 'webp', 'avif'].includes(codec.id);
-    return {
-      id: codec.id,
-      decode: codec.supports.includes('decode')
-        ? browserDecode
+    const platformDecodeUnavailable = codec.requiresWebCodecsDecode && !runtime.webCodecs;
+    const decode = codec.supports.includes('decode')
+      ? platformDecodeUnavailable
+        ? 'unavailable'
+        : browserDecode
           ? 'ready'
           : codec.load
             ? 'lazy'
             : 'unavailable'
-        : 'unavailable',
-      encode: codec.supports.includes('encode')
-        ? codec.load
-          ? 'lazy'
-          : 'unavailable'
-        : 'unavailable',
+      : 'unavailable';
+    const encode = codec.supports.includes('encode')
+      ? codec.load
+        ? 'lazy'
+        : 'unavailable'
+      : 'unavailable';
+    return {
+      id: codec.id,
+      decode,
+      encode,
       animation: codec.animation,
       lazyBytes: codec.lazyBytes,
-      ...(codec.supports.includes('encode')
-        ? codec.unavailableReason
-          ? { unavailableReason: codec.unavailableReason }
-          : {}
-        : codec.encodeUnavailableReason
+      ...(decode === 'unavailable' && codec.decodeUnavailableReason
+        ? { decodeUnavailableReason: codec.decodeUnavailableReason }
+        : {}),
+      ...(encode === 'unavailable' && codec.encodeUnavailableReason
+        ? { encodeUnavailableReason: codec.encodeUnavailableReason }
+        : {}),
+      ...(decode === 'unavailable' && codec.decodeUnavailableReason
+        ? { unavailableReason: codec.decodeUnavailableReason }
+        : encode === 'unavailable' && codec.encodeUnavailableReason
           ? { unavailableReason: codec.encodeUnavailableReason }
           : codec.unavailableReason
             ? { unavailableReason: codec.unavailableReason }
-            : codec.load
-              ? {}
-              : { unavailableReason: 'Codec implementation is not installed yet.' }),
+            : !codec.load
+              ? { unavailableReason: 'Codec implementation is not installed yet.' }
+              : {}),
     };
   });
 }

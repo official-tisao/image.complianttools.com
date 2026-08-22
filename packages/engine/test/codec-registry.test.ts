@@ -27,13 +27,18 @@ describe('P2 codec registry', () => {
       unavailableReason: 'GIF encoding is not available in the production browser export path.',
     });
     expect(capabilities.find((entry) => entry.id === 'heic')).toMatchObject({
-      decode: 'lazy',
+      decode: 'unavailable',
       encode: 'unavailable',
+      decodeUnavailableReason:
+        'This browser does not provide an HEIC decoder. Open the file on a device with HEIC support or export it as JPEG.',
+      encodeUnavailableReason:
+        'HEIC encoding is deliberately excluded because HEVC has active patent pools and available browser encoders are GPL or commercial.',
     });
     expect(capabilities.find((entry) => entry.id === 'exr')).toMatchObject({
       decode: 'lazy',
       encode: 'unavailable',
-      unavailableReason: 'OpenEXR encoding is not implemented.',
+      unavailableReason:
+        'OpenEXR encoding is unavailable in v1 because no maintained permissive browser WASM distribution is available; a vendored TinyEXR build has not been produced and verified.',
     });
     expect(capabilities.find((entry) => entry.id === 'pfm')).toMatchObject({
       decode: 'lazy',

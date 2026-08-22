@@ -12,6 +12,13 @@
   <h1>Runtime capabilities</h1>
   <dl id="capabilities">
     {#each capabilities as capability (capability.id)}<dt>{capability.id}</dt>
-      <dd>{capability.decode}</dd>{/each}
+      <dd>
+        decode: {capability.decode}; encode: {capability.encode}; lazy bytes: {capability.lazyBytes ??
+          0}
+        {#if capability.decodeUnavailableReason}<span>{capability.decodeUnavailableReason}</span
+          >{/if}
+        {#if capability.encodeUnavailableReason}<span>{capability.encodeUnavailableReason}</span
+          >{/if}
+      </dd>{/each}
   </dl>
 </main>
