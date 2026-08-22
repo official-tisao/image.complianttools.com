@@ -179,8 +179,15 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     id: 'svg',
     animation: false,
     lazyBytes: 2_400_000,
-    supports: ['decode'],
-    load: () => import('./svg/rasterize.js'),
+    supports: ['decode', 'encode'],
+    load: () => Promise.all([import('./svg/rasterize.js'), import('./svg/vectorize.js')]),
+  },
+  {
+    id: 'pdf',
+    animation: true,
+    lazyBytes: 1_900_000,
+    supports: ['decode', 'encode'],
+    load: () => Promise.all([import('../documents/pdf-read.js'), import('../documents/pdf.js')]),
   },
   {
     id: 'wbmp',

@@ -140,6 +140,12 @@ const supportedFormats = {
       'The Netpbm family provides deliberately simple monochrome, grayscale, and RGB raster interchange.',
     notes: 'The local decoder supports ASCII and binary P1–P6 variants; export provides RGB PPM.',
   },
+  pdf: {
+    name: 'PDF',
+    summary: 'PDF is a paged document container that can embed raster and vector content.',
+    notes:
+      'The dedicated local tools render selected pages with the pinned PDF.js worker and create ordered image-based PDFs with PDF-lib. The generic raster converter does not pretend PDF is a single raster frame.',
+  },
   png: {
     name: 'PNG',
     summary: 'PNG provides lossless raster compression with full alpha transparency.',
@@ -181,6 +187,12 @@ const supportedFormats = {
       'TIFF is a flexible tagged raster container used in scanning, publishing, and archival workflows.',
     notes:
       'The local UTIF-backed codec round-trips RGBA raster pages. Preserve an original when relying on specialized TIFF tags or uncommon compression variants.',
+  },
+  svg: {
+    name: 'SVG',
+    summary: 'SVG stores resolution-independent vector graphics as XML.',
+    notes:
+      'The local rasterizer refuses external references before rendering. SVG output uses the dedicated local vectorizer and emits self-contained paths rather than embedding remote assets.',
   },
   wbmp: {
     name: 'WBMP',

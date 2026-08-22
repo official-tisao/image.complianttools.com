@@ -21,6 +21,7 @@ export type FormatId =
   | 'jxl'
   | 'mng'
   | 'pcx'
+  | 'pdf'
   | 'pfm'
   | 'psd'
   | 'png'
