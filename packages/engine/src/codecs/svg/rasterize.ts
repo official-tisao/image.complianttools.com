@@ -27,14 +27,23 @@ type SvgRendererFactory = (svg: string, options: Readonly<Record<string, unknown
 let rendererFactory: SvgRendererFactory | undefined;
 let initializeRenderer: Promise<void> | undefined;
 
+/** Initializes the pinned unmodified Resvg WASM module from a caller-provided local asset. */
+export async function initializeSvgRenderer(
+  wasm: ArrayBuffer | Uint8Array | WebAssembly.Module | URL | string,
+): Promise<void> {
+  if (rendererFactory) return;
+  const { Resvg, initWasm } = await import('@resvg/resvg-wasm');
+  await initWasm(wasm);
+  rendererFactory = (svg, options) => new Resvg(svg, options);
+}
+
 /** Loads the unmodified MPL-2.0 renderer only when SVG rasterization is requested. */
 async function loadRenderer(): Promise<SvgRendererFactory> {
   if (rendererFactory) return rendererFactory;
   initializeRenderer ??= (async () => {
-    const { Resvg, initWasm } = await import('@resvg/resvg-wasm');
-    // Vite rewrites this package asset URL at build time; no SVG input can cause a network request.
-    await initWasm(new URL('@resvg/resvg-wasm/index_bg.wasm', import.meta.url));
-    rendererFactory = (svg, options) => new Resvg(svg, options);
+    const { default: wasmUrl } = await import('@resvg/resvg-wasm/index_bg.wasm?url');
+    // Vite emits this exact pinned package asset locally; no SVG input controls the URL.
+    await initializeSvgRenderer(wasmUrl);
   })();
   await initializeRenderer;
   if (!rendererFactory) throw new Error('SVG renderer did not initialize.');
