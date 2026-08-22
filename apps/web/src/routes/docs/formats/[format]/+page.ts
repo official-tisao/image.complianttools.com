@@ -106,6 +106,12 @@ const supportedFormats = {
     notes:
       'The bounded local reader supports core 2D geometry records and validates every record boundary. Unsupported records are counted and shown as warnings; a file with no supported geometry is refused.',
   },
+  xcf: {
+    name: 'XCF',
+    summary: 'XCF stores a GIMP image as a named stack of tiled layers and editing state.',
+    notes:
+      'The bounded local reader supports 8-bit XCF v0–v3 RGB, RGBA, grayscale, and grayscale-alpha layers with uncompressed or GIMP RLE tiles. It returns named layers and a normal-mode flattened composite; masks and unsupported blend modes are refused rather than flattened inaccurately.',
+  },
   fits: {
     name: 'FITS',
     summary: 'FITS is a block-aligned scientific image container widely used in astronomy.',

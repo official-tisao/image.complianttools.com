@@ -22,7 +22,7 @@ describe('P2 codec registry', () => {
       opfs: false,
       webCodecs: false,
     });
-    expect(capabilities).toHaveLength(44);
+    expect(capabilities).toHaveLength(45);
     expect(capabilities.find((entry) => entry.id === 'jpeg')).toMatchObject({
       decode: 'lazy',
       encode: 'lazy',
@@ -122,6 +122,11 @@ describe('P2 codec registry', () => {
         encode: 'unavailable',
         lazyBytes: 12_000,
       });
+    expect(capabilities.find((entry) => entry.id === 'xcf')).toMatchObject({
+      decode: 'lazy',
+      encode: 'unavailable',
+      lazyBytes: 24_000,
+    });
     for (const id of ['mp4', 'webm'] as const)
       expect(capabilities.find((entry) => entry.id === id)).toMatchObject({
         decode: 'unavailable',

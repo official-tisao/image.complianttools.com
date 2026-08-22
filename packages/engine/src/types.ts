@@ -40,6 +40,7 @@ export type FormatId =
   | 'tiff'
   | 'wbmp'
   | 'xbm'
+  | 'xcf'
   | 'webm'
   | 'webp'
   | 'wmf';

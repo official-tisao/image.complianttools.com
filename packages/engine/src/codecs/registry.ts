@@ -259,6 +259,14 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     encodeUnavailableReason: 'EMF writing is outside this bounded local metafile reader.',
   },
   {
+    id: 'xcf',
+    animation: false,
+    lazyBytes: 24_000,
+    supports: ['decode'],
+    load: () => import('../documents/xcf.js'),
+    encodeUnavailableReason: 'XCF writing is not offered; export the flattened result as PNG.',
+  },
+  {
     id: 'wbmp',
     animation: false,
     lazyBytes: 4_000,
