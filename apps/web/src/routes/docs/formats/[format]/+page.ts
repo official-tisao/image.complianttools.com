@@ -1,4 +1,10 @@
 const unavailableFormats = {
+  cbr: {
+    name: 'CBR',
+    reason:
+      'No pinned permissive browser RAR build has been verified to use libarchive’s BSD RAR implementation rather than restricted unrar-derived code.',
+    alternative: 'Rename numbered image pages into a CBZ/ZIP archive using the local CBZ tool.',
+  },
   jp2: {
     name: 'JPEG 2000',
     reason:

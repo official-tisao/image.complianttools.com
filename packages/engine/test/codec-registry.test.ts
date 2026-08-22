@@ -15,7 +15,7 @@ describe('P2 codec registry', () => {
       opfs: false,
       webCodecs: false,
     });
-    expect(capabilities).toHaveLength(36);
+    expect(capabilities).toHaveLength(37);
     expect(capabilities.find((entry) => entry.id === 'jpeg')).toMatchObject({
       decode: 'lazy',
       encode: 'lazy',
@@ -82,6 +82,12 @@ describe('P2 codec registry', () => {
       decode: 'lazy',
       encode: 'lazy',
       lazyBytes: 42_000,
+    });
+    expect(capabilities.find((entry) => entry.id === 'cbr')).toMatchObject({
+      decode: 'unavailable',
+      encode: 'unavailable',
+      decodeUnavailableReason: expect.stringContaining('BSD RAR implementation'),
+      encodeUnavailableReason: expect.stringContaining('use CBZ instead'),
     });
     for (const id of ['jp2', 'pict', 'mng', 'flif', 'cdr', 'dwg', 'djvu'] as const) {
       expect(capabilities.find((entry) => entry.id === id)).toMatchObject({

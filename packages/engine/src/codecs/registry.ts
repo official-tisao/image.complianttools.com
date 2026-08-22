@@ -291,6 +291,16 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     load: () => import('../documents/cbz.js'),
   },
   {
+    id: 'cbr',
+    animation: false,
+    lazyBytes: 0,
+    supports: [],
+    decodeUnavailableReason:
+      'CBR decoding is unavailable until a pinned permissive libarchive WASM build is verified to use libarchive’s BSD RAR implementation rather than restricted unrar-derived code.',
+    encodeUnavailableReason:
+      'CBR export is deliberately unavailable because no verified permissive browser RAR writer is shipped; use CBZ instead.',
+  },
+  {
     id: 'raw',
     animation: false,
     lazyBytes: 28_000,

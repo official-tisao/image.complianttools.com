@@ -3,6 +3,7 @@ export type FormatId =
   | 'avif'
   | 'bmp'
   | 'cbz'
+  | 'cbr'
   | 'cdr'
   | 'cur'
   | 'dds'
