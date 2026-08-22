@@ -386,9 +386,9 @@ upstreams are permissive (BSD-3, BSD-2), so the obstacle is a build we do not ow
 - **Spec:** README §5.2, §25.3.4, §25.5 · **Done when:** either both decode from fixtures, or both are documented as v1-unsupported with a stated reason
 
 #### P2-05 · GIF encoder + optimizer (**ours**)
-- [ ] LZW encode; quantizers (Wu, median-cut, octree, neuquant-equivalent); dithers
-- [ ] Frame differencing, transparency optimization, dispose-method selection
-- [ ] `optimizeLevel` 1–3 and `lossy` 0–200 equivalents — **our own implementation, not gifsicle**
+- [x] LZW encode; quantizers (Wu, median-cut, octree, neuquant-equivalent); dithers
+- [x] Frame differencing, transparency optimization, dispose-method selection
+- [x] `optimizeLevel` 1–3 and `lossy` 0–200 equivalents — **our own implementation, not gifsicle**
 - **Spec:** README §6.10, §25.4 · **Done when:** output size is within 10 % of the GPL reference on a 20-file corpus, with zero GPL code
 
 #### P2-06 · RAW pipeline Stage 1 (**ours**)
