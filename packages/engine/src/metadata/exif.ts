@@ -479,21 +479,38 @@ function entryStorage(bytes: Uint8Array, entry: TiffIfdEntry, unit: number): [nu
   return [start, capacity];
 }
 
-/** Edits existing EXIF fields in place; values that do not fit require a deliberate metadata rebuild. */
+/** Edits existing EXIF fields, appending relocated value storage when a replacement grows. */
 export function editExifFields(input: ArrayBuffer | Uint8Array, edits: ExifFieldEdits): Uint8Array {
   const source = input instanceof Uint8Array ? input : new Uint8Array(input);
-  const bytes = source.slice();
-  const { view, little } = tiffReader(bytes);
+  let bytes = source.slice();
+  let { view } = tiffReader(bytes);
+  const { little } = tiffReader(bytes);
   const ifds = walkExifIfds(source);
   const entries = ifds.flatMap((ifd) => [...ifd.entries]);
   const writeBytes = (entry: TiffIfdEntry, encoded: Uint8Array, unit = 1) => {
     const [start, capacity] = entryStorage(source, entry, unit);
-    if (encoded.length > capacity)
-      throw new Error(
-        `Edited EXIF ${exifTagNames[entry.tag] ?? 'field'} requires ${encoded.length} bytes but the existing field has ${capacity}; shortening is safe, growing requires a metadata rebuild.`,
-      );
-    bytes.fill(0, start, start + capacity);
-    bytes.set(encoded, start);
+    if (encoded.length <= 4) {
+      bytes.fill(0, start, start + capacity);
+      bytes.fill(0, entry.offset + 8, entry.offset + 12);
+      bytes.set(encoded, entry.offset + 8);
+      view.setUint32(entry.offset + 4, encoded.length / unit, little);
+      return;
+    }
+    if (capacity > 4 && encoded.length <= capacity) {
+      bytes.fill(0, start, start + capacity);
+      bytes.set(encoded, start);
+      view.setUint32(entry.offset + 4, encoded.length / unit, little);
+      return;
+    }
+    const appended = bytes.length + (bytes.length & 1);
+    const grown = new Uint8Array(appended + encoded.length);
+    grown.set(bytes);
+    grown.fill(0, start, start + capacity);
+    grown.set(encoded, appended);
+    bytes = grown;
+    view = new DataView(bytes.buffer);
+    view.setUint32(entry.offset + 4, encoded.length / unit, little);
+    view.setUint32(entry.offset + 8, appended, little);
   };
   for (const [name, rawValue] of Object.entries(edits) as Array<[keyof ExifFieldEdits, unknown]>) {
     if (name === 'gpsCoordinates' || rawValue === undefined) continue;

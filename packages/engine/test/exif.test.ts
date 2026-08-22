@@ -134,7 +134,12 @@ describe('EXIF IFD0 reader', () => {
     expect(values.get('rating')).toBe('5');
     expect(values.get('date-time-original')).toBe('2026:08:22 19:00:00');
     expect(new TextDecoder().decode(edited.subarray(248, 264))).toContain('hello');
-    expect(() => editExifFields(bytes, { artist: 'This value cannot fit' })).toThrow('rebuild');
+    const grown = editExifFields(bytes, { artist: 'This value now grows safely' });
+    expect(grown.length).toBeGreaterThan(bytes.length);
+    expect(readExifAllIfds(grown).find((field) => field.name === 'artist')?.value).toBe(
+      'This value now grows safely',
+    );
+    expect(grown.subarray(128, 136)).toEqual(new Uint8Array(8));
   });
 
   it('reads standard GPS coordinates as decimal values and a geo URI', () => {

@@ -487,8 +487,23 @@ export function editJpegExifFields(
       throw new Error('JPEG contains a truncated metadata segment.');
     const data = source.subarray(offset + 4, offset + 2 + length);
     if (marker === 0xe1 && latin1.decode(data.subarray(0, 6)) === 'Exif\0\0') {
-      output.set(editExifFields(data.subarray(6), edits), offset + 10);
-      return output;
+      const rewritten = editExifFields(data.subarray(6), edits);
+      if (rewritten.length === data.length - 6) {
+        output.set(rewritten, offset + 10);
+        return output;
+      }
+      const payloadLength = 6 + rewritten.length;
+      if (payloadLength + 2 > 0xffff)
+        throw new Error('Edited EXIF metadata exceeds the JPEG APP1 segment size limit.');
+      const segment = new Uint8Array(payloadLength + 4);
+      segment.set([0xff, 0xe1, (payloadLength + 2) >>> 8, (payloadLength + 2) & 255]);
+      segment.set(data.subarray(0, 6), 4);
+      segment.set(rewritten, 10);
+      return Uint8Array.from([
+        ...source.subarray(0, offset),
+        ...segment,
+        ...source.subarray(offset + 2 + length),
+      ]);
     }
     offset += length + 2;
   }

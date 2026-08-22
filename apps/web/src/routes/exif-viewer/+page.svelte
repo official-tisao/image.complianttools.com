@@ -144,8 +144,8 @@
     <section aria-labelledby="edit-fields-heading">
       <h2 id="edit-fields-heading">Edit existing EXIF fields</h2>
       <p>
-        Choose fields to change. Values must fit their existing storage; this tool never relocates
-        metadata silently.
+        Choose existing fields to change. Longer values are relocated into expanded EXIF storage;
+        fields that are absent are not silently invented.
       </p>
       {#each editSpecs.filter((spec) => available.includes(spec.key)) as spec}
         <label

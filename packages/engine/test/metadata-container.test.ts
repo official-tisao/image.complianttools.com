@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { zlibSync } from 'fflate';
 
 import {
+  editJpegExifFields,
   readContainerMetadata,
   stripGifMetadata,
   stripJpegMetadata,
@@ -190,6 +191,39 @@ describe('container metadata', () => {
       format: 'jpeg',
       tags: [{ namespace: 'EXIF', name: 'orientation', value: '6' }],
     });
+  });
+
+  it('grows a JPEG APP1 segment when an edited existing field needs more storage', () => {
+    const tiff = new Uint8Array(48);
+    const view = new DataView(tiff.buffer);
+    tiff.set([0x49, 0x49, 42, 0]);
+    view.setUint32(4, 8, true);
+    view.setUint16(8, 1, true);
+    view.setUint16(10, 0x8298, true);
+    view.setUint16(12, 2, true);
+    view.setUint32(14, 4, true);
+    tiff.set(new TextEncoder().encode('Old\0'), 18);
+    const payload = new Uint8Array([...new TextEncoder().encode('Exif\0\0'), ...tiff]);
+    const jpeg = new Uint8Array([
+      0xff,
+      0xd8,
+      0xff,
+      0xe1,
+      0,
+      payload.length + 2,
+      ...payload,
+      0xff,
+      0xd9,
+    ]);
+    const edited = editJpegExifFields(jpeg, { copyright: 'A much longer copyright' });
+    expect(edited.length).toBeGreaterThan(jpeg.length);
+    expect(readContainerMetadata(edited).tags).toContainEqual({
+      namespace: 'EXIF',
+      name: 'copyright',
+      value: 'A much longer copyright',
+    });
+    expect(new TextDecoder('latin1').decode(edited)).not.toContain('Old');
+    expect(edited.subarray(-2)).toEqual(new Uint8Array([0xff, 0xd9]));
   });
 
   it('removes JPEG APP metadata while preserving image markers', () => {
