@@ -114,10 +114,16 @@ describe('Phase 2 adversarial codec corpus', () => {
     expect(detectImageFormat(qoiNamedAsJpeg)).toBe('qoi');
   });
 
-  it('rejects a QOI file declaring a hostile pixel allocation before allocating pixels', () => {
+  it('rejects a QOI file declaring a hostile pixel allocation before allocating pixels', async () => {
     const hostile = new Uint8Array(22);
     hostile.set(qoiHeader(0xffffffff, 0xffffffff));
-    expect(() => decodeQoi(hostile)).toThrow('safe decode limit');
+    await expect(
+      within(decodeWithTypedErrors('qoi', () => decodeQoi(hostile))),
+    ).rejects.toMatchObject({
+      kind: 'decode-failed',
+      detail: 'QOI dimensions exceed the safe decode limit.',
+      remedy: expect.any(String),
+    });
   });
 
   it('rejects 4 GB PNG dimensions before initializing the decoder', async () => {
@@ -161,7 +167,7 @@ describe('Phase 2 adversarial codec corpus', () => {
     });
   });
 
-  it('rejects truncated QOI multi-byte pixel opcodes instead of coercing missing bytes', () => {
+  it('rejects truncated QOI multi-byte pixel opcodes instead of coercing missing bytes', async () => {
     // Each fixture keeps the container's 22-byte minimum, then reaches an incomplete opcode.
     const truncatedRgb = new Uint8Array([
       ...qoiHeader(7, 1),
@@ -197,7 +203,13 @@ describe('Phase 2 adversarial codec corpus', () => {
       0x80,
     ]);
     for (const input of [truncatedRgb, truncatedRgba, truncatedLuma]) {
-      expect(() => decodeQoi(input)).toThrow('Truncated QOI image.');
+      await expect(
+        within(decodeWithTypedErrors('qoi', () => decodeQoi(input))),
+      ).rejects.toMatchObject({
+        kind: 'decode-failed',
+        detail: 'Truncated QOI image.',
+        remedy: expect.any(String),
+      });
     }
   });
 

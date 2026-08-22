@@ -445,8 +445,8 @@ upstreams are permissive (BSD-3, BSD-2), so the obstacle is a build we do not ow
 - **Spec:** README §7.3, §25.3.3 · **Done when:** synthesized profiles validate and round-trip correctly; no vendor profile is redistributed
 
 #### P2-14 · Adversarial corpus
-- [ ] Build the full corpus from README §22.2 (truncated, wrong magic, 1×1, 30000×1, 0-byte, 4 GB declared dims, decompression bomb, nested SVG, **SVG with an external reference — must be refused**, invalid EXIF offsets, 12 000 EXIF entries, mismatched extension)
-- [ ] `fixtures/PROVENANCE.md` for every file
+- [x] Build the full corpus from README §22.2 (truncated, wrong magic, 1×1, 30000×1, 0-byte, 4 GB declared dims, decompression bomb, nested SVG, **SVG with an external reference — must be refused**, invalid EXIF offsets, 12 000 EXIF entries, mismatched extension)
+- [x] `fixtures/PROVENANCE.md` for every file
 - **Spec:** README §22.2 · **Done when:** **zero crashes, zero hangs** — every input yields a typed error with a useful `remedy`
 
 #### P2-15 · Format tools shipped
