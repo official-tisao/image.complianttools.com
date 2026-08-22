@@ -50,6 +50,12 @@ const supportedFormats = {
     notes:
       'The local codec handles frame offsets, source/over blending, loop metadata, and none/background/previous disposal.',
   },
+  avif: {
+    name: 'AVIF',
+    summary: 'AVIF is an AV1-based image format designed for efficient still-image compression.',
+    notes:
+      'The pinned local WASM decoder is fixture-tested. Browser export remains hidden until its worker delivery path is build-verified, so the converter never advertises an encoder it cannot execute.',
+  },
   bmp: {
     name: 'BMP/DIB',
     summary:
@@ -68,6 +74,12 @@ const supportedFormats = {
     summary: 'GIF stores indexed still images and animations with LZW compression.',
     notes:
       'The local codec decodes animation and encodes GIF89a frames with transparency, looping, frame differencing, and deterministic palette reduction. Advanced quantizer choices remain under development.',
+  },
+  jxl: {
+    name: 'JPEG XL',
+    summary: 'JPEG XL is a modern still-image format supporting lossless and lossy coding.',
+    notes:
+      'The pinned local WASM decoder is fixture-tested. Browser export remains hidden until its worker delivery path is build-verified.',
   },
   hdr: {
     name: 'Radiance HDR',

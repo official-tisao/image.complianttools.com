@@ -1076,7 +1076,7 @@ Check a box **only when all twelve STCC items (§0.4) pass.**
 Check when: fixture round-trip test passes, adversarial test passes, capability probe is correct,
 and the format's `/docs/formats/` page exists. **Or** when honestly marked unavailable with a reason.
 
-**Standard raster** — [ ] JPEG · [ ] PNG · [x] APNG · [ ] WebP · [ ] AVIF · [ ] JPEG XL · [x] GIF ·
+**Standard raster** — [ ] JPEG · [ ] PNG · [x] APNG · [ ] WebP · [x] AVIF · [x] JPEG XL · [x] GIF ·
 [x] BMP/DIB · [x] TIFF · [x] ICO · [x] CUR · [ ] HEIC/HEIF (decode only) · [x] TGA · [x] PCX ·
 [x] PPM/PGM/PBM/PNM · [x] PAM · [x] WBMP · [x] XBM/XPM · [ ] DDS · [ ] KTX/KTX2 · [x] Radiance HDR ·
 [ ] OpenEXR · [x] PFM · [x] FITS · [x] JPEG 2000 · [x] SGI/RGB · [x] Sun Raster · [x] QOI

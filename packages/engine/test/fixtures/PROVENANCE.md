@@ -4,6 +4,10 @@ The Phase 2 codec tests currently use byte fixtures constructed inline in their 
 self-generated from the public file-format specifications, contain no photographs or personal data,
 and are therefore not subject to third-party asset licensing.
 
+The AVIF and JPEG XL round-trip fixtures are one-pixel rasters generated locally during the test and
+encoded/decoded with the exact pinned WASM assets in the installed `@jsquash/avif` and
+`@jsquash/jxl` packages. Their malformed cases are zero-byte self-generated inputs.
+
 The adversarial corpus in `adversarial-codecs.test.ts` is also self-generated. Empty input and wrong
 magic are exercised through the typed error boundary for BMP, CUR, DDS, FITS, GIF, Radiance HDR,
 ICO, PCX, PFM, PNM/PAM, QOI, SGI, Sun Raster, TGA, TIFF, WBMP, XBM, and XPM. The remaining cases include
