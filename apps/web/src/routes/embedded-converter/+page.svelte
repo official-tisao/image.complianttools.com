@@ -6,6 +6,7 @@
     emitEmbeddedCArray,
     emitEspIdfCArray,
     emitLvglV8CArray,
+    emitLvglV8RawCArray,
     emitLvglV9CArray,
     packEmbeddedPixels,
   } from '@complianttools/image-engine';
@@ -32,6 +33,9 @@
     | 'indexed2'
     | 'indexed4'
     | 'indexed8'
+    | 'raw'
+    | 'raw-alpha'
+    | 'raw-chroma'
     | 'rgb332'
     | 'rgb565'
     | 'rgb565be'
@@ -50,7 +54,8 @@
     error = '';
     if (!file) return;
     try {
-      const bitmap = await createImageBitmap(file);
+      const sourceBytes = new Uint8Array(await file.arrayBuffer());
+      const bitmap = await createImageBitmap(new Blob([sourceBytes], { type: file.type }));
       const canvas = document.createElement('canvas');
       canvas.width = bitmap.width;
       canvas.height = bitmap.height;
@@ -85,17 +90,20 @@
           : {}),
       };
       const output =
-        target === 'lvgl-v8'
-          ? emitLvglV8CArray(image, options)
-          : target === 'lvgl-v9'
-            ? emitLvglV9CArray(image, options)
-            : target === 'adafruit'
-              ? emitAdafruitGfxBitmap(image, outputName)
-              : target === 'esp-idf'
-                ? emitEspIdfCArray(image, options)
-                : target === 'binary'
-                  ? new Uint8Array(packEmbeddedPixels(image, options))
-                  : emitEmbeddedCArray(image, options);
+        target === 'lvgl-v8' &&
+        (format === 'raw' || format === 'raw-alpha' || format === 'raw-chroma')
+          ? emitLvglV8RawCArray(sourceBytes, image.width, image.height, outputName, format)
+          : target === 'lvgl-v8'
+            ? emitLvglV8CArray(image, options)
+            : target === 'lvgl-v9'
+              ? emitLvglV9CArray(image, options)
+              : target === 'adafruit'
+                ? emitAdafruitGfxBitmap(image, outputName)
+                : target === 'esp-idf'
+                  ? emitEspIdfCArray(image, options)
+                  : target === 'binary'
+                    ? new Uint8Array(packEmbeddedPixels(image, options))
+                    : emitEmbeddedCArray(image, options);
       const binary = target === 'binary';
       const url = URL.createObjectURL(
         new Blob([output], { type: binary ? 'application/octet-stream' : 'text/x-c' }),
@@ -105,7 +113,11 @@
       download.download = `${file.name.replace(/\.[^.]+$/u, '')}.${binary ? 'bin' : 'h'}`;
       download.click();
       URL.revokeObjectURL(url);
-      status = `Exported ${canvas.width}×${canvas.height} ${target.replace('-', ' ')} data locally (${embeddedByteSize(image, options)} bytes flash footprint).`;
+      const footprint =
+        format === 'raw' || format === 'raw-alpha' || format === 'raw-chroma'
+          ? sourceBytes.byteLength
+          : embeddedByteSize(image, options);
+      status = `Exported ${canvas.width}×${canvas.height} ${target.replace('-', ' ')} data locally (${footprint} bytes flash footprint).`;
     } catch (reason) {
       error = reason instanceof Error ? reason.message : 'Unable to create embedded C data.';
     }
@@ -174,6 +186,9 @@
       <option value="indexed2">Indexed 2-bit (LVGL v8)</option>
       <option value="indexed4">Indexed 4-bit (LVGL v8)</option>
       <option value="indexed8">Indexed 8-bit (LVGL v8)</option>
+      <option value="raw">Raw encoded data (LVGL v8 custom decoder)</option>
+      <option value="raw-alpha">Raw encoded data with alpha (LVGL v8)</option>
+      <option value="raw-chroma">Raw encoded data chroma keyed (LVGL v8)</option>
       <option value="rgb332">RGB332</option>
       <option value="rgb565">RGB565</option>
       <option value="rgb565be">RGB565 big-endian</option>

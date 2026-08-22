@@ -8,6 +8,7 @@ import {
   emitEspIdfCArray,
   emitLvglUsageSnippet,
   emitLvglV8CArray,
+  emitLvglV8RawCArray,
   emitLvglV9CArray,
   packLvglV8Pixels,
   packLvglV9Pixels,
@@ -153,6 +154,21 @@ describe('embedded exporter', () => {
       expect(emitLvglV8CArray(twoColours, { outputName: 'logo', format })).toContain(
         `.cf = ${constant}`,
       );
+  });
+
+  it('preserves original encoded bytes for LVGL v8 raw decoder formats', () => {
+    const encoded = new Uint8Array([0x89, 0x50, 0x4e, 0x47]);
+    for (const [format, constant] of [
+      ['raw', 'LV_IMG_CF_RAW'],
+      ['raw-alpha', 'LV_IMG_CF_RAW_ALPHA'],
+      ['raw-chroma', 'LV_IMG_CF_RAW_CHROMA_KEYED'],
+    ] as const) {
+      const output = emitLvglV8RawCArray(encoded, 1, 1, 'logo', format);
+      expect(output).toContain(`.cf = ${constant}`);
+      expect(output).toContain('0x89, 0x50, 0x4e, 0x47');
+      expect(output).toContain('.data_size = sizeof(logo_map)');
+    }
+    expect(() => emitLvglV8RawCArray(new Uint8Array(), 1, 1, 'logo', 'raw')).toThrow('non-empty');
   });
 
   it('emits version-specific LVGL usage snippets with a validated public symbol', () => {

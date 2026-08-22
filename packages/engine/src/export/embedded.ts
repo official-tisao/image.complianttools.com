@@ -9,6 +9,9 @@ export type EmbeddedPixelFormat =
   | 'indexed2'
   | 'indexed4'
   | 'indexed8'
+  | 'raw'
+  | 'raw-alpha'
+  | 'raw-chroma'
   | 'rgb332'
   | 'rgb565'
   | 'rgb565be'
@@ -82,6 +85,8 @@ export function packEmbeddedPixels(image: RasterImage, options: EmbeddedExportOp
     throw new Error('Mono1 output cannot append an alpha byte.');
   }
   const rgba = image.frames[0].data;
+  if (options.format === 'raw' || options.format === 'raw-alpha' || options.format === 'raw-chroma')
+    throw new Error('LVGL raw formats require the original encoded file bytes.');
   if (isAlphaPixelFormat(options.format)) {
     const bits = Number(options.format.slice(5));
     const rowBytes = Math.ceil((image.width * bits) / 8);
@@ -119,6 +124,9 @@ export function packEmbeddedPixels(image: RasterImage, options: EmbeddedExportOp
       | 'indexed2'
       | 'indexed4'
       | 'indexed8'
+      | 'raw'
+      | 'raw-alpha'
+      | 'raw-chroma'
       | 'mono1'
     >,
     number
@@ -215,7 +223,7 @@ export function emitEmbeddedCArray(image: RasterImage, options: EmbeddedExportOp
 }
 
 function emitByteCArray(
-  image: RasterImage,
+  image: Pick<RasterImage, 'width' | 'height'>,
   options: EmbeddedExportOptions,
   bytes: Uint8Array,
 ): string {
@@ -286,6 +294,40 @@ export function packLvglV8Pixels(image: RasterImage, format: EmbeddedPixelFormat
   if (format === 'rgb565' || format === 'rgb565be' || format === 'rgb888')
     return packEmbeddedPixels(image, { outputName: 'lvgl_image', format });
   throw new Error(`LVGL v8 does not support ${format} in this exporter.`);
+}
+
+export type LvglV8RawFormat = 'raw' | 'raw-alpha' | 'raw-chroma';
+
+/** Emits an LVGL v8 descriptor that preserves an encoded file for a registered custom decoder. */
+export function emitLvglV8RawCArray(
+  data: Uint8Array,
+  width: number,
+  height: number,
+  outputName: string,
+  format: LvglV8RawFormat,
+): string {
+  if (data.length === 0) throw new Error('LVGL raw output requires non-empty encoded file bytes.');
+  if (!Number.isInteger(width) || !Number.isInteger(height) || width < 1 || height < 1)
+    throw new Error('LVGL raw output requires positive integer dimensions.');
+  const name = validateEmbeddedOutputName(outputName);
+  const mapName = `${name}_map`;
+  const constant =
+    format === 'raw-alpha'
+      ? 'LV_IMG_CF_RAW_ALPHA'
+      : format === 'raw-chroma'
+        ? 'LV_IMG_CF_RAW_CHROMA_KEYED'
+        : 'LV_IMG_CF_RAW';
+  const array = emitByteCArray(
+    { width, height },
+    { outputName: mapName, format: 'rgba8888' },
+    data,
+  ).replace('#include <stdint.h>', '#include <stdint.h>\n#include "lvgl.h"');
+  return `${array}static const lv_img_dsc_t ${name} = {
+  .header = { .always_zero = 0, .w = ${width}, .h = ${height}, .cf = ${constant} },
+  .data_size = sizeof(${mapName}),
+  .data = ${mapName},
+};
+${emitLvglUsageSnippet(name, 8)}`;
 }
 
 function packLvglV8Indexed(image: RasterImage, format: IndexedPixelFormat): Uint8Array {
