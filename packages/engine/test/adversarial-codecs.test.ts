@@ -13,6 +13,7 @@ import {
   decodePcx,
   decodePfm,
   decodePnm,
+  decodePngToRaster,
   decodeQoi,
   decodeSgi,
   decodeSunRaster,
@@ -69,6 +70,17 @@ function qoiHeader(width: number, height: number): number[] {
 }
 
 describe('Phase 2 adversarial codec corpus', () => {
+  const within = async <T>(operation: Promise<T>, milliseconds = 1_000): Promise<T> =>
+    Promise.race([
+      operation,
+      new Promise<never>((_, reject) =>
+        setTimeout(
+          () => reject(new Error(`Adversarial decode exceeded ${milliseconds} ms.`)),
+          milliseconds,
+        ),
+      ),
+    ]);
+
   it('rejects zero-byte and wrong-magic inputs with typed remedies without hanging', async () => {
     for (const [format, decode] of decoders) {
       for (const input of [new Uint8Array(), new Uint8Array([0xde, 0xad, 0xbe, 0xef])]) {
@@ -106,6 +118,47 @@ describe('Phase 2 adversarial codec corpus', () => {
     const hostile = new Uint8Array(22);
     hostile.set(qoiHeader(0xffffffff, 0xffffffff));
     expect(() => decodeQoi(hostile)).toThrow('safe decode limit');
+  });
+
+  it('rejects 4 GB PNG dimensions before initializing the decoder', async () => {
+    const png = new Uint8Array(24);
+    png.set([137, 80, 78, 71, 13, 10, 26, 10]);
+    png.set([0, 0, 0, 13, 73, 72, 68, 82], 8);
+    const view = new DataView(png.buffer);
+    view.setUint32(16, 0xffff_ffff);
+    view.setUint32(20, 1);
+    await expect(
+      within(decodeWithTypedErrors('png', () => decodePngToRaster(png.buffer))),
+    ).rejects.toMatchObject({
+      kind: 'decode-failed',
+      format: 'png',
+      remedy: expect.any(String),
+    });
+  });
+
+  it('rejects a hostile GIF canvas before frame decompression', async () => {
+    const gif = new Uint8Array([
+      ...new TextEncoder().encode('GIF89a'),
+      0xff,
+      0xff,
+      0xff,
+      0xff,
+      0x80,
+      0,
+      0,
+      0,
+      0,
+      0,
+      255,
+      255,
+      255,
+      0x3b,
+    ]);
+    await expect(within(decodeWithTypedErrors('gif', () => decodeGif(gif)))).rejects.toMatchObject({
+      kind: 'decode-failed',
+      format: 'gif',
+      remedy: expect.any(String),
+    });
   });
 
   it('rejects truncated QOI multi-byte pixel opcodes instead of coercing missing bytes', () => {
@@ -164,30 +217,40 @@ describe('Phase 2 adversarial codec corpus', () => {
     ]);
   });
 
-  it('refuses SVG external references before any renderer can request them', () => {
-    expect(() =>
-      assertSafeSvg(
-        '<svg xmlns="http://www.w3.org/2000/svg"><image href="https://example.test/x.png"/></svg>',
+  it('refuses SVG external references with a typed error before any renderer can request them', async () => {
+    await expect(
+      decodeWithTypedErrors('svg', () =>
+        assertSafeSvg(
+          '<svg xmlns="http://www.w3.org/2000/svg"><image href="https://example.test/x.png"/></svg>',
+        ),
       ),
-    ).toThrow(SVG_EXTERNAL_REFERENCE_MESSAGE);
+    ).rejects.toMatchObject({
+      kind: 'decode-failed',
+      detail: SVG_EXTERNAL_REFERENCE_MESSAGE,
+      remedy: expect.any(String),
+    });
   });
 
-  it('rejects a nested active SVG document and oversized EXIF IFD tables before traversal', () => {
-    expect(() =>
-      assertSafeSvg(
-        '<svg><foreignObject><iframe src="https://example.test/evil" /></foreignObject></svg>',
+  it('rejects a nested active SVG document and oversized EXIF IFD tables before traversal', async () => {
+    await expect(
+      decodeWithTypedErrors('svg', () =>
+        assertSafeSvg(
+          '<svg><foreignObject><iframe src="https://example.test/evil" /></foreignObject></svg>',
+        ),
       ),
-    ).toThrow();
+    ).rejects.toMatchObject({ kind: 'decode-failed', remedy: expect.any(String) });
 
     const exifBomb = new Uint8Array(16);
     const view = new DataView(exifBomb.buffer);
     exifBomb.set([0x49, 0x49, 42, 0]);
     view.setUint32(4, 8, true);
     view.setUint16(8, 12_000, true);
-    expect(() => readExifIfd0(exifBomb)).toThrow('truncated');
+    await expect(decodeWithTypedErrors('jpeg', () => readExifIfd0(exifBomb))).rejects.toMatchObject(
+      { kind: 'decode-failed', remedy: expect.any(String) },
+    );
   });
 
-  it('rejects an EXIF field whose declared value offset lies outside the local file', () => {
+  it('rejects an EXIF field whose declared value offset lies outside the local file', async () => {
     const exif = new Uint8Array(26);
     const view = new DataView(exif.buffer);
     exif.set([0x49, 0x49, 42, 0]);
@@ -197,6 +260,10 @@ describe('Phase 2 adversarial codec corpus', () => {
     view.setUint16(12, 2, true); // ASCII
     view.setUint32(14, 20, true);
     view.setUint32(18, 0xfffffff0, true);
-    expect(() => readExifIfd0(exif)).toThrow('copyright offset is outside the file');
+    await expect(decodeWithTypedErrors('jpeg', () => readExifIfd0(exif))).rejects.toMatchObject({
+      kind: 'decode-failed',
+      detail: 'EXIF copyright offset is outside the file.',
+      remedy: expect.any(String),
+    });
   });
 });

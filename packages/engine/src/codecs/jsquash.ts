@@ -31,6 +31,20 @@ export async function decodeJpegToRaster(bytes: ArrayBuffer): Promise<RasterImag
 }
 
 export async function decodePngToRaster(bytes: ArrayBuffer): Promise<RasterImage> {
+  const header = new Uint8Array(bytes);
+  if (
+    header.length >= 24 &&
+    header[0] === 137 &&
+    header[1] === 80 &&
+    header[2] === 78 &&
+    header[3] === 71
+  ) {
+    const view = new DataView(bytes);
+    const width = view.getUint32(16);
+    const height = view.getUint32(20);
+    if (width < 1 || height < 1 || width * height > 100_000_000)
+      throw new Error('PNG dimensions exceed the safe decode limit.');
+  }
   const decoded = await decodePng(bytes);
   return {
     width: decoded.width,

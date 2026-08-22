@@ -229,6 +229,13 @@ export function decodeGif(input: ArrayBuffer | Uint8Array): RasterImage {
     bytes.byteOffset + bytes.byteLength,
   ) as ArrayBuffer;
   const parsed = parseGIF(buffer);
+  if (
+    parsed.lsd.width < 1 ||
+    parsed.lsd.height < 1 ||
+    parsed.lsd.width * parsed.lsd.height > 100_000_000
+  )
+    throw new Error('GIF dimensions exceed the safe decode limit.');
+  if (parsed.frames.length > 10_000) throw new Error('GIF exceeds the safe frame-count limit.');
   const decoded = decompressFrames(parsed, true);
   if (decoded.length === 0) throw new Error('GIF contains no image frames.');
   const canvas = new Uint8ClampedArray(parsed.lsd.width * parsed.lsd.height * 4);
