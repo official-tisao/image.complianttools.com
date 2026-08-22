@@ -325,7 +325,7 @@ export function emitLvglV8RawCArray(
     { outputName: mapName, format: 'rgba8888' },
     data,
   ).replace('#include <stdint.h>', '#include <stdint.h>\n#include "lvgl.h"');
-  return `${array}static const lv_img_dsc_t ${name} = {
+  return `${array}const lv_img_dsc_t ${name} = {
   .header = { .always_zero = 0, .w = ${width}, .h = ${height}, .cf = ${constant} },
   .data_size = sizeof(${mapName}),
   .data = ${mapName},
@@ -389,8 +389,8 @@ function packLvglV8Indexed(image: RasterImage, format: IndexedPixelFormat): Uint
 export function emitLvglUsageSnippet(outputName: string, version: 8 | 9): string {
   const name = validateEmbeddedOutputName(outputName);
   return version === 9
-    ? `/* In a separate translation unit */\nLV_IMAGE_DECLARE(${name});\nlv_image_set_src(image, &${name});\n`
-    : `/* In a separate translation unit */\nLV_IMG_DECLARE(${name});\nlv_img_set_src(image, &${name});\n`;
+    ? `/* In a separate translation unit:\n * LV_IMAGE_DECLARE(${name});\n * lv_image_set_src(image, &${name});\n */\n`
+    : `/* In a separate translation unit:\n * LV_IMG_DECLARE(${name});\n * lv_img_set_src(image, &${name});\n */\n`;
 }
 
 /** Emits an LVGL v9 image descriptor and matching map for the supported true-colour formats. */
@@ -409,13 +409,7 @@ export function emitLvglV9CArray(image: RasterImage, options: EmbeddedExportOpti
   const mapName = `${validateEmbeddedOutputName(options.outputName)}_map`;
   const mapOptions = { ...options, outputName: mapName };
   const array = emitByteCArray(image, mapOptions, packLvglV9Pixels(image, options.format));
-  const descriptorStorage =
-    options.storage === 'static'
-      ? 'static'
-      : options.storage === 'const'
-        ? 'const'
-        : 'static const';
-  return `${array.replace('#include <stdint.h>', '#include <stdint.h>\n#include "lvgl.h"')}${descriptorStorage} lv_image_dsc_t ${options.outputName} = {
+  return `${array.replace('#include <stdint.h>', '#include <stdint.h>\n#include "lvgl.h"')}const lv_image_dsc_t ${options.outputName} = {
   .header = { .cf = ${colourFormat[options.format]}, .w = ${image.width}, .h = ${image.height} },
   .data_size = sizeof(${mapName}),
   .data = ${mapName},
@@ -457,13 +451,7 @@ export function emitLvglV8CArray(image: RasterImage, options: EmbeddedExportOpti
       ? packEmbeddedPixels(image, options)
       : packLvglV8Pixels(image, options.format),
   );
-  const descriptorStorage =
-    options.storage === 'static'
-      ? 'static'
-      : options.storage === 'const'
-        ? 'const'
-        : 'static const';
-  return `${array.replace('#include <stdint.h>', '#include <stdint.h>\n#include "lvgl.h"')}${descriptorStorage} lv_img_dsc_t ${options.outputName} = {
+  return `${array.replace('#include <stdint.h>', '#include <stdint.h>\n#include "lvgl.h"')}const lv_img_dsc_t ${options.outputName} = {
   .header = { .always_zero = 0, .w = ${image.width}, .h = ${image.height}, .cf = ${selectedColourFormat} },
   .data_size = sizeof(${mapName}),
   .data = ${mapName},

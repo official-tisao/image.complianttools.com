@@ -81,6 +81,8 @@ describe('embedded exporter', () => {
     expect(output).toContain('lv_image_dsc_t logo');
     expect(output).toContain('LV_IMAGE_DECLARE(logo);');
     expect(output).toContain('lv_image_set_src(image, &logo);');
+    expect(output).toContain('const lv_image_dsc_t logo');
+    expect(output).not.toMatch(/^lv_image_set_src/mu);
     expect(output).not.toContain('\n}\/* In a separate translation unit');
   });
 
@@ -107,6 +109,8 @@ describe('embedded exporter', () => {
     expect(output).toContain('LV_IMG_CF_TRUE_COLOR_ALPHA');
     expect(output).toContain('LV_IMG_DECLARE(logo);');
     expect(output).toContain('lv_img_set_src(image, &logo);');
+    expect(output).toContain('const lv_img_dsc_t logo');
+    expect(output).not.toMatch(/^lv_img_set_src/mu);
     expect(output).not.toContain('\n}\/* In a separate translation unit');
   });
 
@@ -189,8 +193,8 @@ describe('embedded exporter', () => {
   });
 
   it('emits version-specific LVGL usage snippets with a validated public symbol', () => {
-    expect(emitLvglUsageSnippet('logo', 8)).toContain('LV_IMG_DECLARE(logo)');
-    expect(emitLvglUsageSnippet('logo', 9)).toContain('LV_IMAGE_DECLARE(logo)');
+    expect(emitLvglUsageSnippet('logo', 8)).toContain('* LV_IMG_DECLARE(logo)');
+    expect(emitLvglUsageSnippet('logo', 9)).toContain('* LV_IMAGE_DECLARE(logo)');
     expect(() => emitLvglUsageSnippet('not valid', 9)).toThrow('valid C identifier');
   });
 
