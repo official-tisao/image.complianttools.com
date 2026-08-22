@@ -10,9 +10,13 @@ export interface GifEncodeOptions {
   /** Palette construction strategy. Median-cut uses a weighted histogram over all frames. */
   readonly quantizer?: 'fixed-332' | 'median-cut' | 'octree' | 'wu' | 'neural';
   /** Optional palette-error diffusion. */
-  readonly dither?: 'none' | 'ordered' | 'floyd-steinberg';
+  readonly dither?: 'none' | 'ordered' | 'floyd-steinberg' | 'atkinson' | 'sierra';
+  /** Dither strength from 0 (disabled) through 100 (full error/threshold amplitude). */
+  readonly ditherAmount?: number;
   /** GIF89a disposal method. Automatic uses background disposal for transparent full frames. */
-  readonly disposal?: 'auto' | 'keep' | 'background' | 'previous';
+  readonly disposal?: 'auto' | 'unspecified' | 'none' | 'background' | 'previous';
+  /** Store image rows in GIF's four-pass interlaced order. */
+  readonly interlace?: boolean;
 }
 
 function push16(bytes: number[], value: number): void {
@@ -477,8 +481,10 @@ function paletteIndexes(
   const indexes = new Uint8Array(width * height);
   const nearestCache = new Map<number, number>();
   const cacheable = !options.dither || options.dither === 'none';
-  let currentErrors = new Float64Array((width + 2) * 3);
-  let nextErrors = new Float64Array((width + 2) * 3);
+  let currentErrors = new Float64Array((width + 4) * 3);
+  let nextErrors = new Float64Array((width + 4) * 3);
+  let laterErrors = new Float64Array((width + 4) * 3);
+  const ditherAmount = Math.max(0, Math.min(100, options.ditherAmount ?? 100)) / 100;
   for (let y = 0; y < height; y += 1) {
     for (let x = 0; x < width; x += 1) {
       const pixel = y * width + x;
@@ -487,9 +493,11 @@ function paletteIndexes(
         indexes[pixel] = 0;
         continue;
       }
-      const errorOffset = (x + 1) * 3;
+      const errorOffset = (x + 2) * 3;
       const orderedError =
-        options.dither === 'ordered' ? (bayer4[(y % 4) * 4 + (x % 4)]! - 7.5) * 4 : 0;
+        options.dither === 'ordered'
+          ? (bayer4[(y % 4) * 4 + (x % 4)]! - 7.5) * 4 * ditherAmount
+          : 0;
       const red = Math.max(
         0,
         Math.min(
@@ -528,26 +536,71 @@ function paletteIndexes(
         if (cacheable) nearestCache.set(cacheKey, index);
       }
       indexes[pixel] = index;
-      if (options.dither !== 'floyd-steinberg') continue;
+      if (!['floyd-steinberg', 'atkinson', 'sierra'].includes(options.dither ?? '')) continue;
       for (let channel = 0; channel < 3; channel += 1) {
-        const error = [red, green, blue][channel]! - palette[index * 3 + channel]!;
-        currentErrors[errorOffset + 3 + channel]! += (error * 7) / 16;
-        nextErrors[errorOffset - 3 + channel]! += (error * 3) / 16;
-        nextErrors[errorOffset + channel]! += (error * 5) / 16;
-        nextErrors[errorOffset + 3 + channel]! += error / 16;
+        const error = ([red, green, blue][channel]! - palette[index * 3 + channel]!) * ditherAmount;
+        const add = (row: Float64Array, delta: number, weight: number) => {
+          const target = errorOffset + delta * 3 + channel;
+          row[target] = row[target]! + error * weight;
+        };
+        if (options.dither === 'floyd-steinberg') {
+          add(currentErrors, 1, 7 / 16);
+          add(nextErrors, -1, 3 / 16);
+          add(nextErrors, 0, 5 / 16);
+          add(nextErrors, 1, 1 / 16);
+        } else if (options.dither === 'atkinson') {
+          add(currentErrors, 1, 1 / 8);
+          add(currentErrors, 2, 1 / 8);
+          add(nextErrors, -1, 1 / 8);
+          add(nextErrors, 0, 1 / 8);
+          add(nextErrors, 1, 1 / 8);
+          add(laterErrors, 0, 1 / 8);
+        } else {
+          add(currentErrors, 1, 5 / 32);
+          add(currentErrors, 2, 3 / 32);
+          for (const [delta, weight] of [
+            [-2, 2 / 32],
+            [-1, 4 / 32],
+            [0, 5 / 32],
+            [1, 4 / 32],
+            [2, 2 / 32],
+          ] as const)
+            add(nextErrors, delta, weight);
+          add(laterErrors, -1, 2 / 32);
+          add(laterErrors, 0, 3 / 32);
+          add(laterErrors, 1, 2 / 32);
+        }
       }
     }
     currentErrors = nextErrors;
-    nextErrors = new Float64Array((width + 2) * 3);
+    nextErrors = laterErrors;
+    laterErrors = new Float64Array((width + 4) * 3);
   }
   return indexes;
 }
 
 function disposalCode(options: GifEncodeOptions, hasTransparency: boolean): number {
+  if (options.disposal === 'unspecified') return 0;
   if (options.disposal === 'background') return 2;
   if (options.disposal === 'previous') return 3;
-  if (options.disposal === 'keep') return 1;
+  if (options.disposal === 'none') return 1;
   return hasTransparency && (!options.optimizeLevel || options.optimizeLevel < 2) ? 2 : 1;
+}
+
+function interlaceIndexes(indexes: Uint8Array, width: number, height: number): Uint8Array {
+  const output = new Uint8Array(indexes.length);
+  let target = 0;
+  for (const [start, step] of [
+    [0, 8],
+    [4, 8],
+    [2, 4],
+    [1, 2],
+  ] as const)
+    for (let y = start; y < height; y += step) {
+      output.set(indexes.subarray(y * width, (y + 1) * width), target);
+      target += width;
+    }
+  return output;
 }
 
 function frameRectangle(
@@ -655,14 +708,15 @@ export function encodeGif(
     push16(bytes, rectangle.top);
     push16(bytes, rectangle.width);
     push16(bytes, rectangle.height);
-    bytes.push(0, 8);
-    const indexes = paletteIndexes(
+    bytes.push(options.interlace ? 0x40 : 0, 8);
+    let indexes = paletteIndexes(
       rectangle.data,
       rectangle.width,
       rectangle.height,
       palette,
       options,
     );
+    if (options.interlace) indexes = interlaceIndexes(indexes, rectangle.width, rectangle.height);
     const data = lzwStream(indexes);
     for (let offset = 0; offset < data.length; offset += 255) {
       const block = data.subarray(offset, offset + 255);

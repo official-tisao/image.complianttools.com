@@ -6,8 +6,12 @@
   let optimizeLevel = $state<0 | 1 | 2 | 3>(2);
   let lossy = $state(0);
   let quantizer = $state<'fixed-332' | 'median-cut' | 'octree' | 'wu' | 'neural'>('median-cut');
-  let dither = $state<'none' | 'ordered' | 'floyd-steinberg'>('floyd-steinberg');
-  let disposal = $state<'auto' | 'keep' | 'background' | 'previous'>('auto');
+  let dither = $state<'none' | 'ordered' | 'floyd-steinberg' | 'atkinson' | 'sierra'>(
+    'floyd-steinberg',
+  );
+  let ditherAmount = $state(100);
+  let disposal = $state<'auto' | 'unspecified' | 'none' | 'background' | 'previous'>('auto');
+  let interlace = $state(false);
 
   async function convert(file: File | undefined) {
     status = '';
@@ -27,14 +31,22 @@
         canvas.height,
         context.getImageData(0, 0, canvas.width, canvas.height).data,
       );
-      const bytes = encodeGif(image, 0, { optimizeLevel, lossy, quantizer, dither, disposal });
+      const bytes = encodeGif(image, 0, {
+        optimizeLevel,
+        lossy,
+        quantizer,
+        dither,
+        ditherAmount,
+        disposal,
+        interlace,
+      });
       const url = URL.createObjectURL(new Blob([bytes], { type: 'image/gif' }));
       const download = document.createElement('a');
       download.href = url;
       download.download = `${file.name.replace(/\.[^.]+$/u, '')}.gif`;
       download.click();
       URL.revokeObjectURL(url);
-      status = `Created a ${canvas.width}×${canvas.height} GIF locally (${bytes.byteLength.toLocaleString()} bytes; ${quantizer}, ${dither} dithering, ${disposal} disposal, optimization ${optimizeLevel}, palette reduction ${lossy}).`;
+      status = `Created a ${canvas.width}×${canvas.height} GIF locally (${bytes.byteLength.toLocaleString()} bytes; ${quantizer}, ${dither} dithering at ${ditherAmount}%, ${disposal} disposal, ${interlace ? 'interlaced' : 'sequential'}, optimization ${optimizeLevel}, palette reduction ${lossy}).`;
     } catch (reason) {
       error = reason instanceof Error ? reason.message : 'Unable to create a GIF.';
     }
@@ -65,18 +77,27 @@
     <select bind:value={dither}>
       <option value="floyd-steinberg">Floyd–Steinberg</option>
       <option value="ordered">Ordered Bayer 4×4</option>
+      <option value="atkinson">Atkinson</option>
+      <option value="sierra">Sierra</option>
       <option value="none">None</option>
     </select>
+  </label>
+  <label>
+    Dither amount (0–100)
+    <input type="range" min="0" max="100" step="1" bind:value={ditherAmount} />
+    {ditherAmount}
   </label>
   <label>
     Frame disposal
     <select bind:value={disposal}>
       <option value="auto">Automatic</option>
-      <option value="keep">Keep previous canvas</option>
+      <option value="unspecified">Unspecified</option>
+      <option value="none">Do not dispose</option>
       <option value="background">Restore background</option>
       <option value="previous">Restore previous canvas</option>
     </select>
   </label>
+  <label><input type="checkbox" bind:checked={interlace} /> Interlace rows</label>
   <label>
     Quantizer
     <select bind:value={quantizer}>

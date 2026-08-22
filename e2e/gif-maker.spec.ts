@@ -12,7 +12,9 @@ test('GIF maker exposes and uses local quantization and animation controls', asy
   await page.waitForLoadState('networkidle');
   await expect(page.getByLabel('Quantizer')).toHaveValue('median-cut');
   await expect(page.getByLabel('Dithering')).toHaveValue('floyd-steinberg');
+  await expect(page.getByLabel('Dither amount (0–100)')).toHaveValue('100');
   await expect(page.getByLabel('Frame disposal')).toHaveValue('auto');
+  await expect(page.getByLabel('Interlace rows')).not.toBeChecked();
   await page.getByLabel('Quantizer').selectOption('neural');
   const pending = page.waitForEvent('download');
   await page.locator('input[type=file]').setInputFiles({

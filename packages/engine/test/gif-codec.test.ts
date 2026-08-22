@@ -143,8 +143,27 @@ describe('GIF encoder', () => {
     expect(new Uint8Array(encodeGif(image, 0, { dither: 'ordered' }))).toEqual(ordered);
   });
 
+  it.each(['atkinson', 'sierra'] as const)('offers deterministic %s error diffusion', (dither) => {
+    const pixels = new Uint8ClampedArray(64 * 4);
+    for (let pixel = 0; pixel < 64; pixel += 1) pixels.set([128, 128, 128, 255], pixel * 4);
+    const image = createRaster(8, 8, pixels);
+    const encoded = new Uint8Array(encodeGif(image, 0, { dither }));
+    expect(encoded).not.toEqual(new Uint8Array(encodeGif(image, 0, { dither: 'none' })));
+    expect(new Uint8Array(encodeGif(image, 0, { dither }))).toEqual(encoded);
+  });
+
+  it('scales dithering to zero without changing non-dithered output', () => {
+    const pixels = new Uint8ClampedArray(16 * 4);
+    for (let pixel = 0; pixel < 16; pixel += 1) pixels.set([128, 128, 128, 255], pixel * 4);
+    const image = createRaster(4, 4, pixels);
+    expect(new Uint8Array(encodeGif(image, 0, { dither: 'sierra', ditherAmount: 0 }))).toEqual(
+      new Uint8Array(encodeGif(image, 0, { dither: 'none' })),
+    );
+  });
+
   it.each([
-    ['keep', 1],
+    ['unspecified', 0],
+    ['none', 1],
     ['background', 2],
     ['previous', 3],
   ] as const)(
@@ -169,5 +188,18 @@ describe('GIF encoder', () => {
     expect(decoded.frames[0].data[0]).toBeGreaterThan(200);
     expect(decoded.frames[0].data[3]).toBe(255);
     expect(decoded.frames[1].data).toEqual(new Uint8ClampedArray(4));
+  });
+
+  it('writes interlaced row order and decodes it back to the original pixels', () => {
+    const pixels = new Uint8ClampedArray(8 * 8 * 4);
+    for (let y = 0; y < 8; y += 1)
+      for (let x = 0; x < 8; x += 1) pixels.set([y * 28, x * 28, 0, 255], (y * 8 + x) * 4);
+    const encoded = new Uint8Array(
+      encodeGif(createRaster(8, 8, pixels), 0, { quantizer: 'median-cut', interlace: true }),
+    );
+    const descriptor = encoded.indexOf(0x2c, 13 + 256 * 3);
+    expect(descriptor).toBeGreaterThan(0);
+    expect(encoded[descriptor + 9]! & 0x40).toBe(0x40);
+    expect(decodeGif(encoded).frames[0].data).toEqual(pixels);
   });
 });
