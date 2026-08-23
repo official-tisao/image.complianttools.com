@@ -14,6 +14,7 @@
   let error = $state('');
   let options = $state(CbzToolOptionsSchema.parse({}));
   const controlValues = $derived({ 'cbz.operation': options.operation });
+  type LocalBlobPart = NonNullable<ConstructorParameters<typeof globalThis.Blob>[0]>[number];
 
   function setControl(path: string, value: unknown) {
     if (path !== 'cbz.operation') return;
@@ -21,7 +22,7 @@
     if (parsed.success) options = parsed.data;
   }
 
-  function downloadBytes(bytes: Uint8Array, type: string, name: string) {
+  function downloadBytes(bytes: LocalBlobPart, type: string, name: string) {
     const url = URL.createObjectURL(new Blob([bytes], { type }));
     const download = document.createElement('a');
     download.href = url;
