@@ -152,3 +152,20 @@ test('image inspector reports deterministic PNG container facts', async ({ page 
   await expect(page.getByText('IHDR (13 bytes)')).toBeVisible();
   await expect(page.getByText(/bits\/byte \(estimate\)/u)).toBeVisible();
 });
+
+test('metadata and inspector adversarial failures surface a typed remedy', async ({ page }) => {
+  for (const route of ['/exif-viewer', '/remove-exif', '/image-info'] as const) {
+    await page.goto(route);
+    await page.waitForLoadState('networkidle');
+    if (route === '/remove-exif') await page.getByLabel('Removal preset').selectOption('all');
+    await page
+      .locator('input[type=file]')
+      .last()
+      .setInputFiles({
+        name: 'broken.png',
+        mimeType: 'image/png',
+        buffer: Buffer.from([0x89, 0x50, 0x4e, 0x47]),
+      });
+    await expect(page.getByRole('alert')).toContainText('Remedy:');
+  }
+});

@@ -1,7 +1,10 @@
 <script lang="ts">
   import {
     editJpegExifFields,
+    engineErrorMessage,
+    isEngineError,
     readContainerMetadata,
+    withTypedEngineErrors,
     type ExifFieldEdits,
     type MetadataTag,
   } from '@complianttools/image-engine';
@@ -57,7 +60,11 @@
     if (!file) return;
     try {
       inputBytes = new Uint8Array(await file.arrayBuffer());
-      tags = readContainerMetadata(inputBytes).tags;
+      tags = withTypedEngineErrors(
+        'Metadata inspection failed',
+        'Choose a valid PNG, JPEG, GIF, WebP, AVIF, or HEIF file and try again.',
+        () => readContainerMetadata(inputBytes!),
+      ).tags;
       if (/\.jpe?g$/iu.test(file.name)) {
         available = editSpecs.map((spec) => spec.key);
         for (const spec of editSpecs) {
@@ -69,10 +76,9 @@
         }
       }
     } catch (reason) {
-      error =
-        reason instanceof Error
-          ? reason.message
-          : 'This local metadata reader could not inspect the file.';
+      error = isEngineError(reason)
+        ? `${engineErrorMessage(reason)} Remedy: ${reason.remedy}`
+        : 'This local metadata reader could not inspect the file.';
     }
   }
   function saveEdits() {
@@ -98,7 +104,11 @@
           longitude: Number(values.longitude),
         };
       }
-      const output = editJpegExifFields(inputBytes, edits as ExifFieldEdits);
+      const output = withTypedEngineErrors(
+        'EXIF editing failed',
+        'Select existing fields with valid values, or use Metadata Remover to strip the metadata.',
+        () => editJpegExifFields(inputBytes!, edits as ExifFieldEdits),
+      );
       const url = URL.createObjectURL(new Blob([output], { type: 'image/jpeg' }));
       const download = document.createElement('a');
       download.href = url;
@@ -107,7 +117,9 @@
       URL.revokeObjectURL(url);
       status = `Edited ${selected.length} existing EXIF field${selected.length === 1 ? '' : 's'} locally; all other bytes were preserved.`;
     } catch (reason) {
-      error = reason instanceof Error ? reason.message : 'Unable to edit these EXIF fields.';
+      error = isEngineError(reason)
+        ? `${engineErrorMessage(reason)} Remedy: ${reason.remedy}`
+        : 'Unable to edit these EXIF fields.';
     }
   }
 </script>
@@ -150,7 +162,7 @@
         Choose fields to add or change. Longer values and new fields are appended through a rebuilt
         EXIF structure; unchecked metadata remains untouched.
       </p>
-      {#each editSpecs.filter((spec) => available.includes(spec.key)) as spec}
+      {#each editSpecs.filter((spec) => available.includes(spec.key)) as spec (spec.key)}
         <label
           ><input
             type="checkbox"

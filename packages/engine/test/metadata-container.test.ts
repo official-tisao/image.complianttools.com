@@ -12,9 +12,23 @@ import {
   stripJpegMetadataExceptOrientationCopyright,
   stripPngMetadata,
   stripWebpMetadata,
+  withTypedEngineErrors,
 } from '../src/index.js';
 
 describe('metadata removal options', () => {
+  it('converts synchronous metadata failures into typed errors with a useful remedy', () => {
+    const remedy = 'Choose a valid image and try again.';
+    expect.assertions(3);
+    try {
+      withTypedEngineErrors('Metadata inspection failed', remedy, () =>
+        readContainerMetadata(new Uint8Array()),
+      );
+    } catch (reason) {
+      expect(reason).toMatchObject({ kind: 'internal', remedy });
+      expect((reason as { detail: string }).detail).toContain('Metadata inspection failed');
+      expect((reason as { detail: string }).detail).toContain('GIF metadata');
+    }
+  });
   it('defaults to a byte-preserving no-op', () => {
     expect(MetadataRemovalOptionsSchema.parse({})).toEqual({ preset: 'keep', selectedTags: [] });
   });

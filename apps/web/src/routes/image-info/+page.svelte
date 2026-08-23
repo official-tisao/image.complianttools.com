@@ -1,7 +1,10 @@
 <script lang="ts">
   import {
     inspectImageContainer,
+    engineErrorMessage,
+    isEngineError,
     readContainerMetadata,
+    withTypedEngineErrors,
     type ImageInspection,
     type MetadataTag,
   } from '@complianttools/image-engine';
@@ -22,9 +25,14 @@
     if (!file) return;
     try {
       const input = await file.arrayBuffer();
+      const inspection = withTypedEngineErrors(
+        'Image inspection failed',
+        'Choose a valid PNG, JPEG, GIF, or WebP image and try again.',
+        () => inspectImageContainer(input),
+      );
       details = {
         bytes: file.size,
-        inspection: inspectImageContainer(input),
+        inspection,
         name: file.name,
         type: file.type,
       };
@@ -34,7 +42,9 @@
         // Pixel dimensions remain useful for formats without a currently supported metadata reader.
       }
     } catch (reason) {
-      error = reason instanceof Error ? reason.message : 'Unable to inspect this image.';
+      error = isEngineError(reason)
+        ? `${engineErrorMessage(reason)} Remedy: ${reason.remedy}`
+        : 'Unable to inspect this image.';
     }
   }
 </script>
@@ -109,7 +119,9 @@
     </dl>
     <h2>Chunk / segment dump</h2>
     <ol>
-      {#each details.inspection.structures as structure}<li>{structure}</li>{/each}
+      {#each details.inspection.structures as structure, index (`${index}:${structure}`)}<li>
+          {structure}
+        </li>{/each}
     </ol>
     {#if tags.length}
       <h2>Supported metadata</h2>

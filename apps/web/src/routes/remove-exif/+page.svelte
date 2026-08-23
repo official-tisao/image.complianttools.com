@@ -1,6 +1,8 @@
 <script lang="ts">
   import {
     MetadataRemovalOptionsSchema,
+    engineErrorMessage,
+    isEngineError,
     metadataRemovalOptionDescriptions,
     stripGifMetadata,
     stripJpegExifTags,
@@ -10,6 +12,7 @@
     stripJpegMetadataExceptOrientationCopyright,
     stripPngMetadata,
     stripWebpMetadata,
+    withTypedEngineErrors,
   } from '@complianttools/image-engine';
   import GeneratedControls from '$lib/GeneratedControls.svelte';
 
@@ -55,32 +58,39 @@
       const isWebp = file.type === 'image/webp' || /\.webp$/iu.test(file.name);
       const isGif = file.type === 'image/gif' || /\.gif$/iu.test(file.name);
       const isJpeg = file.type === 'image/jpeg' || /\.jpe?g$/iu.test(file.name);
-      if (
-        ['gps', 'except-orientation-copyright', 'maker-notes', 'custom'].includes(options.preset) &&
-        !isJpeg
-      )
-        throw new Error(
-          'This selective metadata preset is currently verified for JPEG files only.',
-        );
       const input = await file.arrayBuffer();
-      const output =
-        options.preset === 'keep'
-          ? new Uint8Array(input)
-          : isPng
-            ? stripPngMetadata(input)
-            : isWebp
-              ? stripWebpMetadata(input)
-              : isGif
-                ? stripGifMetadata(input)
-                : options.preset === 'gps'
-                  ? stripJpegGpsMetadata(input)
-                  : options.preset === 'except-orientation-copyright'
-                    ? stripJpegMetadataExceptOrientationCopyright(input)
-                    : options.preset === 'maker-notes'
-                      ? stripJpegMakerNotes(input)
-                      : options.preset === 'custom'
-                        ? stripJpegExifTags(input, options.selectedTags)
-                        : stripJpegMetadata(input);
+      const output = withTypedEngineErrors(
+        'Metadata removal failed',
+        'Choose a valid PNG, JPEG, GIF, or WebP file, or select Keep everything.',
+        () => {
+          if (
+            ['gps', 'except-orientation-copyright', 'maker-notes', 'custom'].includes(
+              options.preset,
+            ) &&
+            !isJpeg
+          )
+            throw new Error(
+              'This selective metadata preset is currently verified for JPEG files only.',
+            );
+          return options.preset === 'keep'
+            ? new Uint8Array(input)
+            : isPng
+              ? stripPngMetadata(input)
+              : isWebp
+                ? stripWebpMetadata(input)
+                : isGif
+                  ? stripGifMetadata(input)
+                  : options.preset === 'gps'
+                    ? stripJpegGpsMetadata(input)
+                    : options.preset === 'except-orientation-copyright'
+                      ? stripJpegMetadataExceptOrientationCopyright(input)
+                      : options.preset === 'maker-notes'
+                        ? stripJpegMakerNotes(input)
+                        : options.preset === 'custom'
+                          ? stripJpegExifTags(input, options.selectedTags)
+                          : stripJpegMetadata(input);
+        },
+      );
       const extension = isPng ? 'png' : isWebp ? 'webp' : isGif ? 'gif' : 'jpg';
       const url = URL.createObjectURL(
         new Blob([output], {
@@ -97,8 +107,9 @@
           ? `Kept every byte locally (${output.byteLength} bytes).`
           : `Removed metadata locally: ${file.size} bytes → ${output.byteLength} bytes.`;
     } catch (reason) {
-      error =
-        reason instanceof Error ? reason.message : 'Unable to remove metadata from this file.';
+      error = isEngineError(reason)
+        ? `${engineErrorMessage(reason)} Remedy: ${reason.remedy}`
+        : 'Unable to remove metadata from this file.';
     }
   }
 </script>
