@@ -119,3 +119,21 @@ test('metadata viewer edits an existing JPEG copyright field without relocating 
   expect(output.subarray(30, 60)).toEqual(fixture.buffer.subarray(30, 60));
   await expect(page.getByRole('status')).toContainText('all other bytes were preserved');
 });
+
+test('image inspector reports deterministic PNG container facts', async ({ page }) => {
+  await page.goto('/image-info');
+  await page.waitForLoadState('networkidle');
+  const png = Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAIAAAADCAQAAABWKLW/AAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+    'base64',
+  );
+  await page.locator('input[type=file]').setInputFiles({
+    name: 'two-by-three.png',
+    mimeType: 'image/png',
+    buffer: png,
+  });
+  await expect(page.getByText('2 × 3 px')).toBeVisible();
+  await expect(page.getByText('Grayscale + alpha')).toBeVisible();
+  await expect(page.getByText('IHDR (13 bytes)')).toBeVisible();
+  await expect(page.getByText(/bits\/byte \(estimate\)/u)).toBeVisible();
+});

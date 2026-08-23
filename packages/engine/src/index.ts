@@ -50,6 +50,7 @@ export * from './export/base64.js';
 export * from './export/favicon.js';
 export * from './metadata/container.js';
 export * from './metadata/exif.js';
+export * from './metadata/inspect.js';
 export * from './color/icc.js';
 export * from './ops/geometry.js';
 export * from './ops/raster.js';

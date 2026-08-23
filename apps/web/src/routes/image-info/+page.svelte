@@ -1,12 +1,16 @@
 <script lang="ts">
-  import { readContainerMetadata, type MetadataTag } from '@complianttools/image-engine';
+  import {
+    inspectImageContainer,
+    readContainerMetadata,
+    type ImageInspection,
+    type MetadataTag,
+  } from '@complianttools/image-engine';
 
   let details = $state<{
     name: string;
     type: string;
     bytes: number;
-    width: number;
-    height: number;
+    inspection: ImageInspection;
   }>();
   let tags = $state<readonly MetadataTag[]>([]);
   let error = $state('');
@@ -17,17 +21,15 @@
     error = '';
     if (!file) return;
     try {
-      const bitmap = await createImageBitmap(file);
+      const input = await file.arrayBuffer();
       details = {
         bytes: file.size,
-        height: bitmap.height,
+        inspection: inspectImageContainer(input),
         name: file.name,
         type: file.type,
-        width: bitmap.width,
       };
-      bitmap.close();
       try {
-        tags = readContainerMetadata(await file.arrayBuffer()).tags;
+        tags = readContainerMetadata(input).tags;
       } catch {
         // Pixel dimensions remain useful for formats without a currently supported metadata reader.
       }
@@ -41,7 +43,7 @@
   <title>Image Inspector — Image Compliant Tools</title>
   <meta
     name="description"
-    content="Inspect image dimensions, size, type, and supported local metadata."
+    content="Inspect image dimensions, colour, depth, alpha, animation, structure, and metadata locally."
   />
   <link rel="canonical" href="https://image.complianttools.com/image-info" />
 </svelte:head>
@@ -49,7 +51,10 @@
 <main>
   <a href="/convert">← Convert</a>
   <h1>Image Inspector</h1>
-  <p>Inspect dimensions and supported metadata locally. Your file is never uploaded.</p>
+  <p>
+    Inspect dimensions, colour, depth, alpha, animation, container structure, and supported metadata
+    locally. Your file is never uploaded.
+  </p>
   <label
     >Choose an image <input
       type="file"
@@ -66,8 +71,46 @@
       <dt>Size</dt>
       <dd>{details.bytes} bytes</dd>
       <dt>Dimensions</dt>
-      <dd>{details.width} × {details.height} px</dd>
+      <dd>{details.inspection.width} × {details.inspection.height} px</dd>
+      <dt>Aspect ratio</dt>
+      <dd>{details.inspection.width}:{details.inspection.height}</dd>
+      <dt>DPI</dt>
+      <dd>
+        {details.inspection.dpi
+          ? `${details.inspection.dpi.x} × ${details.inspection.dpi.y}`
+          : 'Not declared'}
+      </dd>
+      <dt>Colour space</dt>
+      <dd>{details.inspection.colorSpace}</dd>
+      <dt>Bit depth</dt>
+      <dd>{details.inspection.bitDepth ?? 'Unknown'}</dd>
+      <dt>Channels</dt>
+      <dd>{details.inspection.channels ?? 'Unknown'}</dd>
+      <dt>Alpha</dt>
+      <dd>
+        {details.inspection.hasAlpha === null
+          ? 'Unknown'
+          : details.inspection.hasAlpha
+            ? 'Yes'
+            : 'No'}
+      </dd>
+      <dt>Animation</dt>
+      <dd>
+        {details.inspection.animated ? `Yes (${details.inspection.frameCount} frames)` : 'No'}
+      </dd>
+      <dt>Byte entropy</dt>
+      <dd>{details.inspection.entropyBitsPerByte.toFixed(3)} bits/byte (estimate)</dd>
+      <dt>JPEG quality</dt>
+      <dd>
+        {details.inspection.estimatedQuality === null
+          ? 'Not applicable or unavailable'
+          : `${details.inspection.estimatedQuality}% (estimate)`}
+      </dd>
     </dl>
+    <h2>Chunk / segment dump</h2>
+    <ol>
+      {#each details.inspection.structures as structure}<li>{structure}</li>{/each}
+    </ol>
     {#if tags.length}
       <h2>Supported metadata</h2>
       <ul>
