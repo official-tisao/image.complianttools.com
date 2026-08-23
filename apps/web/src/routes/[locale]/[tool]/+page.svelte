@@ -1,6 +1,7 @@
 <script lang="ts">
   import ToolWorkspace from '$lib/ToolWorkspace.svelte';
   import ImageInspector from '$lib/ImageInspector.svelte';
+  import MetadataRemover from '$lib/MetadataRemover.svelte';
   import { toolCopy } from '$lib/i18n';
   import type { PageData } from './$types';
 
@@ -20,6 +21,8 @@
     title={copy.title}
     description={copy.description}
   />
-{:else}
+{:else if data.tool === 'image-info'}
   <ImageInspector locale={data.locale} />
+{:else}
+  <MetadataRemover locale={data.locale} />
 {/if}

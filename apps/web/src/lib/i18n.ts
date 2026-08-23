@@ -75,6 +75,39 @@ const arabic: Readonly<Record<string, string>> = {
   'inspector.unable': 'تعذر فحص هذه الصورة.',
   'inspector.metaDescription':
     'افحص أبعاد الصورة ولونها وعمقها وشفافيتها وحركتها وبنيتها وبياناتها الوصفية محليًا.',
+  'remover.back': '← عارض البيانات الوصفية',
+  'remover.title': 'مزيل البيانات الوصفية',
+  'remover.description':
+    'تُزال بيانات PNG وJPEG وGIF وWebP الوصفية محليًا. لا تُعرض خيارات الإزالة الخاصة بالصيَغ الأخرى حتى تُنفذ وتُتحقق.',
+  'remover.fields': 'حقول EXIF المراد إزالتها',
+  'remover.choose': 'اختر ملف PNG أو JPEG أو GIF أو WebP',
+  'remover.metaDescription': 'أزل بيانات PNG وJPEG وGIF وWebP الوصفية المدعومة محليًا في متصفحك.',
+  'remover.failure': 'فشلت إزالة البيانات الوصفية',
+  'remover.remedy': 'اختر ملف PNG أو JPEG أو GIF أو WebP صالحًا، أو اختر الاحتفاظ بكل شيء.',
+  'remover.selectiveJpeg': 'هذا الإعداد الانتقائي متحقق حاليًا لملفات JPEG فقط.',
+  'remover.unable': 'تعذرت إزالة البيانات الوصفية من هذا الملف.',
+  'remover.kept': 'تم الاحتفاظ بكل بايت محليًا ({value} بايت).',
+  'remover.removed': 'أُزيلت البيانات الوصفية محليًا.',
+  'remover.artist': 'الفنان',
+  'remover.copyright': 'حقوق النشر',
+  'remover.descriptionField': 'وصف الصورة',
+  'remover.comment': 'تعليق المستخدم',
+  'remover.date': 'تاريخ الالتقاط الأصلي',
+  'remover.software': 'البرنامج',
+  'remover.rating': 'التقييم',
+  'remover.keywords': 'الكلمات المفتاحية',
+  'remover.gps': 'إحداثيات GPS',
+  'remover.orientation': 'الاتجاه',
+  'remover.makerNotes': 'ملاحظات الشركة المصنّعة',
+  'option.metadata.preset.label': 'إعداد الإزالة',
+  'option.metadata.preset.help':
+    'الاحتفاظ بكل شيء هو الإعداد الافتراضي الآمن الذي لا يغيّر الملف. اختر سياسة إزالة صراحةً.',
+  'option.metadata.preset.option.keep': 'الاحتفاظ بكل شيء',
+  'option.metadata.preset.option.all': 'إزالة الكل',
+  'option.metadata.preset.option.gps': 'إزالة GPS فقط',
+  'option.metadata.preset.option.except-orientation-copyright': 'الاحتفاظ بالاتجاه وحقوق النشر',
+  'option.metadata.preset.option.maker-notes': 'إزالة ملاحظات الشركة المصنّعة',
+  'option.metadata.preset.option.custom': 'اختيار حقول EXIF',
 };
 
 const accents: Readonly<Record<string, string>> = {
@@ -114,6 +147,18 @@ export function localizeOptions(
         help: description.help
           ? translate(locale, `option.${path}.help`, description.help)
           : undefined,
+        optionLabels: description.options
+          ? Object.fromEntries(
+              description.options.map((option) => [
+                option,
+                translate(
+                  locale,
+                  `option.${path}.option.${option}`,
+                  description.optionLabels?.[option] ?? option,
+                ),
+              ]),
+            )
+          : description.optionLabels,
       },
     ]),
   );

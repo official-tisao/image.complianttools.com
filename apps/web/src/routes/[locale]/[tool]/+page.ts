@@ -2,7 +2,7 @@ import { error } from '@sveltejs/kit';
 import type { EntryGenerator, PageLoad } from './$types';
 
 const locales = ['en-XA', 'ar'] as const;
-const tools = ['convert', 'compress', 'resize', 'image-info'] as const;
+const tools = ['convert', 'compress', 'resize', 'image-info', 'remove-exif'] as const;
 
 export const entries: EntryGenerator = () =>
   locales.flatMap((locale) => tools.map((tool) => ({ locale, tool })));

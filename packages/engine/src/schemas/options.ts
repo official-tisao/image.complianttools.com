@@ -511,6 +511,14 @@ export const metadataRemovalOptionDescriptions: Readonly<Record<string, OptionDe
     group: 'Metadata',
     advanced: false,
     options: ['keep', 'all', 'gps', 'except-orientation-copyright', 'maker-notes', 'custom'],
+    optionLabels: {
+      keep: 'Keep everything',
+      all: 'Remove all',
+      gps: 'Remove GPS only',
+      'except-orientation-copyright': 'Keep orientation and copyright',
+      'maker-notes': 'Remove MakerNotes',
+      custom: 'Choose EXIF fields',
+    },
     defaultValue: 'keep',
   },
 };

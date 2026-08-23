@@ -255,4 +255,33 @@ for (const locale of ['en-XA', 'ar'] as const) {
     await expect(page.getByText('2 × 3 px')).toBeVisible();
     await expect(page.getByText(locale === 'ar' ? 'الأبعاد' : /Dïmënsïôns/u)).toBeVisible();
   });
+
+  test(`metadata remover survives ${locale} localization`, async ({ page }) => {
+    await page.goto(`/${locale}/remove-exif`);
+    await page.waitForLoadState('networkidle');
+    const main = page.locator('main');
+    await expect(main).toHaveAttribute('lang', locale);
+    await expect(main).toHaveAttribute('dir', locale === 'ar' ? 'rtl' : 'ltr');
+    await expect(page.locator('link[rel=canonical]')).toHaveAttribute(
+      'href',
+      `https://image.complianttools.com/${locale}/remove-exif`,
+    );
+    const preset = page.getByTestId('option-metadata-preset').locator('select');
+    await expect(preset.locator('option[value=keep]')).toHaveText(
+      locale === 'ar' ? 'الاحتفاظ بكل شيء' : /Këëp ëvërythïng/u,
+    );
+    await preset.selectOption('custom');
+    await expect(
+      page.getByText(locale === 'ar' ? 'حقول EXIF المراد إزالتها' : /ËXÏF fïëlds tô rëmôvë/u),
+    ).toBeVisible();
+    await preset.selectOption('keep');
+    const pending = page.waitForEvent('download');
+    await page.locator('input[type=file]').setInputFiles(copyrightJpeg());
+    const path = await (await pending).path();
+    expect(path).not.toBeNull();
+    expect(await readFile(path!)).toEqual(copyrightJpeg().buffer);
+    await expect(page.getByRole('status')).toContainText(
+      locale === 'ar' ? 'تم الاحتفاظ بكل بايت محليًا' : /Këpt ëvëry bytë lôcàlly/u,
+    );
+  });
 }
