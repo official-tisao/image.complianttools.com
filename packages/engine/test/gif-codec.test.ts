@@ -11,6 +11,17 @@ import {
   restoreContainerMetadata,
 } from '../src/index.js';
 
+function addGifComment(input: Uint8Array, text: string): Uint8Array {
+  const comment = new TextEncoder().encode(text);
+  const blocks: number[] = [0x21, 0xfe];
+  for (let offset = 0; offset < comment.length; offset += 255) {
+    const block = comment.subarray(offset, offset + 255);
+    blocks.push(block.length, ...block);
+  }
+  blocks.push(0);
+  return new Uint8Array([...input.subarray(0, -1), ...blocks, 0x3b]);
+}
+
 describe('GIF encoder', () => {
   it('preserves readable GIF comments through decode and re-encode by default', () => {
     const encoded = new Uint8Array(
@@ -95,6 +106,33 @@ describe('GIF encoder', () => {
     const { encodedMetadata: _optimizedMetadata, ...optimizedRaster } = decodeGif(result.bytes);
     const { encodedMetadata: _sourceMetadata, ...sourceRaster } = decodeGif(inflated);
     expect(optimizedRaster).toEqual(sourceRaster);
+  });
+
+  it('is byte-smaller and pixel-identical across a 50-file generated corpus', () => {
+    for (let fixture = 0; fixture < 50; fixture += 1) {
+      const width = 1 + (fixture % 5);
+      const height = 1 + (Math.floor(fixture / 5) % 5);
+      const pixels = new Uint8ClampedArray(width * height * 4);
+      for (let pixel = 0; pixel < width * height; pixel += 1)
+        pixels.set(
+          [
+            (fixture * 31 + pixel * 17) & 255,
+            (fixture * 47 + pixel * 29) & 255,
+            (fixture * 61 + pixel * 43) & 255,
+            255,
+          ],
+          pixel * 4,
+        );
+      const loopCount = fixture % 3 === 0 ? null : fixture;
+      const encoded = new Uint8Array(encodeGif(createRaster(width, height, pixels), loopCount));
+      const source = addGifComment(encoded, `removable fixture ${fixture} `.repeat(40));
+      const result = optimizeGifLossless(source);
+      expect(result.optimizedBytes, `fixture ${fixture}`).toBeLessThan(result.originalBytes);
+      expect(readGifLoopCount(result.bytes), `fixture ${fixture}`).toBe(loopCount);
+      const { encodedMetadata: _sourceMetadata, ...sourceRaster } = decodeGif(source);
+      const { encodedMetadata: _optimizedMetadata, ...optimizedRaster } = decodeGif(result.bytes);
+      expect(optimizedRaster, `fixture ${fixture}`).toEqual(sourceRaster);
+    }
   });
 
   it('preserves no-loop semantics while optimizing a still GIF', () => {

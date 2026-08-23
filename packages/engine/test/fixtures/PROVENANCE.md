@@ -29,6 +29,11 @@ Consequently, bilinear interpolation has the independently derivable exact resul
 at all 16 pixels. The test runs the complete DNG parser and developer and compares every output byte
 to that analytic reference; it contains no photograph or third-party data.
 
+The lossless GIF optimization corpus contains 50 inline-generated opaque colour grids ranging from
+1×1 through 5×5 pixels, with deterministic colours, varied loop semantics, and generated removable
+comment blocks. Every optimized result is decoded independently and compared byte-for-byte by frame,
+dimensions, timing, and loop count. The corpus contains no third-party images or personal data.
+
 The adversarial corpus in `adversarial-codecs.test.ts` is also self-generated. Empty input and wrong
 magic are exercised through the typed error boundary for BMP, CUR, DDS, FITS, GIF, Radiance HDR,
 ICO, PCX, PFM, PNM/PAM, QOI, SGI, Sun Raster, TGA, TIFF, WBMP, XBM, and XPM. The remaining cases include
