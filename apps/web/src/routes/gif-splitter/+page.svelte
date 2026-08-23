@@ -61,7 +61,7 @@
     clearTimeout(previewTimer);
     previewImage = image;
     previewFrameIndex = 0;
-    previewPlaying = true;
+    previewPlaying = !globalThis.matchMedia('(prefers-reduced-motion: reduce)').matches;
     await tick();
     if (!previewCanvas) throw new Error('Your browser cannot create the GIF preview.');
     previewCanvas.width = image.width;

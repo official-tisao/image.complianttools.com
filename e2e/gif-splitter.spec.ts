@@ -156,3 +156,22 @@ for (const format of ['webp', 'webm', 'mp4'] as const) {
     expect(crossOrigin).toEqual([]);
   });
 }
+
+test('honours reduced motion and keeps preview stepping keyboard-operable', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/gif-converter');
+  await page.getByLabel('Choose a GIF').setInputFiles({
+    name: 'two-frames.gif',
+    mimeType: 'image/gif',
+    buffer: Buffer.from(animatedGifFixture()),
+  });
+  await expect(page.getByRole('button', { name: 'Play preview' })).toBeVisible();
+  const canvas = page.locator('canvas[aria-label="Decoded GIF animation preview"]');
+  await expect(canvas).toHaveAttribute('data-frame-index', '0');
+  await page.getByRole('button', { name: 'Next frame' }).focus();
+  await page.keyboard.press('Enter');
+  await expect(canvas).toHaveAttribute('data-frame-index', '1');
+  await page.keyboard.press('Shift+Tab');
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('button', { name: 'Pause preview' })).toBeVisible();
+});
