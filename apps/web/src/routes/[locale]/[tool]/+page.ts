@@ -10,6 +10,7 @@ const tools = [
   'remove-exif',
   'exif-viewer',
   'base64-image',
+  'favicon-generator',
 ] as const;
 
 export const entries: EntryGenerator = () =>

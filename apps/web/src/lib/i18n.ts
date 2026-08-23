@@ -187,6 +187,29 @@ const arabic: Readonly<Record<string, string>> = {
   'option.base64.mode.label': 'الاتجاه',
   'option.base64.mode.option.encode': 'الصورة إلى Base64',
   'option.base64.mode.option.decode': 'Base64 إلى ملف',
+  'favicon.back': '← تحويل',
+  'favicon.title': 'منشئ الأيقونة المفضلة',
+  'favicon.description':
+    'أنشئ ملف ICO متعدد الدقات ومجموعة أيقونات PNG وبيان ويب ومقتطف روابط HTML محليًا. لا تُرفع صورتك مطلقًا.',
+  'favicon.choose': 'اختر صورة',
+  'favicon.create': 'إنشاء الحزمة',
+  'favicon.download': 'تنزيل الحزمة',
+  'favicon.preview': 'معاينة الحزمة الدقيقة 32×32',
+  'favicon.previewAlt': 'أيقونة مفضلة منشأة بمقاس 32 في 32',
+  'favicon.html': 'مقتطف روابط HTML',
+  'favicon.siteNameChanged': 'تغير اسم الموقع. أنشئ الحزمة مجددًا لتحديث بيانها.',
+  'favicon.ready': '{value} جاهز.',
+  'favicon.chooseFirst': 'اختر صورة أولًا.',
+  'favicon.canvasError': 'لا يستطيع متصفحك إنشاء لوحة محلية.',
+  'favicon.failure': 'فشل إنشاء الأيقونة المفضلة',
+  'favicon.remedy': 'اختر صورة نقطية صالحة أو قلّل أبعادها أو استخدم اسم موقع أقصر.',
+  'favicon.created': 'أُنشئ favicon.ico وأيقونات PNG وبيان ويب ومقتطف HTML محليًا.',
+  'favicon.unable': 'تعذر إنشاء الأيقونة المفضلة.',
+  'favicon.nameError': 'يجب أن يحتوي اسم الموقع على 1 إلى 128 حرفًا.',
+  'favicon.metaDescription':
+    'أنشئ حزمة أيقونة مفضلة متعددة الدقات مع أيقونات PNG وبيان وHTML محليًا.',
+  'option.favicon.siteName.label': 'اسم الموقع',
+  'option.favicon.siteName.help': 'يُستخدم لحقلي name وshort_name في site.webmanifest.',
 };
 
 const accents: Readonly<Record<string, string>> = {

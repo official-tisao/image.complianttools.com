@@ -4,6 +4,7 @@
   import MetadataRemover from '$lib/MetadataRemover.svelte';
   import MetadataViewer from '$lib/MetadataViewer.svelte';
   import Base64ImageTool from '$lib/Base64ImageTool.svelte';
+  import FaviconGenerator from '$lib/FaviconGenerator.svelte';
   import { toolCopy } from '$lib/i18n';
   import type { PageData } from './$types';
 
@@ -29,6 +30,8 @@
   <MetadataRemover locale={data.locale} />
 {:else if data.tool === 'exif-viewer'}
   <MetadataViewer locale={data.locale} />
-{:else}
+{:else if data.tool === 'base64-image'}
   <Base64ImageTool locale={data.locale} />
+{:else}
+  <FaviconGenerator locale={data.locale} />
 {/if}
