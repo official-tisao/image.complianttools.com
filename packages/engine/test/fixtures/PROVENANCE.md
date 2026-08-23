@@ -23,6 +23,12 @@ The PSB fixture is a generated standards-structured v2 document containing a 2×
 planar RGB composite. It is constructed from the public PSB container layout, contains the same two
 synthetic pixels as the PSD fixture, and is decoded through the production adapter.
 
+The DNG Stage 2 reference fixture is constructed inline from the published TIFF/DNG tag layout. Its
+4×4 RGGB sensor planes are spatially constant at R=1024, G=512, and B=0 with black=0 and white=1024.
+Consequently, bilinear interpolation has the independently derivable exact result RGBA=(255,128,0,255)
+at all 16 pixels. The test runs the complete DNG parser and developer and compares every output byte
+to that analytic reference; it contains no photograph or third-party data.
+
 The adversarial corpus in `adversarial-codecs.test.ts` is also self-generated. Empty input and wrong
 magic are exercised through the typed error boundary for BMP, CUR, DDS, FITS, GIF, Radiance HDR,
 ICO, PCX, PFM, PNM/PAM, QOI, SGI, Sun Raster, TGA, TIFF, WBMP, XBM, and XPM. The remaining cases include

@@ -1,6 +1,55 @@
 import { describe, expect, it } from 'vitest';
 
-import { developDngMosaic, type DngMosaic } from '../src/index.js';
+import { developDng, developDngMosaic, type DngMosaic } from '../src/index.js';
+
+function constantPlaneReferenceDng(): Uint8Array {
+  const width = 4;
+  const height = 4;
+  const pixelOffset = 320;
+  const tags: Array<readonly [number, number, number, number]> = [
+    [256, 4, 1, width],
+    [257, 4, 1, height],
+    [258, 3, 1, 16],
+    [259, 3, 1, 1],
+    [262, 3, 1, 32803],
+    [273, 4, 1, pixelOffset],
+    [277, 3, 1, 1],
+    [278, 4, 1, height],
+    [279, 4, 1, width * height * 2],
+    [33421, 3, 2, 0x0002_0002],
+    [33422, 1, 4, 0x0201_0100],
+    [50706, 1, 4, 0x0000_0401],
+    [50707, 1, 4, 0x0000_0101],
+    [50710, 1, 3, 0x0002_0100],
+    [50711, 3, 1, 1],
+    [50714, 4, 1, 0],
+    [50717, 4, 1, 1024],
+  ];
+  const bytes = new Uint8Array(pixelOffset + width * height * 2);
+  const view = new DataView(bytes.buffer);
+  bytes.set([0x49, 0x49, 42, 0]);
+  view.setUint32(4, 8, true);
+  view.setUint16(8, tags.length, true);
+  for (const [index, [tag, type, count, value]] of tags.entries()) {
+    const offset = 10 + index * 12;
+    view.setUint16(offset, tag, true);
+    view.setUint16(offset + 2, type, true);
+    view.setUint32(offset + 4, count, true);
+    view.setUint32(offset + 8, value, true);
+  }
+  // RGGB planes are constant: R=1024, G=512, B=0. Bilinear interpolation must
+  // therefore reproduce the same independently known colour at every pixel.
+  for (let y = 0; y < height; y += 1)
+    for (let x = 0; x < width; x += 1) {
+      const cfa = 'RGGB'[(y & 1) * 2 + (x & 1)];
+      view.setUint16(
+        pixelOffset + (y * width + x) * 2,
+        cfa === 'R' ? 1024 : cfa === 'G' ? 512 : 0,
+        true,
+      );
+    }
+  return bytes;
+}
 
 const mosaic: DngMosaic = {
   width: 5,
@@ -18,6 +67,18 @@ const mosaic: DngMosaic = {
 };
 
 describe('DNG develop orchestration', () => {
+  it('develops a DNG fixture to its analytically derived reference pixels', () => {
+    const output = developDng(constantPlaneReferenceDng(), {
+      demosaic: 'linear',
+      whiteBalance: 'camera',
+      gamma: 1,
+    });
+    expect(output).toMatchObject({ width: 4, height: 4, bitDepth: 8, colorSpace: 'srgb' });
+    expect(output.frames[0].data).toEqual(
+      new Uint8ClampedArray(Array.from({ length: 16 }, () => [255, 128, 0, 255]).flat()),
+    );
+  });
+
   it('selects linear, VNG, PPG, DCB, and AHD paths with metadata-derived levels and colour', () => {
     const outputs = (['linear', 'vng', 'ppg', 'dcb', 'ahd'] as const).map((demosaic) =>
       developDngMosaic(mosaic, { demosaic, gamma: 1 }),

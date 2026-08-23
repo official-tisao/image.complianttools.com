@@ -63,6 +63,12 @@ const unavailableFormats = {
 } as const;
 
 const supportedFormats = {
+  raw: {
+    name: 'Camera RAW / DNG',
+    summary: 'Camera RAW files preserve sensor data and commonly include an embedded JPEG preview.',
+    notes:
+      'The local RAW tool extracts bounded embedded JPEG previews and labels them as camera previews. Full local development is limited to uncompressed, single-plane 8-bit or 16-bit Bayer DNG files; other RAW families remain preview-only and that limitation is reported before processing.',
+  },
   ai: {
     name: 'Illustrator (AI)',
     summary: 'Modern Illustrator files can use PDF as their compatible document representation.',

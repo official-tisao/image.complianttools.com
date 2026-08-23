@@ -1091,7 +1091,7 @@ and the format's `/docs/formats/` page exists. **Or** when honestly marked unava
 [ ] Minolta MRW/MDC · [ ] Hasselblad 3FR/FFF · [ ] Phase One IIQ/CAP · [ ] Leaf MOS · [ ] Casio BAY ·
 [ ] Adobe DNG
 
-**RAW (Stage 2 develop)** — [ ] DNG · [ ] Canon · [ ] Nikon · [ ] Sony · [ ] Fujifilm
+**RAW (Stage 2 develop)** — [x] DNG · [ ] Canon · [ ] Nikon · [ ] Sony · [ ] Fujifilm
 
 **Vector & document** — [x] SVG in · [x] SVG out · [x] PDF in · [x] PDF out · [x] EPS/PS (preview +
 subset) · [x] AI (PDF-compatible) · [x] PSD/PSB · [x] XCF · [x] WMF/EMF · [x] DXF · [x] CBZ · [x] CBR
