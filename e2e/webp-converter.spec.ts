@@ -112,3 +112,21 @@ test('creates lossy, lossless, and animated WebP locally with exact-byte preview
   expect(Buffer.from(decoded.previewBytes)).toEqual(animation);
   expect(crossOrigin).toEqual([]);
 });
+
+test('reports corrupt local input with a typed remedy and no network fallback', async ({
+  page,
+}) => {
+  const crossOrigin: string[] = [];
+  page.on('request', (request) => {
+    const url = new URL(request.url());
+    if (url.origin !== 'http://127.0.0.1:4173') crossOrigin.push(request.url());
+  });
+  await page.goto('/webp-converter');
+  await page.getByLabel('Choose image files').setInputFiles({
+    name: 'broken.gif',
+    mimeType: 'image/gif',
+    buffer: Buffer.from('not-a-gif'),
+  });
+  await expect(page.getByRole('alert')).toContainText('Choose a valid, non-corrupted GIF file');
+  expect(crossOrigin).toEqual([]);
+});

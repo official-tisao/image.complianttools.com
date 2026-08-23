@@ -10,6 +10,7 @@ export * from './codecs/simple/bmp.js';
 export * from './codecs/simple/dds.js';
 export * from './codecs/simple/apng.js';
 export * from './codecs/simple/animated-webp.js';
+export * from './codecs/simple/webp-export.js';
 export * from './codecs/simple/fits.js';
 export * from './codecs/simple/hdr.js';
 export * from './codecs/simple/ico.js';

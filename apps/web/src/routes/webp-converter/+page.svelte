@@ -4,12 +4,15 @@
     WebpConverterToolOptionsSchema,
     createRaster,
     decodeGif,
+    decodeWithTypedErrors,
     encodeAnimatedWebp,
     encodeRasterAsWebp,
     engineErrorMessage,
+    isEngineError,
+    prepareWebpSequence,
     webpConverterToolOptionDescriptions,
-    type Frame,
     type RasterImage,
+    type FormatId,
   } from '@complianttools/image-engine';
   import GeneratedControls from '$lib/GeneratedControls.svelte';
 
@@ -28,24 +31,34 @@
   }
 
   async function decodeFile(file: File): Promise<RasterImage> {
-    if (/\.gif$/iu.test(file.name) || file.type === 'image/gif')
-      return decodeGif(await file.arrayBuffer());
-    const bitmap = await createImageBitmap(file);
-    try {
-      const canvas = document.createElement('canvas');
-      canvas.width = bitmap.width;
-      canvas.height = bitmap.height;
-      const context = canvas.getContext('2d');
-      if (!context) throw new Error('Your browser cannot create a local canvas.');
-      context.drawImage(bitmap, 0, 0);
-      return createRaster(
-        bitmap.width,
-        bitmap.height,
-        new Uint8ClampedArray(context.getImageData(0, 0, bitmap.width, bitmap.height).data),
-      );
-    } finally {
-      bitmap.close();
-    }
+    const extension = file.name.split('.').pop()?.toLowerCase();
+    const format: FormatId =
+      extension === 'gif'
+        ? 'gif'
+        : extension === 'png'
+          ? 'png'
+          : extension === 'webp'
+            ? 'webp'
+            : 'jpeg';
+    return decodeWithTypedErrors(format, async () => {
+      if (format === 'gif') return decodeGif(await file.arrayBuffer());
+      const bitmap = await createImageBitmap(file);
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = bitmap.width;
+        canvas.height = bitmap.height;
+        const context = canvas.getContext('2d');
+        if (!context) throw new Error('Your browser cannot create a local canvas.');
+        context.drawImage(bitmap, 0, 0);
+        return createRaster(
+          bitmap.width,
+          bitmap.height,
+          new Uint8ClampedArray(context.getImageData(0, 0, bitmap.width, bitmap.height).data),
+        );
+      } finally {
+        bitmap.close();
+      }
+    });
   }
 
   async function convert(fileList: globalThis.FileList | null) {
@@ -54,38 +67,20 @@
     const files = [...(fileList ?? [])];
     if (files.length === 0) return;
     try {
-      if (!options.animated && files.length !== 1)
-        throw new Error(
-          'Still WebP export accepts one image. Enable animation to use multiple files.',
-        );
       const decoded = await Promise.all(files.map(decodeFile));
-      const first = decoded[0]!;
+      const prepared = prepareWebpSequence(decoded, options);
       let output: Uint8Array;
       let frameCount = 1;
       if (options.animated) {
-        const frames: Frame[] = [];
-        for (const image of decoded) {
-          if (image.width !== first.width || image.height !== first.height)
-            throw new Error('Animation frames must have matching dimensions. Resize them first.');
-          for (const frame of image.frames)
-            frames.push({
-              ...frame,
-              durationMs: image.frames.length > 1 ? frame.durationMs : options.frameDelayMs,
-            });
-        }
-        const animation: RasterImage = {
-          ...first,
-          frames: frames as unknown as RasterImage['frames'],
-        };
-        output = await encodeAnimatedWebp(animation, {
+        output = await encodeAnimatedWebp(prepared, {
           quality: options.quality,
           lossless: options.lossless,
           loopCount: options.loopCount,
         });
-        frameCount = frames.length;
+        frameCount = prepared.frames.length;
       } else {
         output = new Uint8Array(
-          await encodeRasterAsWebp(first, {
+          await encodeRasterAsWebp(prepared, {
             quality: options.quality,
             lossless: options.lossless ? 1 : 0,
           }),
@@ -99,7 +94,9 @@
       download.click();
       status = `Created ${options.lossless ? 'lossless' : `lossy quality ${options.quality}`} WebP locally (${frameCount} frame${frameCount === 1 ? '' : 's'}, ${output.byteLength.toLocaleString()} bytes).`;
     } catch (reason) {
-      error = engineErrorMessage(reason);
+      error = isEngineError(reason)
+        ? `${engineErrorMessage(reason)} ${reason.remedy}`
+        : engineErrorMessage(reason);
     }
   }
 </script>

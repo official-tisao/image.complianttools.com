@@ -4,7 +4,10 @@ import {
   WebpConverterToolOptionsSchema,
   createRaster,
   encodeRaster,
+  isEngineError,
+  prepareWebpSequence,
   productionEncoderFormats,
+  type RasterImage,
 } from '../src/index.js';
 
 const worker = new Worker(new URL('./encode-raster-worker.mjs', import.meta.url), {
@@ -44,6 +47,38 @@ describe('production raster encoder', () => {
     expect(() => WebpConverterToolOptionsSchema.parse({ quality: 101 })).toThrow();
     expect(() => WebpConverterToolOptionsSchema.parse({ frameDelayMs: 0 })).toThrow();
     expect(() => WebpConverterToolOptionsSchema.parse({ loopCount: 65_536 })).toThrow();
+  });
+  it('returns typed remedies for invalid WebP frame sets', () => {
+    const one = createRaster(1, 1);
+    const two = createRaster(2, 1);
+    for (const operation of [
+      () => prepareWebpSequence([], { animated: false, frameDelayMs: 100 }),
+      () => prepareWebpSequence([one, one], { animated: false, frameDelayMs: 100 }),
+      () => prepareWebpSequence([one, two], { animated: true, frameDelayMs: 100 }),
+    ]) {
+      try {
+        operation();
+        throw new Error('Expected WebP frame validation to fail.');
+      } catch (reason) {
+        expect(isEngineError(reason)).toBe(true);
+        expect((reason as { remedy: string }).remedy.length).toBeGreaterThan(10);
+      }
+    }
+  });
+  it('preserves GIF timing while applying the selected delay to still animation frames', () => {
+    const still = createRaster(1, 1);
+    const animated = {
+      ...still,
+      frames: [
+        { ...still.frames[0], durationMs: 120 },
+        { ...still.frames[0], durationMs: 180 },
+      ],
+    } as RasterImage;
+    expect(
+      prepareWebpSequence([still, animated], { animated: true, frameDelayMs: 75 }).frames.map(
+        (frame) => frame.durationMs,
+      ),
+    ).toEqual([75, 120, 180]);
   });
   it('executes JPEG, PNG, and WebP through the central dispatcher', async () => {
     const output = await encodeInWorker();
