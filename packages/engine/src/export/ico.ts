@@ -39,13 +39,52 @@ export function encodeIco(image: RasterImage): ArrayBuffer {
   view.setUint16(4, 1, true);
   output[6] = image.width === 256 ? 0 : image.width;
   output[7] = image.height === 256 ? 0 : image.height;
-  output[8] = 0;
-  output[9] = 0;
   view.setUint16(10, 1, true);
   view.setUint16(12, 32, true);
   view.setUint32(14, bitmap.length, true);
   view.setUint32(18, 22, true);
   output.set(bitmap, 22);
+  return output.buffer;
+}
+
+/** Creates a multi-resolution 32-bit BMP-backed ICO in ascending size order. */
+export function encodeMultiIco(images: readonly RasterImage[]): ArrayBuffer {
+  if (images.length < 1 || images.length > 256)
+    throw new Error('ICO export requires between 1 and 256 images.');
+  const ordered = [...images].sort((left, right) => left.width - right.width);
+  const seen = new Set<number>();
+  for (const image of ordered) {
+    if (
+      image.width !== image.height ||
+      image.width < 1 ||
+      image.width > 256 ||
+      seen.has(image.width)
+    )
+      throw new Error('ICO images must be distinct square sizes between 1 and 256 pixels.');
+    seen.add(image.width);
+  }
+  const bitmaps = ordered.map(iconBitmap);
+  const directoryBytes = 6 + 16 * ordered.length;
+  const output = new Uint8Array(
+    directoryBytes + bitmaps.reduce((total, bitmap) => total + bitmap.length, 0),
+  );
+  const view = new DataView(output.buffer);
+  view.setUint16(2, 1, true);
+  view.setUint16(4, ordered.length, true);
+  let payloadOffset = directoryBytes;
+  for (let index = 0; index < ordered.length; index += 1) {
+    const image = ordered[index]!;
+    const bitmap = bitmaps[index]!;
+    const entry = 6 + index * 16;
+    output[entry] = image.width === 256 ? 0 : image.width;
+    output[entry + 1] = image.height === 256 ? 0 : image.height;
+    view.setUint16(entry + 4, 1, true);
+    view.setUint16(entry + 6, 32, true);
+    view.setUint32(entry + 8, bitmap.length, true);
+    view.setUint32(entry + 12, payloadOffset, true);
+    output.set(bitmap, payloadOffset);
+    payloadOffset += bitmap.length;
+  }
   return output.buffer;
 }
 

@@ -13,6 +13,7 @@ import {
   encodeRasterAsJpeg,
   encodeRasterAsOptimisedPng,
   encodeApng,
+  createFaviconPackage,
   encodeGif,
   optimizeGifLossless,
   optimizeJpegLossless,
@@ -184,13 +185,23 @@ parentPort.on('message', async ({ id, corpus }) => {
         { data: source.frames[0].data.slice(), durationMs: 40 },
       ],
     });
+    const favicon = await createFaviconPackage(
+      {
+        ...source,
+        width: 2,
+        height: 2,
+        frames: [{ ...source.frames[0], data: source.frames[0].data.slice(0, 16) }],
+      },
+      'Golden Site',
+    );
     const losslessPng = await optimizePngLossless(plainPng);
-    parentPort.postMessage({ id, jpeg, webp, plainPng, png, apng, losslessPng }, [
+    parentPort.postMessage({ id, jpeg, webp, plainPng, png, apng, favicon, losslessPng }, [
       jpeg,
       webp,
       plainPng,
       png,
       apng,
+      favicon.archive,
       losslessPng.bytes,
     ]);
   } catch (error) {

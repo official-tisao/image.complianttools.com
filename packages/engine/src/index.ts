@@ -47,6 +47,7 @@ export * from './export/filename.js';
 export * from './export/ico.js';
 export * from './export/embedded.js';
 export * from './export/base64.js';
+export * from './export/favicon.js';
 export * from './metadata/container.js';
 export * from './metadata/exif.js';
 export * from './color/icc.js';
