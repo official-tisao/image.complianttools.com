@@ -1093,7 +1093,7 @@ and the format's `/docs/formats/` page exists. **Or** when honestly marked unava
 
 **RAW (Stage 2 develop)** — [ ] DNG · [ ] Canon · [ ] Nikon · [ ] Sony · [ ] Fujifilm
 
-**Vector & document** — [x] SVG in · [x] SVG out · [ ] PDF in · [ ] PDF out · [x] EPS/PS (preview +
+**Vector & document** — [x] SVG in · [x] SVG out · [ ] PDF in · [x] PDF out · [x] EPS/PS (preview +
 subset) · [ ] AI (PDF-compatible) · [x] PSD/PSB · [x] XCF · [x] WMF/EMF · [x] DXF · [x] CBZ · [x] CBR
 
 **Embedded** — [ ] LVGL v9 C array · [ ] LVGL v9 binary · [ ] LVGL v8 C array · [ ] LVGL v8 binary ·
