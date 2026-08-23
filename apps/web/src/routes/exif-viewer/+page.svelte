@@ -160,6 +160,7 @@
           {spec.label}
           <input
             type={spec.kind === 'number' ? 'number' : 'text'}
+            aria-label={spec.label}
             bind:value={values[spec.key]}
             disabled={!selected.includes(spec.key)}
           />
