@@ -2,6 +2,7 @@
   import {
     decodeGif,
     decodeWithTypedErrors,
+    encodeAnimatedWebp,
     encodeAnimationVideo,
     encodeApng,
     engineErrorMessage,
@@ -9,7 +10,7 @@
 
   let status = $state('');
   let error = $state('');
-  let output = $state<'frames' | 'apng' | 'mp4' | 'webm'>('frames');
+  let output = $state<'frames' | 'apng' | 'webp' | 'mp4' | 'webm'>('frames');
 
   async function split(file: File | undefined) {
     status = '';
@@ -18,6 +19,17 @@
     try {
       const bytes = await file.arrayBuffer();
       const image = await decodeWithTypedErrors('gif', () => decodeGif(bytes));
+      if (output === 'webp') {
+        const webpBytes = await encodeAnimatedWebp(image);
+        const url = URL.createObjectURL(new Blob([webpBytes], { type: 'image/webp' }));
+        const download = document.createElement('a');
+        download.href = url;
+        download.download = `${file.name.replace(/\.gif$/iu, '')}.webp`;
+        download.click();
+        URL.revokeObjectURL(url);
+        status = `Converted ${image.frames.length} GIF frame${image.frames.length === 1 ? '' : 's'} to animated WebP locally.`;
+        return;
+      }
       if (output === 'mp4' || output === 'webm') {
         const canvas = document.createElement('canvas');
         const videoBytes = await encodeAnimationVideo(image, output, canvas);
@@ -90,6 +102,7 @@
     <select bind:value={output}>
       <option value="frames">Separate PNG frames</option>
       <option value="apng">Animated PNG (APNG)</option>
+      <option value="webp">Animated WebP</option>
       <option value="mp4">MP4 video</option>
       <option value="webm">WebM video</option>
     </select>
