@@ -19,6 +19,10 @@ The PSD fixture is a generated 2×1 opaque RGB composite produced locally by the
 `ag-psd` 31.0.2 dependency with RLE compression. Its two pixels are synthetic and asserted exactly
 after decoding through the production adapter.
 
+The PSB fixture is a generated standards-structured v2 document containing a 2×1 uncompressed
+planar RGB composite. It is constructed from the public PSB container layout, contains the same two
+synthetic pixels as the PSD fixture, and is decoded through the production adapter.
+
 The adversarial corpus in `adversarial-codecs.test.ts` is also self-generated. Empty input and wrong
 magic are exercised through the typed error boundary for BMP, CUR, DDS, FITS, GIF, Radiance HDR,
 ICO, PCX, PFM, PNM/PAM, QOI, SGI, Sun Raster, TGA, TIFF, WBMP, XBM, and XPM. The remaining cases include
