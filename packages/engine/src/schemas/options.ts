@@ -207,6 +207,12 @@ export const WebpConverterToolOptionsSchema = z.object({
   loopCount: z.number().int().min(0).max(65_535).default(0),
 });
 
+export const AvifConverterToolOptionsSchema = z.object({
+  direction: z.enum(['decode', 'encode']).default('decode'),
+  lossless: z.boolean().default(false),
+  quality: z.number().min(0).max(100).default(50),
+});
+
 const embeddedFormats = [
   'alpha1',
   'alpha2',
@@ -324,6 +330,7 @@ export type CbzToolOptions = z.infer<typeof CbzToolOptionsSchema>;
 export type Base64ToolOptions = z.infer<typeof Base64ToolOptionsSchema>;
 export type GifConverterToolOptions = z.infer<typeof GifConverterToolOptionsSchema>;
 export type WebpConverterToolOptions = z.infer<typeof WebpConverterToolOptionsSchema>;
+export type AvifConverterToolOptions = z.infer<typeof AvifConverterToolOptionsSchema>;
 export type EmbeddedToolOptions = z.infer<typeof EmbeddedToolOptionsSchema>;
 
 export interface OptionDescription {
@@ -731,6 +738,38 @@ export const webpConverterToolOptionDescriptions: Readonly<Record<string, Option
     max: 65_535,
     step: 1,
     defaultValue: 0,
+  },
+};
+
+export const avifConverterToolOptionDescriptions: Readonly<Record<string, OptionDescription>> = {
+  'avif.direction': {
+    label: 'Direction',
+    control: 'segmented',
+    group: 'AVIF',
+    advanced: false,
+    options: ['decode', 'encode'],
+    optionLabels: { decode: 'AVIF to PNG', encode: 'Image to AVIF' },
+    defaultValue: 'decode',
+  },
+  'avif.lossless': {
+    label: 'Use lossless encoding',
+    help: 'Used only when creating AVIF.',
+    control: 'toggle',
+    group: 'AVIF',
+    advanced: false,
+    defaultValue: false,
+  },
+  'avif.quality': {
+    label: 'Lossy quality',
+    help: 'Used only for lossy AVIF encoding.',
+    unit: '%',
+    control: 'slider',
+    group: 'AVIF',
+    advanced: false,
+    min: 0,
+    max: 100,
+    step: 1,
+    defaultValue: 50,
   },
 };
 

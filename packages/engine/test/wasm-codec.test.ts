@@ -8,6 +8,7 @@ import { init as initJxl } from '@jsquash/jxl/decode.js';
 import { init as initJxlEncoder } from '@jsquash/jxl/encode.js';
 
 import {
+  AvifConverterToolOptionsSchema,
   createRaster,
   decodeAvifToRaster,
   decodeJxlToRaster,
@@ -37,6 +38,16 @@ describe('cleared WASM codecs', () => {
     await expect(Promise.resolve()).resolves.toBeUndefined();
   }, 30_000);
 
+  it('validates bidirectional AVIF converter options', () => {
+    expect(AvifConverterToolOptionsSchema.parse({})).toEqual({
+      direction: 'decode',
+      lossless: false,
+      quality: 50,
+    });
+    expect(() => AvifConverterToolOptionsSchema.parse({ direction: 'transcode' })).toThrow();
+    expect(() => AvifConverterToolOptionsSchema.parse({ quality: 101 })).toThrow();
+  });
+
   it('round-trips a local AVIF fixture', async () => {
     const encoded = await encodeRasterAsAvif(fixture, { quality: 100 });
     expect(createHash('sha256').update(new Uint8Array(encoded)).digest('hex')).toBe(
@@ -45,6 +56,12 @@ describe('cleared WASM codecs', () => {
     const decoded = await decodeAvifToRaster(encoded);
     expect(decoded).toMatchObject({ width: 1, height: 1, bitDepth: 8 });
     expect(decoded.frames[0]?.data[3]).toBe(255);
+  }, 30_000);
+
+  it('preserves RGBA samples through lossless AVIF encoding', async () => {
+    const encoded = await encodeRasterAsAvif(fixture, { lossless: true });
+    const decoded = await decodeAvifToRaster(encoded);
+    expect(decoded.frames[0]?.data).toEqual(fixture.frames[0].data);
   }, 30_000);
 
   it('round-trips a local JPEG XL fixture', async () => {

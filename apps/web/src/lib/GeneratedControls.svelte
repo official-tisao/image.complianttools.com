@@ -78,7 +78,8 @@
         {#each description.options ?? [] as option (option)}<button
             type="button"
             aria-pressed={current(path, description) === option}
-            onclick={() => onChange(path, option)}>{option}</button
+            onclick={() => onChange(path, option)}
+            >{description.optionLabels?.[option] ?? option}</button
           >{/each}
       </div>
     {:else if description.control === 'select' || description.control === 'segmented'}
