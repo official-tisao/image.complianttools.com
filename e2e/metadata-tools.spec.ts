@@ -253,6 +253,6 @@ for (const locale of ['en-XA', 'ar'] as const) {
       ),
     });
     await expect(page.getByText('2 × 3 px')).toBeVisible();
-    await expect(page.getByText(locale === 'ar' ? 'الأبعاد' : /Dïmënsiôns/u)).toBeVisible();
+    await expect(page.getByText(locale === 'ar' ? 'الأبعاد' : /Dïmënsïôns/u)).toBeVisible();
   });
 }
