@@ -167,6 +167,26 @@ export const PdfToImageOptionsSchema = z.object({
   dpi: z.number().min(18).max(600).default(72),
 });
 
+export const SvgRasterizeToolOptionsSchema = z
+  .object({
+    mode: z.enum(['original', 'width', 'height', 'scale']).default('original'),
+    value: z.number().positive().max(32_768).default(1),
+  })
+  .superRefine((value, context) => {
+    if ((value.mode === 'width' || value.mode === 'height') && !Number.isInteger(value.value))
+      context.addIssue({
+        code: 'custom',
+        path: ['value'],
+        message: 'SVG output dimensions must be whole pixels.',
+      });
+    if (value.mode === 'scale' && value.value > 100)
+      context.addIssue({
+        code: 'custom',
+        path: ['value'],
+        message: 'SVG scale factor must not exceed 100.',
+      });
+  });
+
 export type ExportOptionsInput = z.input<typeof ExportOptionsSchema>;
 export type ResizeOptions = z.infer<typeof ResizeOptionsSchema>;
 export type CropOptions = z.infer<typeof CropOptionsSchema>;
@@ -174,6 +194,7 @@ export type RotateOptions = z.infer<typeof RotateOptionsSchema>;
 export type MetadataRemovalOptions = z.infer<typeof MetadataRemovalOptionsSchema>;
 export type RawToolOptions = z.infer<typeof RawToolOptionsSchema>;
 export type PdfToImageOptions = z.infer<typeof PdfToImageOptionsSchema>;
+export type SvgRasterizeToolOptions = z.infer<typeof SvgRasterizeToolOptionsSchema>;
 
 export interface OptionDescription {
   label: string;
@@ -186,6 +207,7 @@ export interface OptionDescription {
   max?: number;
   step?: number;
   options?: readonly string[];
+  optionLabels?: Readonly<Record<string, string>>;
   defaultValue: unknown;
 }
 
@@ -450,5 +472,33 @@ export const pdfToImageOptionDescriptions: Readonly<Record<string, OptionDescrip
     max: 600,
     step: 1,
     defaultValue: 72,
+  },
+};
+
+export const svgRasterizeOptionDescriptions: Readonly<Record<string, OptionDescription>> = {
+  'svg.mode': {
+    label: 'Output sizing',
+    control: 'select',
+    group: 'SVG',
+    advanced: false,
+    options: ['original', 'width', 'height', 'scale'],
+    optionLabels: {
+      original: 'Intrinsic dimensions',
+      width: 'Explicit width',
+      height: 'Explicit height',
+      scale: 'Scale factor',
+    },
+    defaultValue: 'original',
+  },
+  'svg.value': {
+    label: 'Dimension or scale value',
+    help: 'Ignored for intrinsic dimensions. Width and height use whole pixels; scale is capped at 100×.',
+    control: 'number',
+    group: 'SVG',
+    advanced: false,
+    min: 0.01,
+    max: 32_768,
+    step: 0.01,
+    defaultValue: 1,
   },
 };

@@ -1,9 +1,24 @@
 <script lang="ts">
-  import { rasterizeSvg } from '@complianttools/image-engine';
+  import {
+    SvgRasterizeToolOptionsSchema,
+    rasterizeSvg,
+    svgRasterizeOptionDescriptions,
+  } from '@complianttools/image-engine';
+  import GeneratedControls from '$lib/GeneratedControls.svelte';
 
   let status = $state('');
   let error = $state('');
-  let width = $state('');
+  let options = $state(SvgRasterizeToolOptionsSchema.parse({}));
+  const controlValues = $derived({ 'svg.mode': options.mode, 'svg.value': options.value });
+
+  function setControl(path: string, value: unknown) {
+    if (!path.startsWith('svg.')) return;
+    const parsed = SvgRasterizeToolOptionsSchema.safeParse({
+      ...options,
+      [path.slice(4)]: value,
+    });
+    if (parsed.success) options = parsed.data;
+  }
 
   async function convert(file: File | undefined) {
     status = '';
@@ -11,7 +26,15 @@
     if (!file) return;
     try {
       const svg = await file.text();
-      const image = await rasterizeSvg(svg, width ? { width: Number(width) } : {});
+      const rasterOptions =
+        options.mode === 'width'
+          ? { width: options.value }
+          : options.mode === 'height'
+            ? { height: options.value }
+            : options.mode === 'scale'
+              ? { zoom: options.value }
+              : {};
+      const image = await rasterizeSvg(svg, rasterOptions);
       const canvas = document.createElement('canvas');
       canvas.width = image.width;
       canvas.height = image.height;
@@ -52,7 +75,11 @@
   <p>
     Rasterize a self-contained SVG locally. External references and active SVG content are refused.
   </p>
-  <label>Output width (optional) <input type="number" min="1" bind:value={width} /></label>
+  <GeneratedControls
+    descriptions={svgRasterizeOptionDescriptions}
+    values={controlValues}
+    onChange={setControl}
+  />
   <label
     >Choose an SVG <input
       type="file"

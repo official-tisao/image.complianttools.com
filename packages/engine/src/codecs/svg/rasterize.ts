@@ -56,6 +56,21 @@ export async function rasterizeSvg(
   options: SvgRasterizeOptions = {},
   factory?: SvgRendererFactory,
 ): Promise<RasterImage> {
+  if (
+    options.width !== undefined &&
+    (!Number.isInteger(options.width) || options.width < 1 || options.width > 32_768)
+  )
+    throw new Error('SVG output width must be a whole number from 1 through 32768 pixels.');
+  if (
+    options.height !== undefined &&
+    (!Number.isInteger(options.height) || options.height < 1 || options.height > 32_768)
+  )
+    throw new Error('SVG output height must be a whole number from 1 through 32768 pixels.');
+  if (
+    options.zoom !== undefined &&
+    (!Number.isFinite(options.zoom) || options.zoom <= 0 || options.zoom > 100)
+  )
+    throw new Error('SVG scale factor must be greater than 0 and no more than 100.');
   const svg = assertSafeSvg(input);
   const renderer = (factory ?? (await loadRenderer()))(svg, {
     fitTo: options.width

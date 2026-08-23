@@ -3,12 +3,27 @@ import { readFile } from 'node:fs/promises';
 import { describe, expect, it, vi } from 'vitest';
 
 import {
+  SvgRasterizeToolOptionsSchema,
   initializeSvgRenderer,
   rasterizeSvg,
   SVG_EXTERNAL_REFERENCE_MESSAGE,
 } from '../src/index.js';
 
 describe('local SVG rasterization', () => {
+  it('defines intrinsic no-op sizing and bounds explicit dimensions and scale', () => {
+    expect(SvgRasterizeToolOptionsSchema.parse({})).toEqual({ mode: 'original', value: 1 });
+    expect(SvgRasterizeToolOptionsSchema.parse({ mode: 'width', value: 320 })).toEqual({
+      mode: 'width',
+      value: 320,
+    });
+    expect(() => SvgRasterizeToolOptionsSchema.parse({ mode: 'width', value: 1.5 })).toThrow(
+      'whole pixels',
+    );
+    expect(() => SvgRasterizeToolOptionsSchema.parse({ mode: 'scale', value: 101 })).toThrow(
+      'must not exceed 100',
+    );
+  });
+
   it('renders a real self-contained fixture through the pinned Resvg WASM bytes', async () => {
     const wasm = await readFile(
       new URL('../node_modules/@resvg/resvg-wasm/index_bg.wasm', import.meta.url),
@@ -47,5 +62,11 @@ describe('local SVG rasterization', () => {
     await expect(
       rasterizeSvg('<svg><image href="https://example.test/image.png"/></svg>'),
     ).rejects.toThrow(SVG_EXTERNAL_REFERENCE_MESSAGE);
+  });
+
+  it('refuses hostile raster dimensions before loading a renderer', async () => {
+    await expect(rasterizeSvg('<svg/>', { width: 32_769 })).rejects.toThrow('32768');
+    await expect(rasterizeSvg('<svg/>', { height: 1.5 })).rejects.toThrow('whole number');
+    await expect(rasterizeSvg('<svg/>', { zoom: 101 })).rejects.toThrow('no more than 100');
   });
 });
