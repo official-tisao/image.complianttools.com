@@ -166,6 +166,27 @@ const arabic: Readonly<Record<string, string>> = {
   'option.metadata.edit.latitude.value.label': 'قيمة خط عرض GPS',
   'option.metadata.edit.longitude.enabled.label': 'تعديل خط طول GPS',
   'option.metadata.edit.longitude.value.label': 'قيمة خط طول GPS',
+  'base64.back': '← تحويل',
+  'base64.title': 'الصورة إلى Base64',
+  'base64.description': 'حوّل صورة إلى عنوان بيانات أو فك عنوان بيانات إلى ملف محليًا.',
+  'base64.choose': 'اختر صورة',
+  'base64.dataUrl': 'عنوان بيانات Base64',
+  'base64.copy': 'نسخ Base64',
+  'base64.html': 'مقتطف HTML',
+  'base64.copyHtml': 'نسخ HTML',
+  'base64.css': 'مقتطف CSS',
+  'base64.copyCss': 'نسخ CSS',
+  'base64.decode': 'فك الترميز والتنزيل',
+  'base64.copied': 'نُسخ محليًا إلى الحافظة.',
+  'base64.decoded': 'فُك ترميز {value} بايت محليًا باسم',
+  'base64.encodeError': 'تعذر ترميز هذه الصورة. اختر ملفًا صالحًا أصغر من حد 32 ميجابايت.',
+  'base64.decodeError': 'تعذر فك عنوان البيانات. الصق عنوان Base64 صالحًا أصغر من حد 32 ميجابايت.',
+  'base64.clipboardError': 'تعذر النسخ. اسمح بالوصول إلى الحافظة ثم حاول مجددًا.',
+  'base64.metaDescription':
+    'حوّل الصور إلى عناوين بيانات Base64 أو أعدها إلى ملفات محلية في متصفحك.',
+  'option.base64.mode.label': 'الاتجاه',
+  'option.base64.mode.option.encode': 'الصورة إلى Base64',
+  'option.base64.mode.option.decode': 'Base64 إلى ملف',
 };
 
 const accents: Readonly<Record<string, string>> = {
@@ -182,7 +203,12 @@ const accents: Readonly<Record<string, string>> = {
 };
 
 function pseudo(value: string): string {
-  const expanded = [...value].map((letter) => accents[letter] ?? letter).join('');
+  const expanded = value
+    .split(/(\{[^{}]+\})/u)
+    .map((part) =>
+      part.startsWith('{') ? part : [...part].map((letter) => accents[letter] ?? letter).join(''),
+    )
+    .join('');
   return `［${expanded} ${'~'.repeat(Math.max(2, Math.ceil(value.length / 5)))}］`;
 }
 

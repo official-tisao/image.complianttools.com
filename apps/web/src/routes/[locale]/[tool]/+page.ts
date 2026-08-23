@@ -9,6 +9,7 @@ const tools = [
   'image-info',
   'remove-exif',
   'exif-viewer',
+  'base64-image',
 ] as const;
 
 export const entries: EntryGenerator = () =>

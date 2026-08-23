@@ -27,6 +27,8 @@ const phase2Routes = [
   '/ar/exif-viewer',
   '/ar/remove-exif',
   '/ar/image-info',
+  '/en-XA/base64-image',
+  '/ar/base64-image',
   '/lossless-optimize',
 ] as const;
 

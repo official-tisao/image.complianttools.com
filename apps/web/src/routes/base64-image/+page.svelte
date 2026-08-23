@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Base64ImageTool from '../image-to-base64/+page.svelte';
+  import Base64ImageTool from '$lib/Base64ImageTool.svelte';
 </script>
 
 <Base64ImageTool />
