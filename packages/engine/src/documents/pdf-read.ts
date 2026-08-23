@@ -114,3 +114,19 @@ export async function renderPdfPage(
     await pdf.destroy();
   }
 }
+
+/** Renders modern PDF-compatible Illustrator files and explicitly refuses legacy PostScript AI. */
+export async function renderIllustratorPage(
+  input: ArrayBuffer | Uint8Array,
+  options: PdfPageRenderOptions = {},
+  loader?: PdfDocumentLoader,
+  canvasFactory?: PdfCanvasFactory,
+): Promise<RasterImage> {
+  const bytes = input instanceof Uint8Array ? input : new Uint8Array(input);
+  if (new TextDecoder('latin1').decode(bytes.subarray(0, 5)) !== '%PDF-')
+    throw new Error(
+      'This is a legacy pre-PDF Illustrator file. Only modern PDF-compatible .ai files are supported; export it as PDF or SVG in Illustrator first.',
+    );
+  if (!canvasFactory) throw new Error('Illustrator rendering requires a browser canvas factory.');
+  return renderPdfPage(bytes, options, loader, canvasFactory);
+}
