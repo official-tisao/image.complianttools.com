@@ -4,11 +4,32 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   renderIllustratorPage,
   renderPdfPage,
+  readPdfDocumentInfo,
   type PdfCanvasFactory,
   type PdfDocumentLoader,
 } from '../src/index.js';
 
 describe('browser-local PDF page rendering', () => {
+  it('parses real multi-page PDF bytes through the production PDF.js loader', async () => {
+    const document = await PDFDocument.create();
+    document.addPage([72, 36]);
+    document.addPage([144, 216]);
+    const fixture = await document.save();
+    await expect(readPdfDocumentInfo(fixture)).resolves.toEqual({
+      pageCount: 2,
+      pages: [
+        { pageNumber: 1, widthPoints: 72, heightPoints: 36 },
+        { pageNumber: 2, widthPoints: 144, heightPoints: 216 },
+      ],
+    });
+  });
+
+  it('rejects malformed bytes through the production PDF.js loader', async () => {
+    await expect(
+      readPdfDocumentInfo(new TextEncoder().encode('%PDF-not-a-document')),
+    ).rejects.toThrow();
+  });
+
   it('renders a chosen PDF page through the injected local renderer and destroys the document', async () => {
     const destroy = vi.fn(async () => undefined);
     const loader: PdfDocumentLoader = async () => ({

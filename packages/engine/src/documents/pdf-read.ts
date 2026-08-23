@@ -51,21 +51,64 @@ interface PdfDocument {
 export type PdfDocumentLoader = (input: Uint8Array) => Promise<PdfDocument>;
 export type PdfCanvasFactory = () => PdfCanvas;
 
+export interface PdfDocumentInfo {
+  readonly pageCount: number;
+  readonly pages: readonly {
+    readonly pageNumber: number;
+    readonly widthPoints: number;
+    readonly heightPoints: number;
+  }[];
+}
+
 let pdfJsLoader: Promise<PdfDocumentLoader> | undefined;
 
 async function loadPdfJs(): Promise<PdfDocumentLoader> {
   pdfJsLoader ??= (async () => {
-    const pdfjs = await import('pdfjs-dist');
+    // The legacy entry installs PDF.js's supported Node canvas/DOMMatrix shims;
+    // browsers use the smaller standard entry.
+    const nodeEnvironment = typeof DOMMatrix === 'undefined';
+    const pdfjs = nodeEnvironment
+      ? await import('pdfjs-dist/legacy/build/pdf.mjs')
+      : await import('pdfjs-dist');
     // Vite emits this worker as a local asset. PDF.js controls its own worker request; engine code
     // never contacts an arbitrary document-provided URL.
-    pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-      'pdfjs-dist/build/pdf.worker.min.mjs',
-      import.meta.url,
-    ).toString();
+    pdfjs.GlobalWorkerOptions.workerSrc = nodeEnvironment
+      ? import.meta.resolve('pdfjs-dist/legacy/build/pdf.worker.min.mjs')
+      : new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).toString();
     return async (input) =>
       (await pdfjs.getDocument({ data: new Uint8Array(input) }).promise) as unknown as PdfDocument;
   })();
   return pdfJsLoader!;
+}
+
+/** Parses a real PDF locally and reports its page geometry without rasterizing it. */
+export async function readPdfDocumentInfo(
+  input: ArrayBuffer | Uint8Array,
+  loader?: PdfDocumentLoader,
+): Promise<PdfDocumentInfo> {
+  const source = input instanceof Uint8Array ? new Uint8Array(input) : new Uint8Array(input);
+  const pdf = await (loader ?? (await loadPdfJs()))(source);
+  try {
+    const pages = [];
+    for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+      const viewport = (await pdf.getPage(pageNumber)).getViewport({ scale: 1 });
+      if (
+        !Number.isFinite(viewport.width) ||
+        !Number.isFinite(viewport.height) ||
+        viewport.width < 1 ||
+        viewport.height < 1
+      )
+        throw new Error(`PDF page ${pageNumber} has invalid dimensions.`);
+      pages.push({
+        pageNumber,
+        widthPoints: viewport.width,
+        heightPoints: viewport.height,
+      });
+    }
+    return { pageCount: pdf.numPages, pages };
+  } finally {
+    await pdf.destroy();
+  }
 }
 
 /** Renders one PDF page to an RGBA raster through a caller-provided browser canvas. */

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { renderPdfPage } from '@complianttools/image-engine';
+  import { readPdfDocumentInfo, renderPdfPage } from '@complianttools/image-engine';
 
   let status = $state('');
   let error = $state('');
@@ -11,11 +11,14 @@
     error = '';
     if (!file) return;
     try {
-      const image = await renderPdfPage(
-        await file.arrayBuffer(),
-        { pageNumber, scale },
-        undefined,
-        () => document.createElement('canvas'),
+      const input = await file.arrayBuffer();
+      const info = await readPdfDocumentInfo(input);
+      if (pageNumber > info.pageCount)
+        throw new Error(
+          `PDF has ${info.pageCount} page${info.pageCount === 1 ? '' : 's'}; page ${pageNumber} is unavailable.`,
+        );
+      const image = await renderPdfPage(input, { pageNumber, scale }, undefined, () =>
+        document.createElement('canvas'),
       );
       const canvas = document.createElement('canvas');
       canvas.width = image.width;
@@ -35,7 +38,7 @@
       download.download = `${file.name.replace(/\.pdf$/iu, '')}-page-${pageNumber}.png`;
       download.click();
       URL.revokeObjectURL(url);
-      status = `Rendered page ${pageNumber} at ${image.width}×${image.height} locally.`;
+      status = `Rendered page ${pageNumber} of ${info.pageCount} at ${image.width}×${image.height} locally.`;
     } catch (reason) {
       error = reason instanceof Error ? reason.message : 'Unable to render this PDF page.';
     }
