@@ -1,4 +1,5 @@
 export type FormatId =
+  | 'ai'
   | 'apng'
   | 'avif'
   | 'bmp'

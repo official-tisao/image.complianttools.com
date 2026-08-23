@@ -5,6 +5,7 @@ import {
   renderIllustratorPage,
   renderPdfPage,
   readPdfDocumentInfo,
+  readIllustratorDocumentInfo,
   type PdfCanvasFactory,
   type PdfDocumentLoader,
 } from '../src/index.js';
@@ -28,6 +29,19 @@ describe('browser-local PDF page rendering', () => {
     await expect(
       readPdfDocumentInfo(new TextEncoder().encode('%PDF-not-a-document')),
     ).rejects.toThrow();
+  });
+
+  it('parses a real PDF-compatible Illustrator fixture and rejects legacy PostScript AI', async () => {
+    const document = await PDFDocument.create();
+    document.addPage([300, 200]);
+    const fixture = await document.save();
+    await expect(readIllustratorDocumentInfo(fixture)).resolves.toEqual({
+      pageCount: 1,
+      pages: [{ pageNumber: 1, widthPoints: 300, heightPoints: 200 }],
+    });
+    await expect(
+      readIllustratorDocumentInfo(new TextEncoder().encode('%!PS-Adobe-3.0')),
+    ).rejects.toThrow('legacy pre-PDF Illustrator');
   });
 
   it('renders a chosen PDF page through the injected local renderer and destroys the document', async () => {

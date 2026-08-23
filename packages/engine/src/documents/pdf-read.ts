@@ -111,6 +111,23 @@ export async function readPdfDocumentInfo(
   }
 }
 
+function assertPdfCompatibleIllustrator(input: Uint8Array): void {
+  if (new TextDecoder('latin1').decode(input.subarray(0, 5)) !== '%PDF-')
+    throw new Error(
+      'This is a legacy pre-PDF Illustrator file. Only modern PDF-compatible .ai files are supported; export it as PDF or SVG in Illustrator first.',
+    );
+}
+
+/** Parses page information from a modern PDF-compatible Illustrator file. */
+export async function readIllustratorDocumentInfo(
+  input: ArrayBuffer | Uint8Array,
+  loader?: PdfDocumentLoader,
+): Promise<PdfDocumentInfo> {
+  const bytes = input instanceof Uint8Array ? input : new Uint8Array(input);
+  assertPdfCompatibleIllustrator(bytes);
+  return readPdfDocumentInfo(bytes, loader);
+}
+
 /** Renders one PDF page to an RGBA raster through a caller-provided browser canvas. */
 export async function renderPdfPage(
   input: ArrayBuffer | Uint8Array,
@@ -166,10 +183,7 @@ export async function renderIllustratorPage(
   canvasFactory?: PdfCanvasFactory,
 ): Promise<RasterImage> {
   const bytes = input instanceof Uint8Array ? input : new Uint8Array(input);
-  if (new TextDecoder('latin1').decode(bytes.subarray(0, 5)) !== '%PDF-')
-    throw new Error(
-      'This is a legacy pre-PDF Illustrator file. Only modern PDF-compatible .ai files are supported; export it as PDF or SVG in Illustrator first.',
-    );
+  assertPdfCompatibleIllustrator(bytes);
   if (!canvasFactory) throw new Error('Illustrator rendering requires a browser canvas factory.');
   return renderPdfPage(bytes, options, loader, canvasFactory);
 }

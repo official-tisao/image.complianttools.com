@@ -23,3 +23,23 @@ test('PDF to Image reads a real document page count before rendering', async ({ 
   });
   await expect(page.getByRole('alert')).toHaveText('PDF has 2 pages; page 3 is unavailable.');
 });
+
+test('PDF to Image accepts modern PDF-compatible AI and names legacy AI', async ({ page }) => {
+  const fixture = await createPdfFromPngPages([{ pngBytes: onePixelPng, width: 72, height: 36 }]);
+  await page.goto('/pdf-to-image');
+  await page.waitForLoadState('networkidle');
+  await page.getByLabel('Page').fill('2');
+  await page.locator('input[type=file]').setInputFiles({
+    name: 'modern.ai',
+    mimeType: 'application/postscript',
+    buffer: Buffer.from(fixture),
+  });
+  await expect(page.getByRole('alert')).toHaveText('PDF has 1 page; page 2 is unavailable.');
+
+  await page.locator('input[type=file]').setInputFiles({
+    name: 'legacy.ai',
+    mimeType: 'application/postscript',
+    buffer: Buffer.from('%!PS-Adobe-3.0'),
+  });
+  await expect(page.getByRole('alert')).toContainText('legacy pre-PDF Illustrator');
+});

@@ -22,7 +22,7 @@ describe('P2 codec registry', () => {
       opfs: false,
       webCodecs: false,
     });
-    expect(capabilities).toHaveLength(56);
+    expect(capabilities).toHaveLength(57);
     expect(capabilities.find((entry) => entry.id === 'ktx')).toMatchObject({
       decode: 'unavailable',
       encode: 'unavailable',
@@ -111,6 +111,11 @@ describe('P2 codec registry', () => {
       encode: 'lazy',
       animation: true,
     });
+    expect(capabilities.find((entry) => entry.id === 'ai')).toMatchObject({
+      decode: 'lazy',
+      encode: 'unavailable',
+    });
+    expect(getCodec('ai').decodeUnavailableReason).toContain('PDF-compatible Illustrator');
     expect(capabilities.find((entry) => entry.id === 'eps')).toMatchObject({
       decode: 'lazy',
       encode: 'unavailable',

@@ -63,6 +63,12 @@ const unavailableFormats = {
 } as const;
 
 const supportedFormats = {
+  ai: {
+    name: 'Illustrator (AI)',
+    summary: 'Modern Illustrator files can use PDF as their compatible document representation.',
+    notes:
+      'The local PDF.js path reads modern PDF-compatible .ai files. Legacy PostScript Illustrator files are identified and refused with an export-as-PDF-or-SVG remedy.',
+  },
   apng: {
     name: 'APNG',
     summary: 'Animated PNG stores lossless RGBA frames in standard PNG chunks.',

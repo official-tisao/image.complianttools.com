@@ -251,6 +251,16 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     load: () => Promise.all([import('../documents/pdf-read.js'), import('../documents/pdf.js')]),
   },
   {
+    id: 'ai',
+    animation: true,
+    lazyBytes: 1_900_000,
+    supports: ['decode'],
+    load: () => import('../documents/pdf-read.js'),
+    decodeUnavailableReason:
+      'Only modern PDF-compatible Illustrator files are supported; legacy PostScript Illustrator files must be exported as PDF or SVG first.',
+    encodeUnavailableReason: 'Illustrator export is unavailable; export SVG or PDF instead.',
+  },
+  {
     id: 'eps',
     animation: false,
     lazyBytes: 10_000,
