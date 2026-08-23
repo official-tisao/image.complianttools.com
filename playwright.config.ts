@@ -7,9 +7,10 @@ export default defineConfig({
   reporter: process.env.CI ? [['line'], ['html', { open: 'never' }]] : 'line',
   webServer: {
     command:
-      'pnpm --filter @complianttools/image-engine build && pnpm --filter @complianttools/web dev',
+      'node node_modules/typescript/bin/tsc -p packages/engine/tsconfig.json && cd apps/web && node node_modules/vite/bin/vite.js build && node node_modules/vite/bin/vite.js preview --host 127.0.0.1 --port 4173',
     url: 'http://127.0.0.1:4173/debug/capabilities',
     reuseExistingServer: !process.env.CI,
+    timeout: 180_000,
   },
   use: {
     baseURL: 'http://127.0.0.1:4173',
