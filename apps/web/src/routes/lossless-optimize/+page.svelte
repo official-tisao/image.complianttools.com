@@ -1,9 +1,9 @@
 <script lang="ts">
   import {
     createRaster,
-    encodeRasterAsOptimisedPng,
     optimizeGifLossless,
     optimizeJpegLossless,
+    optimizePngLossless,
   } from '@complianttools/image-engine';
   let status = $state('');
   let error = $state('');
@@ -39,17 +39,19 @@
       return;
     }
     try {
-      if (isGif || isJpeg) {
+      {
+        const input = await file.arrayBuffer();
         const result = isGif
-          ? optimizeGifLossless(await file.arrayBuffer())
-          : await optimizeJpegLossless(await file.arrayBuffer(), decodeJpegInBrowser);
-        const extension = isGif ? 'gif' : 'jpg';
-        const url = URL.createObjectURL(
-          new Blob([result.bytes], { type: isGif ? 'image/gif' : 'image/jpeg' }),
-        );
+          ? optimizeGifLossless(input)
+          : isJpeg
+            ? await optimizeJpegLossless(input, decodeJpegInBrowser)
+            : await optimizePngLossless(input);
+        const extension = isGif ? 'gif' : isJpeg ? 'jpg' : 'png';
+        const mimeType = isGif ? 'image/gif' : isJpeg ? 'image/jpeg' : 'image/png';
+        const url = URL.createObjectURL(new Blob([result.bytes], { type: mimeType }));
         const download = document.createElement('a');
         download.href = url;
-        download.download = `${file.name.replace(/\.(?:gif|jpe?g|jfif)$/iu, '')}-optimized.${extension}`;
+        download.download = `${file.name.replace(/\.(?:png|gif|jpe?g|jfif)$/iu, '')}-optimized.${extension}`;
         download.click();
         URL.revokeObjectURL(url);
         status = result.changed
@@ -57,27 +59,6 @@
           : `Pixel-verified locally; no smaller safe candidate was found, so the original ${result.originalBytes.toLocaleString()} bytes were preserved.`;
         return;
       }
-      const bitmap = await createImageBitmap(file);
-      const canvas = document.createElement('canvas');
-      canvas.width = bitmap.width;
-      canvas.height = bitmap.height;
-      const context = canvas.getContext('2d', { willReadFrequently: true });
-      if (!context) throw new Error('Your browser cannot create a local canvas.');
-      context.drawImage(bitmap, 0, 0);
-      bitmap.close();
-      const image = createRaster(
-        canvas.width,
-        canvas.height,
-        context.getImageData(0, 0, canvas.width, canvas.height).data,
-      );
-      const output = await encodeRasterAsOptimisedPng(image);
-      const url = URL.createObjectURL(new Blob([output], { type: 'image/png' }));
-      const download = document.createElement('a');
-      download.href = url;
-      download.download = `${file.name.replace(/\.png$/iu, '')}-optimized.png`;
-      download.click();
-      URL.revokeObjectURL(url);
-      status = `Optimized locally: ${file.size.toLocaleString()} → ${output.byteLength.toLocaleString()} bytes.`;
     } catch (reason) {
       error = reason instanceof Error ? reason.message : 'Unable to optimize this image.';
     }
@@ -94,9 +75,9 @@
   <a href="/convert">← Convert</a>
   <h1>Lossless PNG, GIF, and JPEG Optimizer</h1>
   <p>
-    Optimize PNG, GIF, or JPEG files locally. GIF and JPEG candidates are independently decoded and
-    returned only when rendered pixels are unchanged; GIF timing and loop settings are checked too.
-    Files never leave your browser.
+    Optimize PNG, GIF, or JPEG files locally. Every candidate is independently decoded and returned
+    only when rendered pixels are unchanged; GIF timing and loop settings are checked too. Files
+    never leave your browser.
   </p>
   <label
     >Choose a PNG, GIF, or JPEG <input

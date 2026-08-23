@@ -63,7 +63,7 @@ export function stripJpegMetadataMarkers(input: ArrayBuffer | Uint8Array): Uint8
   return output;
 }
 
-/** Returns changed JPEG bytes only after an independent MozJPEG pixel comparison. */
+/** Returns copy-none JPEG bytes only after a MozJPEG-backed independent pixel comparison. */
 export async function optimizeJpegLossless(
   input: ArrayBuffer | Uint8Array,
   decoder: (input: ArrayBuffer) => Promise<RasterImage> = decodeJpegToRaster,
