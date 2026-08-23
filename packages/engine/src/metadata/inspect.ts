@@ -57,6 +57,7 @@ function inspectPng(bytes: Uint8Array): ImageInspection {
   };
   const structures: string[] = [];
   let frameCount = 1;
+  let transparencyChunk = false;
   let dpi: ImageInspection['dpi'] = null;
   for (let offset = 8; offset <= bytes.length - 12;) {
     const length = view.getUint32(offset);
@@ -64,6 +65,7 @@ function inspectPng(bytes: Uint8Array): ImageInspection {
     if (end > bytes.length) throw new Error('PNG contains a truncated chunk.');
     const type = ascii.decode(bytes.subarray(offset + 4, offset + 8));
     structures.push(`${type} (${length} bytes)`);
+    if (type === 'tRNS') transparencyChunk = true;
     if (type === 'acTL' && length >= 8) frameCount = view.getUint32(offset + 8);
     if (type === 'pHYs' && length >= 9 && bytes[offset + 16] === 1) {
       dpi = {
@@ -80,7 +82,7 @@ function inspectPng(bytes: Uint8Array): ImageInspection {
     height,
     bitDepth,
     channels,
-    hasAlpha: colorType === 4 || colorType === 6,
+    hasAlpha: colorType === 4 || colorType === 6 || transparencyChunk,
     colorSpace: spaceMap[colorType] ?? `Unknown PNG colour type ${colorType}`,
     dpi,
     frameCount,
@@ -96,20 +98,53 @@ function inspectGif(bytes: Uint8Array): ImageInspection {
   let frames = 0;
   let transparent = false;
   const structures: string[] = ['Header (6 bytes)', 'Logical screen descriptor (7 bytes)'];
-  for (let offset = 13; offset < bytes.length; offset += 1) {
-    if (bytes[offset] === 0x2c) frames += 1;
-    if (bytes[offset] === 0x21 && bytes[offset + 1] === 0xf9 && bytes[offset + 3] !== undefined)
-      transparent ||= (bytes[offset + 3]! & 1) !== 0;
-    if (bytes[offset] === 0x21 && bytes[offset + 1] !== undefined)
-      structures.push(`Extension 0x${bytes[offset + 1]!.toString(16).padStart(2, '0')}`);
-    if (bytes[offset] === 0x2c) structures.push('Image descriptor');
+  const skipSubBlocks = (start: number): number => {
+    let offset = start;
+    while (offset < bytes.length) {
+      const size = bytes[offset++]!;
+      if (size === 0) return offset;
+      if (offset + size > bytes.length) throw new Error('GIF contains a truncated data sub-block.');
+      offset += size;
+    }
+    throw new Error('GIF contains an unterminated data sub-block sequence.');
+  };
+  const packed = bytes[10]!;
+  let offset = 13 + ((packed & 0x80) !== 0 ? 3 * 2 ** ((packed & 7) + 1) : 0);
+  while (offset < bytes.length) {
+    const marker = bytes[offset++]!;
+    if (marker === 0x3b) break;
+    if (marker === 0x21) {
+      if (offset >= bytes.length) throw new Error('GIF contains a truncated extension label.');
+      const label = bytes[offset++]!;
+      structures.push(`Extension 0x${label.toString(16).padStart(2, '0')}`);
+      if (label === 0xf9) {
+        if (offset + 6 > bytes.length || bytes[offset] !== 4)
+          throw new Error('GIF contains a malformed graphic control extension.');
+        transparent ||= (bytes[offset + 1]! & 1) !== 0;
+      }
+      offset = skipSubBlocks(offset);
+      continue;
+    }
+    if (marker === 0x2c) {
+      if (offset + 9 > bytes.length) throw new Error('GIF contains a truncated image descriptor.');
+      structures.push('Image descriptor');
+      frames += 1;
+      const imagePacked = bytes[offset + 8]!;
+      offset += 9;
+      if ((imagePacked & 0x80) !== 0) offset += 3 * 2 ** ((imagePacked & 7) + 1);
+      if (offset >= bytes.length) throw new Error('GIF contains truncated image data.');
+      offset += 1; // LZW minimum code size
+      offset = skipSubBlocks(offset);
+      continue;
+    }
+    throw new Error(`GIF contains an unexpected block marker 0x${marker.toString(16)}.`);
   }
   frames = Math.max(1, frames);
   return base(bytes, {
     format: 'gif',
     width: view.getUint16(6, true),
     height: view.getUint16(8, true),
-    bitDepth: (bytes[10]! & 7) + 1,
+    bitDepth: (packed & 7) + 1,
     channels: 3,
     hasAlpha: transparent,
     colorSpace: 'Indexed RGB',
@@ -167,9 +202,19 @@ function inspectJpeg(bytes: Uint8Array): ImageInspection {
       if (unit === 2) dpi = { x: Math.round(x * 2.54), y: Math.round(y * 2.54) };
     }
     if (marker === 0xdb) {
-      for (let cursor = offset + 5; cursor < offset + 2 + length; cursor += 1) {
-        quantizationSum += bytes[cursor]!;
-        quantizationValues += 1;
+      const segmentEnd = offset + 2 + length;
+      for (let cursor = offset + 4; cursor < segmentEnd;) {
+        const precision = bytes[cursor]! >> 4;
+        cursor += 1;
+        const tableBytes = precision === 0 ? 64 : 128;
+        if (cursor + tableBytes > segmentEnd)
+          throw new Error('JPEG contains a truncated quantization table.');
+        for (let index = 0; index < 64; index += 1) {
+          quantizationSum +=
+            precision === 0 ? bytes[cursor + index]! : view.getUint16(cursor + index * 2);
+          quantizationValues += 1;
+        }
+        cursor += tableBytes;
       }
     }
     offset += 2 + length;
@@ -201,7 +246,7 @@ function inspectWebp(bytes: Uint8Array): ImageInspection {
   const structures: string[] = [];
   let width = 0,
     height = 0,
-    alpha = false,
+    alpha: boolean | null = false,
     frames = 0;
   for (let offset = 12; offset <= bytes.length - 8;) {
     const type = ascii.decode(bytes.subarray(offset, offset + 4));
@@ -214,18 +259,36 @@ function inspectWebp(bytes: Uint8Array): ImageInspection {
       width = 1 + bytes[offset + 12]! + (bytes[offset + 13]! << 8) + (bytes[offset + 14]! << 16);
       height = 1 + bytes[offset + 15]! + (bytes[offset + 16]! << 8) + (bytes[offset + 17]! << 16);
     }
+    if (type === 'ALPH') alpha = true;
+    if (type === 'VP8 ' && length >= 10) {
+      const payload = offset + 8;
+      if (bytes[payload + 3] !== 0x9d || bytes[payload + 4] !== 0x01 || bytes[payload + 5] !== 0x2a)
+        throw new Error('WebP contains an invalid VP8 frame header.');
+      width ||= view.getUint16(payload + 6, true) & 0x3fff;
+      height ||= view.getUint16(payload + 8, true) & 0x3fff;
+    }
+    if (type === 'VP8L' && length >= 5) {
+      const payload = offset + 8;
+      if (bytes[payload] !== 0x2f) throw new Error('WebP contains an invalid VP8L signature.');
+      width ||= 1 + bytes[payload + 1]! + ((bytes[payload + 2]! & 0x3f) << 8);
+      height ||=
+        1 +
+        (bytes[payload + 2]! >> 6) +
+        (bytes[payload + 3]! << 2) +
+        ((bytes[payload + 4]! & 0x0f) << 10);
+      if (!structures.some((structure) => structure.startsWith('VP8X'))) alpha = null;
+    }
     if (type === 'ANMF') frames += 1;
     offset = end;
   }
-  if (!width || !height)
-    throw new Error('WebP inspection currently requires a VP8X extended header.');
+  if (!width || !height) throw new Error('WebP does not contain a supported image header.');
   frames = Math.max(1, frames);
   return base(bytes, {
     format: 'webp',
     width,
     height,
     bitDepth: 8,
-    channels: alpha ? 4 : 3,
+    channels: alpha === null ? null : alpha ? 4 : 3,
     hasAlpha: alpha,
     colorSpace: 'YCbCr/RGB',
     dpi: null,

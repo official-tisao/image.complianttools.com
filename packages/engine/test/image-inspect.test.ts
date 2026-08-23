@@ -36,6 +36,27 @@ describe('image container inspection', () => {
     });
   });
 
+  it('recognizes transparency declared by an indexed PNG tRNS chunk', () => {
+    const bytes = new Uint8Array([
+      137,
+      80,
+      78,
+      71,
+      13,
+      10,
+      26,
+      10,
+      ...chunk('IHDR', [0, 0, 0, 1, 0, 0, 0, 1, 8, 3, 0, 0, 0]),
+      ...chunk('tRNS', [0]),
+      ...chunk('IEND', []),
+    ]);
+    expect(inspectImageContainer(bytes)).toMatchObject({
+      colorSpace: 'Indexed colour',
+      channels: 1,
+      hasAlpha: true,
+    });
+  });
+
   it('reports GIF dimensions, palette depth, transparency, and frames', () => {
     const bytes = new Uint8Array([
       ...Buffer.from('GIF89a'),
@@ -43,7 +64,7 @@ describe('image container inspection', () => {
       0,
       3,
       0,
-      0xf7,
+      0x07,
       0,
       0,
       0x21,
@@ -63,6 +84,11 @@ describe('image container inspection', () => {
       0,
       3,
       0,
+      0,
+      2,
+      1,
+      0x2c,
+      0,
       0x2c,
       0,
       0,
@@ -71,6 +97,11 @@ describe('image container inspection', () => {
       2,
       0,
       3,
+      0,
+      0,
+      2,
+      1,
+      0,
       0,
       0x3b,
     ]);
@@ -185,6 +216,66 @@ describe('image container inspection', () => {
       frameCount: 2,
       animated: true,
       structures: ['VP8X (10 bytes)', 'ANMF (0 bytes)', 'ANMF (0 bytes)'],
+    });
+  });
+
+  it('reads dimensions from simple lossy and lossless WebP bitstream headers', () => {
+    const lossy = new Uint8Array([
+      ...Buffer.from('RIFF'),
+      22,
+      0,
+      0,
+      0,
+      ...Buffer.from('WEBP'),
+      ...Buffer.from('VP8 '),
+      10,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0x9d,
+      0x01,
+      0x2a,
+      2,
+      0,
+      3,
+      0,
+    ]);
+    expect(inspectImageContainer(lossy)).toMatchObject({
+      format: 'webp',
+      width: 2,
+      height: 3,
+      channels: 3,
+      hasAlpha: false,
+    });
+
+    const lossless = new Uint8Array([
+      ...Buffer.from('RIFF'),
+      18,
+      0,
+      0,
+      0,
+      ...Buffer.from('WEBP'),
+      ...Buffer.from('VP8L'),
+      5,
+      0,
+      0,
+      0,
+      0x2f,
+      1,
+      0x80,
+      0,
+      0,
+      0,
+    ]);
+    expect(inspectImageContainer(lossless)).toMatchObject({
+      format: 'webp',
+      width: 2,
+      height: 3,
+      channels: null,
+      hasAlpha: null,
     });
   });
 });
