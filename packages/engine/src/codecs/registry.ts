@@ -9,6 +9,8 @@ export interface CodecDescriptor {
   readonly lazyBytes: number;
   readonly supports: readonly CodecOperation[];
   readonly productionEncode?: boolean;
+  /** Optional encoder-only loader when decode and encode use separate lazy graphs. */
+  readonly encodeLoad?: () => Promise<unknown>;
   readonly load?: () => Promise<unknown>;
   readonly unavailableReason?: string;
   readonly decodeUnavailableReason?: string;
@@ -388,12 +390,9 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     id: 'avif',
     animation: true,
     lazyBytes: 1_900_000,
-    supports: ['decode'],
+    supports: ['decode', 'encode'],
     load: () => import('./third-party/avif-decode.js'),
-    unavailableReason:
-      'AVIF encoding is not offered until its worker build can be delivered and verified in production.',
-    encodeUnavailableReason:
-      'AVIF encoding is not offered until its worker build can be delivered and verified in production.',
+    encodeLoad: () => import('./third-party/avif-encode.js'),
   },
   {
     id: 'bmp',
@@ -439,12 +438,9 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     id: 'jxl',
     animation: true,
     lazyBytes: 1_200_000,
-    supports: ['decode'],
+    supports: ['decode', 'encode'],
     load: () => import('./third-party/jxl-decode.js'),
-    unavailableReason:
-      'JPEG XL encoding is not offered until its worker build can be delivered and verified in production.',
-    encodeUnavailableReason:
-      'JPEG XL encoding is not offered until its worker build can be delivered and verified in production.',
+    encodeLoad: () => import('./third-party/jxl-encode.js'),
   },
 ];
 
@@ -481,7 +477,7 @@ export function codecCapabilities(runtime: RuntimeCapabilities): FormatCapabilit
             : 'unavailable'
       : 'unavailable';
     const encode = codec.supports.includes('encode')
-      ? codec.load
+      ? (codec.encodeLoad ?? codec.load)
         ? 'lazy'
         : 'unavailable'
       : 'unavailable';
@@ -527,4 +523,23 @@ export async function loadCodec(id: FormatId, consentLargeDownload = false): Pro
     );
   }
   return codec.load();
+}
+
+/** Loads the encoder graph without forcing a format's decoder graph into the same route chunk. */
+export async function loadEncoder(id: FormatId, consentLargeDownload = false): Promise<unknown> {
+  const codec = getCodec(id);
+  const loader = codec.encodeLoad ?? (codec.supports.includes('encode') ? codec.load : undefined);
+  if (!loader) {
+    const reason =
+      codec.encodeUnavailableReason ??
+      codec.unavailableReason ??
+      'No local encoder implementation is available.';
+    throw new Error(`${id} encoding is unavailable: ${reason}`);
+  }
+  const disclosure = codecDownloadDisclosure(id);
+  if (disclosure.requiresConsent && !consentLargeDownload)
+    throw new Error(
+      `${id} encoding requires a ${(disclosure.bytes / 1_000_000).toFixed(1)} MB download; explicit consent is required.`,
+    );
+  return loader();
 }

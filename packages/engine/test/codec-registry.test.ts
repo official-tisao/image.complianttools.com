@@ -5,6 +5,7 @@ import {
   codecDownloadDisclosure,
   getCodec,
   loadCodec,
+  loadEncoder,
   productionEncoderFormats,
   requiresCodecDownloadConsent,
 } from '../src/index.js';
@@ -37,6 +38,16 @@ describe('P2 codec registry', () => {
     expect(capabilities.find((entry) => entry.id === 'gif')).toMatchObject({
       decode: 'lazy',
       encode: 'lazy',
+    });
+    expect(capabilities.find((entry) => entry.id === 'avif')).toMatchObject({
+      decode: 'lazy',
+      encode: 'lazy',
+      lazyBytes: 1_900_000,
+    });
+    expect(capabilities.find((entry) => entry.id === 'jxl')).toMatchObject({
+      decode: 'lazy',
+      encode: 'lazy',
+      lazyBytes: 1_200_000,
     });
     expect(capabilities.find((entry) => entry.id === 'heic')).toMatchObject({
       decode: 'unavailable',
@@ -166,6 +177,13 @@ describe('P2 codec registry', () => {
     await expect(loadCodec('jpeg')).resolves.toBeDefined();
     await expect(loadCodec('exr')).rejects.toThrow('OpenEXR is unavailable in v1');
     await expect(loadCodec('gif')).resolves.toBeDefined();
+    await expect(loadEncoder('avif')).resolves.toMatchObject({
+      encodeRasterAsAvif: expect.any(Function),
+    });
+    await expect(loadEncoder('jxl')).resolves.toMatchObject({
+      encodeRasterAsJxl: expect.any(Function),
+    });
+    await expect(loadEncoder('heic')).rejects.toThrow('HEIC encoding is deliberately excluded');
     expect(getCodec('webp').supports).toEqual(['decode', 'encode']);
     expect(getCodec('qoi').supports).toEqual(['decode', 'encode']);
     await expect(loadCodec('jp2')).rejects.toThrow(
@@ -182,7 +200,7 @@ describe('P2 codec registry', () => {
     for (const id of productionEncoderFormats()) {
       const codec = getCodec(id);
       expect(codec.supports).toContain('encode');
-      expect(codec.load).toBeTypeOf('function');
+      expect(codec.encodeLoad ?? codec.load).toBeTypeOf('function');
       expect(codecDownloadDisclosure(id).bytes).toBe(codec.lazyBytes);
     }
     expect(productionEncoderFormats()).not.toContain('avif');

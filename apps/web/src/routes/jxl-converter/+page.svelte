@@ -9,6 +9,7 @@
     getCodec,
     isEngineError,
     jxlConverterToolOptionDescriptions,
+    loadEncoder,
   } from '@complianttools/image-engine';
   import GeneratedControls from '$lib/GeneratedControls.svelte';
 
@@ -64,8 +65,9 @@
         const raster = await decodeWithTypedErrors(sourceFormat, () =>
           rasterFromBrowserImage(file),
         );
-        const { encodeRasterAsJxl } =
-          await import('@complianttools/image-engine/codecs/jxl-encode');
+        const { encodeRasterAsJxl } = (await loadEncoder(
+          'jxl',
+        )) as typeof import('@complianttools/image-engine/codecs/jxl-encode');
         const bytes = await encodeRasterAsJxl(raster, {
           quality: options.quality,
           lossless: options.lossless,

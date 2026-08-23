@@ -9,6 +9,7 @@
     engineErrorMessage,
     getCodec,
     isEngineError,
+    loadEncoder,
   } from '@complianttools/image-engine';
   import GeneratedControls from '$lib/GeneratedControls.svelte';
 
@@ -64,8 +65,9 @@
         const raster = await decodeWithTypedErrors(sourceFormat, () =>
           rasterFromBrowserImage(file),
         );
-        const { encodeRasterAsAvif } =
-          await import('@complianttools/image-engine/codecs/avif-encode');
+        const { encodeRasterAsAvif } = (await loadEncoder(
+          'avif',
+        )) as typeof import('@complianttools/image-engine/codecs/avif-encode');
         const bytes = await encodeRasterAsAvif(raster, {
           quality: options.quality,
           lossless: options.lossless,
