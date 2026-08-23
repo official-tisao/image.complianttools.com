@@ -11,12 +11,14 @@ async function exportBinary(page: Page, target: string, format: string): Promise
   await page.waitForLoadState('networkidle');
   await page.getByLabel('Target').selectOption(target);
   await page.getByLabel('Pixel format').selectOption(format);
-  const pending = page.waitForEvent('download');
   await page.locator('input[type=file]').setInputFiles({
     name: 'black.png',
     mimeType: 'image/png',
     buffer: blackPixelPng,
   });
+  await page.getByRole('button', { name: 'Generate output' }).click();
+  const pending = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Download output' }).click();
   const path = await (await pending).path();
   expect(path).not.toBeNull();
   return readFile(path!);
