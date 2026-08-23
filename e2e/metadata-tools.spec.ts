@@ -229,3 +229,30 @@ test('metadata tools are keyboard-operable end to end', async ({ page }) => {
   });
   await expect(page.getByText('2 × 3 px')).toBeVisible();
 });
+
+for (const locale of ['en-XA', 'ar'] as const) {
+  test(`image inspector survives ${locale} localization`, async ({ page }) => {
+    await page.goto(`/${locale}/image-info`);
+    await page.waitForLoadState('networkidle');
+    const main = page.locator('main');
+    await expect(main).toHaveAttribute('lang', locale);
+    await expect(main).toHaveAttribute('dir', locale === 'ar' ? 'rtl' : 'ltr');
+    await expect(page.locator('link[rel=canonical]')).toHaveAttribute(
+      'href',
+      `https://image.complianttools.com/${locale}/image-info`,
+    );
+    await expect(page.getByRole('heading', { level: 1 })).toContainText(
+      locale === 'ar' ? 'فاحص الصور' : '［Ïmàgë Ïnspëctôr',
+    );
+    await page.locator('input[type=file]').setInputFiles({
+      name: 'two-by-three.png',
+      mimeType: 'image/png',
+      buffer: Buffer.from(
+        'iVBORw0KGgoAAAANSUhEUgAAAAIAAAADCAQAAABWKLW/AAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+        'base64',
+      ),
+    });
+    await expect(page.getByText('2 × 3 px')).toBeVisible();
+    await expect(page.getByText(locale === 'ar' ? 'الأبعاد' : /Dïmënsiôns/u)).toBeVisible();
+  });
+}
