@@ -1,20 +1,30 @@
 <script lang="ts">
   import {
+    Base64ToolOptionsSchema,
     DEFAULT_BASE64_MAX_BYTES,
     base64DataUrlSnippets,
     decodeBase64DataUrl,
     encodeBase64DataUrl,
     isEngineError,
+    base64ToolOptionDescriptions,
   } from '@complianttools/image-engine';
+  import GeneratedControls from '$lib/GeneratedControls.svelte';
 
   const maximumBytes = DEFAULT_BASE64_MAX_BYTES;
   let value = $state('');
   let htmlSnippet = $state('');
   let cssSnippet = $state('');
   let decodeInput = $state('');
-  let mode = $state<'encode' | 'decode'>('encode');
+  let options = $state(Base64ToolOptionsSchema.parse({}));
+  const controlValues = $derived({ 'base64.mode': options.mode });
   let status = $state('');
   let error = $state('');
+
+  function setControl(path: string, value: unknown) {
+    if (path !== 'base64.mode') return;
+    const parsed = Base64ToolOptionsSchema.safeParse({ mode: value });
+    if (parsed.success) options = parsed.data;
+  }
 
   async function convert(file: File | undefined) {
     value = '';
@@ -81,14 +91,12 @@
   <a href="/convert">← Convert</a>
   <h1>Image to Base64</h1>
   <p>Encode an image to a data URL or decode a data URL back to a file locally.</p>
-  <label
-    >Direction
-    <select bind:value={mode}>
-      <option value="encode">Image to Base64</option>
-      <option value="decode">Base64 to file</option>
-    </select></label
-  >
-  {#if mode === 'encode'}
+  <GeneratedControls
+    descriptions={base64ToolOptionDescriptions}
+    values={controlValues}
+    onChange={setControl}
+  />
+  {#if options.mode === 'encode'}
     <label
       >Choose an image <input
         type="file"

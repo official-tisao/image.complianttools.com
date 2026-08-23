@@ -1,17 +1,27 @@
 <script lang="ts">
   import {
+    CbzToolOptionsSchema,
+    cbzToolOptionDescriptions,
     createPdfFromPngPages,
     decodeCbz,
     decodeWithTypedErrors,
     encodeCbz,
     engineErrorMessage,
   } from '@complianttools/image-engine';
+  import GeneratedControls from '$lib/GeneratedControls.svelte';
 
   let status = $state('');
   let error = $state('');
-  let operation = $state<'create' | 'extract' | 'pdf'>('create');
+  let options = $state(CbzToolOptionsSchema.parse({}));
+  const controlValues = $derived({ 'cbz.operation': options.operation });
 
-  function downloadBytes(bytes: BlobPart, type: string, name: string) {
+  function setControl(path: string, value: unknown) {
+    if (path !== 'cbz.operation') return;
+    const parsed = CbzToolOptionsSchema.safeParse({ operation: value });
+    if (parsed.success) options = parsed.data;
+  }
+
+  function downloadBytes(bytes: Uint8Array, type: string, name: string) {
     const url = URL.createObjectURL(new Blob([bytes], { type }));
     const download = document.createElement('a');
     download.href = url;
@@ -21,7 +31,7 @@
   }
 
   function assertZipComic(bytes: Uint8Array) {
-    if (new TextDecoder('latin1').decode(bytes.subarray(0, 4)) === 'Rar!')
+    if (new globalThis.TextDecoder('latin1').decode(bytes.subarray(0, 4)) === 'Rar!')
       throw new Error(
         'RAR-backed CBR extraction is unavailable because the cleared local libarchive RAR path is still unresolved. Convert the archive to CBZ/ZIP first.',
       );
@@ -52,17 +62,17 @@
     }
   }
 
-  async function convert(files: FileList | null) {
+  async function convert(files: readonly File[]) {
     status = '';
     error = '';
     if (!files?.length) return;
     try {
-      if (operation !== 'create') {
+      if (options.operation !== 'create') {
         const file = files[0]!;
         const source = new Uint8Array(await file.arrayBuffer());
         assertZipComic(source);
         const pages = await decodeWithTypedErrors('cbz', () => decodeCbz(source));
-        if (operation === 'extract') {
+        if (options.operation === 'extract') {
           for (const page of pages)
             downloadBytes(page.bytes, 'application/octet-stream', page.name);
           status = `Extracted ${pages.length} naturally ordered image page${pages.length === 1 ? '' : 's'} locally.`;
@@ -104,23 +114,22 @@
     Create a CBZ from images, extract a CBZ/ZIP image set, or convert its naturally ordered pages to
     PDF locally. RAR-backed CBR remains explicitly unavailable; no page is uploaded.
   </p>
+  <GeneratedControls
+    descriptions={cbzToolOptionDescriptions}
+    values={controlValues}
+    onChange={setControl}
+  />
   <label>
-    Operation
-    <select bind:value={operation}>
-      <option value="create">Images to CBZ</option>
-      <option value="extract">CBZ/ZIP to image files</option>
-      <option value="pdf">CBZ/ZIP to PDF</option>
-    </select>
-  </label>
-  <label>
-    {operation === 'create' ? 'Choose comic page images' : 'Choose a CBZ, ZIP, or CBR archive'}
+    {options.operation === 'create'
+      ? 'Choose comic page images'
+      : 'Choose a CBZ, ZIP, or CBR archive'}
     <input
       type="file"
-      multiple={operation === 'create'}
-      accept={operation === 'create'
+      multiple={options.operation === 'create'}
+      accept={options.operation === 'create'
         ? 'image/avif,image/gif,image/jpeg,image/jxl,image/png,image/webp'
         : '.cbz,.zip,.cbr,application/zip,application/vnd.comicbook+zip'}
-      onchange={(event) => void convert(event.currentTarget.files)}
+      onchange={(event) => void convert([...(event.currentTarget.files ?? [])])}
     />
   </label>
   {#if status}<p role="status">{status}</p>{/if}

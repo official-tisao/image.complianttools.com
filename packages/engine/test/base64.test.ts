@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  Base64ToolOptionsSchema,
   base64DataUrlSnippets,
   decodeBase64DataUrl,
   encodeBase64DataUrl,
@@ -8,6 +9,11 @@ import {
 } from '../src/index.js';
 
 describe('Base64 data URL export', () => {
+  it('defines and bounds the generated direction selector', () => {
+    expect(Base64ToolOptionsSchema.parse({})).toEqual({ mode: 'encode' });
+    expect(() => Base64ToolOptionsSchema.parse({ mode: 'upload' })).toThrow();
+  });
+
   it.each([
     [[], ''],
     [[0], 'AA=='],

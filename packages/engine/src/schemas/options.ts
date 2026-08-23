@@ -187,6 +187,14 @@ export const SvgRasterizeToolOptionsSchema = z
       });
   });
 
+export const CbzToolOptionsSchema = z.object({
+  operation: z.enum(['create', 'extract', 'pdf']).default('create'),
+});
+
+export const Base64ToolOptionsSchema = z.object({
+  mode: z.enum(['encode', 'decode']).default('encode'),
+});
+
 export type ExportOptionsInput = z.input<typeof ExportOptionsSchema>;
 export type ResizeOptions = z.infer<typeof ResizeOptionsSchema>;
 export type CropOptions = z.infer<typeof CropOptionsSchema>;
@@ -195,6 +203,8 @@ export type MetadataRemovalOptions = z.infer<typeof MetadataRemovalOptionsSchema
 export type RawToolOptions = z.infer<typeof RawToolOptionsSchema>;
 export type PdfToImageOptions = z.infer<typeof PdfToImageOptionsSchema>;
 export type SvgRasterizeToolOptions = z.infer<typeof SvgRasterizeToolOptionsSchema>;
+export type CbzToolOptions = z.infer<typeof CbzToolOptionsSchema>;
+export type Base64ToolOptions = z.infer<typeof Base64ToolOptionsSchema>;
 
 export interface OptionDescription {
   label: string;
@@ -500,5 +510,33 @@ export const svgRasterizeOptionDescriptions: Readonly<Record<string, OptionDescr
     max: 32_768,
     step: 0.01,
     defaultValue: 1,
+  },
+};
+
+export const cbzToolOptionDescriptions: Readonly<Record<string, OptionDescription>> = {
+  'cbz.operation': {
+    label: 'Operation',
+    control: 'select',
+    group: 'Comic archive',
+    advanced: false,
+    options: ['create', 'extract', 'pdf'],
+    optionLabels: {
+      create: 'Images to CBZ',
+      extract: 'CBZ/ZIP to image files',
+      pdf: 'CBZ/ZIP to PDF',
+    },
+    defaultValue: 'create',
+  },
+};
+
+export const base64ToolOptionDescriptions: Readonly<Record<string, OptionDescription>> = {
+  'base64.mode': {
+    label: 'Direction',
+    control: 'select',
+    group: 'Base64',
+    advanced: false,
+    options: ['encode', 'decode'],
+    optionLabels: { encode: 'Image to Base64', decode: 'Base64 to file' },
+    defaultValue: 'encode',
   },
 };

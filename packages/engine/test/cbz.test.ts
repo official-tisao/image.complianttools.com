@@ -1,9 +1,20 @@
 import { zipSync } from 'fflate';
 import { describe, expect, it } from 'vitest';
 
-import { decodeCbz, decodeWithTypedErrors, encodeCbz, isEngineError } from '../src/index.js';
+import {
+  CbzToolOptionsSchema,
+  decodeCbz,
+  decodeWithTypedErrors,
+  encodeCbz,
+  isEngineError,
+} from '../src/index.js';
 
 describe('CBZ codec', () => {
+  it('defines and bounds the generated operation selector', () => {
+    expect(CbzToolOptionsSchema.parse({})).toEqual({ operation: 'create' });
+    expect(() => CbzToolOptionsSchema.parse({ operation: 'rar' })).toThrow();
+  });
+
   it('round-trips pages in natural filename order', () => {
     const encoded = encodeCbz([
       { name: 'page10.png', bytes: new Uint8Array([10]) },
