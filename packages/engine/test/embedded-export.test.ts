@@ -13,6 +13,9 @@ import {
   packLvglV8Pixels,
   packLvglV9Pixels,
   packEmbeddedPixels,
+  packGenericRawPixels,
+  packLvglV8Binary,
+  packLvglV9Binary,
   validateEmbeddedOutputName,
 } from '../src/index.js';
 
@@ -101,6 +104,33 @@ describe('embedded exporter', () => {
       expect(emitLvglV9CArray(image, { outputName: 'logo', format })).toContain(
         `.cf = ${constant}`,
       );
+  });
+
+  it('packs the documented LVGL v8/v9 binary formats and rejects descriptor-only formats', () => {
+    for (const pack of [packLvglV8Binary, packLvglV9Binary]) {
+      expect(pack(image, { outputName: 'logo', format: 'rgb332' })).toEqual(new Uint8Array([0xe0]));
+      expect(pack(image, { outputName: 'logo', format: 'rgb565' })).toEqual(
+        new Uint8Array([0x00, 0xf8]),
+      );
+      expect(pack(image, { outputName: 'logo', format: 'rgb565be' })).toEqual(
+        new Uint8Array([0xf8, 0x00]),
+      );
+      expect(pack(image, { outputName: 'logo', format: 'rgb888' })).toEqual(
+        new Uint8Array([255, 0, 0]),
+      );
+      expect(() => pack(image, { outputName: 'logo', format: 'argb8888' })).toThrow(
+        'LVGL binary output does not support',
+      );
+    }
+  });
+
+  it('packs only documented generic raw layouts', () => {
+    expect(packGenericRawPixels(image, { outputName: 'logo', format: 'rgba8888' })).toEqual(
+      new Uint8Array([255, 0, 0, 128]),
+    );
+    expect(() => packGenericRawPixels(image, { outputName: 'logo', format: 'indexed1' })).toThrow(
+      'Generic raw output does not support',
+    );
   });
 
   it('emits a version-specific LVGL v8 descriptor', () => {

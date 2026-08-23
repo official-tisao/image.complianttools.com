@@ -35,6 +35,10 @@ export interface EmbeddedExportOptions {
   readonly dithering?: 'none' | 'ordered';
 }
 
+export type LvglBinaryFormat = 'rgb332' | 'rgb565' | 'rgb565be' | 'rgb888';
+export type GenericRawFormat =
+  'rgb565' | 'rgb565be' | 'rgb888' | 'bgr888' | 'argb8888' | 'rgba8888' | 'gray8' | 'mono1';
+
 type AlphaPixelFormat = 'alpha1' | 'alpha2' | 'alpha4' | 'alpha8';
 
 function isAlphaPixelFormat(format: EmbeddedPixelFormat): format is AlphaPixelFormat {
@@ -191,6 +195,41 @@ export function packEmbeddedPixels(image: RasterImage, options: EmbeddedExportOp
     if (options.alphaByte) output[target++] = transparent ? 0 : alpha!;
   }
   return output;
+}
+
+function assertLvglBinaryFormat(format: EmbeddedPixelFormat): asserts format is LvglBinaryFormat {
+  if (!['rgb332', 'rgb565', 'rgb565be', 'rgb888'].includes(format))
+    throw new Error(
+      `LVGL binary output does not support ${format}; choose RGB332, RGB565, RGB565 Swap, or RGB888.`,
+    );
+}
+
+/** Packs the four raw pixel layouts accepted by LVGL v8 binary assets. */
+export function packLvglV8Binary(image: RasterImage, options: EmbeddedExportOptions): Uint8Array {
+  assertLvglBinaryFormat(options.format);
+  return packEmbeddedPixels(image, options);
+}
+
+/** Packs the four raw pixel layouts accepted by LVGL v9 binary assets. */
+export function packLvglV9Binary(image: RasterImage, options: EmbeddedExportOptions): Uint8Array {
+  assertLvglBinaryFormat(options.format);
+  return packEmbeddedPixels(image, options);
+}
+
+/** Packs a headerless generic embedded raster in one of the documented layouts. */
+export function packGenericRawPixels(
+  image: RasterImage,
+  options: EmbeddedExportOptions,
+): Uint8Array {
+  if (
+    !['rgb565', 'rgb565be', 'rgb888', 'bgr888', 'argb8888', 'rgba8888', 'gray8', 'mono1'].includes(
+      options.format,
+    )
+  )
+    throw new Error(
+      `Generic raw output does not support ${options.format}; choose a documented generic pixel layout.`,
+    );
+  return packEmbeddedPixels(image, options);
 }
 
 /** Emits a `uint16_t` RGB565 map suitable for ESP-IDF and TFT_eSPI drawing APIs. */

@@ -8,14 +8,23 @@
     emitLvglV8CArray,
     emitLvglV8RawCArray,
     emitLvglV9CArray,
-    packEmbeddedPixels,
+    packGenericRawPixels,
+    packLvglV8Binary,
+    packLvglV9Binary,
   } from '@complianttools/image-engine';
 
   let status = $state('');
   let error = $state('');
-  let target = $state<'generic' | 'binary' | 'lvgl-v8' | 'lvgl-v9' | 'adafruit' | 'esp-idf'>(
-    'generic',
-  );
+  let target = $state<
+    | 'generic'
+    | 'generic-bin'
+    | 'lvgl-v8'
+    | 'lvgl-v8-bin'
+    | 'lvgl-v9'
+    | 'lvgl-v9-bin'
+    | 'adafruit'
+    | 'esp-idf'
+  >('generic');
   let outputName = $state('image_data');
   let alphaByte = $state(false);
   let chromaKeyed = $state(false);
@@ -97,14 +106,18 @@
             ? emitLvglV8CArray(image, options)
             : target === 'lvgl-v9'
               ? emitLvglV9CArray(image, options)
-              : target === 'adafruit'
-                ? emitAdafruitGfxBitmap(image, outputName)
-                : target === 'esp-idf'
-                  ? emitEspIdfCArray(image, options)
-                  : target === 'binary'
-                    ? new Uint8Array(packEmbeddedPixels(image, options))
-                    : emitEmbeddedCArray(image, options);
-      const binary = target === 'binary';
+              : target === 'lvgl-v9-bin'
+                ? packLvglV9Binary(image, options)
+                : target === 'lvgl-v8-bin'
+                  ? packLvglV8Binary(image, options)
+                  : target === 'adafruit'
+                    ? emitAdafruitGfxBitmap(image, outputName)
+                    : target === 'esp-idf'
+                      ? emitEspIdfCArray(image, options)
+                      : target === 'generic-bin'
+                        ? packGenericRawPixels(image, options)
+                        : emitEmbeddedCArray(image, options);
+      const binary = target.endsWith('-bin');
       const url = URL.createObjectURL(
         new Blob([output], { type: binary ? 'application/octet-stream' : 'text/x-c' }),
       );
@@ -113,8 +126,9 @@
       download.download = `${file.name.replace(/\.[^.]+$/u, '')}.${binary ? 'bin' : 'h'}`;
       download.click();
       URL.revokeObjectURL(url);
-      const footprint =
-        format === 'raw' || format === 'raw-alpha' || format === 'raw-chroma'
+      const footprint = binary
+        ? (output as Uint8Array).byteLength
+        : format === 'raw' || format === 'raw-alpha' || format === 'raw-chroma'
           ? sourceBytes.byteLength
           : embeddedByteSize(image, options);
       status = `Exported ${canvas.width}×${canvas.height} ${target.replace('-', ' ')} data locally (${footprint} bytes flash footprint).`;
@@ -144,9 +158,11 @@
     Target
     <select bind:value={target}>
       <option value="generic">Generic RGB565 C array</option>
-      <option value="binary">Generic RGB565 binary</option>
+      <option value="generic-bin">Generic raw binary</option>
       <option value="lvgl-v9">LVGL v9 image descriptor</option>
+      <option value="lvgl-v9-bin">LVGL v9 binary</option>
       <option value="lvgl-v8">LVGL v8 image descriptor</option>
+      <option value="lvgl-v8-bin">LVGL v8 binary</option>
       <option value="adafruit">Adafruit GFX 1-bit bitmap</option>
       <option value="esp-idf">ESP-IDF / TFT_eSPI RGB565 array</option>
     </select>

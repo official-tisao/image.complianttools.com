@@ -1096,8 +1096,8 @@ and the format's `/docs/formats/` page exists. **Or** when honestly marked unava
 **Vector & document** — [x] SVG in · [x] SVG out · [x] PDF in · [x] PDF out · [x] EPS/PS (preview +
 subset) · [x] AI (PDF-compatible) · [x] PSD/PSB · [x] XCF · [x] WMF/EMF · [x] DXF · [x] CBZ · [x] CBR
 
-**Embedded** — [ ] LVGL v9 C array · [ ] LVGL v9 binary · [ ] LVGL v8 C array · [ ] LVGL v8 binary ·
-[ ] Generic raw · [ ] Adafruit GFX · [ ] ESP-IDF/TFT_eSPI
+**Embedded** — [ ] LVGL v9 C array · [x] LVGL v9 binary · [ ] LVGL v8 C array · [x] LVGL v8 binary ·
+[x] Generic raw · [ ] Adafruit GFX · [ ] ESP-IDF/TFT_eSPI
 
 **Video in (WebCodecs)** — [ ] MP4/M4V/MOV · [ ] WebM · [ ] MKV · [x] AVI
 
