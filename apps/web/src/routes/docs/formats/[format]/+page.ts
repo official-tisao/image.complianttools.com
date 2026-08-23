@@ -155,6 +155,12 @@ const supportedFormats = {
     notes:
       'The local MP4Box demuxer adds no codec download. Frame extraction is offered only when the browser’s VideoDecoder supports the stream codec; video encoding is outside this image workflow.',
   },
+  mkv: {
+    name: 'Matroska (MKV)',
+    summary: 'Matroska is an EBML media container that can carry many video codec families.',
+    notes:
+      'The pinned local demuxer reads Matroska tracks without downloading a codec. Frame extraction is offered only when the browser’s VideoDecoder supports the declared stream codec; unsupported codecs are reported by name.',
+  },
   hdr: {
     name: 'Radiance HDR',
     summary: 'Radiance RGBE stores high-dynamic-range colour using a shared exponent.',

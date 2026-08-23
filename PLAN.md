@@ -1099,7 +1099,7 @@ subset) · [x] AI (PDF-compatible) · [x] PSD/PSB · [x] XCF · [x] WMF/EMF · [
 **Embedded** — [ ] LVGL v9 C array · [x] LVGL v9 binary · [ ] LVGL v8 C array · [x] LVGL v8 binary ·
 [x] Generic raw · [ ] Adafruit GFX · [ ] ESP-IDF/TFT_eSPI
 
-**Video in (WebCodecs)** — [ ] MP4/M4V/MOV · [ ] WebM · [ ] MKV · [x] AVI
+**Video in (WebCodecs)** — [ ] MP4/M4V/MOV · [ ] WebM · [x] MKV · [x] AVI
 
 ---
 

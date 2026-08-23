@@ -6,7 +6,9 @@ import {
   EncodedPacketSink,
   EncodedVideoPacketSource,
   Input,
+  MATROSKA,
   ALL_FORMATS,
+  MkvOutputFormat,
   Mp4OutputFormat,
   Output,
   WebMOutputFormat,
@@ -144,6 +146,35 @@ describe('platform video frame extraction', () => {
 
     // Independently confirm that the generated fixture is a parseable WebM track.
     const media = new Input({ formats: ALL_FORMATS, source: new BufferSource(target.buffer!) });
+    const track = await media.getPrimaryVideoTrack();
+    expect(track).not.toBeNull();
+    expect(await new EncodedPacketSink(track!).getFirstPacket()).not.toBeNull();
+    media.dispose();
+  });
+
+  it('demuxes a real Matroska file produced by the pinned local muxer', async () => {
+    const target = new BufferTarget();
+    const output = new Output({ format: new MkvOutputFormat(), target });
+    const source = new EncodedVideoPacketSource('vp8');
+    output.addVideoTrack(source);
+    await output.start();
+    const sample = new Uint8Array([0x9d, 0x01, 0x2a, 0x02, 0x00, 0x01, 0x00]);
+    await source.add(new EncodedPacket(sample, 'key', 0, 1), {
+      decoderConfig: { codec: 'vp8', codedWidth: 2, codedHeight: 1 },
+    });
+    await output.finalize();
+    expect(target.buffer).toBeInstanceOf(ArrayBuffer);
+
+    const chunk = await demuxContainerFirstVideoPacket(target.buffer!);
+    expect(chunk).toMatchObject({
+      config: { codec: 'vp8', codedWidth: 2, codedHeight: 1 },
+      data: sample,
+      timestamp: 0,
+      key: true,
+    });
+
+    // Restrict independent format detection to Matroska, excluding the WebM subtype.
+    const media = new Input({ formats: [MATROSKA], source: new BufferSource(target.buffer!) });
     const track = await media.getPrimaryVideoTrack();
     expect(track).not.toBeNull();
     expect(await new EncodedPacketSink(track!).getFirstPacket()).not.toBeNull();
