@@ -144,11 +144,30 @@ export const MetadataRemovalOptionsSchema = z
       });
   });
 
+export const RawToolOptionsSchema = z.object({
+  instantPreview: z.boolean().default(true),
+  demosaic: z.enum(['linear', 'vng', 'ppg', 'dcb', 'ahd']).default('ahd'),
+  whiteBalance: z.enum(['as-shot', 'camera', 'auto', 'daylight', 'custom']).default('as-shot'),
+  temperatureKelvin: z.number().min(2_000).max(50_000).default(6_500),
+  tint: z.number().min(-150).max(150).default(0),
+  highlightRecovery: z.enum(['clip', 'unclip', 'blend', 'rebuild']).default('clip'),
+  outputColorSpace: z.enum(['srgb', 'display-p3', 'adobe-rgb', 'gray']).default('srgb'),
+  outputBitDepth: z.coerce
+    .number()
+    .pipe(z.union([z.literal(8), z.literal(16)]))
+    .default(8),
+  gamma: z.number().min(0.1).max(5).default(2.2),
+  exposureEv: z.number().min(-3).max(3).default(0),
+  noiseReductionThreshold: z.number().min(0).max(100).default(0),
+  chromaticAberrationCorrection: z.boolean().default(false),
+});
+
 export type ExportOptionsInput = z.input<typeof ExportOptionsSchema>;
 export type ResizeOptions = z.infer<typeof ResizeOptionsSchema>;
 export type CropOptions = z.infer<typeof CropOptionsSchema>;
 export type RotateOptions = z.infer<typeof RotateOptionsSchema>;
 export type MetadataRemovalOptions = z.infer<typeof MetadataRemovalOptionsSchema>;
+export type RawToolOptions = z.infer<typeof RawToolOptionsSchema>;
 
 export interface OptionDescription {
   label: string;
@@ -159,6 +178,7 @@ export interface OptionDescription {
   advanced: boolean;
   min?: number;
   max?: number;
+  step?: number;
   options?: readonly string[];
   defaultValue: unknown;
 }
@@ -291,5 +311,114 @@ export const metadataRemovalOptionDescriptions: Readonly<Record<string, OptionDe
     advanced: false,
     options: ['keep', 'all', 'gps', 'except-orientation-copyright', 'maker-notes', 'custom'],
     defaultValue: 'keep',
+  },
+};
+
+export const rawToolOptionDescriptions: Readonly<Record<string, OptionDescription>> = {
+  'raw.instantPreview': {
+    label: 'Extract embedded preview first',
+    help: "Downloads the camera's embedded JPEG before developing DNG pixels.",
+    control: 'toggle',
+    group: 'RAW',
+    advanced: false,
+    defaultValue: true,
+  },
+  'raw.demosaic': {
+    label: 'Demosaic',
+    control: 'select',
+    group: 'RAW',
+    advanced: false,
+    options: ['ahd', 'vng', 'ppg', 'dcb', 'linear'],
+    defaultValue: 'ahd',
+  },
+  'raw.whiteBalance': {
+    label: 'White balance',
+    control: 'select',
+    group: 'RAW',
+    advanced: false,
+    options: ['as-shot', 'camera', 'auto', 'daylight', 'custom'],
+    defaultValue: 'as-shot',
+  },
+  'raw.temperatureKelvin': {
+    label: 'Custom temperature',
+    help: 'Used only when white balance is custom.',
+    unit: 'K',
+    control: 'number',
+    group: 'RAW',
+    advanced: true,
+    min: 2_000,
+    max: 50_000,
+    defaultValue: 6_500,
+  },
+  'raw.tint': {
+    label: 'Custom tint',
+    help: 'Used only when white balance is custom.',
+    control: 'number',
+    group: 'RAW',
+    advanced: true,
+    min: -150,
+    max: 150,
+    defaultValue: 0,
+  },
+  'raw.highlightRecovery': {
+    label: 'Highlight recovery',
+    control: 'select',
+    group: 'RAW',
+    advanced: false,
+    options: ['clip', 'unclip', 'blend', 'rebuild'],
+    defaultValue: 'clip',
+  },
+  'raw.outputColorSpace': {
+    label: 'Output colour space',
+    control: 'select',
+    group: 'Output',
+    advanced: false,
+    options: ['srgb', 'display-p3', 'adobe-rgb', 'gray'],
+    defaultValue: 'srgb',
+  },
+  'raw.outputBitDepth': {
+    label: 'Output bit depth',
+    control: 'select',
+    group: 'Output',
+    advanced: false,
+    options: ['8', '16'],
+    defaultValue: 8,
+  },
+  'raw.gamma': {
+    label: 'Gamma',
+    control: 'number',
+    group: 'RAW',
+    advanced: true,
+    min: 0.1,
+    max: 5,
+    step: 0.1,
+    defaultValue: 2.2,
+  },
+  'raw.exposureEv': {
+    label: 'Exposure',
+    unit: 'EV',
+    control: 'number',
+    group: 'RAW',
+    advanced: false,
+    min: -3,
+    max: 3,
+    step: 0.1,
+    defaultValue: 0,
+  },
+  'raw.noiseReductionThreshold': {
+    label: 'Noise-reduction threshold',
+    control: 'number',
+    group: 'RAW',
+    advanced: true,
+    min: 0,
+    max: 100,
+    defaultValue: 0,
+  },
+  'raw.chromaticAberrationCorrection': {
+    label: 'Chromatic-aberration correction',
+    control: 'toggle',
+    group: 'RAW',
+    advanced: true,
+    defaultValue: false,
   },
 };

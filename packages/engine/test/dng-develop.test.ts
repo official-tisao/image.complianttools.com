@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { developDng, developDngMosaic, type DngMosaic } from '../src/index.js';
+import {
+  RawToolOptionsSchema,
+  developDng,
+  developDngMosaic,
+  type DngMosaic,
+} from '../src/index.js';
 
 function constantPlaneReferenceDng(): Uint8Array {
   const width = 4;
@@ -67,6 +72,27 @@ const mosaic: DngMosaic = {
 };
 
 describe('DNG develop orchestration', () => {
+  it('defines bounded, neutral UI defaults in the shared option schema', () => {
+    expect(RawToolOptionsSchema.parse({})).toEqual({
+      instantPreview: true,
+      demosaic: 'ahd',
+      whiteBalance: 'as-shot',
+      temperatureKelvin: 6500,
+      tint: 0,
+      highlightRecovery: 'clip',
+      outputColorSpace: 'srgb',
+      outputBitDepth: 8,
+      gamma: 2.2,
+      exposureEv: 0,
+      noiseReductionThreshold: 0,
+      chromaticAberrationCorrection: false,
+    });
+    expect(RawToolOptionsSchema.parse({ outputBitDepth: '16' }).outputBitDepth).toBe(16);
+    expect(() => RawToolOptionsSchema.parse({ exposureEv: 4 })).toThrow();
+    expect(() => RawToolOptionsSchema.parse({ temperatureKelvin: 1000 })).toThrow();
+    expect(() => RawToolOptionsSchema.parse({ noiseReductionThreshold: 101 })).toThrow();
+  });
+
   it('develops a DNG fixture to its analytically derived reference pixels', () => {
     const output = developDng(constantPlaneReferenceDng(), {
       demosaic: 'linear',

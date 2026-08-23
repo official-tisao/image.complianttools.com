@@ -31,6 +31,24 @@ function uncompressedDng(): Buffer {
   return bytes;
 }
 
+test('RAW controls are generated with the bounded schema defaults', async ({ page }) => {
+  await page.goto('/raw-converter');
+  await page.waitForLoadState('networkidle');
+  await expect(page.getByLabel('Extract embedded preview first')).toBeChecked();
+  await expect(page.getByLabel('Demosaic')).toHaveValue('ahd');
+  await expect(page.getByLabel('White balance')).toHaveValue('as-shot');
+  await expect(page.getByLabel('Highlight recovery')).toHaveValue('clip');
+  await expect(page.getByLabel('Output colour space')).toHaveValue('srgb');
+  await expect(page.getByLabel('Output bit depth')).toHaveValue('8');
+  await expect(page.getByLabel('Exposure')).toHaveValue('0');
+  await page.getByText('Advanced', { exact: true }).click();
+  await expect(page.getByLabel('Custom temperature')).toHaveAttribute('min', '2000');
+  await expect(page.getByLabel('Custom temperature')).toHaveAttribute('max', '50000');
+  await expect(page.getByLabel('Gamma')).toHaveAttribute('step', '0.1');
+  await expect(page.getByLabel('Noise-reduction threshold')).toHaveValue('0');
+  await expect(page.getByLabel('Chromatic-aberration correction')).not.toBeChecked();
+});
+
 test('RAW converter labels and downloads the largest embedded camera preview', async ({ page }) => {
   const container = Buffer.alloc(96);
   container.set([0x46, 0x55, 0x4a, 0x49], 0);

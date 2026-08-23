@@ -48,6 +48,7 @@
           type="range"
           min={description.min}
           max={description.max}
+          step={description.step}
           value={Number(current(path, description))}
           oninput={(event) => onChange(path, Number(event.currentTarget.value))}
         /><input
@@ -55,6 +56,7 @@
           type="number"
           min={description.min}
           max={description.max}
+          step={description.step}
           value={Number(current(path, description))}
           oninput={(event) => onChange(path, Number(event.currentTarget.value))}
         /><span>{description.unit}</span>
@@ -65,6 +67,8 @@
           id={`control-${path}`}
           type="number"
           min={description.min}
+          max={description.max}
+          step={description.step}
           value={Number(current(path, description))}
           oninput={(event) => onChange(path, Number(event.currentTarget.value))}
         /><span>{description.unit}</span>
