@@ -22,7 +22,7 @@ describe('P2 codec registry', () => {
       opfs: false,
       webCodecs: false,
     });
-    expect(capabilities).toHaveLength(46);
+    expect(capabilities).toHaveLength(56);
     expect(capabilities.find((entry) => entry.id === 'ktx')).toMatchObject({
       decode: 'unavailable',
       encode: 'unavailable',
@@ -133,12 +133,18 @@ describe('P2 codec registry', () => {
       encode: 'unavailable',
       lazyBytes: 24_000,
     });
-    for (const id of ['mp4', 'webm'] as const)
+    for (const id of ['mp4', 'm4v', 'mov', '3gp', 'webm', 'mkv', 'ogv'] as const)
       expect(capabilities.find((entry) => entry.id === id)).toMatchObject({
         decode: 'unavailable',
         encode: 'unavailable',
         decodeUnavailableReason: expect.stringContaining('VideoDecoder'),
         encodeUnavailableReason: expect.stringContaining('Video encoding is outside'),
+      });
+    for (const id of ['avi', 'wmv', 'flv', 'mts', 'm2ts'] as const)
+      expect(capabilities.find((entry) => entry.id === id)).toMatchObject({
+        decode: 'unavailable',
+        encode: 'unavailable',
+        decodeUnavailableReason: expect.stringContaining('container reader'),
       });
     for (const id of ['jp2', 'pict', 'mng', 'flif', 'cdr', 'dwg', 'djvu', 'ktx'] as const) {
       expect(capabilities.find((entry) => entry.id === id)).toMatchObject({
@@ -191,7 +197,9 @@ describe('P2 codec registry', () => {
       opfs: false,
       webCodecs: true,
     });
-    for (const id of ['heic', 'mp4', 'webm'] as const)
+    for (const id of ['heic', 'mp4', 'm4v', 'mov', '3gp', 'webm', 'mkv', 'ogv'] as const)
       expect(capabilities.find((entry) => entry.id === id)?.decode).toBe('lazy');
+    for (const id of ['avi', 'wmv', 'flv', 'mts', 'm2ts'] as const)
+      expect(capabilities.find((entry) => entry.id === id)?.decode).toBe('unavailable');
   });
 });

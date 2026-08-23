@@ -544,12 +544,13 @@ an `LV_IMG_DECLARE` / `lv_image_set_src` usage snippet.
 
 ### 5.6 Video input (T13 only)
 
-Decode only, for frame extraction: `.mp4 .m4v .mov .webm .mkv .avi .ogv .wmv† .flv† .3gp .mts .m2ts`
+Decode only, for frame extraction: `.mp4 .m4v .mov .webm .mkv .avi† .ogv .wmv† .flv† .3gp .mts† .m2ts†`
 Implemented with the platform's **WebCodecs `VideoDecoder`** plus `mp4box` (BSD-3) and
-`mediabunny` (MPL-2.0) for MP4/WebM container reading — no bundled codec, no patent exposure, and hardware
-acceleration for free. Container and codec support is therefore **whatever the browser provides**, so
-it is capability-probed per §5.7 and reported honestly rather than promised. Formats the platform
-cannot decode say exactly that.
+`mediabunny` (MPL-2.0) for ISO-BMFF (MP4/M4V/MOV/3GP), Matroska/WebM, and Ogg container reading — no
+bundled codec, no patent exposure, and hardware acceleration for free. AVI, WMV, FLV, MTS, and M2TS
+are explicitly unavailable because the pinned local reader does not parse those containers and an
+FFmpeg fallback is deliberately excluded. For readable containers, codec support is **whatever the
+browser provides**, so it is capability-probed per §5.7 and reported honestly rather than promised.
 
 ### 5.7 Runtime capability probing
 

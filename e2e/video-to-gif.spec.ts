@@ -18,3 +18,18 @@ test('video frame tool reports an invalid local container without a network fall
   await expect(page.getByRole('alert')).toBeVisible();
   expect(crossOrigin).toEqual([]);
 });
+
+test('video frame tool names a documented container that has no permitted local parser', async ({
+  page,
+}) => {
+  await page.goto('/video-to-gif');
+  await page.waitForLoadState('networkidle');
+  await page.locator('input[type=file]').setInputFiles({
+    name: 'legacy.avi',
+    mimeType: 'video/x-msvideo',
+    buffer: Buffer.from('RIFF-invalid-AVI'),
+  });
+  await expect(page.getByRole('alert')).toContainText(
+    'AVI input is unavailable because the pinned local container reader does not parse this container',
+  );
+});

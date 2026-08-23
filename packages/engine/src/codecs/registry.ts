@@ -28,6 +28,33 @@ export function requiresCodecDownloadConsent(bytes: number): boolean {
   return bytes > LARGE_CODEC_DOWNLOAD_BYTES;
 }
 
+const videoEncodeUnavailableReason =
+  'Video encoding is outside this image tool; extracted frames can be exported as standard images.';
+
+function platformVideoDescriptor(id: FormatId, label: string): CodecDescriptor {
+  return {
+    id,
+    animation: true,
+    lazyBytes: 0,
+    supports: ['decode'],
+    load: () => import('./platform/video.js'),
+    requiresWebCodecsDecode: true,
+    decodeUnavailableReason: `${label} frame extraction requires a supported local container and a browser WebCodecs VideoDecoder that supports the file’s video codec.`,
+    encodeUnavailableReason: videoEncodeUnavailableReason,
+  };
+}
+
+function unavailableVideoDescriptor(id: FormatId, label: string): CodecDescriptor {
+  return {
+    id,
+    animation: true,
+    lazyBytes: 0,
+    supports: [],
+    decodeUnavailableReason: `${label} input is unavailable because the pinned local container reader does not parse this container; no bundled FFmpeg fallback is permitted.`,
+    encodeUnavailableReason: videoEncodeUnavailableReason,
+  };
+}
+
 export const codecRegistry: readonly CodecDescriptor[] = [
   {
     id: 'ktx',
@@ -127,30 +154,18 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     encodeUnavailableReason:
       'HEIC encoding is deliberately excluded because HEVC has active patent pools and available browser encoders are GPL or commercial.',
   },
-  {
-    id: 'mp4',
-    animation: true,
-    lazyBytes: 0,
-    supports: ['decode'],
-    load: () => import('./platform/video.js'),
-    requiresWebCodecsDecode: true,
-    decodeUnavailableReason:
-      'MP4 frame extraction requires a browser WebCodecs VideoDecoder that supports the file’s video codec.',
-    encodeUnavailableReason:
-      'Video encoding is outside this image tool; extracted frames can be exported as standard images.',
-  },
-  {
-    id: 'webm',
-    animation: true,
-    lazyBytes: 0,
-    supports: ['decode'],
-    load: () => import('./platform/video.js'),
-    requiresWebCodecsDecode: true,
-    decodeUnavailableReason:
-      'WebM frame extraction requires a browser WebCodecs VideoDecoder that supports the file’s video codec.',
-    encodeUnavailableReason:
-      'Video encoding is outside this image tool; extracted frames can be exported as standard images.',
-  },
+  platformVideoDescriptor('mp4', 'MP4'),
+  platformVideoDescriptor('m4v', 'M4V'),
+  platformVideoDescriptor('mov', 'MOV'),
+  platformVideoDescriptor('3gp', '3GP'),
+  platformVideoDescriptor('webm', 'WebM'),
+  platformVideoDescriptor('mkv', 'Matroska'),
+  platformVideoDescriptor('ogv', 'Ogg video'),
+  unavailableVideoDescriptor('avi', 'AVI'),
+  unavailableVideoDescriptor('wmv', 'WMV'),
+  unavailableVideoDescriptor('flv', 'FLV'),
+  unavailableVideoDescriptor('mts', 'MTS'),
+  unavailableVideoDescriptor('m2ts', 'M2TS'),
   {
     id: 'jpeg',
     animation: false,

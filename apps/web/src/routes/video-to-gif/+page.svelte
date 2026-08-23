@@ -4,18 +4,42 @@
     encodeGif,
     engineErrorMessage,
     extractContainerVideoFrame,
+    getCodec,
+    type FormatId,
   } from '@complianttools/image-engine';
 
   let timestamp = $state(0);
   let status = $state('');
   let error = $state('');
 
+  const videoFormats: Readonly<Record<string, FormatId>> = {
+    mp4: 'mp4',
+    m4v: 'm4v',
+    mov: 'mov',
+    '3gp': '3gp',
+    webm: 'webm',
+    mkv: 'mkv',
+    ogv: 'ogv',
+    avi: 'avi',
+    wmv: 'wmv',
+    flv: 'flv',
+    mts: 'mts',
+    m2ts: 'm2ts',
+  };
+
   async function extract(file: File | undefined) {
     status = '';
     error = '';
     if (!file) return;
     try {
-      const format = /\.webm$/iu.test(file.name) ? 'webm' : 'mp4';
+      const extension = file.name.split('.').pop()?.toLowerCase() ?? '';
+      const format = videoFormats[extension];
+      if (!format) throw new Error('Choose a supported video container extension.');
+      const codec = getCodec(format);
+      if (!codec.supports.includes('decode'))
+        throw new Error(
+          codec.decodeUnavailableReason ?? `${extension.toUpperCase()} is unavailable.`,
+        );
       const frame = await decodeWithTypedErrors(format, () =>
         extractContainerVideoFrame(file, timestamp),
       );
@@ -46,7 +70,8 @@
   <a href="/convert">← Convert</a>
   <h1>Video Frame to GIF</h1>
   <p>
-    Extract one frame from MP4 or WebM locally. Availability depends on your browser’s WebCodecs
+    Extract one frame from MP4, M4V, MOV, 3GP, WebM, MKV, or OGV locally. AVI, WMV, FLV, MTS, and
+    M2TS are named explicitly when unavailable. Decoding also depends on your browser’s WebCodecs
     support for the video stream; no video codec is downloaded.
   </p>
   <label>
@@ -54,10 +79,10 @@
     <input type="number" min="0" step="0.01" bind:value={timestamp} />
   </label>
   <label>
-    Choose an MP4 or WebM video
+    Choose a video
     <input
       type="file"
-      accept="video/mp4,video/webm,.m4v,.mov"
+      accept="video/mp4,video/webm,video/quicktime,video/ogg,.m4v,.mov,.3gp,.mkv,.avi,.wmv,.flv,.mts,.m2ts"
       onchange={(event) => void extract(event.currentTarget.files?.[0])}
     />
   </label>
