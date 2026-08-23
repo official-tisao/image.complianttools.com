@@ -7,11 +7,42 @@ type PsdDocument = {
   readonly imageData?: { readonly data: Uint8ClampedArray | Uint8Array };
 };
 type PsdModule = {
+  initializeCanvas(
+    createCanvas: (width: number, height: number) => HTMLCanvasElement,
+    createImageData: (width: number, height: number) => ImageData,
+  ): void;
   readPsd(input: ArrayBuffer | Uint8Array, options: { useImageData: true }): PsdDocument;
 };
 
 async function loadPsd(): Promise<PsdModule> {
-  return import('ag-psd') as Promise<PsdModule>;
+  const module = (await import('ag-psd')) as PsdModule;
+  module.initializeCanvas(
+    (width, height) => {
+      if (typeof document === 'undefined')
+        throw new Error('PSD layer rendering requires a browser canvas.');
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      return canvas;
+    },
+    (width, height) => {
+      if (typeof ImageData !== 'undefined') {
+        try {
+          const image = new ImageData(width, height);
+          if (image.data instanceof Uint8ClampedArray) return image;
+        } catch {
+          // Some non-browser codec shims expose an incompatible ImageData constructor.
+        }
+      }
+      return {
+        width,
+        height,
+        colorSpace: 'srgb',
+        data: new Uint8ClampedArray(width * height * 4),
+      } as ImageData;
+    },
+  );
+  return module;
 }
 
 /** Decodes the flattened PSD/PSB composite locally; layer data remains in the source document. */

@@ -15,6 +15,10 @@ The OpenEXR fixture is a generated standards-structured 1×1 uncompressed scanli
 half-float B, G, R, and A channels. It is constructed from the public OpenEXR container layout and
 contains no third-party visual content.
 
+The PSD fixture is a generated 2×1 opaque RGB composite produced locally by the exact pinned
+`ag-psd` 31.0.2 dependency with RLE compression. Its two pixels are synthetic and asserted exactly
+after decoding through the production adapter.
+
 The adversarial corpus in `adversarial-codecs.test.ts` is also self-generated. Empty input and wrong
 magic are exercised through the typed error boundary for BMP, CUR, DDS, FITS, GIF, Radiance HDR,
 ICO, PCX, PFM, PNM/PAM, QOI, SGI, Sun Raster, TGA, TIFF, WBMP, XBM, and XPM. The remaining cases include
