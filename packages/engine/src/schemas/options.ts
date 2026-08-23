@@ -201,6 +201,10 @@ export const VectorizeToolOptionsSchema = z.object({
   curveTolerance: z.number().min(0.01).max(10).default(1),
 });
 
+export const FaviconToolOptionsSchema = z.object({
+  siteName: z.string().trim().min(1).max(128).default('Site'),
+});
+
 export const CbzToolOptionsSchema = z.object({
   operation: z.enum(['create', 'extract', 'pdf']).default('create'),
 });
@@ -348,6 +352,7 @@ export type PdfToImageOptions = z.infer<typeof PdfToImageOptionsSchema>;
 export type ImageToPdfOptions = z.infer<typeof ImageToPdfOptionsSchema>;
 export type SvgRasterizeToolOptions = z.infer<typeof SvgRasterizeToolOptionsSchema>;
 export type VectorizeToolOptions = z.infer<typeof VectorizeToolOptionsSchema>;
+export type FaviconToolOptions = z.infer<typeof FaviconToolOptionsSchema>;
 export type CbzToolOptions = z.infer<typeof CbzToolOptionsSchema>;
 export type Base64ToolOptions = z.infer<typeof Base64ToolOptionsSchema>;
 export type GifConverterToolOptions = z.infer<typeof GifConverterToolOptionsSchema>;
@@ -752,6 +757,18 @@ export const vectorizeToolOptionDescriptions: Readonly<Record<string, OptionDesc
     max: 10,
     step: 0.01,
     defaultValue: 1,
+  },
+};
+
+export const faviconToolOptionDescriptions: Readonly<Record<string, OptionDescription>> = {
+  'favicon.siteName': {
+    label: 'Site name',
+    help: 'Used for the name and short_name fields in site.webmanifest.',
+    control: 'text',
+    group: 'Favicon package',
+    advanced: false,
+    pattern: '.{1,128}',
+    defaultValue: 'Site',
   },
 };
 

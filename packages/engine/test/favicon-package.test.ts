@@ -2,6 +2,7 @@ import { unzipSync } from 'fflate';
 import { describe, expect, it } from 'vitest';
 
 import {
+  FaviconToolOptionsSchema,
   createFaviconPackage,
   createRaster,
   encodeMultiIco,
@@ -18,6 +19,11 @@ const fakePngEncoder = async (image: { width: number; height: number }) =>
   Uint8Array.of(137, 80, 78, 71, image.width >>> 8, image.width & 255).buffer;
 
 describe('favicon package', () => {
+  it('defines a bounded generated site-name default', () => {
+    expect(FaviconToolOptionsSchema.parse({})).toEqual({ siteName: 'Site' });
+    expect(() => FaviconToolOptionsSchema.parse({ siteName: ' ' })).toThrow();
+    expect(() => FaviconToolOptionsSchema.parse({ siteName: 'x'.repeat(129) })).toThrow();
+  });
   it('writes an ordered four-resolution ICO directory', () => {
     const images = [...FAVICON_ICO_SIZES]
       .reverse()
@@ -48,6 +54,7 @@ describe('favicon package', () => {
       'site.webmanifest',
     ]);
     const archive = unzipSync(new Uint8Array(first.archive));
+    expect(new Uint8Array(first.previewPng)).toEqual(archive['favicon-32x32.png']);
     expect(new DataView(archive['favicon.ico']!.buffer).getUint16(4, true)).toBe(4);
     expect(new TextDecoder().decode(archive['site.webmanifest'])).toBe(first.manifest);
     expect(JSON.parse(first.manifest)).toMatchObject({

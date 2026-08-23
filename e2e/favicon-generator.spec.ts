@@ -1,6 +1,9 @@
 import { readFile } from 'node:fs/promises';
 
 import { expect, test } from '@playwright/test';
+import fflate from '../packages/engine/node_modules/fflate/lib/node.cjs';
+
+const { unzipSync } = fflate;
 
 test('downloads the complete deterministic favicon package without network fallback', async ({
   page,
@@ -23,18 +26,31 @@ test('downloads the complete deterministic favicon package without network fallb
     }),
   );
   await page.getByLabel('Site name').fill('Example Site');
-  const pending = page.waitForEvent('download');
   await page.getByLabel('Choose an image').setInputFiles({
     name: 'source.png',
     mimeType: 'image/png',
     buffer: png,
   });
+  await page.getByRole('button', { name: 'Create package' }).click();
+  await expect(page.getByRole('status')).toContainText('Created favicon.ico');
+  const preview = page.getByRole('img', { name: 'Generated 32 by 32 favicon' });
+  await expect(preview).toBeVisible();
+  const previewUrl = await preview.getAttribute('src');
+  const previewBytes = Buffer.from(
+    await page.evaluate(
+      async (url) => [...new Uint8Array(await (await fetch(url!)).arrayBuffer())],
+      previewUrl,
+    ),
+  );
+  const pending = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Download package' }).click();
   const download = await pending;
   expect(download.suggestedFilename()).toBe('favicon-package.zip');
   const path = await download.path();
   expect(path).not.toBeNull();
   const archive = await readFile(path!);
-  const storedText = new TextDecoder('latin1').decode(archive);
+  const unpacked = unzipSync(archive);
+  expect(Buffer.from(unpacked['favicon-32x32.png']!)).toEqual(previewBytes);
   for (const name of [
     'android-chrome-192x192.png',
     'android-chrome-512x512.png',
@@ -45,9 +61,10 @@ test('downloads the complete deterministic favicon package without network fallb
     'favicon.ico',
     'site.webmanifest',
   ])
-    expect(storedText).toContain(name);
-  expect(storedText).toContain('"name": "Example Site"');
+    expect(Object.keys(unpacked)).toContain(name);
+  expect(JSON.parse(new TextDecoder().decode(unpacked['site.webmanifest']))).toMatchObject({
+    name: 'Example Site',
+  });
   await expect(page.getByLabel('HTML link snippet')).toHaveValue(/apple-touch-icon/u);
-  await expect(page.getByRole('status')).toContainText('Created favicon.ico');
   expect(crossOrigin).toEqual([]);
 });

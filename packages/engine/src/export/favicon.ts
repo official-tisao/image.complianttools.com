@@ -13,6 +13,8 @@ export interface FaviconPackage {
   readonly html: string;
   readonly manifest: string;
   readonly fileNames: readonly string[];
+  /** Exact favicon-32x32.png bytes included in the archive, for faithful preview. */
+  readonly previewPng: ArrayBuffer;
 }
 
 type PngEncoder = (image: RasterImage) => Promise<ArrayBuffer>;
@@ -91,10 +93,15 @@ export async function createFaviconPackage(
   };
   for (const file of pngFiles) archive[file.name] = file.bytes;
   const zipped = zipSync(archive, { level: 0, mtime: new Date(1980, 0, 1) });
+  const preview = archive['favicon-32x32.png']!;
   return {
     archive: zipped.buffer.slice(zipped.byteOffset, zipped.byteOffset + zipped.byteLength),
     html,
     manifest,
     fileNames: Object.keys(archive).sort(),
+    previewPng: preview.buffer.slice(
+      preview.byteOffset,
+      preview.byteOffset + preview.byteLength,
+    ) as ArrayBuffer,
   };
 }
