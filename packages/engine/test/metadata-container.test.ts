@@ -13,6 +13,7 @@ import {
   stripPngMetadata,
   stripWebpMetadata,
   withTypedEngineErrors,
+  withTypedEngineErrorsAsync,
 } from '../src/index.js';
 
 describe('metadata removal options', () => {
@@ -28,6 +29,17 @@ describe('metadata removal options', () => {
       expect((reason as { detail: string }).detail).toContain('Metadata inspection failed');
       expect((reason as { detail: string }).detail).toContain('GIF metadata');
     }
+  });
+  it('converts rejected operations into typed errors with a useful remedy', async () => {
+    await expect(
+      withTypedEngineErrorsAsync('PDF creation failed', 'Choose a smaller image.', async () => {
+        throw new Error('invalid page');
+      }),
+    ).rejects.toMatchObject({
+      kind: 'internal',
+      detail: 'PDF creation failed: invalid page',
+      remedy: 'Choose a smaller image.',
+    });
   });
   it('defaults to a byte-preserving no-op', () => {
     expect(MetadataRemovalOptionsSchema.parse({})).toEqual({ preset: 'keep', selectedTags: [] });

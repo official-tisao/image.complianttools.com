@@ -48,6 +48,24 @@ export function withTypedEngineErrors<T>(operation: string, remedy: string, run:
   }
 }
 
+/** Async counterpart for operations whose failure is reported by a rejected promise. */
+export async function withTypedEngineErrorsAsync<T>(
+  operation: string,
+  remedy: string,
+  run: () => Promise<T>,
+): Promise<T> {
+  try {
+    return await run();
+  } catch (cause) {
+    if (isEngineError(cause)) throw cause;
+    throw {
+      kind: 'internal',
+      detail: `${operation}: ${cause instanceof Error ? cause.message : String(cause)}`,
+      remedy,
+    } satisfies EngineError;
+  }
+}
+
 export function engineErrorMessage(error: unknown): string {
   if (!isEngineError(error)) return error instanceof Error ? error.message : String(error);
   if (error.kind === 'decode-failed' || error.kind === 'internal') return error.detail;

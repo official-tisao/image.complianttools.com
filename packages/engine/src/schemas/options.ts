@@ -167,6 +167,15 @@ export const PdfToImageOptionsSchema = z.object({
   dpi: z.number().min(18).max(600).default(72),
 });
 
+export const ImageToPdfOptionsSchema = z.object({
+  pageSize: z.enum(['image', 'a4', 'letter']).default('image'),
+  orientation: z.enum(['auto', 'portrait', 'landscape']).default('auto'),
+  marginPoints: z.number().min(0).max(144).default(0),
+  ordering: z.enum(['input', 'filename']).default('input'),
+  compression: z.enum(['lossless', 'jpeg']).default('lossless'),
+  jpegQuality: z.number().min(1).max(100).default(82),
+});
+
 export const SvgRasterizeToolOptionsSchema = z
   .object({
     mode: z.enum(['original', 'width', 'height', 'scale']).default('original'),
@@ -331,6 +340,7 @@ export type RotateOptions = z.infer<typeof RotateOptionsSchema>;
 export type MetadataRemovalOptions = z.infer<typeof MetadataRemovalOptionsSchema>;
 export type RawToolOptions = z.infer<typeof RawToolOptionsSchema>;
 export type PdfToImageOptions = z.infer<typeof PdfToImageOptionsSchema>;
+export type ImageToPdfOptions = z.infer<typeof ImageToPdfOptionsSchema>;
 export type SvgRasterizeToolOptions = z.infer<typeof SvgRasterizeToolOptionsSchema>;
 export type CbzToolOptions = z.infer<typeof CbzToolOptionsSchema>;
 export type Base64ToolOptions = z.infer<typeof Base64ToolOptionsSchema>;
@@ -617,6 +627,72 @@ export const pdfToImageOptionDescriptions: Readonly<Record<string, OptionDescrip
     max: 600,
     step: 1,
     defaultValue: 72,
+  },
+};
+
+export const imageToPdfOptionDescriptions: Readonly<Record<string, OptionDescription>> = {
+  'pdf.pageSize': {
+    label: 'Page size',
+    help: 'Image size preserves one PDF point per source pixel. A4 and Letter fit and centre each image.',
+    control: 'select',
+    group: 'PDF',
+    advanced: false,
+    options: ['image', 'a4', 'letter'],
+    optionLabels: { image: 'Match each image', a4: 'A4', letter: 'US Letter' },
+    defaultValue: 'image',
+  },
+  'pdf.orientation': {
+    label: 'Orientation',
+    help: 'Auto follows each source image. Portrait or landscape forces every output page.',
+    control: 'segmented',
+    group: 'PDF',
+    advanced: false,
+    options: ['auto', 'portrait', 'landscape'],
+    optionLabels: { auto: 'Auto', portrait: 'Portrait', landscape: 'Landscape' },
+    defaultValue: 'auto',
+  },
+  'pdf.marginPoints': {
+    label: 'Margin',
+    help: 'Adds an equal white margin inside every page. There are 72 points per inch.',
+    unit: 'pt',
+    control: 'number',
+    group: 'PDF',
+    advanced: false,
+    min: 0,
+    max: 144,
+    step: 1,
+    defaultValue: 0,
+  },
+  'pdf.ordering': {
+    label: 'Page ordering',
+    control: 'segmented',
+    group: 'PDF',
+    advanced: false,
+    options: ['input', 'filename'],
+    optionLabels: { input: 'Selected order', filename: 'Filename' },
+    defaultValue: 'input',
+  },
+  'pdf.compression': {
+    label: 'Image compression',
+    help: 'Lossless embeds PNG pages. JPEG can reduce size but may alter pixels.',
+    control: 'segmented',
+    group: 'PDF',
+    advanced: false,
+    options: ['lossless', 'jpeg'],
+    optionLabels: { lossless: 'Lossless PNG', jpeg: 'JPEG' },
+    defaultValue: 'lossless',
+  },
+  'pdf.jpegQuality': {
+    label: 'JPEG quality',
+    help: 'Used only for JPEG compression.',
+    unit: '%',
+    control: 'slider',
+    group: 'PDF',
+    advanced: true,
+    min: 1,
+    max: 100,
+    step: 1,
+    defaultValue: 82,
   },
 };
 
