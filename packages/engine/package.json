@@ -44,6 +44,7 @@
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "bench": "node bench/run.mjs",
     "test": "node test/all.test.mjs && vitest run test/codec-roundtrip.test.ts test/phase1.test.ts test/bmp-codec.test.ts test/codec-registry.test.ts test/simple-codec-framework.test.ts test/qoi-codec.test.ts test/pnm-codec.test.ts test/pcx-codec.test.ts test/pfm-codec.test.ts test/fits-codec.test.ts test/hdr-codec.test.ts test/sgi-codec.test.ts test/sun-raster-codec.test.ts test/tga-codec.test.ts test/wbmp-codec.test.ts test/xbm-codec.test.ts test/dds-codec.test.ts test/apng-codec.test.ts test/svg-safety.test.ts test/svg-rasterize.test.ts test/vectorize.test.ts test/gif-codec.test.ts test/exr-codec.test.ts test/tiff-codec.test.ts test/wasm-codec.test.ts test/heic-codec.test.ts test/raw-preview.test.ts test/dng.test.ts test/demosaic.test.ts test/embedded-export.test.ts test/ico-export.test.ts test/metadata-container.test.ts test/exif.test.ts test/icc.test.ts test/video-codec.test.ts test/adversarial-codecs.test.ts test/pdf.test.ts test/pdf-read.test.ts test/psd.test.ts test/cbz.test.ts",
     "lint": "tsc -p tsconfig.json --noEmit",
     "typecheck": "tsc -p tsconfig.json --noEmit"
