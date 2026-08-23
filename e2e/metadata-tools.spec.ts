@@ -169,3 +169,63 @@ test('metadata and inspector adversarial failures surface a typed remedy', async
     await expect(page.getByRole('alert')).toContainText('Remedy:');
   }
 });
+
+test('metadata tools are keyboard-operable end to end', async ({ page }) => {
+  test.setTimeout(60_000);
+  const copyright = copyrightJpeg();
+
+  await page.goto('/exif-viewer');
+  await page.waitForLoadState('networkidle');
+  const viewerInput = page.locator('input[type=file]');
+  await viewerInput.focus();
+  await expect(viewerInput).toBeFocused();
+  // Playwright supplies the file at the native picker boundary; every application control below
+  // is reached and activated with the keyboard.
+  await viewerInput.setInputFiles(copyright);
+  const copyrightToggle = page.getByRole('checkbox', { name: 'Copyright' });
+  await copyrightToggle.focus();
+  await page.keyboard.press('Space');
+  await expect(copyrightToggle).toBeChecked();
+  const copyrightValue = page.getByRole('textbox', { name: 'Copyright', exact: true });
+  await copyrightValue.focus();
+  await page.keyboard.press('ControlOrMeta+A');
+  await page.keyboard.type('Keys');
+  const viewerDownload = page.waitForEvent('download');
+  const saveButton = page.getByRole('button', { name: 'Download edited JPEG' });
+  await saveButton.focus();
+  await page.keyboard.press('Enter');
+  const editedPath = await (await viewerDownload).path();
+  expect(editedPath).not.toBeNull();
+  expect((await readFile(editedPath!)).subarray(60, 65)).toEqual(Buffer.from('Keys\0', 'ascii'));
+
+  await page.goto('/remove-exif');
+  await page.waitForLoadState('networkidle');
+  const preset = page.getByLabel('Removal preset');
+  await preset.focus();
+  await expect(preset).toBeFocused();
+  await page.keyboard.press('End');
+  await expect(preset).toHaveValue('custom');
+  await page.keyboard.press('Tab');
+  const artist = page.getByRole('checkbox', { name: 'Artist' });
+  await artist.focus();
+  await page.keyboard.press('Space');
+  await expect(artist).toBeChecked();
+  const removerInput = page.locator('input[type=file]');
+  await removerInput.focus();
+  await expect(removerInput).toBeFocused();
+
+  await page.goto('/image-info');
+  await page.waitForLoadState('networkidle');
+  const inspectorInput = page.locator('input[type=file]');
+  await inspectorInput.focus();
+  await expect(inspectorInput).toBeFocused();
+  await inspectorInput.setInputFiles({
+    name: 'two-by-three.png',
+    mimeType: 'image/png',
+    buffer: Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAIAAAADCAQAAABWKLW/AAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+      'base64',
+    ),
+  });
+  await expect(page.getByText('2 × 3 px')).toBeVisible();
+});

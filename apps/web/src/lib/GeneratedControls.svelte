@@ -86,7 +86,7 @@
       <select
         id={`control-${path}`}
         value={String(current(path, description))}
-        onchange={(event) => onChange(path, event.currentTarget.value)}
+        oninput={(event) => onChange(path, event.currentTarget.value)}
         >{#each description.options ?? [] as option (option)}<option value={option}
             >{description.optionLabels?.[option] ?? option}</option
           >{/each}</select

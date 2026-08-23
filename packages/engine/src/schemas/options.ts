@@ -128,11 +128,18 @@ export const RotateOptionsSchema = z.object({
   applyExifOrientation: z.boolean().default(true),
 });
 
+export const MetadataRemovalPresetSchema = z.enum([
+  'keep',
+  'all',
+  'gps',
+  'except-orientation-copyright',
+  'maker-notes',
+  'custom',
+]);
+
 export const MetadataRemovalOptionsSchema = z
   .object({
-    preset: z
-      .enum(['keep', 'all', 'gps', 'except-orientation-copyright', 'maker-notes', 'custom'])
-      .default('keep'),
+    preset: MetadataRemovalPresetSchema.default('keep'),
     selectedTags: z.array(z.number().int().min(0).max(0xffff)).default([]),
   })
   .superRefine((value, context) => {

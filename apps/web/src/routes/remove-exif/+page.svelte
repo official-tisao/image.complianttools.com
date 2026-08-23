@@ -1,6 +1,7 @@
 <script lang="ts">
   import {
     MetadataRemovalOptionsSchema,
+    MetadataRemovalPresetSchema,
     engineErrorMessage,
     isEngineError,
     metadataRemovalOptionDescriptions,
@@ -44,7 +45,7 @@
 
   function setControl(path: string, value: unknown) {
     if (path !== 'metadata.preset') return;
-    preset = MetadataRemovalOptionsSchema.parse({ preset: value }).preset;
+    preset = MetadataRemovalPresetSchema.parse(value);
   }
 
   async function strip(file: File | undefined) {

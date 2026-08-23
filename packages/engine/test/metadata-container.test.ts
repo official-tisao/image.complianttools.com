@@ -3,6 +3,7 @@ import { zlibSync } from 'fflate';
 
 import {
   MetadataRemovalOptionsSchema,
+  MetadataRemovalPresetSchema,
   editJpegExifFields,
   readContainerMetadata,
   stripGifMetadata,
@@ -46,6 +47,7 @@ describe('metadata removal options', () => {
   });
 
   it('requires at least one bounded EXIF tag for custom removal', () => {
+    expect(MetadataRemovalPresetSchema.parse('custom')).toBe('custom');
     expect(() => MetadataRemovalOptionsSchema.parse({ preset: 'custom' })).toThrow(
       'Select at least one EXIF field',
     );
