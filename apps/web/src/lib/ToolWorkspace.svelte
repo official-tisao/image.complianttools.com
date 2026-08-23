@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onDestroy, untrack } from 'svelte';
   import { searchTargetSize } from '@complianttools/image-engine/pipeline/target-size';
-  import { getCodec, productionEncoderFormats } from '@complianttools/image-engine';
+  import { decodeBmp, getCodec, productionEncoderFormats } from '@complianttools/image-engine';
   import { phaseOneOptionDescriptions } from '@complianttools/image-engine/schemas/options';
   import type { Recipe } from '@complianttools/image-engine/types';
   import CompareCanvas from './CompareCanvas.svelte';
@@ -147,14 +147,20 @@
     }
   }
   async function decode(file: File) {
-    const bitmap = await createImageBitmap(file);
-    const canvas = document.createElement('canvas');
-    canvas.width = bitmap.width;
-    canvas.height = bitmap.height;
-    const context = canvas.getContext('2d', { willReadFrequently: true })!;
-    context.drawImage(bitmap, 0, 0);
-    bitmap.close();
-    return context.getImageData(0, 0, canvas.width, canvas.height);
+    try {
+      const bitmap = await createImageBitmap(file);
+      const canvas = document.createElement('canvas');
+      canvas.width = bitmap.width;
+      canvas.height = bitmap.height;
+      const context = canvas.getContext('2d', { willReadFrequently: true })!;
+      context.drawImage(bitmap, 0, 0);
+      bitmap.close();
+      return context.getImageData(0, 0, canvas.width, canvas.height);
+    } catch (cause) {
+      if (file.type !== 'image/bmp' && !file.name.toLowerCase().endsWith('.bmp')) throw cause;
+      const decoded = decodeBmp(await file.arrayBuffer());
+      return new ImageData(decoded.frames[0].data.slice(), decoded.width, decoded.height);
+    }
   }
   function workerProcess(image: ImageData, recipe: Recipe): Promise<ImageData> {
     return new Promise((resolve, reject) => {
