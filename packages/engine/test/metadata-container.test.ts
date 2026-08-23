@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { zlibSync } from 'fflate';
 
 import {
+  MetadataEditOptionsSchema,
   MetadataRemovalOptionsSchema,
   MetadataRemovalPresetSchema,
   editJpegExifFields,
@@ -18,6 +19,37 @@ import {
 } from '../src/index.js';
 
 describe('metadata removal options', () => {
+  it('defaults every metadata edit to a valid no-op', () => {
+    const options = MetadataEditOptionsSchema.parse({});
+    expect(Object.values(options).every((field) => !field.enabled && field.value === '')).toBe(
+      true,
+    );
+  });
+
+  it('validates enabled metadata values and paired GPS coordinates', () => {
+    expect(() =>
+      MetadataEditOptionsSchema.parse({ copyright: { enabled: true, value: '' } }),
+    ).toThrow('Enter a value');
+    expect(() =>
+      MetadataEditOptionsSchema.parse({ latitude: { enabled: true, value: '43.7' } }),
+    ).toThrow('Enable both GPS');
+    expect(() =>
+      MetadataEditOptionsSchema.parse({
+        latitude: { enabled: true, value: '91' },
+        longitude: { enabled: true, value: '-79.4' },
+      }),
+    ).toThrow('latitude must be between -90 and 90');
+    expect(
+      MetadataEditOptionsSchema.parse({
+        latitude: { enabled: true, value: '43.7' },
+        longitude: { enabled: true, value: '-79.4' },
+      }),
+    ).toMatchObject({
+      latitude: { enabled: true, value: '43.7' },
+      longitude: { enabled: true, value: '-79.4' },
+    });
+  });
+
   it('converts synchronous metadata failures into typed errors with a useful remedy', () => {
     const remedy = 'Choose a valid image and try again.';
     expect.assertions(3);

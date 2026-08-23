@@ -151,6 +151,58 @@ export const MetadataRemovalOptionsSchema = z
       });
   });
 
+const metadataEditField = z.object({
+  enabled: z.boolean().default(false),
+  value: z.string().default(''),
+});
+
+export const MetadataEditOptionsSchema = z
+  .object({
+    artist: metadataEditField.default({ enabled: false, value: '' }),
+    copyright: metadataEditField.default({ enabled: false, value: '' }),
+    imageDescription: metadataEditField.default({ enabled: false, value: '' }),
+    userComment: metadataEditField.default({ enabled: false, value: '' }),
+    dateTimeOriginal: metadataEditField.default({ enabled: false, value: '' }),
+    software: metadataEditField.default({ enabled: false, value: '' }),
+    rating: metadataEditField.default({ enabled: false, value: '' }),
+    keywords: metadataEditField.default({ enabled: false, value: '' }),
+    orientation: metadataEditField.default({ enabled: false, value: '' }),
+    latitude: metadataEditField.default({ enabled: false, value: '' }),
+    longitude: metadataEditField.default({ enabled: false, value: '' }),
+  })
+  .superRefine((options, context) => {
+    for (const [field, state] of Object.entries(options))
+      if (state.enabled && state.value.trim() === '')
+        context.addIssue({
+          code: 'custom',
+          path: [field, 'value'],
+          message: 'Enter a value for every enabled metadata field.',
+        });
+    const gpsEnabled = options.latitude.enabled || options.longitude.enabled;
+    if (gpsEnabled && options.latitude.enabled !== options.longitude.enabled)
+      context.addIssue({
+        code: 'custom',
+        path: ['latitude', 'enabled'],
+        message: 'Enable both GPS latitude and longitude.',
+      });
+    const numericBounds = [
+      ['rating', options.rating, 0, 5],
+      ['orientation', options.orientation, 1, 8],
+      ['latitude', options.latitude, -90, 90],
+      ['longitude', options.longitude, -180, 180],
+    ] as const;
+    for (const [field, state, minimum, maximum] of numericBounds) {
+      if (!state.enabled) continue;
+      const value = Number(state.value);
+      if (!Number.isFinite(value) || value < minimum || value > maximum)
+        context.addIssue({
+          code: 'custom',
+          path: [field, 'value'],
+          message: `${field} must be between ${minimum} and ${maximum}.`,
+        });
+    }
+  });
+
 export const RawToolOptionsSchema = z.object({
   instantPreview: z.boolean().default(true),
   demosaic: z.enum(['linear', 'vng', 'ppg', 'dcb', 'ahd']).default('ahd'),
@@ -354,6 +406,7 @@ export type ResizeOptions = z.infer<typeof ResizeOptionsSchema>;
 export type CropOptions = z.infer<typeof CropOptionsSchema>;
 export type RotateOptions = z.infer<typeof RotateOptionsSchema>;
 export type MetadataRemovalOptions = z.infer<typeof MetadataRemovalOptionsSchema>;
+export type MetadataEditOptions = z.infer<typeof MetadataEditOptionsSchema>;
 export type RawToolOptions = z.infer<typeof RawToolOptionsSchema>;
 export type PdfToImageOptions = z.infer<typeof PdfToImageOptionsSchema>;
 export type ImageToPdfOptions = z.infer<typeof ImageToPdfOptionsSchema>;
@@ -522,6 +575,46 @@ export const metadataRemovalOptionDescriptions: Readonly<Record<string, OptionDe
     defaultValue: 'keep',
   },
 };
+
+const metadataEditLabels = {
+  artist: 'Artist',
+  copyright: 'Copyright',
+  imageDescription: 'ImageDescription',
+  userComment: 'UserComment',
+  dateTimeOriginal: 'DateTimeOriginal',
+  software: 'Software',
+  rating: 'Rating',
+  keywords: 'Keywords',
+  orientation: 'Orientation',
+  latitude: 'GPS latitude',
+  longitude: 'GPS longitude',
+} as const;
+
+export const metadataEditOptionDescriptions: Readonly<Record<string, OptionDescription>> =
+  Object.fromEntries(
+    Object.entries(metadataEditLabels).flatMap(([field, label]) => [
+      [
+        `metadata.edit.${field}.enabled`,
+        {
+          label: `Edit ${label}`,
+          control: 'toggle',
+          group: 'EXIF editing',
+          advanced: false,
+          defaultValue: false,
+        } satisfies OptionDescription,
+      ],
+      [
+        `metadata.edit.${field}.value`,
+        {
+          label: `${label} value`,
+          control: 'text',
+          group: 'EXIF editing',
+          advanced: false,
+          defaultValue: '',
+        } satisfies OptionDescription,
+      ],
+    ]),
+  );
 
 export const rawToolOptionDescriptions: Readonly<Record<string, OptionDescription>> = {
   'raw.instantPreview': {

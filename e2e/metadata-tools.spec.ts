@@ -120,8 +120,8 @@ test('metadata viewer edits an existing JPEG copyright field without relocating 
   const fixture = copyrightJpeg();
   await page.locator('input[type=file]').setInputFiles(fixture);
   await expect(page.getByRole('cell', { name: 'Original' })).toBeVisible();
-  await page.getByRole('checkbox', { name: 'Copyright' }).check();
-  await page.getByRole('textbox', { name: 'Copyright', exact: true }).fill('Mine');
+  await page.getByRole('checkbox', { name: 'Edit Copyright' }).check();
+  await page.getByRole('textbox', { name: 'Copyright value', exact: true }).fill('Mine');
   const pending = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Download edited JPEG' }).click();
   const download = await pending;
@@ -133,6 +133,17 @@ test('metadata viewer edits an existing JPEG copyright field without relocating 
   expect(output.subarray(0, 26)).toEqual(fixture.buffer.subarray(0, 26));
   expect(output.subarray(30, 60)).toEqual(fixture.buffer.subarray(30, 60));
   await expect(page.getByRole('status')).toContainText('all other bytes were preserved');
+});
+
+test('metadata viewer reports generated edit validation as a typed remedy', async ({ page }) => {
+  await page.goto('/exif-viewer');
+  await page.waitForLoadState('networkidle');
+  await page.locator('input[type=file]').setInputFiles(copyrightJpeg());
+  await page.getByRole('checkbox', { name: 'Edit GPS latitude' }).check();
+  await page.getByRole('textbox', { name: 'GPS latitude value' }).fill('43.7');
+  await page.getByRole('button', { name: 'Download edited JPEG' }).click();
+  await expect(page.getByRole('alert')).toContainText('Enable both GPS latitude and longitude');
+  await expect(page.getByRole('alert')).toContainText('Remedy:');
 });
 
 test('image inspector reports deterministic PNG container facts', async ({ page }) => {
@@ -182,11 +193,11 @@ test('metadata tools are keyboard-operable end to end', async ({ page }) => {
   // Playwright supplies the file at the native picker boundary; every application control below
   // is reached and activated with the keyboard.
   await viewerInput.setInputFiles(copyright);
-  const copyrightToggle = page.getByRole('checkbox', { name: 'Copyright' });
+  const copyrightToggle = page.getByRole('checkbox', { name: 'Edit Copyright' });
   await copyrightToggle.focus();
   await page.keyboard.press('Space');
   await expect(copyrightToggle).toBeChecked();
-  const copyrightValue = page.getByRole('textbox', { name: 'Copyright', exact: true });
+  const copyrightValue = page.getByRole('textbox', { name: 'Copyright value', exact: true });
   await copyrightValue.focus();
   await page.keyboard.press('ControlOrMeta+A');
   await page.keyboard.type('Keys');
@@ -303,9 +314,10 @@ for (const locale of ['en-XA', 'ar'] as const) {
         name: locale === 'ar' ? 'القيمة' : /Vàlüë/u,
       }),
     ).toBeVisible();
-    const copyrightName = locale === 'ar' ? 'حقوق النشر' : /Côpyrïght/u;
-    await page.getByRole('checkbox', { name: copyrightName }).check();
-    await page.getByRole('textbox', { name: copyrightName }).fill('Local');
+    const copyrightToggleName = locale === 'ar' ? 'تعديل حقوق النشر' : /Ëdït Côpyrïght/u;
+    const copyrightValueName = locale === 'ar' ? 'قيمة حقوق النشر' : /Côpyrïght vàlüë/u;
+    await page.getByRole('checkbox', { name: copyrightToggleName }).check();
+    await page.getByRole('textbox', { name: copyrightValueName }).fill('Local');
     const pending = page.waitForEvent('download');
     await page
       .getByRole('button', {

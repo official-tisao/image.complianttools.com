@@ -1,15 +1,19 @@
 <script lang="ts">
   import {
+    MetadataEditOptionsSchema,
     editJpegExifFields,
     engineErrorMessage,
     isEngineError,
+    metadataEditOptionDescriptions,
     readContainerMetadata,
     withTypedEngineErrors,
     type EngineError,
     type ExifFieldEdits,
+    type MetadataEditOptions,
     type MetadataTag,
   } from '@complianttools/image-engine';
-  import { translate, type Locale } from './i18n';
+  import GeneratedControls from './GeneratedControls.svelte';
+  import { localizeOptions, translate, type Locale } from './i18n';
 
   let { locale = 'en' }: { locale?: Locale } = $props();
   const t = (key: string, fallback: string, value?: string | number) =>
@@ -74,26 +78,30 @@
     status = $state('');
   let tags = $state<readonly MetadataTag[]>([]),
     inputBytes = $state<Uint8Array>();
-  let available = $state<EditKey[]>([]),
-    selected = $state<EditKey[]>([]);
-  let values = $state<Record<EditKey, string>>({
-    artist: '',
-    copyright: '',
-    imageDescription: '',
-    userComment: '',
-    dateTimeOriginal: '',
-    software: '',
-    rating: '',
-    keywords: '',
-    orientation: '',
-    latitude: '',
-    longitude: '',
-  });
+  let canEdit = $state(false);
+  let editOptions = $state<MetadataEditOptions>(MetadataEditOptionsSchema.parse({}));
+  const editDescriptions = $derived(localizeOptions(locale, metadataEditOptionDescriptions));
+  const controlValues = $derived(
+    Object.fromEntries(
+      editSpecs.flatMap((spec) => [
+        [`metadata.edit.${spec.key}.enabled`, editOptions[spec.key].enabled],
+        [`metadata.edit.${spec.key}.value`, editOptions[spec.key].value],
+      ]),
+    ),
+  );
 
-  function choose(key: EditKey, checked: boolean) {
-    selected = checked
-      ? [...new Set([...selected, key])]
-      : selected.filter((value) => value !== key);
+  function setEditControl(path: string, value: unknown) {
+    const match = /^metadata\.edit\.([^.]+)\.(enabled|value)$/u.exec(path);
+    if (!match) return;
+    const key = match[1] as EditKey;
+    if (!editSpecs.some((spec) => spec.key === key)) return;
+    editOptions = {
+      ...editOptions,
+      [key]: {
+        ...editOptions[key],
+        [match[2]!]: match[2] === 'enabled' ? Boolean(value) : String(value),
+      },
+    };
   }
   async function inspect(file: File | undefined) {
     fileName = file?.name ?? '';
@@ -101,8 +109,8 @@
     error = '';
     status = '';
     inputBytes = undefined;
-    available = [];
-    selected = [];
+    canEdit = false;
+    editOptions = MetadataEditOptionsSchema.parse({});
     if (!file) return;
     try {
       inputBytes = new Uint8Array(await file.arrayBuffer());
@@ -115,13 +123,18 @@
         () => readContainerMetadata(inputBytes!),
       ).tags;
       if (/\.jpe?g$/iu.test(file.name)) {
-        available = editSpecs.map((spec) => spec.key);
+        canEdit = true;
         for (const spec of editSpecs) {
           const namespace = spec.key === 'latitude' || spec.key === 'longitude' ? 'GPS' : 'EXIF';
           const field = tags.find((tag) => tag.namespace === namespace && tag.name === spec.name);
           if (!field) continue;
-          values[spec.key] =
-            spec.key === 'userComment' || spec.key === 'keywords' ? '' : field.value;
+          editOptions = {
+            ...editOptions,
+            [spec.key]: {
+              ...editOptions[spec.key],
+              value: spec.key === 'userComment' || spec.key === 'keywords' ? '' : field.value,
+            },
+          };
         }
       }
     } catch (reason) {
@@ -133,29 +146,35 @@
   function saveEdits() {
     error = '';
     status = '';
+    const selected = editSpecs.filter((spec) => editOptions[spec.key].enabled);
     if (!inputBytes || selected.length === 0) {
-      error = t('viewer.selectField', 'Select at least one existing EXIF field to edit.');
+      const reason = {
+        kind: 'internal',
+        detail: t('viewer.editFailure', 'EXIF editing failed'),
+        remedy: t('viewer.selectField', 'Select at least one existing EXIF field to edit.'),
+      } satisfies EngineError;
+      error = `${engineErrorMessage(reason)} ${t('error.remedyLabel', 'Remedy')}: ${reason.remedy}`;
       return;
     }
     try {
+      const parsed = withTypedEngineErrors(
+        t('viewer.editFailure', 'EXIF editing failed'),
+        t(
+          'viewer.editRemedy',
+          'Select existing fields with valid values, or use Metadata Remover to strip the metadata.',
+        ),
+        () => MetadataEditOptionsSchema.parse(editOptions),
+      );
       const edits: Record<string, unknown> = {};
-      for (const key of selected) {
+      for (const { key } of selected) {
         if (key === 'latitude' || key === 'longitude') continue;
-        edits[key] = key === 'rating' || key === 'orientation' ? Number(values[key]) : values[key];
+        edits[key] =
+          key === 'rating' || key === 'orientation' ? Number(parsed[key].value) : parsed[key].value;
       }
-      if (selected.includes('latitude') || selected.includes('longitude')) {
-        if (!selected.includes('latitude') || !selected.includes('longitude'))
-          throw {
-            kind: 'internal',
-            detail: t('viewer.editFailure', 'EXIF editing failed'),
-            remedy: t(
-              'viewer.gpsPair',
-              'Select both GPS latitude and longitude when adding or editing coordinates.',
-            ),
-          } satisfies EngineError;
+      if (parsed.latitude.enabled && parsed.longitude.enabled) {
         edits.gpsCoordinates = {
-          latitude: Number(values.latitude),
-          longitude: Number(values.longitude),
+          latitude: Number(parsed.latitude.value),
+          longitude: Number(parsed.longitude.value),
         };
       }
       const output = withTypedEngineErrors(
@@ -236,7 +255,7 @@
           >{/each}</tbody
       >
     </table>{/if}
-  {#if available.length}
+  {#if canEdit}
     <section aria-labelledby="edit-fields-heading">
       <h2 id="edit-fields-heading">{t('viewer.editHeading', 'Add or edit EXIF fields')}</h2>
       <p>
@@ -245,22 +264,12 @@
           'Choose fields to add or change. Longer values and new fields are appended through a rebuilt EXIF structure; unchecked metadata remains untouched.',
         )}
       </p>
-      {#each editSpecs.filter((spec) => available.includes(spec.key)) as spec (spec.key)}
-        <label
-          ><input
-            type="checkbox"
-            checked={selected.includes(spec.key)}
-            onchange={(event) => choose(spec.key, event.currentTarget.checked)}
-          />
-          {t(spec.message, spec.label)}
-          <input
-            type={spec.kind === 'number' ? 'number' : 'text'}
-            aria-label={t(spec.message, spec.label)}
-            bind:value={values[spec.key]}
-            disabled={!selected.includes(spec.key)}
-          />
-        </label>
-      {/each}
+      <GeneratedControls
+        descriptions={editDescriptions}
+        values={controlValues}
+        onChange={setEditControl}
+        {locale}
+      />
       <button type="button" onclick={saveEdits}
         >{t('viewer.download', 'Download edited JPEG')}</button
       >
