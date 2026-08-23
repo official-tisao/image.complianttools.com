@@ -425,10 +425,10 @@ upstreams are permissive (BSD-3, BSD-2), so the obstacle is a build we do not ow
 - **Spec:** README §5.6, §25.3.1 · **Done when:** frame extraction works from MP4/WebM with zero added download
 
 #### P2-11 · Embedded / LVGL exporter (T16)
-- [ ] LVGL v9 (5 colour formats) + v8 (13 formats), C array + binary
-- [ ] Generic raw, Adafruit GFX, ESP-IDF/TFT_eSPI targets
-- [ ] `Output name` validation, `Alpha byte`, `Chroma keyed`, `Dithering`, `Big-endian`, `const`/`static`/`PROGMEM`, line width
-- [ ] Live byte-size + flash-footprint readout, `LV_IMG_DECLARE` snippet
+- [x] LVGL v9 (5 colour formats) + v8 (13 formats), C array + binary
+- [x] Generic raw, Adafruit GFX, ESP-IDF/TFT_eSPI targets
+- [x] `Output name` validation, `Alpha byte`, `Chroma keyed`, `Dithering`, `Big-endian`, `const`/`static`/`PROGMEM`, line width
+- [x] Live byte-size + flash-footprint readout, `LV_IMG_DECLARE` snippet
 - **Spec:** README §5.5 · **Done when:** output compiles in a real LVGL v8 and v9 project
 
 #### P2-12 · Metadata subsystem
