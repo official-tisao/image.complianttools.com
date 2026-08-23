@@ -24,6 +24,25 @@ test('PDF to Image reads a real document page count before rendering', async ({ 
   await expect(page.getByRole('alert')).toHaveText('PDF has 2 pages; page 3 is unavailable.');
 });
 
+test('PDF to Image renders a real page at the selected DPI', async ({ page }) => {
+  const fixture = await createPdfFromPngPages([{ pngBytes: onePixelPng, width: 72, height: 36 }]);
+  await page.goto('/pdf-to-image');
+  await page.waitForLoadState('networkidle');
+  await expect(page.getByLabel('Page')).toHaveValue('1');
+  await expect(page.getByLabel('Output DPI')).toHaveValue('72');
+  await page.getByLabel('Output DPI').fill('144');
+  const pending = page.waitForEvent('download');
+  await page.locator('input[type=file]').setInputFiles({
+    name: 'one-page.pdf',
+    mimeType: 'application/pdf',
+    buffer: Buffer.from(fixture),
+  });
+  expect((await pending).suggestedFilename()).toBe('one-page-page-1.png');
+  await expect(page.getByRole('status')).toHaveText(
+    'Rendered page 1 of 1 at 144 DPI (144×72) locally.',
+  );
+});
+
 test('PDF to Image accepts modern PDF-compatible AI and names legacy AI', async ({ page }) => {
   const fixture = await createPdfFromPngPages([{ pngBytes: onePixelPng, width: 72, height: 36 }]);
   await page.goto('/pdf-to-image');

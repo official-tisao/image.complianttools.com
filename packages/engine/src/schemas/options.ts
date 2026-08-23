@@ -162,12 +162,18 @@ export const RawToolOptionsSchema = z.object({
   chromaticAberrationCorrection: z.boolean().default(false),
 });
 
+export const PdfToImageOptionsSchema = z.object({
+  pageNumber: z.number().int().min(1).default(1),
+  dpi: z.number().min(18).max(600).default(72),
+});
+
 export type ExportOptionsInput = z.input<typeof ExportOptionsSchema>;
 export type ResizeOptions = z.infer<typeof ResizeOptionsSchema>;
 export type CropOptions = z.infer<typeof CropOptionsSchema>;
 export type RotateOptions = z.infer<typeof RotateOptionsSchema>;
 export type MetadataRemovalOptions = z.infer<typeof MetadataRemovalOptionsSchema>;
 export type RawToolOptions = z.infer<typeof RawToolOptionsSchema>;
+export type PdfToImageOptions = z.infer<typeof PdfToImageOptionsSchema>;
 
 export interface OptionDescription {
   label: string;
@@ -420,5 +426,29 @@ export const rawToolOptionDescriptions: Readonly<Record<string, OptionDescriptio
     group: 'RAW',
     advanced: true,
     defaultValue: false,
+  },
+};
+
+export const pdfToImageOptionDescriptions: Readonly<Record<string, OptionDescription>> = {
+  'pdf.pageNumber': {
+    label: 'Page',
+    control: 'number',
+    group: 'PDF',
+    advanced: false,
+    min: 1,
+    step: 1,
+    defaultValue: 1,
+  },
+  'pdf.dpi': {
+    label: 'Output DPI',
+    help: "Controls raster dimensions relative to PDF's 72 DPI coordinate system.",
+    unit: 'DPI',
+    control: 'number',
+    group: 'PDF',
+    advanced: false,
+    min: 18,
+    max: 600,
+    step: 1,
+    defaultValue: 72,
   },
 };

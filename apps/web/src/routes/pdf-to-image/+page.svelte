@@ -1,15 +1,27 @@
 <script lang="ts">
   import {
+    PdfToImageOptionsSchema,
+    pdfToImageOptionDescriptions,
     readIllustratorDocumentInfo,
     readPdfDocumentInfo,
     renderIllustratorPage,
     renderPdfPage,
   } from '@complianttools/image-engine';
+  import GeneratedControls from '$lib/GeneratedControls.svelte';
 
   let status = $state('');
   let error = $state('');
-  let pageNumber = $state(1);
-  let scale = $state(1);
+  let options = $state(PdfToImageOptionsSchema.parse({}));
+  const controlValues = $derived({
+    'pdf.pageNumber': options.pageNumber,
+    'pdf.dpi': options.dpi,
+  });
+
+  function setControl(path: string, value: unknown) {
+    if (!path.startsWith('pdf.')) return;
+    const parsed = PdfToImageOptionsSchema.safeParse({ ...options, [path.slice(4)]: value });
+    if (parsed.success) options = parsed.data;
+  }
 
   async function convert(file: File | undefined) {
     status = '';
@@ -21,15 +33,16 @@
       const info = isIllustrator
         ? await readIllustratorDocumentInfo(input)
         : await readPdfDocumentInfo(input);
-      if (pageNumber > info.pageCount)
+      if (options.pageNumber > info.pageCount)
         throw new Error(
-          `PDF has ${info.pageCount} page${info.pageCount === 1 ? '' : 's'}; page ${pageNumber} is unavailable.`,
+          `PDF has ${info.pageCount} page${info.pageCount === 1 ? '' : 's'}; page ${options.pageNumber} is unavailable.`,
         );
+      const renderOptions = { pageNumber: options.pageNumber, scale: options.dpi / 72 };
       const image = isIllustrator
-        ? await renderIllustratorPage(input, { pageNumber, scale }, undefined, () =>
+        ? await renderIllustratorPage(input, renderOptions, undefined, () =>
             document.createElement('canvas'),
           )
-        : await renderPdfPage(input, { pageNumber, scale }, undefined, () =>
+        : await renderPdfPage(input, renderOptions, undefined, () =>
             document.createElement('canvas'),
           );
       const canvas = document.createElement('canvas');
@@ -47,10 +60,10 @@
       const url = URL.createObjectURL(blob);
       const download = document.createElement('a');
       download.href = url;
-      download.download = `${file.name.replace(/\.(?:pdf|ai)$/iu, '')}-page-${pageNumber}.png`;
+      download.download = `${file.name.replace(/\.(?:pdf|ai)$/iu, '')}-page-${options.pageNumber}.png`;
       download.click();
       URL.revokeObjectURL(url);
-      status = `Rendered page ${pageNumber} of ${info.pageCount} at ${image.width}×${image.height} locally.`;
+      status = `Rendered page ${options.pageNumber} of ${info.pageCount} at ${options.dpi} DPI (${image.width}×${image.height}) locally.`;
     } catch (reason) {
       error = reason instanceof Error ? reason.message : 'Unable to render this PDF page.';
     }
@@ -73,8 +86,11 @@
     Render one PDF or modern PDF-compatible Illustrator page to PNG on your device. Legacy
     PostScript Illustrator files are refused explicitly. Your file is never uploaded.
   </p>
-  <label>Page <input type="number" min="1" bind:value={pageNumber} /></label>
-  <label>Scale <input type="number" min="0.1" step="0.1" bind:value={scale} /></label>
+  <GeneratedControls
+    descriptions={pdfToImageOptionDescriptions}
+    values={controlValues}
+    onChange={setControl}
+  />
   <label
     >Choose a PDF or AI file <input
       type="file"

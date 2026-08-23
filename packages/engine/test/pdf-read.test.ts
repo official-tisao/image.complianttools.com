@@ -2,6 +2,7 @@ import { PDFDocument } from 'pdf-lib';
 import { describe, expect, it, vi } from 'vitest';
 
 import {
+  PdfToImageOptionsSchema,
   renderIllustratorPage,
   renderPdfPage,
   readPdfDocumentInfo,
@@ -11,11 +12,17 @@ import {
 } from '../src/index.js';
 
 describe('browser-local PDF page rendering', () => {
+  it('defines bounded page and DPI defaults for the generated tool controls', () => {
+    expect(PdfToImageOptionsSchema.parse({})).toEqual({ pageNumber: 1, dpi: 72 });
+    expect(() => PdfToImageOptionsSchema.parse({ pageNumber: 0 })).toThrow();
+    expect(() => PdfToImageOptionsSchema.parse({ dpi: 601 })).toThrow();
+  });
+
   it('parses real multi-page PDF bytes through the production PDF.js loader', async () => {
-    const document = await PDFDocument.create();
-    document.addPage([72, 36]);
-    document.addPage([144, 216]);
-    const fixture = await document.save();
+    const pdfDocument = await PDFDocument.create();
+    pdfDocument.addPage([72, 36]);
+    pdfDocument.addPage([144, 216]);
+    const fixture = await pdfDocument.save();
     await expect(readPdfDocumentInfo(fixture)).resolves.toEqual({
       pageCount: 2,
       pages: [
@@ -32,9 +39,9 @@ describe('browser-local PDF page rendering', () => {
   });
 
   it('parses a real PDF-compatible Illustrator fixture and rejects legacy PostScript AI', async () => {
-    const document = await PDFDocument.create();
-    document.addPage([300, 200]);
-    const fixture = await document.save();
+    const pdfDocument = await PDFDocument.create();
+    pdfDocument.addPage([300, 200]);
+    const fixture = await pdfDocument.save();
     await expect(readIllustratorDocumentInfo(fixture)).resolves.toEqual({
       pageCount: 1,
       pages: [{ pageNumber: 1, widthPoints: 300, heightPoints: 200 }],
