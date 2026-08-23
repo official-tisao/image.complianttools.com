@@ -94,6 +94,7 @@
       <input
         id={`control-${path}`}
         type={description.control === 'color' ? 'color' : 'text'}
+        pattern={description.pattern}
         value={String(current(path, description))}
         oninput={(event) => onChange(path, event.currentTarget.value)}
       />

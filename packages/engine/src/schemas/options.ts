@@ -195,6 +195,111 @@ export const Base64ToolOptionsSchema = z.object({
   mode: z.enum(['encode', 'decode']).default('encode'),
 });
 
+const embeddedFormats = [
+  'alpha1',
+  'alpha2',
+  'alpha4',
+  'alpha8',
+  'indexed1',
+  'indexed2',
+  'indexed4',
+  'indexed8',
+  'raw',
+  'raw-alpha',
+  'raw-chroma',
+  'rgb332',
+  'rgb565',
+  'rgb565be',
+  'rgb565a8',
+  'rgb888',
+  'bgr888',
+  'argb8888',
+  'rgba8888',
+  'xrgb8888',
+  'gray8',
+  'mono1',
+] as const;
+
+export const EmbeddedToolOptionsSchema = z
+  .object({
+    target: z
+      .enum([
+        'generic',
+        'generic-bin',
+        'lvgl-v8',
+        'lvgl-v8-bin',
+        'lvgl-v9',
+        'lvgl-v9-bin',
+        'adafruit',
+        'esp-idf',
+      ])
+      .default('generic'),
+    outputName: z
+      .string()
+      .regex(/^[A-Za-z_][A-Za-z0-9_]*$/u, 'Output name must be a valid C identifier.')
+      .default('image_data'),
+    alphaByte: z.boolean().default(false),
+    chromaKeyed: z.boolean().default(false),
+    chromaKey: cssColor.default('#00ff00'),
+    bigEndian: z.boolean().default(false),
+    storage: z.enum(['const', 'static', 'static-const']).default('static-const'),
+    lineWidth: z.number().int().min(1).max(256).default(12),
+    dithering: z.enum(['none', 'ordered']).default('none'),
+    format: z.enum(embeddedFormats).default('rgb565'),
+  })
+  .superRefine((value, context) => {
+    const allowed: Partial<Record<typeof value.target, readonly (typeof value.format)[]>> = {
+      generic: embeddedFormats.filter(
+        (format) => format !== 'raw' && format !== 'raw-alpha' && format !== 'raw-chroma',
+      ),
+      'generic-bin': [
+        'rgb565',
+        'rgb565be',
+        'rgb888',
+        'bgr888',
+        'argb8888',
+        'rgba8888',
+        'gray8',
+        'mono1',
+      ],
+      'lvgl-v8-bin': ['rgb332', 'rgb565', 'rgb565be', 'rgb888'],
+      'lvgl-v9-bin': ['rgb332', 'rgb565', 'rgb565be', 'rgb888'],
+      'lvgl-v8': [
+        'alpha1',
+        'alpha2',
+        'alpha4',
+        'alpha8',
+        'indexed1',
+        'indexed2',
+        'indexed4',
+        'indexed8',
+        'raw',
+        'raw-alpha',
+        'raw-chroma',
+        'rgb565',
+        'rgb565be',
+        'rgb565a8',
+        'rgb888',
+        'argb8888',
+      ],
+      'lvgl-v9': ['rgb565', 'rgb565be', 'rgb565a8', 'rgb888', 'xrgb8888', 'argb8888'],
+      'esp-idf': ['rgb565', 'rgb565be'],
+    };
+    const formats = allowed[value.target];
+    if (formats && !formats.includes(value.format))
+      context.addIssue({
+        code: 'custom',
+        path: ['format'],
+        message: `${value.target} does not support ${value.format}.`,
+      });
+    if (value.format === 'mono1' && value.alphaByte)
+      context.addIssue({
+        code: 'custom',
+        path: ['alphaByte'],
+        message: 'Mono1 output cannot append an alpha byte.',
+      });
+  });
+
 export type ExportOptionsInput = z.input<typeof ExportOptionsSchema>;
 export type ResizeOptions = z.infer<typeof ResizeOptionsSchema>;
 export type CropOptions = z.infer<typeof CropOptionsSchema>;
@@ -205,6 +310,7 @@ export type PdfToImageOptions = z.infer<typeof PdfToImageOptionsSchema>;
 export type SvgRasterizeToolOptions = z.infer<typeof SvgRasterizeToolOptionsSchema>;
 export type CbzToolOptions = z.infer<typeof CbzToolOptionsSchema>;
 export type Base64ToolOptions = z.infer<typeof Base64ToolOptionsSchema>;
+export type EmbeddedToolOptions = z.infer<typeof EmbeddedToolOptionsSchema>;
 
 export interface OptionDescription {
   label: string;
@@ -218,6 +324,7 @@ export interface OptionDescription {
   step?: number;
   options?: readonly string[];
   optionLabels?: Readonly<Record<string, string>>;
+  pattern?: string;
   defaultValue: unknown;
 }
 
@@ -538,5 +645,108 @@ export const base64ToolOptionDescriptions: Readonly<Record<string, OptionDescrip
     options: ['encode', 'decode'],
     optionLabels: { encode: 'Image to Base64', decode: 'Base64 to file' },
     defaultValue: 'encode',
+  },
+};
+
+export const embeddedToolOptionDescriptions: Readonly<Record<string, OptionDescription>> = {
+  'embedded.target': {
+    label: 'Target',
+    control: 'select',
+    group: 'Embedded',
+    advanced: false,
+    options: [
+      'generic',
+      'generic-bin',
+      'lvgl-v9',
+      'lvgl-v9-bin',
+      'lvgl-v8',
+      'lvgl-v8-bin',
+      'adafruit',
+      'esp-idf',
+    ],
+    optionLabels: {
+      generic: 'Generic C array',
+      'generic-bin': 'Generic raw binary',
+      'lvgl-v9': 'LVGL v9 image descriptor',
+      'lvgl-v9-bin': 'LVGL v9 binary',
+      'lvgl-v8': 'LVGL v8 image descriptor',
+      'lvgl-v8-bin': 'LVGL v8 binary',
+      adafruit: 'Adafruit GFX 1-bit bitmap',
+      'esp-idf': 'ESP-IDF / TFT_eSPI array',
+    },
+    defaultValue: 'generic',
+  },
+  'embedded.dithering': {
+    label: 'Dithering',
+    control: 'select',
+    group: 'Embedded',
+    advanced: false,
+    options: ['none', 'ordered'],
+    optionLabels: { none: 'None', ordered: 'Ordered Bayer' },
+    defaultValue: 'none',
+  },
+  'embedded.alphaByte': {
+    label: 'Append alpha byte',
+    control: 'toggle',
+    group: 'Embedded',
+    advanced: true,
+    defaultValue: false,
+  },
+  'embedded.bigEndian': {
+    label: 'Big-endian byte order',
+    control: 'toggle',
+    group: 'Embedded',
+    advanced: true,
+    defaultValue: false,
+  },
+  'embedded.chromaKeyed': {
+    label: 'Enable chroma key',
+    control: 'toggle',
+    group: 'Embedded',
+    advanced: true,
+    defaultValue: false,
+  },
+  'embedded.chromaKey': {
+    label: 'Chroma key colour',
+    help: 'Used only when chroma key is enabled.',
+    control: 'color',
+    group: 'Embedded',
+    advanced: true,
+    defaultValue: '#00ff00',
+  },
+  'embedded.storage': {
+    label: 'Storage qualifier',
+    control: 'select',
+    group: 'C source',
+    advanced: true,
+    options: ['static-const', 'const', 'static'],
+    optionLabels: { 'static-const': 'static const', const: 'const', static: 'static' },
+    defaultValue: 'static-const',
+  },
+  'embedded.lineWidth': {
+    label: 'Bytes per source line',
+    control: 'number',
+    group: 'C source',
+    advanced: true,
+    min: 1,
+    max: 256,
+    step: 1,
+    defaultValue: 12,
+  },
+  'embedded.format': {
+    label: 'Pixel format',
+    control: 'select',
+    group: 'Embedded',
+    advanced: false,
+    options: embeddedFormats,
+    defaultValue: 'rgb565',
+  },
+  'embedded.outputName': {
+    label: 'C symbol name',
+    control: 'text',
+    group: 'C source',
+    advanced: false,
+    pattern: '[A-Za-z_][A-Za-z0-9_]*',
+    defaultValue: 'image_data',
   },
 };

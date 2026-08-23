@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  EmbeddedToolOptionsSchema,
   createRaster,
   embeddedByteSize,
   emitAdafruitGfxBitmap,
@@ -22,6 +23,29 @@ import {
 const image = createRaster(1, 1, new Uint8ClampedArray([255, 0, 0, 128]));
 
 describe('embedded exporter', () => {
+  it('defines bounded generated defaults and rejects incompatible target formats', () => {
+    expect(EmbeddedToolOptionsSchema.parse({})).toMatchObject({
+      target: 'generic',
+      outputName: 'image_data',
+      format: 'rgb565',
+      lineWidth: 12,
+      dithering: 'none',
+      alphaByte: false,
+      chromaKeyed: false,
+      bigEndian: false,
+    });
+    expect(() => EmbeddedToolOptionsSchema.parse({ outputName: 'not-valid!' })).toThrow(
+      'valid C identifier',
+    );
+    expect(() => EmbeddedToolOptionsSchema.parse({ lineWidth: 257 })).toThrow();
+    expect(() =>
+      EmbeddedToolOptionsSchema.parse({ target: 'lvgl-v9', format: 'indexed8' }),
+    ).toThrow('does not support');
+    expect(() => EmbeddedToolOptionsSchema.parse({ target: 'generic-bin', format: 'raw' })).toThrow(
+      'does not support',
+    );
+  });
+
   it('packs RGB565 in both byte orders and optional alpha bytes', () => {
     expect(packEmbeddedPixels(image, { outputName: 'logo', format: 'rgb565' })).toEqual(
       new Uint8Array([0x00, 0xf8]),
@@ -86,7 +110,7 @@ describe('embedded exporter', () => {
     expect(output).toContain('lv_image_set_src(image, &logo);');
     expect(output).toContain('const lv_image_dsc_t logo');
     expect(output).not.toMatch(/^lv_image_set_src/mu);
-    expect(output).not.toContain('\n}\/* In a separate translation unit');
+    expect(output).not.toContain('\n}/* In a separate translation unit');
   });
 
   it('packs all five LVGL v9 formats in LVGL memory order', () => {
@@ -141,7 +165,7 @@ describe('embedded exporter', () => {
     expect(output).toContain('lv_img_set_src(image, &logo);');
     expect(output).toContain('const lv_img_dsc_t logo');
     expect(output).not.toMatch(/^lv_img_set_src/mu);
-    expect(output).not.toContain('\n}\/* In a separate translation unit');
+    expect(output).not.toContain('\n}/* In a separate translation unit');
   });
 
   it('selects truthful LVGL v8 alpha and chroma descriptors', () => {
