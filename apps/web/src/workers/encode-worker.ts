@@ -2,6 +2,13 @@ import { encodeRaster } from '@complianttools/image-engine/codecs/encode';
 import { createRaster } from '@complianttools/image-engine/ops/raster';
 import type { FormatId } from '@complianttools/image-engine/types';
 
+function errorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'object' && error && 'reason' in error)
+    return String((error as { reason: unknown }).reason);
+  return String(error);
+}
+
 self.onmessage = async (
   event: MessageEvent<{
     width: number;
@@ -20,6 +27,6 @@ self.onmessage = async (
     const bytes = await encodeRaster(image, event.data.format, { quality: event.data.quality });
     self.postMessage({ bytes }, { transfer: [bytes] });
   } catch (error) {
-    self.postMessage({ error: error instanceof Error ? error.message : String(error) });
+    self.postMessage({ error: errorMessage(error) });
   }
 };

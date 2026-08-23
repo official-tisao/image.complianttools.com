@@ -2,6 +2,13 @@ import { createRaster } from '@complianttools/image-engine/ops/raster';
 import { run } from '@complianttools/image-engine/pipeline/execute';
 import type { Recipe } from '@complianttools/image-engine/types';
 
+function errorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'object' && error && 'reason' in error)
+    return String((error as { reason: unknown }).reason);
+  return String(error);
+}
+
 self.onmessage = async (
   event: MessageEvent<{ width: number; height: number; data: ArrayBuffer; recipe: Recipe }>,
 ) => {
@@ -19,6 +26,6 @@ self.onmessage = async (
       { transfer: [buffer] },
     );
   } catch (error) {
-    self.postMessage({ error: error instanceof Error ? error.message : String(error) });
+    self.postMessage({ error: errorMessage(error) });
   }
 };
