@@ -2,6 +2,7 @@
   import ToolWorkspace from '$lib/ToolWorkspace.svelte';
   import ImageInspector from '$lib/ImageInspector.svelte';
   import MetadataRemover from '$lib/MetadataRemover.svelte';
+  import MetadataViewer from '$lib/MetadataViewer.svelte';
   import { toolCopy } from '$lib/i18n';
   import type { PageData } from './$types';
 
@@ -23,6 +24,8 @@
   />
 {:else if data.tool === 'image-info'}
   <ImageInspector locale={data.locale} />
-{:else}
+{:else if data.tool === 'remove-exif'}
   <MetadataRemover locale={data.locale} />
+{:else}
+  <MetadataViewer locale={data.locale} />
 {/if}

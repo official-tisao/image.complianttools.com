@@ -140,7 +140,9 @@
 </svelte:head>
 
 <main lang={locale === 'en-XA' ? 'en-XA' : locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}>
-  <a href="/exif-viewer">{t('remover.back', '← Metadata Viewer')}</a>
+  <a href={locale === 'en' ? '/exif-viewer' : `/${locale}/exif-viewer`}
+    >{t('remover.back', '← Metadata Viewer')}</a
+  >
   <h1>{t('remover.title', 'Metadata Remover')}</h1>
   <p>
     {t(

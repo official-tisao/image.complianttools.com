@@ -284,4 +284,39 @@ for (const locale of ['en-XA', 'ar'] as const) {
       locale === 'ar' ? 'تم الاحتفاظ بكل بايت محليًا' : /Këpt ëvëry bytë lôcàlly/u,
     );
   });
+
+  test(`metadata viewer survives ${locale} localization`, async ({ page }) => {
+    await page.goto(`/${locale}/exif-viewer`);
+    await page.waitForLoadState('networkidle');
+    const main = page.locator('main');
+    await expect(main).toHaveAttribute('lang', locale);
+    await expect(main).toHaveAttribute('dir', locale === 'ar' ? 'rtl' : 'ltr');
+    await expect(page.locator('link[rel=canonical]')).toHaveAttribute(
+      'href',
+      `https://image.complianttools.com/${locale}/exif-viewer`,
+    );
+    const fixture = copyrightJpeg();
+    await page.locator('input[type=file]').setInputFiles(fixture);
+    await expect(page.getByRole('cell', { name: 'Original' })).toBeVisible();
+    await expect(
+      page.getByRole('columnheader', {
+        name: locale === 'ar' ? 'القيمة' : /Vàlüë/u,
+      }),
+    ).toBeVisible();
+    const copyrightName = locale === 'ar' ? 'حقوق النشر' : /Côpyrïght/u;
+    await page.getByRole('checkbox', { name: copyrightName }).check();
+    await page.getByRole('textbox', { name: copyrightName }).fill('Local');
+    const pending = page.waitForEvent('download');
+    await page
+      .getByRole('button', {
+        name: locale === 'ar' ? 'تنزيل JPEG المعدّل' : /Dôwnlôàd ëdïtëd JPËG/u,
+      })
+      .click();
+    const path = await (await pending).path();
+    expect(path).not.toBeNull();
+    expect((await readFile(path!)).subarray(60, 66)).toEqual(Buffer.from('Local\0', 'ascii'));
+    await expect(page.getByRole('status')).toContainText(
+      locale === 'ar' ? 'وحُفظت جميع البايتات الأخرى' : /àll ôthër bytës wërë prësërvëd/u,
+    );
+  });
 }
