@@ -420,8 +420,8 @@ upstreams are permissive (BSD-3, BSD-2), so the obstacle is a build we do not ow
 - **Spec:** README §5.4, §25.4 · **Done when:** each has a fixture test; CDR/DWG/DjVu/PICT/MNG/FLIF show their specific "not supported and why" page
 
 #### P2-10 · Video → frames via WebCodecs
-- [ ] `VideoDecoder` + `mp4box.js` / `jswebm` demux — **no bundled codec**
-- [ ] Container/codec support capability-probed and reported honestly
+- [x] `VideoDecoder` + `mp4box.js` / `jswebm` demux — **no bundled codec**
+- [x] Container/codec support capability-probed and reported honestly
 - **Spec:** README §5.6, §25.3.1 · **Done when:** frame extraction works from MP4/WebM with zero added download
 
 #### P2-11 · Embedded / LVGL exporter (T16)
