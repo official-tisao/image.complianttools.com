@@ -98,6 +98,46 @@ export type DemuxedVideoChunk = {
   readonly key: boolean;
 };
 
+/**
+ * Reads the first encoded video packet from any container supported by the pinned
+ * Mediabunny build. This proves container parsing independently from the browser's
+ * codec availability and is used for MP4, WebM, Matroska, and AVI capability checks.
+ */
+export async function demuxContainerFirstVideoPacket(
+  input: ArrayBuffer | Uint8Array,
+): Promise<DemuxedVideoChunk> {
+  const { ALL_FORMATS, BufferSource, EncodedPacketSink, Input } = await import('mediabunny');
+  const bytes = input instanceof Uint8Array ? input : new Uint8Array(input);
+  const media = new Input({ formats: ALL_FORMATS, source: new BufferSource(bytes) });
+  try {
+    const track = await media.getPrimaryVideoTrack();
+    if (!track) throw new Error('The media container contains no video track.');
+    const config = await track.getDecoderConfig();
+    if (!config) throw new Error('The video track does not declare a decoder configuration.');
+    const packet = await new EncodedPacketSink(track).getFirstPacket();
+    if (!packet) throw new Error('The video track contains no encoded packets.');
+    const description = config.description;
+    const descriptionBytes = description
+      ? description instanceof ArrayBuffer
+        ? new Uint8Array(description)
+        : new Uint8Array(description.buffer, description.byteOffset, description.byteLength)
+      : undefined;
+    return {
+      config: {
+        codec: config.codec,
+        ...(config.codedWidth === undefined ? {} : { codedWidth: config.codedWidth }),
+        ...(config.codedHeight === undefined ? {} : { codedHeight: config.codedHeight }),
+        ...(descriptionBytes ? { description: descriptionBytes.slice().buffer } : {}),
+      },
+      data: packet.data.slice(),
+      timestamp: packet.microsecondTimestamp,
+      key: packet.type === 'key',
+    };
+  } finally {
+    media.dispose();
+  }
+}
+
 type Mp4Track = {
   readonly id: number;
   readonly codec: string;

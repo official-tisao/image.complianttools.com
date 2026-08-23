@@ -1,7 +1,20 @@
 import { describe, expect, it } from 'vitest';
+import {
+  BufferTarget,
+  BufferSource,
+  EncodedPacket,
+  EncodedPacketSink,
+  EncodedVideoPacketSource,
+  Input,
+  ALL_FORMATS,
+  Mp4OutputFormat,
+  Output,
+  WebMOutputFormat,
+} from 'mediabunny';
 
 import {
   demuxMp4FirstVideoSample,
+  demuxContainerFirstVideoPacket,
   extractContainerVideoFrame,
   extractVideoFrame,
   supportsVideoDecoder,
@@ -80,6 +93,61 @@ describe('platform video frame extraction', () => {
       key: true,
     });
     expect(chunk.config.description).toEqual(new Uint8Array([1, 100]).buffer);
+  });
+
+  it('demuxes a real MP4 produced by the pinned local muxer', async () => {
+    const target = new BufferTarget();
+    const output = new Output({ format: new Mp4OutputFormat(), target });
+    const source = new EncodedVideoPacketSource('vp9');
+    output.addVideoTrack(source);
+    await output.start();
+    const sample = new Uint8Array([0x82, 0x49, 0x83, 0x42]);
+    await source.add(new EncodedPacket(sample, 'key', 0, 1), {
+      decoderConfig: {
+        codec: 'vp09.00.10.08',
+        codedWidth: 2,
+        codedHeight: 1,
+      },
+    });
+    await output.finalize();
+    expect(target.buffer).toBeInstanceOf(ArrayBuffer);
+
+    const chunk = await demuxMp4FirstVideoSample(new Uint8Array(target.buffer!));
+    expect(chunk).toMatchObject({
+      config: { codec: 'vp09.00.10.08', codedWidth: 2, codedHeight: 1 },
+      data: sample,
+      timestamp: 0,
+      key: true,
+    });
+  });
+
+  it('demuxes a real WebM produced by the pinned local muxer', async () => {
+    const target = new BufferTarget();
+    const output = new Output({ format: new WebMOutputFormat(), target });
+    const source = new EncodedVideoPacketSource('vp8');
+    output.addVideoTrack(source);
+    await output.start();
+    const sample = new Uint8Array([0x9d, 0x01, 0x2a, 0x02, 0x00, 0x01, 0x00]);
+    await source.add(new EncodedPacket(sample, 'key', 0, 1), {
+      decoderConfig: { codec: 'vp8', codedWidth: 2, codedHeight: 1 },
+    });
+    await output.finalize();
+    expect(target.buffer).toBeInstanceOf(ArrayBuffer);
+
+    const chunk = await demuxContainerFirstVideoPacket(target.buffer!);
+    expect(chunk).toMatchObject({
+      config: { codec: 'vp8', codedWidth: 2, codedHeight: 1 },
+      data: sample,
+      timestamp: 0,
+      key: true,
+    });
+
+    // Independently confirm that the generated fixture is a parseable WebM track.
+    const media = new Input({ formats: ALL_FORMATS, source: new BufferSource(target.buffer!) });
+    const track = await media.getPrimaryVideoTrack();
+    expect(track).not.toBeNull();
+    expect(await new EncodedPacketSink(track!).getFirstPacket()).not.toBeNull();
+    media.dispose();
   });
 
   it('probes per-codec capability and turns an output frame into a raster', async () => {
