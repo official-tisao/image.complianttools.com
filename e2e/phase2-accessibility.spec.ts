@@ -12,7 +12,7 @@ const phase2Routes = [
   '/pdf-to-image',
   '/image-to-pdf',
   '/favicon-generator',
-  '/gif-splitter',
+  '/gif-converter',
   '/embedded-converter',
   '/image-to-base64',
   '/base64-image',

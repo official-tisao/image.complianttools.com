@@ -37,7 +37,7 @@ for (const format of ['webp', 'webm', 'mp4'] as const) {
       const url = new URL(request.url());
       if (url.origin !== 'http://127.0.0.1:4173') crossOrigin.push(request.url());
     });
-    await page.goto('/gif-splitter');
+    await page.goto('/gif-converter');
     await page.waitForLoadState('networkidle');
     await page.getByLabel('Output').selectOption(format);
 

@@ -85,9 +85,9 @@
   <title>GIF Splitter — Image Compliant Tools</title>
   <meta
     name="description"
-    content="Export GIF frames as PNGs or convert animations to APNG, MP4, or WebM locally."
+    content="Export GIF frames as PNGs or convert animations to APNG, animated WebP, MP4, or WebM locally."
   />
-  <link rel="canonical" href="https://image.complianttools.com/gif-splitter" />
+  <link rel="canonical" href="https://image.complianttools.com/gif-converter" />
 </svelte:head>
 
 <main>
