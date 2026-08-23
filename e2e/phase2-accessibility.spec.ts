@@ -5,6 +5,7 @@ const phase2Routes = [
   '/heic-converter',
   '/raw-converter',
   '/avif-converter',
+  '/webp-converter',
   '/convert/png-to-webp',
   '/jxl-converter',
   '/svg-to-png',

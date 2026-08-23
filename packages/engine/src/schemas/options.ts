@@ -199,6 +199,14 @@ export const GifConverterToolOptionsSchema = z.object({
   output: z.enum(['frames', 'apng', 'webp', 'mp4', 'webm']).default('frames'),
 });
 
+export const WebpConverterToolOptionsSchema = z.object({
+  animated: z.boolean().default(false),
+  lossless: z.boolean().default(false),
+  quality: z.number().min(0).max(100).default(75),
+  frameDelayMs: z.number().int().min(10).max(60_000).default(100),
+  loopCount: z.number().int().min(0).max(65_535).default(0),
+});
+
 const embeddedFormats = [
   'alpha1',
   'alpha2',
@@ -315,6 +323,7 @@ export type SvgRasterizeToolOptions = z.infer<typeof SvgRasterizeToolOptionsSche
 export type CbzToolOptions = z.infer<typeof CbzToolOptionsSchema>;
 export type Base64ToolOptions = z.infer<typeof Base64ToolOptionsSchema>;
 export type GifConverterToolOptions = z.infer<typeof GifConverterToolOptionsSchema>;
+export type WebpConverterToolOptions = z.infer<typeof WebpConverterToolOptionsSchema>;
 export type EmbeddedToolOptions = z.infer<typeof EmbeddedToolOptionsSchema>;
 
 export interface OptionDescription {
@@ -669,6 +678,59 @@ export const gifConverterToolOptionDescriptions: Readonly<Record<string, OptionD
       webm: 'WebM video',
     },
     defaultValue: 'frames',
+  },
+};
+
+export const webpConverterToolOptionDescriptions: Readonly<Record<string, OptionDescription>> = {
+  'webp.animated': {
+    label: 'Create an animation',
+    help: 'Uses every selected image as a frame; an animated GIF keeps its original frame delays.',
+    control: 'toggle',
+    group: 'WebP',
+    advanced: false,
+    defaultValue: false,
+  },
+  'webp.lossless': {
+    label: 'Use lossless encoding',
+    control: 'toggle',
+    group: 'WebP',
+    advanced: false,
+    defaultValue: false,
+  },
+  'webp.quality': {
+    label: 'Lossy quality',
+    help: 'Ignored when lossless encoding is enabled.',
+    unit: '%',
+    control: 'slider',
+    group: 'WebP',
+    advanced: false,
+    min: 0,
+    max: 100,
+    step: 1,
+    defaultValue: 75,
+  },
+  'webp.frameDelayMs': {
+    label: 'Frame delay',
+    help: 'Used for separate image files; GIF input keeps its own timing.',
+    unit: 'ms',
+    control: 'number',
+    group: 'Animation',
+    advanced: true,
+    min: 10,
+    max: 60_000,
+    step: 10,
+    defaultValue: 100,
+  },
+  'webp.loopCount': {
+    label: 'Loop count',
+    help: '0 repeats forever.',
+    control: 'number',
+    group: 'Animation',
+    advanced: true,
+    min: 0,
+    max: 65_535,
+    step: 1,
+    defaultValue: 0,
   },
 };
 

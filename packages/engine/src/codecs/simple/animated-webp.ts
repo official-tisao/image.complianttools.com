@@ -56,7 +56,7 @@ function frameImage(image: RasterImage, frame: Frame): RasterImage {
 /** Encodes full-canvas raster frames and muxes them into a standards-compliant animated WebP. */
 export async function encodeAnimatedWebp(
   image: RasterImage,
-  options: { quality?: number; loopCount?: number } = {},
+  options: { quality?: number; lossless?: boolean; loopCount?: number } = {},
 ): Promise<Uint8Array> {
   if (image.width < 1 || image.height < 1 || image.width > 0x1000000 || image.height > 0x1000000)
     throw new Error('Animated WebP dimensions must be between 1 and 16,777,216 pixels.');
@@ -80,7 +80,10 @@ export async function encodeAnimatedWebp(
   const chunks = [chunk('VP8X', vp8x), chunk('ANIM', anim)];
   for (const frame of image.frames) {
     const encoded = new Uint8Array(
-      await encodeRasterAsWebp(frameImage(image, frame), { quality: options.quality ?? 80 }),
+      await encodeRasterAsWebp(frameImage(image, frame), {
+        quality: options.quality ?? 80,
+        lossless: options.lossless ? 1 : 0,
+      }),
     );
     const encodedChunks = imageChunks(encoded);
     const payloadLength = 16 + encodedChunks.reduce((sum, item) => sum + item.length, 0);

@@ -1,7 +1,33 @@
 export const prerender = true;
 
+const paths = [
+  'convert',
+  'compress',
+  'resize',
+  'heic-converter',
+  'avif-converter',
+  'webp-converter',
+  'jxl-converter',
+  'raw-converter',
+  'svg-to-png',
+  'image-to-svg',
+  'pdf-to-image',
+  'image-to-pdf',
+  'favicon-generator',
+  'base64-image',
+  'gif-converter',
+  'gif-maker',
+  'video-to-gif',
+  'cbz-converter',
+  'lossless-optimize',
+  'embedded-converter',
+  'exif-viewer',
+  'remove-exif',
+  'image-info',
+] as const;
+
 export const GET = () =>
   new Response(
-    `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://image.complianttools.com/convert</loc></url><url><loc>https://image.complianttools.com/compress</loc></url><url><loc>https://image.complianttools.com/resize</loc></url><url><loc>https://image.complianttools.com/heic-converter</loc></url><url><loc>https://image.complianttools.com/avif-converter</loc></url><url><loc>https://image.complianttools.com/jxl-converter</loc></url><url><loc>https://image.complianttools.com/raw-converter</loc></url><url><loc>https://image.complianttools.com/svg-to-png</loc></url><url><loc>https://image.complianttools.com/image-to-svg</loc></url><url><loc>https://image.complianttools.com/pdf-to-image</loc></url><url><loc>https://image.complianttools.com/image-to-pdf</loc></url><url><loc>https://image.complianttools.com/favicon-generator</loc></url><url><loc>https://image.complianttools.com/base64-image</loc></url><url><loc>https://image.complianttools.com/gif-converter</loc></url><url><loc>https://image.complianttools.com/gif-maker</loc></url><url><loc>https://image.complianttools.com/video-to-gif</loc></url><url><loc>https://image.complianttools.com/cbz-converter</loc></url><url><loc>https://image.complianttools.com/lossless-optimize</loc></url><url><loc>https://image.complianttools.com/embedded-converter</loc></url><url><loc>https://image.complianttools.com/exif-viewer</loc></url><url><loc>https://image.complianttools.com/remove-exif</loc></url><url><loc>https://image.complianttools.com/image-info</loc></url></urlset>`,
+    `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${paths.map((path) => `<url><loc>https://image.complianttools.com/${path}</loc></url>`).join('')}</urlset>`,
     { headers: { 'content-type': 'application/xml' } },
   );

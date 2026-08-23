@@ -1,6 +1,11 @@
 import { Worker } from 'node:worker_threads';
 import { afterAll, describe, expect, it } from 'vitest';
-import { createRaster, encodeRaster, productionEncoderFormats } from '../src/index.js';
+import {
+  WebpConverterToolOptionsSchema,
+  createRaster,
+  encodeRaster,
+  productionEncoderFormats,
+} from '../src/index.js';
 
 const worker = new Worker(new URL('./encode-raster-worker.mjs', import.meta.url), {
   type: 'module',
@@ -28,6 +33,18 @@ function encodeInWorker(): Promise<{
 }
 
 describe('production raster encoder', () => {
+  it('validates still and animated WebP tool options', () => {
+    expect(WebpConverterToolOptionsSchema.parse({})).toEqual({
+      animated: false,
+      lossless: false,
+      quality: 75,
+      frameDelayMs: 100,
+      loopCount: 0,
+    });
+    expect(() => WebpConverterToolOptionsSchema.parse({ quality: 101 })).toThrow();
+    expect(() => WebpConverterToolOptionsSchema.parse({ frameDelayMs: 0 })).toThrow();
+    expect(() => WebpConverterToolOptionsSchema.parse({ loopCount: 65_536 })).toThrow();
+  });
   it('executes JPEG, PNG, and WebP through the central dispatcher', async () => {
     const output = await encodeInWorker();
     expect(new Uint8Array(output.jpeg).subarray(0, 3)).toEqual(new Uint8Array([0xff, 0xd8, 0xff]));
