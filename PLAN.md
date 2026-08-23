@@ -461,7 +461,7 @@ upstreams are permissive (BSD-3, BSD-2), so the obstacle is a build we do not ow
 
 #### P2-17 · Fixture + golden coverage
 - [ ] Every row in README §5 has a fixture test **or** is honestly marked unavailable with a reason
-- [ ] Golden files recorded for every encode path
+- [x] Golden files recorded for every encode path
 - **Spec:** README §22.2, §22.5 · **Done when:** Appendix B is fully checked
 
 #### P2-18 · Lossless optimizer (T23)

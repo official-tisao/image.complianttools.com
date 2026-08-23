@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 
 import { init as initAvif } from '@jsquash/avif/decode.js';
@@ -38,6 +39,9 @@ describe('cleared WASM codecs', () => {
 
   it('round-trips a local AVIF fixture', async () => {
     const encoded = await encodeRasterAsAvif(fixture, { quality: 100 });
+    expect(createHash('sha256').update(new Uint8Array(encoded)).digest('hex')).toBe(
+      'd5881ed8786171ba9e30a197aedb877dbbd98467d91b5dad38d7888058902bbb',
+    );
     const decoded = await decodeAvifToRaster(encoded);
     expect(decoded).toMatchObject({ width: 1, height: 1, bitDepth: 8 });
     expect(decoded.frames[0]?.data[3]).toBe(255);
@@ -45,6 +49,9 @@ describe('cleared WASM codecs', () => {
 
   it('round-trips a local JPEG XL fixture', async () => {
     const encoded = await encodeRasterAsJxl(fixture, { quality: 100 });
+    expect(createHash('sha256').update(new Uint8Array(encoded)).digest('hex')).toBe(
+      '4ac2e8482c14d5345fb2ac1c096939fb56c0a2ac6e5a5ef60e42566a43ae0504',
+    );
     const decoded = await decodeJxlToRaster(encoded);
     expect(decoded).toMatchObject({ width: 1, height: 1, bitDepth: 8 });
     expect(decoded.frames[0]?.data[3]).toBe(255);

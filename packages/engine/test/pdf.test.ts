@@ -1,4 +1,5 @@
 import { PDFDocument } from 'pdf-lib';
+import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 
 import { createPdfFromPng, createPdfFromPngPages } from '../src/index.js';
@@ -17,6 +18,10 @@ describe('PDF export', () => {
     expect(bytes.subarray(0, 5)).toEqual(new Uint8Array([37, 80, 68, 70, 45]));
     expect(pdf.getPageCount()).toBe(1);
     expect(pdf.getPage(0).getSize()).toEqual({ height: 36, width: 72 });
+    expect(await createPdfFromPng(onePixelPng, 72, 36)).toEqual(bytes);
+    expect(createHash('sha256').update(bytes).digest('hex')).toBe(
+      'bd7bbb2fc53b57797776b1a15853d0d5af6b59c241e39f67d23c3d22cf72e173',
+    );
   });
 
   it('rejects invalid page dimensions before creating a document', async () => {

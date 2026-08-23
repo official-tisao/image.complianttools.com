@@ -42,6 +42,9 @@ export async function createPdfFromPngPages(pages: readonly PdfPngPage[]): Promi
 
   const { PDFDocument } = await loadPdfLib();
   const pdfDocument = await PDFDocument.create();
+  const deterministicDate = new Date(0);
+  pdfDocument.setCreationDate(deterministicDate);
+  pdfDocument.setModificationDate(deterministicDate);
   for (const source of pages) {
     const page = pdfDocument.addPage([source.width, source.height]);
     const image = await pdfDocument.embedPng(source.pngBytes);

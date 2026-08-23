@@ -51,6 +51,8 @@ export function encodeCbz(pages: readonly ComicPage[]): ArrayBuffer {
       );
     archive[name] = page.bytes;
   }
-  const output = zipSync(archive, { level: 0 });
+  // ZIP timestamps default to "now", which makes identical local exports byte-different.
+  // A local-time constructor keeps the encoded DOS date stable across host time zones.
+  const output = zipSync(archive, { level: 0, mtime: new Date(1980, 0, 1) });
   return output.buffer.slice(output.byteOffset, output.byteOffset + output.byteLength);
 }

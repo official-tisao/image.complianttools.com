@@ -1,4 +1,5 @@
 import { Worker } from 'node:worker_threads';
+import { createHash } from 'node:crypto';
 
 import { afterAll, describe, expect, it } from 'vitest';
 
@@ -10,6 +11,7 @@ function runCodecJob(): Promise<{
   webp: ArrayBuffer;
   plainPng: ArrayBuffer;
   png: ArrayBuffer;
+  apng: ArrayBuffer;
   losslessPng: {
     bytes: ArrayBuffer;
     changed: boolean;
@@ -30,6 +32,7 @@ function runCodecJob(): Promise<{
       webp: ArrayBuffer;
       plainPng: ArrayBuffer;
       png: ArrayBuffer;
+      apng: ArrayBuffer;
       losslessPng: {
         bytes: ArrayBuffer;
         changed: boolean;
@@ -76,6 +79,21 @@ describe('jSquash worker codecs', () => {
     expect(first.png.byteLength).toBeLessThanOrEqual(first.plainPng.byteLength);
     expect(first.losslessPng.optimizedBytes).toBeLessThanOrEqual(first.losslessPng.originalBytes);
     expect(new Uint8Array(first.losslessPng.bytes)).toEqual(new Uint8Array(first.png));
+    const digest = (bytes: ArrayBuffer) =>
+      createHash('sha256').update(new Uint8Array(bytes)).digest('hex');
+    expect({
+      jpeg: digest(first.jpeg),
+      apng: digest(first.apng),
+      png: digest(first.plainPng),
+      optimizedPng: digest(first.png),
+      webp: digest(first.webp),
+    }).toEqual({
+      jpeg: 'cc001fbed8797bda726fa8dc3b43f72f205f2716ad2c8c3b671d56b383938a38',
+      apng: '309b339bbf13abbf6d32bbf84c3a9145dd9e60fc5965ca327a1027a9ff8beb25',
+      png: 'd307f87bcaf95c4d4058338771a8fce6004b456962ca3e945470dedb828a6b1b',
+      optimizedPng: '9cdf9196e8fa231160c070325b1911607b899671fad294069be2bdaaf7162061',
+      webp: 'ea93240f4ce2156ec6edcd7afa471c077e44a25d4a799bb4aab4baaa45eb5390',
+    });
   }, 30_000);
 
   it('returns smaller independently pixel-verified output across a 50-file corpus', async () => {

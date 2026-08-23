@@ -12,6 +12,7 @@ import {
   encodeRasterAsPng,
   encodeRasterAsJpeg,
   encodeRasterAsOptimisedPng,
+  encodeApng,
   encodeGif,
   optimizeGifLossless,
   optimizeJpegLossless,
@@ -176,12 +177,20 @@ parentPort.on('message', async ({ id, corpus }) => {
       encodeRasterAsPng(source),
       encodeRasterAsOptimisedPng(source),
     ]);
+    const apng = await encodeApng({
+      ...source,
+      frames: [
+        { data: source.frames[0].data.slice(), durationMs: 25 },
+        { data: source.frames[0].data.slice(), durationMs: 40 },
+      ],
+    });
     const losslessPng = await optimizePngLossless(plainPng);
-    parentPort.postMessage({ id, jpeg, webp, plainPng, png, losslessPng }, [
+    parentPort.postMessage({ id, jpeg, webp, plainPng, png, apng, losslessPng }, [
       jpeg,
       webp,
       plainPng,
       png,
+      apng,
       losslessPng.bytes,
     ]);
   } catch (error) {
