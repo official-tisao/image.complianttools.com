@@ -1100,7 +1100,7 @@ subset) · [x] AI (PDF-compatible) · [x] PSD/PSB · [x] XCF · [x] WMF/EMF · [
 **Embedded** — [ ] LVGL v9 C array · [x] LVGL v9 binary · [ ] LVGL v8 C array · [x] LVGL v8 binary ·
 [x] Generic raw · [ ] Adafruit GFX · [ ] ESP-IDF/TFT_eSPI
 
-**Video in (WebCodecs)** — [ ] MP4/M4V/MOV · [x] WebM · [x] MKV · [x] AVI
+**Video in (WebCodecs)** — [x] MP4/M4V/MOV · [x] WebM · [x] MKV · [x] AVI
 
 ---
 
@@ -1211,7 +1211,7 @@ Every README change gets a row here, per §0.3. Newest first.
 
 | Date | README § | Change | PLAN action |
 | --- | --- | --- | --- |
-| 2026-08-23 | §5.6 | Added installed-Edge evidence that records a real WebM, decodes it through the production local container/WebCodecs path, exports GIF, and independently verifies the decoded RGBA pixel with zero cross-origin requests | Completed the Appendix B WebM row; MP4/M4V/MOV still requires real pixel-decode evidence |
+| 2026-08-23 | §5.6 | Added installed-Edge evidence that records real WebM and MP4 containers, decodes them through the production local container/WebCodecs path, exports GIF, and independently verifies the decoded RGBA pixel with zero cross-origin requests; the MP4 bytes pass under MP4, M4V, and MOV extensions | Completed the Appendix B WebM and MP4/M4V/MOV rows and the P2-10 real frame-extraction condition |
 | 2026-08-22 | §5.6 | Corrected video-container scope to the formats parsed by the pinned local readers; AVI/WMV/FLV/MTS/M2TS now surface a specific unavailable reason instead of falling through as MP4 | Completed the Appendix B AVI row by the documented-unavailable path; retained real-decode requirements for the supported video rows |
 | 2026-08-09 | §7.6, §11, §19, §22, §24, §25.3.4 | Closed Phase 1 with live target-search progress, canvas pan/pixel grid, 12 MP latency evidence, Axe, keyboard, SEO, en-XA/Arabic coverage, and pinned Axe tooling | Completed P1-08/09/12/14/15, T01/T20/T24, and Gate 1 |
 | 2026-08-09 | §7.6, §8, §10, §11, §19, §25.3.4 | Implemented the Phase 1 engine core, static route archetypes, generated controls, compare canvas, predicted sizing, and pinned/verified their direct dependencies | Completed P1-01..07, P1-10/11/13; recorded partial completion on P1-08/09/12/14 and measured Gate 1 evidence |

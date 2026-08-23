@@ -62,6 +62,74 @@ test('decodes real browser-recorded WebM pixels and exports them as GIF', async 
   expect(crossOrigin).toEqual([]);
 });
 
+test('decodes real browser-recorded MP4 family pixels and exports them as GIF', async ({
+  page,
+}) => {
+  const crossOrigin: string[] = [];
+  page.on('request', (request) => {
+    const url = new URL(request.url());
+    if (url.origin !== 'http://127.0.0.1:4173') crossOrigin.push(request.url());
+  });
+  await page.goto('/video-to-gif');
+  await page.waitForLoadState('networkidle');
+
+  const recording = await page.evaluate(async () => {
+    const mimeType = ['video/mp4;codecs=avc1.42E01E', 'video/mp4;codecs=avc1', 'video/mp4'].find(
+      (candidate) => MediaRecorder.isTypeSupported(candidate),
+    );
+    if (!mimeType) return null;
+    const canvas = document.createElement('canvas');
+    canvas.width = 32;
+    canvas.height = 32;
+    const context = canvas.getContext('2d');
+    if (!context) throw new Error('Canvas 2D is unavailable.');
+    context.fillStyle = '#ef1808';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    const stream = canvas.captureStream(10);
+    const chunks: Blob[] = [];
+    const recorder = new MediaRecorder(stream, { mimeType });
+    recorder.ondataavailable = (event) => {
+      if (event.data.size > 0) chunks.push(event.data);
+    };
+    const stopped = new Promise<void>((resolve, reject) => {
+      recorder.onstop = () => resolve();
+      recorder.onerror = () => reject(new Error('Unable to record the MP4 fixture.'));
+    });
+    recorder.start(100);
+    (stream.getVideoTracks()[0] as CanvasCaptureMediaStreamTrack).requestFrame();
+    await new Promise((resolve) => setTimeout(resolve, 350));
+    recorder.stop();
+    await stopped;
+    stream.getTracks().forEach((track) => track.stop());
+    return [...new Uint8Array(await new Blob(chunks, { type: mimeType }).arrayBuffer())];
+  });
+
+  test.skip(
+    recording === null,
+    'Installed Edge cannot record an MP4 fixture for real decode proof.',
+  );
+  expect(recording!.length).toBeGreaterThan(100);
+  for (const extension of ['mp4', 'm4v', 'mov'] as const) {
+    const downloadPromise = page.waitForEvent('download');
+    await page.locator('input[type=file]').setInputFiles({
+      name: `browser-recorded.${extension}`,
+      mimeType: extension === 'mov' ? 'video/quicktime' : 'video/mp4',
+      buffer: Buffer.from(recording!),
+    });
+    const download = await downloadPromise;
+    await expect(page.getByRole('status')).toContainText(
+      'Extracted the frame at 0.00 seconds locally.',
+    );
+    const gif = decodeGif(Buffer.concat(await (await download.createReadStream()).toArray()));
+    const [red, green, blue, alpha] = gif.frames[0]!.data;
+    expect(red).toBeGreaterThan(180);
+    expect(green).toBeLessThan(80);
+    expect(blue).toBeLessThan(80);
+    expect(alpha).toBe(255);
+  }
+  expect(crossOrigin).toEqual([]);
+});
+
 test('video frame tool reports an invalid local container without a network fallback', async ({
   page,
 }) => {
