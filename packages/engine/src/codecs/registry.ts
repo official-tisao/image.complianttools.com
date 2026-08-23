@@ -1,5 +1,5 @@
 import type { FormatCapability, RuntimeCapabilities } from '../capabilities.js';
-import type { FormatId } from '../types.js';
+import type { EngineError, FormatId } from '../types.js';
 
 export type CodecOperation = 'decode' | 'encode';
 
@@ -448,6 +448,24 @@ export function getCodec(id: FormatId): CodecDescriptor {
   const codec = codecRegistry.find((entry) => entry.id === id);
   if (!codec) throw new Error(`No codec registry entry exists for ${id}.`);
   return codec;
+}
+
+/** Builds the registry-backed typed error used by UI and programmatic capability failures. */
+export function codecUnavailableError(id: FormatId, operation: CodecOperation): EngineError {
+  const codec = getCodec(id);
+  const reason =
+    operation === 'decode'
+      ? (codec.decodeUnavailableReason ?? codec.unavailableReason)
+      : (codec.encodeUnavailableReason ?? codec.unavailableReason);
+  return {
+    kind: 'codec-unavailable',
+    format: id,
+    reason: reason ?? `No local ${operation} implementation is available.`,
+    remedy:
+      operation === 'decode'
+        ? 'Convert the file with a trusted application to a format marked decode-ready, then try again.'
+        : 'Choose a format marked encode-ready in the format capability list.',
+  };
 }
 
 export function productionEncoderFormats(): FormatId[] {

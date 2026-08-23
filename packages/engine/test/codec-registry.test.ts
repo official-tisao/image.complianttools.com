@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   codecCapabilities,
   codecDownloadDisclosure,
+  codecUnavailableError,
   getCodec,
   loadCodec,
   loadEncoder,
@@ -112,6 +113,12 @@ describe('P2 codec registry', () => {
       encode: 'unavailable',
       decodeUnavailableReason: expect.stringContaining('BSD RAR implementation'),
       encodeUnavailableReason: expect.stringContaining('use CBZ instead'),
+    });
+    expect(codecUnavailableError('cbr', 'decode')).toMatchObject({
+      kind: 'codec-unavailable',
+      format: 'cbr',
+      reason: expect.stringContaining('BSD RAR implementation'),
+      remedy: expect.any(String),
     });
     expect(capabilities.find((entry) => entry.id === 'svg')).toMatchObject({
       decode: 'lazy',
