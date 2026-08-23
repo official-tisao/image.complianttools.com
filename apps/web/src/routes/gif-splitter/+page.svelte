@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onDestroy, tick } from 'svelte';
   import {
     GifConverterToolOptionsSchema,
     decodeGif,
@@ -8,12 +9,66 @@
     encodeApng,
     engineErrorMessage,
     gifConverterToolOptionDescriptions,
+    type RasterImage,
   } from '@complianttools/image-engine';
   import GeneratedControls from '$lib/GeneratedControls.svelte';
 
   let status = $state('');
   let error = $state('');
   let options = $state(GifConverterToolOptionsSchema.parse({}));
+  let previewImage = $state<RasterImage | null>(null);
+  let previewCanvas = $state<globalThis.HTMLCanvasElement>();
+  let previewFrameIndex = $state(0);
+  let previewPlaying = $state(false);
+  let previewTimer: ReturnType<typeof setTimeout> | undefined;
+
+  onDestroy(() => clearTimeout(previewTimer));
+
+  function drawPreviewFrame(index: number) {
+    if (!previewImage || !previewCanvas) return;
+    const frameCount = previewImage.frames.length;
+    previewFrameIndex = ((index % frameCount) + frameCount) % frameCount;
+    const context = previewCanvas.getContext('2d');
+    if (!context) return;
+    const frame = previewImage.frames[previewFrameIndex]!;
+    const imageData = context.createImageData(previewImage.width, previewImage.height);
+    imageData.data.set(frame.data);
+    context.putImageData(imageData, 0, 0);
+    previewCanvas.dataset.frameIndex = String(previewFrameIndex);
+  }
+
+  function schedulePreview() {
+    clearTimeout(previewTimer);
+    if (!previewPlaying || !previewImage) return;
+    const delay = Math.max(10, previewImage.frames[previewFrameIndex]!.durationMs);
+    previewTimer = setTimeout(() => {
+      drawPreviewFrame(previewFrameIndex + 1);
+      schedulePreview();
+    }, delay);
+  }
+
+  function setPreviewPlaying(playing: boolean) {
+    previewPlaying = playing;
+    schedulePreview();
+  }
+
+  function selectPreviewFrame(index: number) {
+    setPreviewPlaying(false);
+    drawPreviewFrame(index);
+  }
+
+  async function startPreview(image: RasterImage) {
+    clearTimeout(previewTimer);
+    previewImage = image;
+    previewFrameIndex = 0;
+    previewPlaying = true;
+    await tick();
+    if (!previewCanvas) throw new Error('Your browser cannot create the GIF preview.');
+    previewCanvas.width = image.width;
+    previewCanvas.height = image.height;
+    drawPreviewFrame(0);
+    schedulePreview();
+  }
 
   function updateOption(path: string, value: unknown) {
     if (path !== 'gif.output') return;
@@ -28,6 +83,7 @@
     try {
       const bytes = await file.arrayBuffer();
       const image = await decodeWithTypedErrors('gif', () => decodeGif(bytes));
+      await startPreview(image);
       if (options.output === 'webp') {
         const webpBytes = await encodeAnimatedWebp(image);
         const url = URL.createObjectURL(new Blob([webpBytes], { type: 'image/webp' }));
@@ -118,6 +174,39 @@
       onchange={(event) => void split(event.currentTarget.files?.[0])}
     /></label
   >
+  {#if previewImage}
+    <figure>
+      <canvas bind:this={previewCanvas} aria-label="Decoded GIF animation preview"></canvas>
+      <div role="group" aria-label="Preview playback">
+        <button type="button" onclick={() => selectPreviewFrame(previewFrameIndex - 1)}>
+          Previous frame
+        </button>
+        <button type="button" onclick={() => setPreviewPlaying(!previewPlaying)}>
+          {previewPlaying ? 'Pause preview' : 'Play preview'}
+        </button>
+        <button type="button" onclick={() => selectPreviewFrame(previewFrameIndex + 1)}>
+          Next frame
+        </button>
+      </div>
+      <figcaption>
+        Live preview — frame {previewFrameIndex + 1} of {previewImage.frames.length}
+      </figcaption>
+    </figure>
+  {/if}
   {#if status}<p role="status">{status}</p>{/if}
   {#if error}<p role="alert">{error}</p>{/if}
 </main>
+
+<style>
+  canvas {
+    display: block;
+    max-width: 100%;
+    height: auto;
+  }
+
+  [role='group'] {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+</style>

@@ -54,6 +54,17 @@ for (const format of ['webp', 'webm', 'mp4'] as const) {
         ? 'Converted 2 GIF frames to animated WebP locally.'
         : `Converted 2 GIF frames to ${format.toUpperCase()} locally.`,
     );
+    await page.getByRole('button', { name: 'Pause preview' }).click();
+    const preview = await page
+      .locator('canvas[aria-label="Decoded GIF animation preview"]')
+      .evaluate((canvas) => {
+        const context = (canvas as HTMLCanvasElement).getContext('2d');
+        if (!context) throw new Error('Preview canvas has no 2D context.');
+        return {
+          frameIndex: Number((canvas as HTMLCanvasElement).dataset.frameIndex),
+          pixel: [...context.getImageData(0, 0, 1, 1).data],
+        };
+      });
 
     const bytes = Buffer.concat(await (await download.createReadStream()).toArray());
     expect(bytes.length).toBeGreaterThan(100);
@@ -138,6 +149,9 @@ for (const format of ['webp', 'webm', 'mp4'] as const) {
       expect(playback.firstPixel[2]).toBeLessThan(80);
       expect(playback.secondPixel[0]).toBeLessThan(80);
       expect(playback.secondPixel[2]).toBeGreaterThan(180);
+      const exportedPixel = preview.frameIndex === 0 ? playback.firstPixel : playback.secondPixel;
+      for (let channel = 0; channel < 4; channel += 1)
+        expect(Math.abs(preview.pixel[channel]! - exportedPixel[channel]!)).toBeLessThanOrEqual(20);
     }
     expect(crossOrigin).toEqual([]);
   });
