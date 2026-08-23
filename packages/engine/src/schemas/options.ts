@@ -196,6 +196,11 @@ export const SvgRasterizeToolOptionsSchema = z
       });
   });
 
+export const VectorizeToolOptionsSchema = z.object({
+  colors: z.number().int().min(2).max(64).default(16),
+  curveTolerance: z.number().min(0.01).max(10).default(1),
+});
+
 export const CbzToolOptionsSchema = z.object({
   operation: z.enum(['create', 'extract', 'pdf']).default('create'),
 });
@@ -342,6 +347,7 @@ export type RawToolOptions = z.infer<typeof RawToolOptionsSchema>;
 export type PdfToImageOptions = z.infer<typeof PdfToImageOptionsSchema>;
 export type ImageToPdfOptions = z.infer<typeof ImageToPdfOptionsSchema>;
 export type SvgRasterizeToolOptions = z.infer<typeof SvgRasterizeToolOptionsSchema>;
+export type VectorizeToolOptions = z.infer<typeof VectorizeToolOptionsSchema>;
 export type CbzToolOptions = z.infer<typeof CbzToolOptionsSchema>;
 export type Base64ToolOptions = z.infer<typeof Base64ToolOptionsSchema>;
 export type GifConverterToolOptions = z.infer<typeof GifConverterToolOptionsSchema>;
@@ -719,6 +725,31 @@ export const svgRasterizeOptionDescriptions: Readonly<Record<string, OptionDescr
     advanced: false,
     min: 0.01,
     max: 32_768,
+    step: 0.01,
+    defaultValue: 1,
+  },
+};
+
+export const vectorizeToolOptionDescriptions: Readonly<Record<string, OptionDescription>> = {
+  'vector.colors': {
+    label: 'Colour count',
+    help: 'Posterizes the source before tracing. Fewer colours usually produce a smaller SVG.',
+    control: 'number',
+    group: 'Vector trace',
+    advanced: false,
+    min: 2,
+    max: 64,
+    step: 1,
+    defaultValue: 16,
+  },
+  'vector.curveTolerance': {
+    label: 'Curve tolerance',
+    help: 'Higher values simplify traced lines and quadratic curves more aggressively.',
+    control: 'slider',
+    group: 'Vector trace',
+    advanced: false,
+    min: 0.01,
+    max: 10,
     step: 0.01,
     defaultValue: 1,
   },
