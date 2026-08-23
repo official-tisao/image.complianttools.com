@@ -66,6 +66,11 @@ export interface RasterImage {
   readonly premultipliedAlpha: boolean;
   readonly frames: readonly [Frame, ...Frame[]];
   readonly iccProfile?: Uint8Array;
+  /** Byte-exact source-container metadata retained for same-format re-encoding. */
+  readonly encodedMetadata?: {
+    readonly format: Extract<FormatId, 'gif' | 'jpeg' | 'png' | 'webp'>;
+    readonly blocks: readonly Uint8Array[];
+  };
 }
 
 export interface ExportOptions {

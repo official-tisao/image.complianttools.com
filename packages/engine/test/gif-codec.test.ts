@@ -7,9 +7,20 @@ import {
   optimiseGifFrames,
   optimizeGifLossless,
   readGifLoopCount,
+  readContainerMetadata,
+  restoreContainerMetadata,
 } from '../src/index.js';
 
 describe('GIF encoder', () => {
+  it('preserves readable GIF comments through decode and re-encode by default', () => {
+    const encoded = new Uint8Array(
+      encodeGif(createRaster(1, 1, new Uint8ClampedArray([255, 0, 0, 255]))),
+    );
+    const comment = new Uint8Array([0x21, 0xfe, 4, 0x6c, 0x6f, 0x63, 0x61, 0]);
+    const tagged = restoreContainerMetadata(encoded, { format: 'gif', blocks: [comment] });
+    const reencoded = encodeGif(decodeGif(tagged));
+    expect(readContainerMetadata(reencoded).tags).toEqual(readContainerMetadata(tagged).tags);
+  });
   it('generates reverse, bounce, and crossfade animation sequences', () => {
     const image = createRaster(1, 1, new Uint8ClampedArray([0, 0, 0, 255]));
     const animated = {
@@ -81,7 +92,9 @@ describe('GIF encoder', () => {
     expect(result.changed).toBe(true);
     expect(result.optimizedBytes).toBeLessThan(result.originalBytes);
     expect(readGifLoopCount(result.bytes)).toBe(7);
-    expect(decodeGif(result.bytes)).toEqual(decodeGif(inflated));
+    const { encodedMetadata: _optimizedMetadata, ...optimizedRaster } = decodeGif(result.bytes);
+    const { encodedMetadata: _sourceMetadata, ...sourceRaster } = decodeGif(inflated);
+    expect(optimizedRaster).toEqual(sourceRaster);
   });
 
   it('preserves no-loop semantics while optimizing a still GIF', () => {

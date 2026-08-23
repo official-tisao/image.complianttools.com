@@ -16,6 +16,7 @@ function encodeInWorker(): Promise<{
     { width: number; height: number; frames: [{ data: Uint8ClampedArray }] }
   >;
   typedErrors: Array<{ kind: string; format: string; remedy: string }>;
+  preserved: Record<'jpeg' | 'png' | 'webp', { before: unknown; after: unknown }>;
 }> {
   return new Promise((resolve, reject) => {
     worker.once('error', reject);
@@ -55,6 +56,8 @@ describe('production raster encoder', () => {
         remedy: expect.any(String),
       }),
     ]);
+    for (const format of ['jpeg', 'png', 'webp'] as const)
+      expect(output.preserved[format].after).toEqual(output.preserved[format].before);
   });
 
   it('rejects unavailable formats with the registry reason', async () => {

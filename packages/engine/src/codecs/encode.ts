@@ -1,6 +1,7 @@
 import type { EngineError, ExportOptions, FormatId, RasterImage } from '../types.js';
 import { encodeRasterAsJpeg, encodeRasterAsPng, encodeRasterAsWebp } from './jsquash.js';
 import { getCodec } from './registry.js';
+import { restoreContainerMetadata } from '../metadata/container.js';
 
 export async function encodeRaster(
   image: RasterImage,
@@ -20,19 +21,23 @@ export async function encodeRaster(
     } satisfies EngineError;
   }
 
+  let encoded: ArrayBuffer;
   switch (format) {
     case 'jpeg':
-      return encodeRasterAsJpeg(image, {
+      encoded = await encodeRasterAsJpeg(image, {
         ...(options.quality === undefined ? {} : { quality: options.quality }),
         ...(options.progressive === undefined ? {} : { progressive: options.progressive }),
       });
+      break;
     case 'png':
-      return encodeRasterAsPng(image);
+      encoded = await encodeRasterAsPng(image);
+      break;
     case 'webp':
-      return encodeRasterAsWebp(image, {
+      encoded = await encodeRasterAsWebp(image, {
         ...(options.quality === undefined ? {} : { quality: options.quality }),
         ...(options.lossless ? { lossless: 1 } : {}),
       });
+      break;
     default:
       throw {
         kind: 'codec-unavailable',
@@ -41,4 +46,7 @@ export async function encodeRaster(
         remedy: 'Choose JPEG, PNG, or WebP for browser export.',
       } satisfies EngineError;
   }
+  return (options.stripMetadata ?? 'none') === 'none'
+    ? restoreContainerMetadata(encoded, image.encodedMetadata).buffer
+    : encoded;
 }

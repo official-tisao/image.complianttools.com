@@ -311,6 +311,156 @@ export function readContainerMetadata(input: ArrayBuffer | Uint8Array): Readable
   return readGif(bytes);
 }
 
+export type PreservedContainerMetadata = NonNullable<
+  import('../types.js').RasterImage['encodedMetadata']
+>;
+
+function preservedBlocks(
+  format: PreservedContainerMetadata['format'],
+  blocks: Uint8Array[],
+): PreservedContainerMetadata | undefined {
+  return blocks.length > 0 ? { format, blocks } : undefined;
+}
+
+/** Extracts byte-exact readable metadata blocks for same-format re-encoding. */
+export function preserveContainerMetadata(
+  input: ArrayBuffer | Uint8Array,
+): PreservedContainerMetadata | undefined {
+  const bytes = input instanceof Uint8Array ? input : new Uint8Array(input);
+  if (matches(bytes, pngSignature))
+    return preservedBlocks(
+      'png',
+      pngChunks(bytes)
+        .filter((chunk) => metadataChunks.has(chunk.type))
+        .map((chunk) => bytes.slice(chunk.start, chunk.end)),
+    );
+  if (bytes[0] === 0xff && bytes[1] === 0xd8) {
+    const blocks: Uint8Array[] = [];
+    for (let offset = 2; offset + 4 <= bytes.length;) {
+      if (bytes[offset] !== 0xff) break;
+      const marker = bytes[offset + 1]!;
+      if (marker === 0xd9 || marker === 0xda) break;
+      const length = (bytes[offset + 2]! << 8) | bytes[offset + 3]!;
+      if (length < 2 || offset + 2 + length > bytes.length)
+        throw new Error('JPEG contains a truncated metadata segment.');
+      const data = bytes.subarray(offset + 4, offset + 2 + length);
+      const readable =
+        (marker === 0xe0 && latin1.decode(data.subarray(0, 5)) === 'JFIF\0') ||
+        [0xe1, 0xe2, 0xeb, 0xed].includes(marker);
+      if (readable) blocks.push(bytes.slice(offset, offset + 2 + length));
+      offset += 2 + length;
+    }
+    return preservedBlocks('jpeg', blocks);
+  }
+  if (
+    latin1.decode(bytes.subarray(0, 4)) === 'RIFF' &&
+    latin1.decode(bytes.subarray(8, 12)) === 'WEBP'
+  )
+    return preservedBlocks(
+      'webp',
+      webpChunks(bytes)
+        .filter((chunk) => ['EXIF', 'XMP ', 'ICCP', 'C2PA'].includes(chunk.type))
+        .map((chunk) => bytes.slice(chunk.start, chunk.end)),
+    );
+  if (
+    latin1.decode(bytes.subarray(0, 6)) === 'GIF87a' ||
+    latin1.decode(bytes.subarray(0, 6)) === 'GIF89a'
+  ) {
+    const blocks: Uint8Array[] = [];
+    let offset = 13;
+    if ((bytes[10]! & 0x80) !== 0) offset += 3 * 2 ** ((bytes[10]! & 0x07) + 1);
+    while (offset < bytes.length) {
+      const start = offset,
+        marker = bytes[offset++];
+      if (marker === 0x3b) break;
+      if (marker === 0x21) {
+        const label = bytes[offset++];
+        const end = gifSubBlocksEnd(bytes, offset);
+        if (label === 0xfe) blocks.push(bytes.slice(start, end));
+        offset = end;
+        continue;
+      }
+      if (marker !== 0x2c || offset + 9 > bytes.length)
+        throw new Error('GIF contains an invalid or truncated image block.');
+      const packed = bytes[offset + 8]!;
+      offset += 9;
+      if ((packed & 0x80) !== 0) offset += 3 * 2 ** ((packed & 0x07) + 1);
+      if (bytes[offset++] === undefined) throw new Error('GIF contains truncated image data.');
+      offset = gifSubBlocksEnd(bytes, offset);
+    }
+    return preservedBlocks('gif', blocks);
+  }
+  return undefined;
+}
+
+/** Restores preserved blocks into a newly encoded container of the same format. */
+export function restoreContainerMetadata(
+  encoded: ArrayBuffer | Uint8Array,
+  metadata: PreservedContainerMetadata | undefined,
+): Uint8Array {
+  const bytes = encoded instanceof Uint8Array ? encoded : new Uint8Array(encoded);
+  if (!metadata || metadata.blocks.length === 0) return bytes.slice();
+  if (metadata.format === 'png' && matches(bytes, pngSignature)) {
+    const chunks = pngChunks(bytes);
+    const output: Uint8Array[] = [bytes.subarray(0, 8)];
+    for (const chunk of chunks) {
+      if (chunk.type === 'IEND') output.push(...metadata.blocks);
+      if (!metadataChunks.has(chunk.type)) output.push(bytes.subarray(chunk.start, chunk.end));
+    }
+    return Uint8Array.from(output.flatMap((part) => [...part]));
+  }
+  if (metadata.format === 'jpeg' && bytes[0] === 0xff && bytes[1] === 0xd8) {
+    const retained: Uint8Array[] = [bytes.subarray(0, 2), ...metadata.blocks];
+    for (let offset = 2; offset < bytes.length;) {
+      if (bytes[offset] !== 0xff) {
+        retained.push(bytes.subarray(offset));
+        break;
+      }
+      const marker = bytes[offset + 1]!;
+      if (marker === 0xd9 || marker === 0xda) {
+        retained.push(bytes.subarray(offset));
+        break;
+      }
+      const length = (bytes[offset + 2]! << 8) | bytes[offset + 3]!;
+      if (length < 2 || offset + 2 + length > bytes.length)
+        throw new Error('JPEG contains a truncated metadata segment.');
+      const data = bytes.subarray(offset + 4, offset + 2 + length);
+      const readable =
+        (marker === 0xe0 && latin1.decode(data.subarray(0, 5)) === 'JFIF\0') ||
+        [0xe1, 0xe2, 0xeb, 0xed].includes(marker);
+      if (!readable) retained.push(bytes.subarray(offset, offset + 2 + length));
+      offset += 2 + length;
+    }
+    return Uint8Array.from(retained.flatMap((part) => [...part]));
+  }
+  if (metadata.format === 'webp') {
+    const stripped = stripWebpMetadata(bytes);
+    const chunks = [
+      ...webpChunks(stripped).map((chunk) => stripped.subarray(chunk.start, chunk.end)),
+      ...metadata.blocks,
+    ];
+    const output = new Uint8Array(12 + chunks.reduce((sum, chunk) => sum + chunk.length, 0));
+    output.set(stripped.subarray(0, 12));
+    new DataView(output.buffer).setUint32(4, output.length - 8, true);
+    let offset = 12;
+    for (const chunk of chunks) {
+      output.set(chunk, offset);
+      offset += chunk.length;
+    }
+    return output;
+  }
+  if (metadata.format === 'gif') {
+    const stripped = stripGifMetadata(bytes);
+    if (stripped.at(-1) !== 0x3b) throw new Error('GIF metadata restore requires a trailer.');
+    return Uint8Array.from([
+      ...stripped.subarray(0, -1),
+      ...metadata.blocks.flatMap((block) => [...block]),
+      0x3b,
+    ]);
+  }
+  return bytes.slice();
+}
+
 /** Removes only ancillary metadata chunks; image data and mandatory PNG chunks are copied verbatim. */
 export function stripPngMetadata(input: ArrayBuffer | Uint8Array): Uint8Array {
   const bytes = input instanceof Uint8Array ? input : new Uint8Array(input);

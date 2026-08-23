@@ -435,7 +435,7 @@ upstreams are permissive (BSD-3, BSD-2), so the obstacle is a build we do not ow
 - [x] Read: EXIF (all IFDs + MakerNotes), IPTC, XMP, ICC, JFIF, PNG text chunks, GIF comment, WebP/AVIF/HEIF boxes, C2PA
 - [x] Write/strip presets + per-field editing (README §6.9)
 - [x] GPS shown as decimal + DMS + `geo:` URI — **no map tiles** (P5)
-- [ ] Property test: `stripMetadata: 'none'` preserves every readable tag through a re-encode
+- [x] Property test: `stripMetadata: 'none'` preserves every readable tag through a re-encode
 - **Spec:** README §6.9 · **Done when:** the preservation property test passes across all metadata-carrying formats
 
 #### P2-13 · ICC profile synthesis (**ours**)

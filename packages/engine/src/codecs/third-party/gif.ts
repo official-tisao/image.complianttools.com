@@ -1,6 +1,7 @@
 import { decompressFrames, parseGIF } from 'gifuct-js';
 
 import type { RasterImage } from '../../types.js';
+import { preserveContainerMetadata, restoreContainerMetadata } from '../../metadata/container.js';
 
 export interface GifEncodeOptions {
   /** 0 retains every frame; 1 merges duplicates; 2–3 also encode unchanged pixels as transparent. */
@@ -852,7 +853,8 @@ export function encodeGif(
     bytes.push(0);
   }
   bytes.push(0x3b);
-  return Uint8Array.from(bytes).buffer;
+  const encoded = Uint8Array.from(bytes);
+  return restoreContainerMetadata(encoded, image.encodedMetadata).buffer as ArrayBuffer;
 }
 
 /**
@@ -966,6 +968,10 @@ export function decodeGif(input: ArrayBuffer | Uint8Array): RasterImage {
     bitDepth: 8,
     premultipliedAlpha: false,
     frames: frames as unknown as RasterImage['frames'],
+    ...(() => {
+      const encodedMetadata = preserveContainerMetadata(bytes);
+      return encodedMetadata ? { encodedMetadata } : {};
+    })(),
   };
 }
 
@@ -1021,11 +1027,12 @@ export function optimizeGifLossless(
 ): LosslessGifOptimizationResult {
   const source = input instanceof Uint8Array ? input.slice() : new Uint8Array(input.slice(0));
   const original = decodeGif(source);
+  const { encodedMetadata: _encodedMetadata, ...renderedImage } = original;
   const loopCount = readGifLoopCount(source);
   let best = source;
   for (const optimizeLevel of [3, 2, 1, 0] as const) {
     const candidate = new Uint8Array(
-      encodeGif(original, loopCount, {
+      encodeGif(renderedImage, loopCount, {
         optimizeLevel,
         paletteMode: 'per-frame',
         paletteSize: 256,

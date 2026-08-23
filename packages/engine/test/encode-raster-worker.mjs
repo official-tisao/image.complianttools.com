@@ -13,6 +13,8 @@ import {
   decodeWebpToRaster,
   decodeWithTypedErrors,
   encodeRaster,
+  readContainerMetadata,
+  restoreContainerMetadata,
 } from '../dist/index.js';
 
 globalThis.ImageData = class ImageData {
@@ -66,6 +68,51 @@ parentPort.on('message', async () => {
       decodePngToRaster(png.slice(0)),
       decodeWebpToRaster(webp.slice(0)),
     ]);
+    const crc32 = (input) => {
+      let crc = 0xffffffff;
+      for (const byte of input) {
+        crc ^= byte;
+        for (let bit = 0; bit < 8; bit += 1) crc = (crc >>> 1) ^ (0xedb88320 & -(crc & 1));
+      }
+      return (crc ^ 0xffffffff) >>> 0;
+    };
+    const pngTextData = new TextEncoder().encode('Author\0Ada');
+    const pngType = new TextEncoder().encode('tEXt');
+    const pngBlock = new Uint8Array(12 + pngTextData.length);
+    const pngView = new DataView(pngBlock.buffer);
+    pngView.setUint32(0, pngTextData.length);
+    pngBlock.set(pngType, 4);
+    pngBlock.set(pngTextData, 8);
+    pngView.setUint32(8 + pngTextData.length, crc32(new Uint8Array([...pngType, ...pngTextData])));
+    const xmp = new TextEncoder().encode('http://ns.adobe.com/xap/1.0/\0<x:xmpmeta/>');
+    const jpegBlock = new Uint8Array(4 + xmp.length);
+    jpegBlock.set([0xff, 0xe1, (xmp.length + 2) >>> 8, (xmp.length + 2) & 255]);
+    jpegBlock.set(xmp, 4);
+    const webpData = new TextEncoder().encode('<x:xmpmeta/>');
+    const webpBlock = new Uint8Array(8 + webpData.length + (webpData.length & 1));
+    webpBlock.set(new TextEncoder().encode('XMP '));
+    new DataView(webpBlock.buffer).setUint32(4, webpData.length, true);
+    webpBlock.set(webpData, 8);
+    const tagged = {
+      jpeg: restoreContainerMetadata(jpeg, { format: 'jpeg', blocks: [jpegBlock] }),
+      png: restoreContainerMetadata(png, { format: 'png', blocks: [pngBlock] }),
+      webp: restoreContainerMetadata(webp, { format: 'webp', blocks: [webpBlock] }),
+    };
+    const taggedRasters = {
+      jpeg: await decodeJpegToRaster(tagged.jpeg.buffer),
+      png: await decodePngToRaster(tagged.png.buffer),
+      webp: await decodeWebpToRaster(tagged.webp.buffer),
+    };
+    const preserved = {};
+    for (const format of ['jpeg', 'png', 'webp']) {
+      const reencoded = await encodeRaster(taggedRasters[format], format, {
+        stripMetadata: 'none',
+      });
+      preserved[format] = {
+        before: readContainerMetadata(tagged[format]).tags,
+        after: readContainerMetadata(reencoded).tags,
+      };
+    }
     const typedErrors = [];
     for (const [format, decode] of [
       ['jpeg', decodeJpegToRaster],
@@ -89,6 +136,7 @@ parentPort.on('message', async () => {
           webp: decodedWebp,
         },
         typedErrors,
+        preserved,
       },
       [jpeg, png, webp],
     );

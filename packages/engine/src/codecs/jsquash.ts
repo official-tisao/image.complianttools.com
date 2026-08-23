@@ -7,6 +7,7 @@ import decodeWebp from '@jsquash/webp/decode.js';
 import encodeWebp from '@jsquash/webp/encode.js';
 
 import type { RasterImage } from '../types.js';
+import { preserveContainerMetadata } from '../metadata/container.js';
 
 function toImageData(image: RasterImage): ImageData {
   const frame = image.frames[0];
@@ -18,6 +19,11 @@ function toImageData(image: RasterImage): ImageData {
   } as ImageData;
 }
 
+function retainedMetadata(bytes: ArrayBuffer) {
+  const encodedMetadata = preserveContainerMetadata(bytes);
+  return encodedMetadata ? { encodedMetadata } : {};
+}
+
 export async function decodeJpegToRaster(bytes: ArrayBuffer): Promise<RasterImage> {
   const decoded = await decodeJpeg(bytes);
   return {
@@ -27,6 +33,7 @@ export async function decodeJpegToRaster(bytes: ArrayBuffer): Promise<RasterImag
     bitDepth: 8,
     premultipliedAlpha: false,
     frames: [{ data: decoded.data, durationMs: 0 }],
+    ...retainedMetadata(bytes),
   };
 }
 
@@ -53,6 +60,7 @@ export async function decodePngToRaster(bytes: ArrayBuffer): Promise<RasterImage
     bitDepth: 8,
     premultipliedAlpha: false,
     frames: [{ data: decoded.data, durationMs: 0 }],
+    ...retainedMetadata(bytes),
   };
 }
 
@@ -65,6 +73,7 @@ export async function decodeWebpToRaster(bytes: ArrayBuffer): Promise<RasterImag
     bitDepth: 8,
     premultipliedAlpha: false,
     frames: [{ data: decoded.data, durationMs: 0 }],
+    ...retainedMetadata(bytes),
   };
 }
 
