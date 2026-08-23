@@ -466,6 +466,7 @@ upstreams are permissive (BSD-3, BSD-2), so the obstacle is a build we do not ow
 
 #### P2-18 · Lossless optimizer (T23)
 - [x] `oxipng`, `mozjpeg -copy none`, our own GIF optimizer — pixel-identical output
+- [x] 50-file generated corpus: 17 PNG, 17 JPEG, 16 GIF; every output is smaller and independently pixel-verified
 - **Spec:** README §4.2 · **Done when:** output is byte-smaller and pixel-identical across a 50-file corpus
 
 ### 🚦 Gate 2

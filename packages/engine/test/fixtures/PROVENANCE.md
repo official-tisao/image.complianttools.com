@@ -34,6 +34,12 @@ The lossless GIF optimization corpus contains 50 inline-generated opaque colour 
 comment blocks. Every optimized result is decoded independently and compared byte-for-byte by frame,
 dimensions, timing, and loop count. The corpus contains no third-party images or personal data.
 
+The cross-format lossless optimization corpus in `codec-worker.mjs` contains 50 deterministic 8×8
+generated colour grids: 17 PNG files with deliberately fragmented IDAT chunks, 17 JPEG files with
+generated removable APP1 metadata, and 16 GIF files with generated removable comments. It uses the
+pinned PNG/JPEG WASM encoders and decoders plus the local GIF codec. An optimizer accepts a smaller
+candidate only after decoding both source and candidate and comparing the complete raster result.
+
 The adversarial corpus in `adversarial-codecs.test.ts` is also self-generated. Empty input and wrong
 magic are exercised through the typed error boundary for BMP, CUR, DDS, FITS, GIF, Radiance HDR,
 ICO, PCX, PFM, PNM/PAM, QOI, SGI, Sun Raster, TGA, TIFF, WBMP, XBM, and XPM. The remaining cases include
