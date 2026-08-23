@@ -195,6 +195,10 @@ export const Base64ToolOptionsSchema = z.object({
   mode: z.enum(['encode', 'decode']).default('encode'),
 });
 
+export const GifConverterToolOptionsSchema = z.object({
+  output: z.enum(['frames', 'apng', 'webp', 'mp4', 'webm']).default('frames'),
+});
+
 const embeddedFormats = [
   'alpha1',
   'alpha2',
@@ -310,6 +314,7 @@ export type PdfToImageOptions = z.infer<typeof PdfToImageOptionsSchema>;
 export type SvgRasterizeToolOptions = z.infer<typeof SvgRasterizeToolOptionsSchema>;
 export type CbzToolOptions = z.infer<typeof CbzToolOptionsSchema>;
 export type Base64ToolOptions = z.infer<typeof Base64ToolOptionsSchema>;
+export type GifConverterToolOptions = z.infer<typeof GifConverterToolOptionsSchema>;
 export type EmbeddedToolOptions = z.infer<typeof EmbeddedToolOptionsSchema>;
 
 export interface OptionDescription {
@@ -645,6 +650,25 @@ export const base64ToolOptionDescriptions: Readonly<Record<string, OptionDescrip
     options: ['encode', 'decode'],
     optionLabels: { encode: 'Image to Base64', decode: 'Base64 to file' },
     defaultValue: 'encode',
+  },
+};
+
+export const gifConverterToolOptionDescriptions: Readonly<Record<string, OptionDescription>> = {
+  'gif.output': {
+    label: 'Output',
+    help: 'MP4 and WebM require a compatible local WebCodecs encoder.',
+    control: 'select',
+    group: 'GIF',
+    advanced: false,
+    options: ['frames', 'apng', 'webp', 'mp4', 'webm'],
+    optionLabels: {
+      frames: 'Separate PNG frames',
+      apng: 'Animated PNG (APNG)',
+      webp: 'Animated WebP',
+      mp4: 'MP4 video',
+      webm: 'WebM video',
+    },
+    defaultValue: 'frames',
   },
 };
 

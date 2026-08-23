@@ -4,6 +4,7 @@ import {
   decodeGif,
   encodeGif,
   generateGifFrames,
+  GifConverterToolOptionsSchema,
   optimiseGifFrames,
   optimizeGifLossless,
   readGifLoopCount,
@@ -23,6 +24,11 @@ function addGifComment(input: Uint8Array, text: string): Uint8Array {
 }
 
 describe('GIF encoder', () => {
+  it('validates GIF converter output options and defaults to frame export', () => {
+    expect(GifConverterToolOptionsSchema.parse({})).toEqual({ output: 'frames' });
+    expect(GifConverterToolOptionsSchema.parse({ output: 'webp' })).toEqual({ output: 'webp' });
+    expect(() => GifConverterToolOptionsSchema.parse({ output: 'avi' })).toThrow();
+  });
   it('preserves readable GIF comments through decode and re-encode by default', () => {
     const encoded = new Uint8Array(
       encodeGif(createRaster(1, 1, new Uint8ClampedArray([255, 0, 0, 255]))),
@@ -103,9 +109,12 @@ describe('GIF encoder', () => {
     expect(result.changed).toBe(true);
     expect(result.optimizedBytes).toBeLessThan(result.originalBytes);
     expect(readGifLoopCount(result.bytes)).toBe(7);
-    const { encodedMetadata: _optimizedMetadata, ...optimizedRaster } = decodeGif(result.bytes);
-    const { encodedMetadata: _sourceMetadata, ...sourceRaster } = decodeGif(inflated);
-    expect(optimizedRaster).toEqual(sourceRaster);
+    const optimizedRaster = decodeGif(result.bytes);
+    const sourceRaster = decodeGif(inflated);
+    expect({ ...optimizedRaster, encodedMetadata: undefined }).toEqual({
+      ...sourceRaster,
+      encodedMetadata: undefined,
+    });
   });
 
   it('is byte-smaller and pixel-identical across a 50-file generated corpus', () => {
@@ -129,9 +138,12 @@ describe('GIF encoder', () => {
       const result = optimizeGifLossless(source);
       expect(result.optimizedBytes, `fixture ${fixture}`).toBeLessThan(result.originalBytes);
       expect(readGifLoopCount(result.bytes), `fixture ${fixture}`).toBe(loopCount);
-      const { encodedMetadata: _sourceMetadata, ...sourceRaster } = decodeGif(source);
-      const { encodedMetadata: _optimizedMetadata, ...optimizedRaster } = decodeGif(result.bytes);
-      expect(optimizedRaster, `fixture ${fixture}`).toEqual(sourceRaster);
+      const sourceRaster = decodeGif(source);
+      const optimizedRaster = decodeGif(result.bytes);
+      expect({ ...optimizedRaster, encodedMetadata: undefined }, `fixture ${fixture}`).toEqual({
+        ...sourceRaster,
+        encodedMetadata: undefined,
+      });
     }
   });
 
