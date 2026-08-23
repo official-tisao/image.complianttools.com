@@ -213,6 +213,12 @@ export const AvifConverterToolOptionsSchema = z.object({
   quality: z.number().min(0).max(100).default(50),
 });
 
+export const JxlConverterToolOptionsSchema = z.object({
+  direction: z.enum(['decode', 'encode']).default('decode'),
+  lossless: z.boolean().default(false),
+  quality: z.number().min(0).max(100).default(75),
+});
+
 const embeddedFormats = [
   'alpha1',
   'alpha2',
@@ -331,6 +337,7 @@ export type Base64ToolOptions = z.infer<typeof Base64ToolOptionsSchema>;
 export type GifConverterToolOptions = z.infer<typeof GifConverterToolOptionsSchema>;
 export type WebpConverterToolOptions = z.infer<typeof WebpConverterToolOptionsSchema>;
 export type AvifConverterToolOptions = z.infer<typeof AvifConverterToolOptionsSchema>;
+export type JxlConverterToolOptions = z.infer<typeof JxlConverterToolOptionsSchema>;
 export type EmbeddedToolOptions = z.infer<typeof EmbeddedToolOptionsSchema>;
 
 export interface OptionDescription {
@@ -770,6 +777,38 @@ export const avifConverterToolOptionDescriptions: Readonly<Record<string, Option
     max: 100,
     step: 1,
     defaultValue: 50,
+  },
+};
+
+export const jxlConverterToolOptionDescriptions: Readonly<Record<string, OptionDescription>> = {
+  'jxl.direction': {
+    label: 'Direction',
+    control: 'segmented',
+    group: 'JPEG XL',
+    advanced: false,
+    options: ['decode', 'encode'],
+    optionLabels: { decode: 'JPEG XL to PNG', encode: 'Image to JPEG XL' },
+    defaultValue: 'decode',
+  },
+  'jxl.lossless': {
+    label: 'Use lossless raster encoding',
+    help: 'Preserves decoded pixels; this is not reconstructible JPEG recompression.',
+    control: 'toggle',
+    group: 'JPEG XL',
+    advanced: false,
+    defaultValue: false,
+  },
+  'jxl.quality': {
+    label: 'Lossy quality',
+    help: 'Used only for lossy JPEG XL encoding.',
+    unit: '%',
+    control: 'slider',
+    group: 'JPEG XL',
+    advanced: false,
+    min: 0,
+    max: 100,
+    step: 1,
+    defaultValue: 75,
   },
 };
 

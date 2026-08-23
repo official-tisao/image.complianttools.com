@@ -20,6 +20,10 @@
       "types": "./dist/codecs/third-party/avif-encode.d.ts",
       "default": "./dist/codecs/third-party/avif-encode.js"
     },
+    "./codecs/jxl-encode": {
+      "types": "./dist/codecs/third-party/jxl-encode.d.ts",
+      "default": "./dist/codecs/third-party/jxl-encode.js"
+    },
     "./pipeline/execute": {
       "types": "./dist/pipeline/execute.d.ts",
       "default": "./dist/pipeline/execute.js"
