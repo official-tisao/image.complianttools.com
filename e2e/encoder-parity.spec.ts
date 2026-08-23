@@ -35,6 +35,7 @@ for (const format of ['jpeg', 'png', 'webp'] as const) {
       if (message.type() === 'error') pageErrors.push(message.text());
     });
     await page.goto('/convert');
+    await page.waitForLoadState('networkidle');
     await page.getByLabel('Format').selectOption(format);
     await page.setInputFiles('[data-testid=file-input]', fixture);
     await expect(page.getByRole('button', { name: 'Download' }), pageErrors.join('\n')).toBeEnabled(
