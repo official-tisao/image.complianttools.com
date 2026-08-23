@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { zlibSync } from 'fflate';
 
 import {
+  MetadataRemovalOptionsSchema,
   editJpegExifFields,
   readContainerMetadata,
   stripGifMetadata,
@@ -12,6 +13,21 @@ import {
   stripPngMetadata,
   stripWebpMetadata,
 } from '../src/index.js';
+
+describe('metadata removal options', () => {
+  it('defaults to a byte-preserving no-op', () => {
+    expect(MetadataRemovalOptionsSchema.parse({})).toEqual({ preset: 'keep', selectedTags: [] });
+  });
+
+  it('requires at least one bounded EXIF tag for custom removal', () => {
+    expect(() => MetadataRemovalOptionsSchema.parse({ preset: 'custom' })).toThrow(
+      'Select at least one EXIF field',
+    );
+    expect(() =>
+      MetadataRemovalOptionsSchema.parse({ preset: 'custom', selectedTags: [0x1_0000] }),
+    ).toThrow();
+  });
+});
 
 function pngChunk(type: string, data: readonly number[]): number[] {
   const length = data.length;

@@ -1,5 +1,7 @@
 <script lang="ts">
   import {
+    MetadataRemovalOptionsSchema,
+    metadataRemovalOptionDescriptions,
     stripGifMetadata,
     stripJpegExifTags,
     stripJpegGpsMetadata,
@@ -9,14 +11,14 @@
     stripPngMetadata,
     stripWebpMetadata,
   } from '@complianttools/image-engine';
+  import GeneratedControls from '$lib/GeneratedControls.svelte';
 
   let fileName = $state('');
   let status = $state('');
   let error = $state('');
-  let preset = $state<
-    'keep' | 'all' | 'gps' | 'except-orientation-copyright' | 'maker-notes' | 'custom'
-  >('all');
+  let preset = $state(MetadataRemovalOptionsSchema.parse({}).preset);
   let selectedTags = $state<number[]>([]);
+  const controlValues = $derived({ 'metadata.preset': preset });
   const customFields = [
     [0x013b, 'Artist'],
     [0x8298, 'Copyright'],
@@ -37,28 +39,32 @@
       : selectedTags.filter((value) => value !== tag);
   }
 
+  function setControl(path: string, value: unknown) {
+    if (path !== 'metadata.preset') return;
+    preset = MetadataRemovalOptionsSchema.parse({ preset: value }).preset;
+  }
+
   async function strip(file: File | undefined) {
     fileName = file?.name ?? '';
     status = '';
     error = '';
     if (!file) return;
     try {
+      const options = MetadataRemovalOptionsSchema.parse({ preset, selectedTags });
       const isPng = file.type === 'image/png' || /\.png$/iu.test(file.name);
       const isWebp = file.type === 'image/webp' || /\.webp$/iu.test(file.name);
       const isGif = file.type === 'image/gif' || /\.gif$/iu.test(file.name);
       const isJpeg = file.type === 'image/jpeg' || /\.jpe?g$/iu.test(file.name);
       if (
-        ['gps', 'except-orientation-copyright', 'maker-notes', 'custom'].includes(preset) &&
+        ['gps', 'except-orientation-copyright', 'maker-notes', 'custom'].includes(options.preset) &&
         !isJpeg
       )
         throw new Error(
           'This selective metadata preset is currently verified for JPEG files only.',
         );
-      if (preset === 'custom' && selectedTags.length === 0)
-        throw new Error('Select at least one EXIF field to remove.');
       const input = await file.arrayBuffer();
       const output =
-        preset === 'keep'
+        options.preset === 'keep'
           ? new Uint8Array(input)
           : isPng
             ? stripPngMetadata(input)
@@ -66,14 +72,14 @@
               ? stripWebpMetadata(input)
               : isGif
                 ? stripGifMetadata(input)
-                : preset === 'gps'
+                : options.preset === 'gps'
                   ? stripJpegGpsMetadata(input)
-                  : preset === 'except-orientation-copyright'
+                  : options.preset === 'except-orientation-copyright'
                     ? stripJpegMetadataExceptOrientationCopyright(input)
-                    : preset === 'maker-notes'
+                    : options.preset === 'maker-notes'
                       ? stripJpegMakerNotes(input)
-                      : preset === 'custom'
-                        ? stripJpegExifTags(input, selectedTags)
+                      : options.preset === 'custom'
+                        ? stripJpegExifTags(input, options.selectedTags)
                         : stripJpegMetadata(input);
       const extension = isPng ? 'png' : isWebp ? 'webp' : isGif ? 'gif' : 'jpg';
       const url = URL.createObjectURL(
@@ -87,7 +93,7 @@
       anchor.click();
       URL.revokeObjectURL(url);
       status =
-        preset === 'keep'
+        options.preset === 'keep'
           ? `Kept every byte locally (${output.byteLength} bytes).`
           : `Removed metadata locally: ${file.size} bytes → ${output.byteLength} bytes.`;
     } catch (reason) {
@@ -113,23 +119,15 @@
     PNG, JPEG, GIF, and WebP metadata is stripped locally. Other format-specific stripping options
     are not offered until they are implemented and verified.
   </p>
-  <label>
-    Removal preset
-    <select bind:value={preset}>
-      <option value="all">Remove all metadata</option>
-      <option value="gps">Remove EXIF GPS only (JPEG)</option>
-      <option value="except-orientation-copyright"
-        >Remove all except Orientation + Copyright (JPEG)</option
-      >
-      <option value="maker-notes">Remove MakerNotes only (JPEG)</option>
-      <option value="keep">Keep everything (byte-identical)</option>
-      <option value="custom">Custom fields (JPEG)</option>
-    </select>
-  </label>
+  <GeneratedControls
+    descriptions={metadataRemovalOptionDescriptions}
+    values={controlValues}
+    onChange={setControl}
+  />
   {#if preset === 'custom'}
     <fieldset>
       <legend>EXIF fields to remove</legend>
-      {#each customFields as [tag, label]}
+      {#each customFields as [tag, label] (tag)}
         <label
           ><input
             type="checkbox"

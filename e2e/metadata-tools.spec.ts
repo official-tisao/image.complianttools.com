@@ -97,6 +97,21 @@ test('GPS-only preset downloads a JPEG with coordinate storage wiped', async ({ 
   await expect(page.getByRole('status')).toContainText('Removed metadata locally');
 });
 
+test('metadata removal defaults to a byte-identical no-op', async ({ page }) => {
+  await page.goto('/remove-exif');
+  await page.waitForLoadState('networkidle');
+  await expect(page.getByLabel('Removal preset')).toHaveValue('keep');
+  const fixture = copyrightJpeg();
+  const pending = page.waitForEvent('download');
+  await page.locator('input[type=file]').setInputFiles(fixture);
+  const download = await pending;
+  const path = await download.path();
+  expect(path).not.toBeNull();
+  const output = await readFile(path!);
+  expect(output).toEqual(fixture.buffer);
+  await expect(page.getByRole('status')).toContainText('Kept every byte locally');
+});
+
 test('metadata viewer edits an existing JPEG copyright field without relocating EXIF', async ({
   page,
 }) => {

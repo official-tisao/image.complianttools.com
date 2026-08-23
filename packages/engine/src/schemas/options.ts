@@ -128,10 +128,27 @@ export const RotateOptionsSchema = z.object({
   applyExifOrientation: z.boolean().default(true),
 });
 
+export const MetadataRemovalOptionsSchema = z
+  .object({
+    preset: z
+      .enum(['keep', 'all', 'gps', 'except-orientation-copyright', 'maker-notes', 'custom'])
+      .default('keep'),
+    selectedTags: z.array(z.number().int().min(0).max(0xffff)).default([]),
+  })
+  .superRefine((value, context) => {
+    if (value.preset === 'custom' && value.selectedTags.length === 0)
+      context.addIssue({
+        code: 'custom',
+        path: ['selectedTags'],
+        message: 'Select at least one EXIF field to remove.',
+      });
+  });
+
 export type ExportOptionsInput = z.input<typeof ExportOptionsSchema>;
 export type ResizeOptions = z.infer<typeof ResizeOptionsSchema>;
 export type CropOptions = z.infer<typeof CropOptionsSchema>;
 export type RotateOptions = z.infer<typeof RotateOptionsSchema>;
+export type MetadataRemovalOptions = z.infer<typeof MetadataRemovalOptionsSchema>;
 
 export interface OptionDescription {
   label: string;
@@ -262,5 +279,17 @@ export const phaseOneOptionDescriptions: Readonly<Record<string, OptionDescripti
     group: 'Resize',
     advanced: true,
     defaultValue: false,
+  },
+};
+
+export const metadataRemovalOptionDescriptions: Readonly<Record<string, OptionDescription>> = {
+  'metadata.preset': {
+    label: 'Removal preset',
+    help: 'Keep everything is the safe no-op default. Select a removal policy explicitly.',
+    control: 'select',
+    group: 'Metadata',
+    advanced: false,
+    options: ['keep', 'all', 'gps', 'except-orientation-copyright', 'maker-notes', 'custom'],
+    defaultValue: 'keep',
   },
 };
