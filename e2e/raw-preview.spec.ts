@@ -83,6 +83,7 @@ test('RAW converter surfaces a useful malformed-input error', async ({ page }) =
     buffer: Buffer.alloc(32),
   });
   await expect(page.getByRole('alert')).toContainText('No embedded JPEG camera preview');
+  await expect(page.getByRole('alert')).toContainText('Remedy:');
 });
 
 test('RAW converter runs a selected 16-bit DNG develop path', async ({ page }) => {
@@ -98,4 +99,68 @@ test('RAW converter runs a selected 16-bit DNG develop path', async ({ page }) =
   await expect(page.getByRole('status')).toHaveText('DNG develop complete at 16-bit using PPG.');
   const link = page.getByRole('link', { name: 'Download 16-bit developed output' });
   await expect(link).toHaveAttribute('download', 'minimal-2x2-rgba16le.raw');
+  const raw16 = Buffer.from(
+    await page.evaluate(
+      async (href) => [...new Uint8Array(await (await fetch(href!)).arrayBuffer())],
+      await link.getAttribute('href'),
+    ),
+  );
+  expect(raw16.byteLength).toBe(2 * 2 * 4 * 2);
+  const previewUrl = await page
+    .getByRole('img', { name: 'Developed DNG preview' })
+    .getAttribute('src');
+  const preview = Buffer.from(
+    await page.evaluate(
+      async (url) => [...new Uint8Array(await (await fetch(url!)).arrayBuffer())],
+      previewUrl,
+    ),
+  );
+  expect(preview.subarray(0, 8)).toEqual(
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+  );
+  expect({ width: preview.readUInt32BE(16), height: preview.readUInt32BE(20) }).toEqual({
+    width: 2,
+    height: 2,
+  });
 });
+
+test('RAW generated controls begin with a keyboard-operable preview toggle', async ({ page }) => {
+  await page.goto('/raw-converter');
+  await page.waitForLoadState('networkidle');
+  await page.getByLabel('Extract embedded preview first').focus();
+  await page.keyboard.press('Space');
+  await expect(page.getByLabel('Extract embedded preview first')).not.toBeChecked();
+  await page.keyboard.press('Tab');
+  await expect(page.getByLabel('Demosaic')).toBeFocused();
+});
+
+for (const locale of ['en-XA', 'ar'] as const) {
+  test(`${locale} RAW route develops exact DNG preview dimensions with locale layout`, async ({
+    page,
+  }) => {
+    await page.goto(`/${locale}/raw-converter`);
+    await page.waitForLoadState('networkidle');
+    await page.locator('input[type=file]').setInputFiles({
+      name: `${locale}.dng`,
+      mimeType: 'image/x-adobe-dng',
+      buffer: uncompressedDng(),
+    });
+    await expect(page.getByRole('status')).toContainText('8-');
+    const previewUrl = await page.locator('main img').last().getAttribute('src');
+    const preview = Buffer.from(
+      await page.evaluate(
+        async (url) => [...new Uint8Array(await (await fetch(url!)).arrayBuffer())],
+        previewUrl,
+      ),
+    );
+    expect({ width: preview.readUInt32BE(16), height: preview.readUInt32BE(20) }).toEqual({
+      width: 2,
+      height: 2,
+    });
+    await expect(page.locator('main')).toHaveAttribute('dir', locale === 'ar' ? 'rtl' : 'ltr');
+    await expect(page.locator('link[rel=canonical]')).toHaveAttribute(
+      'href',
+      `https://image.complianttools.com/${locale}/raw-converter`,
+    );
+  });
+}

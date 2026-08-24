@@ -15,6 +15,7 @@
   import WebpConverter from '$lib/WebpConverter.svelte';
   import JxlConverter from '$lib/JxlConverter.svelte';
   import HeicConverter from '$lib/HeicConverter.svelte';
+  import RawConverter from '$lib/RawConverter.svelte';
   import { toolCopy } from '$lib/i18n';
   import type { PageData } from './$types';
 
@@ -62,6 +63,8 @@
   <JxlConverter locale={data.locale} />
 {:else if data.tool === 'heic-converter'}
   <HeicConverter locale={data.locale} />
+{:else if data.tool === 'raw-converter'}
+  <RawConverter locale={data.locale} />
 {:else}
   <FaviconGenerator locale={data.locale} />
 {/if}
