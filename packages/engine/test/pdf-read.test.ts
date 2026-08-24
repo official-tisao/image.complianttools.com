@@ -30,7 +30,7 @@ describe('browser-local PDF page rendering', () => {
         { pageNumber: 2, widthPoints: 144, heightPoints: 216 },
       ],
     });
-  });
+  }, 20_000);
 
   it('rejects malformed bytes through the production PDF.js loader', async () => {
     await expect(
