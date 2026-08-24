@@ -175,3 +175,83 @@ test('honours reduced motion and keeps preview stepping keyboard-operable', asyn
   await page.keyboard.press('Enter');
   await expect(page.getByRole('button', { name: 'Pause preview' })).toBeVisible();
 });
+
+test('exports every GIF frame as an exact PNG download', async ({ page }) => {
+  await page.goto('/gif-converter');
+  await page.waitForLoadState('networkidle');
+  const downloads: import('@playwright/test').Download[] = [];
+  page.on('download', (download) => downloads.push(download));
+  await page.locator('input[type=file]').setInputFiles({
+    name: 'two-frames.gif',
+    mimeType: 'image/gif',
+    buffer: Buffer.from(animatedGifFixture()),
+  });
+  await expect(page.getByRole('status')).toContainText('Exported 2 GIF frames locally.');
+  await expect.poll(() => downloads.length).toBe(2);
+  expect(downloads.map((download) => download.suggestedFilename())).toEqual([
+    'two-frames-frame-001.png',
+    'two-frames-frame-002.png',
+  ]);
+  for (const download of downloads) {
+    const bytes = Buffer.concat(await (await download.createReadStream()).toArray());
+    expect(bytes.subarray(0, 8)).toEqual(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
+    expect(inspectImageContainer(bytes)).toMatchObject({ width: 32, height: 32 });
+  }
+});
+
+test('converts a GIF to a real two-frame APNG locally', async ({ page }) => {
+  await page.goto('/gif-converter');
+  await page.waitForLoadState('networkidle');
+  await page.getByLabel('Output').selectOption('apng');
+  const pending = page.waitForEvent('download');
+  await page.locator('input[type=file]').setInputFiles({
+    name: 'two-frames.gif',
+    mimeType: 'image/gif',
+    buffer: Buffer.from(animatedGifFixture()),
+  });
+  const bytes = Buffer.concat(await (await (await pending).createReadStream()).toArray());
+  expect(bytes.includes(Buffer.from('acTL'))).toBe(true);
+  expect(inspectImageContainer(bytes)).toMatchObject({
+    format: 'png',
+    width: 32,
+    height: 32,
+    animated: true,
+    frameCount: 2,
+  });
+});
+
+test('GIF output control leads to the file picker by keyboard', async ({ page }) => {
+  await page.goto('/gif-converter');
+  await page.waitForLoadState('networkidle');
+  await page.getByLabel('Output').focus();
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('Tab');
+  await expect(page.getByLabel('Output')).toHaveValue('apng');
+  await expect(page.locator('input[type=file]')).toBeFocused();
+});
+
+for (const locale of ['en-XA', 'ar'] as const) {
+  test(`${locale} GIF route exports exact APNG animation with locale layout`, async ({ page }) => {
+    await page.goto(`/${locale}/gif-converter`);
+    await page.waitForLoadState('networkidle');
+    await page.locator('select').selectOption('apng');
+    const pending = page.waitForEvent('download');
+    await page.locator('input[type=file]').setInputFiles({
+      name: `${locale}.gif`,
+      mimeType: 'image/gif',
+      buffer: Buffer.from(animatedGifFixture()),
+    });
+    const bytes = Buffer.concat(await (await (await pending).createReadStream()).toArray());
+    expect(inspectImageContainer(bytes)).toMatchObject({
+      width: 32,
+      height: 32,
+      animated: true,
+      frameCount: 2,
+    });
+    await expect(page.locator('main')).toHaveAttribute('dir', locale === 'ar' ? 'rtl' : 'ltr');
+    await expect(page.locator('link[rel=canonical]')).toHaveAttribute(
+      'href',
+      `https://image.complianttools.com/${locale}/gif-converter`,
+    );
+  });
+}

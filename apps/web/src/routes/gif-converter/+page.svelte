@@ -1,5 +1,5 @@
 <script lang="ts">
-  import GifConverter from '../gif-splitter/+page.svelte';
+  import GifConverter from '$lib/GifConverter.svelte';
 </script>
 
 <GifConverter />
