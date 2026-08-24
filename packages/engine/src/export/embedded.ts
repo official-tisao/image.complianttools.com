@@ -448,10 +448,26 @@ export function emitLvglV9CArray(image: RasterImage, options: EmbeddedExportOpti
   const mapName = `${validateEmbeddedOutputName(options.outputName)}_map`;
   const mapOptions = { ...options, outputName: mapName };
   const array = emitByteCArray(image, mapOptions, packLvglV9Pixels(image, options.format));
+  const bytesPerRow =
+    image.width *
+    (options.format === 'rgb565' || options.format === 'rgb565be' || options.format === 'rgb565a8'
+      ? 2
+      : options.format === 'rgb888'
+        ? 3
+        : 4);
   return `${array.replace('#include <stdint.h>', '#include <stdint.h>\n#include "lvgl.h"')}const lv_image_dsc_t ${options.outputName} = {
-  .header = { .cf = ${colourFormat[options.format]}, .w = ${image.width}, .h = ${image.height} },
+  .header = {
+    .magic = LV_IMAGE_HEADER_MAGIC,
+    .cf = ${colourFormat[options.format]},
+    .flags = 0,
+    .w = ${image.width},
+    .h = ${image.height},
+    .stride = ${bytesPerRow},
+    .reserved_2 = 0,
+  },
   .data_size = sizeof(${mapName}),
   .data = ${mapName},
+  .reserved = NULL,
 };
 ${emitLvglUsageSnippet(options.outputName, 9)}`;
 }

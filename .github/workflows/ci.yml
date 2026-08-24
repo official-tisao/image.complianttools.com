@@ -104,6 +104,38 @@ jobs:
       - run: pnpm exec playwright install --with-deps chromium firefox webkit
       - run: pnpm test:e2e
 
+  embedded-compile:
+    name: embedded-compile
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: lvgl/lvgl
+          ref: 4495f428630cc1741bd8bfd977f080e8460e8e8d
+          path: .lvgl/v8
+      - uses: actions/checkout@v4
+        with:
+          repository: lvgl/lvgl
+          ref: 85aa60d18b3d5e5588d7b247abf90198f07c8a63
+          path: .lvgl/v9
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.5
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @complianttools/image-engine build
+      - run: node scripts/write-embedded-compile-fixtures.mjs .generated/lvgl
+      - name: Compile generated sources against real LVGL v8 and v9
+        run: |
+          cc -std=c11 -Wall -Wextra -Werror -DLV_CONF_SKIP -I .lvgl/v8 -c .generated/lvgl/lvgl-v8.c -o .generated/lvgl/lvgl-v8.o
+          cc -std=c11 -Wall -Wextra -Werror -DLV_CONF_SKIP -I .lvgl/v9 -c .generated/lvgl/lvgl-v9.c -o .generated/lvgl/lvgl-v9.o
+
   credential-leak:
     name: credential-leak
     runs-on: ubuntu-latest

@@ -27,6 +27,8 @@ test('embedded converter emits an LVGL v9 RGB565A8 descriptor locally', async ({
   expect(path).not.toBeNull();
   const source = await readFile(path!, 'utf8');
   expect(source).toContain('LV_COLOR_FORMAT_RGB565A8');
+  expect(source).toContain('LV_IMAGE_HEADER_MAGIC');
+  expect(source).toContain('.stride = 2');
   expect(source).toContain('lv_image_dsc_t status_icon');
   expect(source).toContain('0x00, 0x00, 0xff');
   await expect(page.getByRole('status')).toContainText('3 bytes flash footprint');

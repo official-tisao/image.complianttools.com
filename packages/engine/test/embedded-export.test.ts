@@ -105,6 +105,9 @@ describe('embedded exporter', () => {
     const output = emitLvglV9CArray(image, { outputName: 'logo', format: 'rgb565' });
     expect(output).toContain('#include "lvgl.h"');
     expect(output).toContain('.cf = LV_COLOR_FORMAT_RGB565');
+    expect(output).toContain('.magic = LV_IMAGE_HEADER_MAGIC');
+    expect(output).toContain('.stride = 2');
+    expect(output).toContain('.reserved = NULL');
     expect(output).toContain('lv_image_dsc_t logo');
     expect(output).toContain('LV_IMAGE_DECLARE(logo);');
     expect(output).toContain('lv_image_set_src(image, &logo);');
@@ -128,6 +131,12 @@ describe('embedded exporter', () => {
       expect(emitLvglV9CArray(image, { outputName: 'logo', format })).toContain(
         `.cf = ${constant}`,
       );
+    expect(emitLvglV9CArray(image, { outputName: 'logo', format: 'rgb888' })).toContain(
+      '.stride = 3',
+    );
+    expect(emitLvglV9CArray(image, { outputName: 'logo', format: 'argb8888' })).toContain(
+      '.stride = 4',
+    );
   });
 
   it('packs the documented LVGL v8/v9 binary formats and rejects descriptor-only formats', () => {
