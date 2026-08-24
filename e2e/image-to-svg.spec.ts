@@ -74,3 +74,50 @@ test('rejects corrupt raster input without creating a download', async ({ page }
   await expect(page.getByRole('alert')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Download SVG' })).toBeDisabled();
 });
+
+test('vectorizer controls and actions follow keyboard focus order', async ({ page }) => {
+  await page.goto('/image-to-svg');
+  await page.waitForLoadState('networkidle');
+  await page.getByLabel('Colour count').focus();
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('slider', { name: 'Curve tolerance' })).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('spinbutton', { name: 'Curve tolerance value' })).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(page.locator('input[type=file]')).toBeFocused();
+});
+
+for (const locale of ['en-XA', 'ar'] as const) {
+  test(`${locale} vectorizer exports the exact previewed SVG with locale layout`, async ({
+    page,
+  }) => {
+    await page.goto(`/${locale}/image-to-svg`);
+    await page.waitForLoadState('networkidle');
+    const png = await pngFixture(page);
+    await page.locator('input[type=file]').setInputFiles({
+      name: `${locale}.png`,
+      mimeType: 'image/png',
+      buffer: png,
+    });
+    await page.locator('main > button').first().click();
+    const preview = page.locator('section img');
+    await expect(preview).toBeVisible();
+    const previewUrl = await preview.getAttribute('src');
+    const previewText = await page.evaluate(
+      async (url) => await (await fetch(url!)).text(),
+      previewUrl,
+    );
+    const pending = page.waitForEvent('download');
+    await page.locator('main > button').nth(1).click();
+    const exported = Buffer.concat(
+      await (await (await pending).createReadStream()).toArray(),
+    ).toString();
+    expect(exported).toBe(previewText);
+    expect(exported).not.toMatch(/(?:href|xlink:href)=["']https?:/u);
+    await expect(page.locator('main')).toHaveAttribute('dir', locale === 'ar' ? 'rtl' : 'ltr');
+    await expect(page.locator('link[rel=canonical]')).toHaveAttribute(
+      'href',
+      `https://image.complianttools.com/${locale}/image-to-svg`,
+    );
+  });
+}

@@ -230,6 +230,31 @@ const arabic: Readonly<Record<string, string>> = {
   'option.svg.value.label': 'قيمة البعد أو القياس',
   'option.svg.value.help':
     'تُتجاهل مع الأبعاد الأصلية. يستخدم العرض والارتفاع بكسلات كاملة، ويُحد معامل القياس عند 100×.',
+  'vector.back': '← SVG إلى PNG',
+  'vector.title': 'الصورة إلى SVG',
+  'vector.description':
+    'حوّل صورة نقطية إلى مسارات SVG مستقلة على جهازك بعد تقليل ألوانها وتتبعها. لا يتم رفع أي شيء.',
+  'vector.choose': 'اختر صورة نقطية',
+  'vector.trace': 'تتبع الصورة',
+  'vector.download': 'تنزيل SVG',
+  'vector.optionsChanged': 'تغيرت الخيارات. أعد التتبع لتحديث المعاينة المطابقة.',
+  'vector.ready': '{value} جاهز للتتبع.',
+  'vector.chooseFirst': 'اختر صورة نقطية أولًا.',
+  'vector.canvasError': 'لا يستطيع متصفحك إنشاء لوحة محلية.',
+  'vector.failure': 'فشل تتبع المتجهات',
+  'vector.remedy': 'اختر صورة نقطية صالحة أو قلّل أبعادها أو ارفع سماحية المنحنى.',
+  'vector.traced': 'تم تتبع {value} محليًا إلى',
+  'vector.svgBytes': 'بايت SVG',
+  'vector.unable': 'تعذر تحويل هذه الصورة إلى متجهات.',
+  'vector.preview': 'معاينة SVG المصدّر المطابقة',
+  'vector.previewDescription': 'تستخدم المعاينة والتنزيل نص SVG المستقل نفسه تمامًا.',
+  'vector.previewAlt': 'معاينة تصدير SVG المتتبع',
+  'vector.metaDescription': 'قلّل ألوان الصور النقطية وتتبعها محليًا إلى مسارات SVG.',
+  'option.vector.colors.label': 'عدد الألوان',
+  'option.vector.colors.help': 'يقلّل ألوان المصدر قبل التتبع. تنتج الألوان الأقل عادةً SVG أصغر.',
+  'option.vector.curveTolerance.label': 'سماحية المنحنى',
+  'option.vector.curveTolerance.help':
+    'تعمل القيم الأعلى على تبسيط الخطوط والمنحنيات التربيعية المتتبعة بقوة أكبر.',
 };
 
 const accents: Readonly<Record<string, string>> = {

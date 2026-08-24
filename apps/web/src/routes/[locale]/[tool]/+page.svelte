@@ -6,6 +6,7 @@
   import Base64ImageTool from '$lib/Base64ImageTool.svelte';
   import FaviconGenerator from '$lib/FaviconGenerator.svelte';
   import SvgRasterizer from '$lib/SvgRasterizer.svelte';
+  import Vectorizer from '$lib/Vectorizer.svelte';
   import { toolCopy } from '$lib/i18n';
   import type { PageData } from './$types';
 
@@ -35,6 +36,8 @@
   <Base64ImageTool locale={data.locale} />
 {:else if data.tool === 'svg-to-png'}
   <SvgRasterizer locale={data.locale} />
+{:else if data.tool === 'image-to-svg'}
+  <Vectorizer locale={data.locale} />
 {:else}
   <FaviconGenerator locale={data.locale} />
 {/if}
