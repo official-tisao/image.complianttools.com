@@ -107,7 +107,7 @@ jobs:
   embedded-compile:
     name: embedded-compile
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: actions/checkout@v4
@@ -135,6 +135,20 @@ jobs:
         run: |
           cc -std=c11 -Wall -Wextra -Werror -DLV_CONF_SKIP -I .lvgl/v8 -c .generated/lvgl/lvgl-v8.c -o .generated/lvgl/lvgl-v8.o
           cc -std=c11 -Wall -Wextra -Werror -DLV_CONF_SKIP -I .lvgl/v9 -c .generated/lvgl/lvgl-v9.c -o .generated/lvgl/lvgl-v9.o
+      - uses: arduino/setup-arduino-cli@v2
+      - name: Install pinned Arduino targets and libraries
+        run: |
+          arduino-cli config init
+          arduino-cli config add board_manager.additional_urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
+          arduino-cli core update-index
+          arduino-cli core install arduino:avr@1.8.6
+          arduino-cli core install esp32:esp32@3.3.8
+          arduino-cli lib install "Adafruit GFX Library@1.12.6"
+          arduino-cli lib install "TFT_eSPI@2.5.43"
+      - name: Compile generated Adafruit GFX and TFT_eSPI sketches
+        run: |
+          arduino-cli compile --fqbn arduino:avr:uno .generated/lvgl/adafruit
+          arduino-cli compile --fqbn esp32:esp32:esp32 .generated/lvgl/tft-espi
 
   raw-corpus:
     name: raw-corpus

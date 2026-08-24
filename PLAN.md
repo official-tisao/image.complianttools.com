@@ -1099,7 +1099,7 @@ and the format's `/docs/formats/` page exists. **Or** when honestly marked unava
 subset) · [x] AI (PDF-compatible) · [x] PSD/PSB · [x] XCF · [x] WMF/EMF · [x] DXF · [x] CBZ · [x] CBR
 
 **Embedded** — [x] LVGL v9 C array · [x] LVGL v9 binary · [x] LVGL v8 C array · [x] LVGL v8 binary ·
-[x] Generic raw · [ ] Adafruit GFX · [ ] ESP-IDF/TFT_eSPI
+[x] Generic raw · [x] Adafruit GFX · [x] ESP-IDF/TFT_eSPI
 
 **Video in (WebCodecs)** — [x] MP4/M4V/MOV · [x] WebM · [x] MKV · [x] AVI
 
@@ -1212,7 +1212,8 @@ Every README change gets a row here, per §0.3. Newest first.
 
 | Date | README § | Change | PLAN action |
 | --- | --- | --- | --- |
-| 2026-08-24 | §5.3 | Added a network-isolated manifest for 15 real CC0 camera files from raw.pixls.us across 11 vendors, with the catalog's published SHA-256 for every object; CI verifies hashes and production preview extraction. Tightened the scanner to require a valid JPEG Start-of-Frame, rejecting an observed 8-byte SOI/EOI false positive | Completed the P2-06 ≥15-file/≥8-vendor real-corpus acceptance condition; the broader every-listed-vendor checkbox remains open |
+| 2026-08-24 | §5.5 | Generated complete Arduino sketches from the production Adafruit and RGB565 emitters, including real `drawBitmap` / `pushImage` bindings. Compiled locally with official Arduino CLI 1.5.1 against Arduino AVR 1.8.6 + Adafruit GFX 1.12.6 (6,084-byte flash / 193-byte RAM result) and ESP32 3.3.8 + TFT_eSPI 2.5.43 (318,292-byte flash / 22,500-byte RAM result); CI installs the same pinned versions and repeats both builds | Completed the Appendix B Adafruit GFX and ESP-IDF/TFT_eSPI rows and extended P2-11's real-project compile job to all C/header targets |
+| 2026-08-24 | §5.3 | Added a standalone manifest for 15 real CC0 camera files from raw.pixls.us across 11 vendors, with the catalog's published SHA-256 for every object; a dedicated CI job verifies hashes and production preview extraction. Tightened the scanner to require a valid JPEG Start-of-Frame, rejecting an observed 8-byte SOI/EOI false positive | Completed the P2-06 ≥15-file/≥8-vendor real-corpus acceptance condition; the broader every-listed-vendor checkbox remains open |
 | 2026-08-24 | §5.5 | Corrected LVGL v9 descriptors to include the mandatory magic, flags, stride, and reserved fields; generated production v8/v9 descriptor-and-binding translation units and compiled them with C11 warnings-as-errors against official LVGL v8.4.0 (`4495f428630cc1741bd8bfd977f080e8460e8e8d`) and v9.5.0 (`85aa60d18b3d5e5588d7b247abf90198f07c8a63`) source trees | Completed the P2-11 real-project compile condition and the Appendix B LVGL v8/v9 C-array rows; Adafruit GFX and ESP-IDF/TFT_eSPI remain unchecked pending target-header compilation |
 | 2026-08-23 | §5.6 | Added installed-Edge evidence that records real WebM and MP4 containers, decodes them through the production local container/WebCodecs path, exports GIF, and independently verifies the decoded RGBA pixel with zero cross-origin requests; the MP4 bytes pass under MP4, M4V, and MOV extensions | Completed the Appendix B WebM and MP4/M4V/MOV rows and the P2-10 real frame-extraction condition |
 | 2026-08-22 | §5.6 | Corrected video-container scope to the formats parsed by the pinned local readers; AVI/WMV/FLV/MTS/M2TS now surface a specific unavailable reason instead of falling through as MP4 | Completed the Appendix B AVI row by the documented-unavailable path; retained real-decode requirements for the supported video rows |
