@@ -20,6 +20,7 @@ const tools = [
   'avif-converter',
   'webp-converter',
   'jxl-converter',
+  'heic-converter',
 ] as const;
 
 export const entries: EntryGenerator = () =>

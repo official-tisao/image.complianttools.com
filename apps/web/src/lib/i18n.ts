@@ -480,6 +480,21 @@ const arabic: Readonly<Record<string, string>> = {
     'يحافظ على البكسلات المفكوكة؛ وهذا ليس إعادة ضغط JPEG قابلة لإعادة البناء.',
   'option.jxl.quality.label': 'الجودة الضائعة',
   'option.jxl.quality.help': 'تُستخدم فقط لترميز JPEG XL الضائع.',
+  'heic.back': '← تحويل',
+  'heic.title': 'محول HEIC / HEIF',
+  'heic.description':
+    'حوّل صورة HEIC أو HEIF إلى PNG محليًا عندما يوفر متصفحك مفكك ترميز على المنصة. ترميز HEIC غير متاح عمدًا.',
+  'heic.choose': 'اختر صورة HEIC أو HEIF',
+  'heic.failure': 'فشل تحويل HEIC',
+  'heic.remedy':
+    'افتح الملف في متصفح يدعم HEIC، أو صدّره بصيغة JPEG على جهازه المصدر، أو اختر صورة HEIC/HEIF صالحة.',
+  'heic.noFrame': 'لم يُرجع مفكك HEIC أي إطار صورة.',
+  'heic.canvasError': 'لا يستطيع متصفحك إنشاء لوحة محلية.',
+  'heic.pngError': 'تعذر ترميز PNG محليًا.',
+  'heic.converted': 'تم تحويل',
+  'heic.toPng': 'صورة HEIC إلى PNG محليًا',
+  'heic.metaDescription':
+    'حوّل HEIC وHEIF إلى PNG محليًا باستخدام مفكك المنصة في متصفحك. إخراج HEIC غير متاح عمدًا.',
 };
 
 const accents: Readonly<Record<string, string>> = {

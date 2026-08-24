@@ -49,6 +49,8 @@ const phase2Routes = [
   '/ar/webp-converter',
   '/en-XA/jxl-converter',
   '/ar/jxl-converter',
+  '/en-XA/heic-converter',
+  '/ar/heic-converter',
   '/lossless-optimize',
 ] as const;
 
