@@ -22,6 +22,26 @@ const platform = globalThis as unknown as ImageDecoderEnvironment;
 
 export type HeicMimeType = 'image/heic' | 'image/heif';
 
+const HEIC_BRANDS = new Set(['heic', 'heix', 'hevc', 'hevx', 'heim', 'heis', 'hevm', 'hevs']);
+const HEIF_BRANDS = new Set(['mif1', 'msf1']);
+
+function readBrands(bytes: Uint8Array): string[] {
+  if (bytes.length < 16 || String.fromCharCode(...bytes.subarray(4, 8)) !== 'ftyp') return [];
+  const size = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).getUint32(0);
+  if (size < 16 || size > bytes.length) return [];
+  const brands = [String.fromCharCode(...bytes.subarray(8, 12))];
+  for (let offset = 16; offset <= size - 4; offset += 4) {
+    brands.push(String.fromCharCode(...bytes.subarray(offset, offset + 4)));
+  }
+  return brands;
+}
+
+/** Rejects malformed ISO-BMFF and non-HEIF containers before invoking a platform decoder. */
+export function isHeicContainer(input: ArrayBuffer | Uint8Array): boolean {
+  const bytes = input instanceof Uint8Array ? input : new Uint8Array(input);
+  return readBrands(bytes).some((brand) => HEIC_BRANDS.has(brand) || HEIF_BRANDS.has(brand));
+}
+
 /**
  * Selects the platform MIME type from an ISO-BMFF `ftyp` brand. `mif1` and
  * `msf1` are HEIF brands; HEVC-specific brands are HEIC. Unknown input stays
@@ -29,11 +49,8 @@ export type HeicMimeType = 'image/heic' | 'image/heif';
  */
 export function detectHeicMimeType(input: ArrayBuffer | Uint8Array): HeicMimeType {
   const bytes = input instanceof Uint8Array ? input : new Uint8Array(input);
-  if (bytes.length < 12 || String.fromCharCode(...bytes.subarray(4, 8)) !== 'ftyp') {
-    return 'image/heic';
-  }
-  const brand = String.fromCharCode(...bytes.subarray(8, 12));
-  return brand === 'mif1' || brand === 'msf1' ? 'image/heif' : 'image/heic';
+  const brands = readBrands(bytes);
+  return brands.some((brand) => HEIC_BRANDS.has(brand)) ? 'image/heic' : 'image/heif';
 }
 
 /** Returns whether this browser's installed platform decoder accepts HEIC or HEIF. */
@@ -56,6 +73,9 @@ export async function decodeHeic(
 ): Promise<RasterImage> {
   if (!decoderConstructor) throw new Error(HEIC_UNSUPPORTED_MESSAGE);
   const bytes = input instanceof Uint8Array ? input : new Uint8Array(input);
+  if (!isHeicContainer(bytes)) {
+    throw new Error('The selected file is not a valid HEIC or HEIF container.');
+  }
   const data = bytes.buffer.slice(
     bytes.byteOffset,
     bytes.byteOffset + bytes.byteLength,

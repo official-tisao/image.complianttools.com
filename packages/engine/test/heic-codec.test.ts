@@ -4,6 +4,7 @@ import {
   decodeHeic,
   detectHeicMimeType,
   HEIC_UNSUPPORTED_MESSAGE,
+  isHeicContainer,
   supportsHeicDecode,
   type ImageDecoderConstructor,
 } from '../src/index.js';
@@ -12,14 +13,31 @@ describe('HEIC platform codec', () => {
   it('selects HEIF for generic ISO-BMFF HEIF brands and HEIC otherwise', () => {
     expect(
       detectHeicMimeType(
-        new Uint8Array([0, 0, 0, 0, 0x66, 0x74, 0x79, 0x70, 0x6d, 0x69, 0x66, 0x31]),
+        new Uint8Array([0, 0, 0, 16, 0x66, 0x74, 0x79, 0x70, 0x6d, 0x69, 0x66, 0x31, 0, 0, 0, 0]),
       ),
     ).toBe('image/heif');
     expect(
       detectHeicMimeType(
-        new Uint8Array([0, 0, 0, 0, 0x66, 0x74, 0x79, 0x70, 0x68, 0x65, 0x69, 0x63]),
+        new Uint8Array([0, 0, 0, 16, 0x66, 0x74, 0x79, 0x70, 0x68, 0x65, 0x69, 0x63, 0, 0, 0, 0]),
       ),
     ).toBe('image/heic');
+  });
+
+  it('accepts HEIF-compatible brands and rejects malformed or AVIF containers', () => {
+    expect(
+      isHeicContainer(
+        new Uint8Array([
+          0, 0, 0, 20, 0x66, 0x74, 0x79, 0x70, 0x6d, 0x69, 0x66, 0x31, 0, 0, 0, 0, 0x68, 0x65, 0x69,
+          0x63,
+        ]),
+      ),
+    ).toBe(true);
+    expect(
+      isHeicContainer(
+        new Uint8Array([0, 0, 0, 16, 0x66, 0x74, 0x79, 0x70, 0x61, 0x76, 0x69, 0x66, 0, 0, 0, 0]),
+      ),
+    ).toBe(false);
+    expect(isHeicContainer(new Uint8Array([1, 2, 3]))).toBe(false);
   });
 
   it('probes supported HEIC and HEIF platform decoders', async () => {
@@ -62,7 +80,7 @@ describe('HEIC platform codec', () => {
       }
     } as unknown as ImageDecoderConstructor;
     const decoded = await decodeHeic(
-      new Uint8Array([0, 0, 0, 0, 0x66, 0x74, 0x79, 0x70, 0x6d, 0x69, 0x66, 0x31]),
+      new Uint8Array([0, 0, 0, 16, 0x66, 0x74, 0x79, 0x70, 0x6d, 0x69, 0x66, 0x31, 0, 0, 0, 0]),
       decoder,
     );
     expect(decoded.frames[0].data).toEqual(new Uint8ClampedArray([4, 5, 6, 255]));
@@ -74,5 +92,22 @@ describe('HEIC platform codec', () => {
     await expect(decodeHeic(new Uint8Array([1]), undefined)).rejects.toThrow(
       HEIC_UNSUPPORTED_MESSAGE,
     );
+  });
+
+  it('rejects a non-HEIF container before constructing the platform decoder', async () => {
+    let constructed = false;
+    const decoder = class {
+      constructor() {
+        constructed = true;
+      }
+      close(): void {}
+      async decode(): Promise<never> {
+        throw new Error('not reached');
+      }
+    } as unknown as ImageDecoderConstructor;
+    await expect(decodeHeic(new Uint8Array([1, 2, 3]), decoder)).rejects.toThrow(
+      'not a valid HEIC or HEIF container',
+    );
+    expect(constructed).toBe(false);
   });
 });

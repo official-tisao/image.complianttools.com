@@ -5,6 +5,7 @@
     decodeWithTypedErrors,
     detectHeicMimeType,
     engineErrorMessage,
+    isHeicContainer,
     isEngineError,
     supportsHeicDecode,
     type RasterImage,
@@ -78,6 +79,9 @@
         ),
         async () => {
           const bytes = await file.arrayBuffer();
+          if (!isHeicContainer(bytes)) {
+            throw new Error('The selected file is not a valid HEIC or HEIF container.');
+          }
           const image = await decodeWithTypedErrors('heic', async () =>
             (await supportsHeicDecode()) ? decodeHeic(bytes) : decodeWithNativeImagePipeline(bytes),
           );

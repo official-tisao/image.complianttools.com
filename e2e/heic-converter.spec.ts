@@ -80,6 +80,31 @@ test('surfaces the named platform limitation when HEIC is unavailable', async ({
   await expect(page.getByRole('alert')).toContainText('Remedy:');
 });
 
+test('rejects AVIF bytes renamed as HEIC before invoking a platform decoder', async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(globalThis, 'ImageDecoder', {
+      configurable: true,
+      value: class {
+        static async isTypeSupported() {
+          return true;
+        }
+        constructor() {
+          throw new Error('decoder must not be constructed');
+        }
+      },
+    });
+  });
+  await page.goto('/heic-converter');
+  await page.waitForLoadState('networkidle');
+  await page.getByLabel('Choose a HEIC or HEIF image').setInputFiles({
+    name: 'renamed.heic',
+    mimeType: 'image/heic',
+    buffer: Buffer.from([0, 0, 0, 16, 0x66, 0x74, 0x79, 0x70, 0x61, 0x76, 0x69, 0x66, 0, 0, 0, 0]),
+  });
+  await expect(page.getByRole('alert')).toContainText('not a valid HEIC or HEIF container');
+  await expect(page.getByRole('alert')).toContainText('Remedy:');
+});
+
 test('uses the native browser image pipeline when WebCodecs ImageDecoder is unavailable', async ({
   page,
 }) => {
