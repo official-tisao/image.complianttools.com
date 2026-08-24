@@ -80,6 +80,9 @@ jobs:
       - name: Build
         run: pnpm build
 
+      - name: Enforce absolute metadata-read latency budget
+        run: pnpm --filter @complianttools/image-engine bench
+
       - name: Verify every shipped route budget
         run: pnpm verify:route-budgets
 
