@@ -2,15 +2,17 @@
   import {
     HEIC_UNSUPPORTED_MESSAGE,
     decodeHeic,
-    decodeWithTypedErrors,
     detectHeicMimeType,
-    engineErrorMessage,
     isHeicContainer,
-    isEngineError,
     supportsHeicDecode,
-    type RasterImage,
+  } from '@complianttools/image-engine/codecs/platform/heic';
+  import {
+    decodeWithTypedErrors,
+    engineErrorMessage,
+    isEngineError,
     withTypedEngineErrorsAsync,
-  } from '@complianttools/image-engine';
+  } from '@complianttools/image-engine/errors';
+  import type { RasterImage } from '@complianttools/image-engine/types';
   import { translate, type Locale } from './i18n';
 
   let { locale = 'en' }: { locale?: Locale } = $props();

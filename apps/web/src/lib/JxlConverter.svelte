@@ -1,16 +1,17 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
+  import { getCodec, loadEncoder } from '@complianttools/image-engine/codecs/registry';
+  import { decodeJxlToRaster } from '@complianttools/image-engine/codecs/third-party/jxl-decode';
   import {
-    JxlConverterToolOptionsSchema,
-    createRaster,
-    decodeJxlToRaster,
     decodeWithTypedErrors,
     engineErrorMessage,
-    getCodec,
     isEngineError,
+  } from '@complianttools/image-engine/errors';
+  import { createRaster } from '@complianttools/image-engine/ops/raster';
+  import {
+    JxlConverterToolOptionsSchema,
     jxlConverterToolOptionDescriptions,
-    loadEncoder,
-  } from '@complianttools/image-engine';
+  } from '@complianttools/image-engine/schemas/options';
   import GeneratedControls from '$lib/GeneratedControls.svelte';
   import { localizeOptions, translate, type Locale } from './i18n';
 

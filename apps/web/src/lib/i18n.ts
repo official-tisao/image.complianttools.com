@@ -1,4 +1,4 @@
-import type { OptionDescription } from '@complianttools/image-engine';
+import type { OptionDescription } from '@complianttools/image-engine/schemas/options';
 
 export type Locale = 'en' | 'en-XA' | 'ar';
 

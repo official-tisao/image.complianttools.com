@@ -1,13 +1,17 @@
 <script lang="ts">
   import {
-    inspectImageContainer,
     engineErrorMessage,
     isEngineError,
-    readContainerMetadata,
     withTypedEngineErrors,
-    type ImageInspection,
+  } from '@complianttools/image-engine/errors';
+  import {
+    readContainerMetadata,
     type MetadataTag,
-  } from '@complianttools/image-engine';
+  } from '@complianttools/image-engine/metadata/container';
+  import {
+    inspectImageContainer,
+    type ImageInspection,
+  } from '@complianttools/image-engine/metadata/inspect';
   import ToolPageCompletion from './ToolPageCompletion.svelte';
   import { translate, type Locale } from './i18n';
 

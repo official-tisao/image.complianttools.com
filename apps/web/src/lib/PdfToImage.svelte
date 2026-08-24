@@ -1,15 +1,19 @@
 <script lang="ts">
   import {
-    PdfToImageOptionsSchema,
     engineErrorMessage,
     isEngineError,
-    pdfToImageOptionDescriptions,
+    withTypedEngineErrorsAsync,
+  } from '@complianttools/image-engine/errors';
+  import {
     readIllustratorDocumentInfo,
     readPdfDocumentInfo,
     renderIllustratorPage,
     renderPdfPage,
-    withTypedEngineErrorsAsync,
-  } from '@complianttools/image-engine';
+  } from '@complianttools/image-engine/documents/pdf-read';
+  import {
+    PdfToImageOptionsSchema,
+    pdfToImageOptionDescriptions,
+  } from '@complianttools/image-engine/schemas/options';
   import GeneratedControls from '$lib/GeneratedControls.svelte';
   import { localizeOptions, translate, type Locale } from './i18n';
 

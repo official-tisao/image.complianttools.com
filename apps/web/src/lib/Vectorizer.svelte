@@ -1,14 +1,15 @@
 <script lang="ts">
   import {
-    VectorizeToolOptionsSchema,
-    createRaster,
     engineErrorMessage,
     isEngineError,
-    vectorizeRaster,
-    vectorizeToolOptionDescriptions,
     withTypedEngineErrors,
+  } from '@complianttools/image-engine/errors';
+  import { createRaster } from '@complianttools/image-engine/ops/raster';
+  import {
+    VectorizeToolOptionsSchema,
+    vectorizeToolOptionDescriptions,
     type VectorizeToolOptions,
-  } from '@complianttools/image-engine';
+  } from '@complianttools/image-engine/schemas/options';
   import GeneratedControls from '$lib/GeneratedControls.svelte';
   import { localizeOptions, translate, type Locale } from './i18n';
 
@@ -60,6 +61,7 @@
       return;
     }
     try {
+      const { vectorizeRaster } = await import('@complianttools/image-engine/codecs/svg/vectorize');
       const bitmap = await createImageBitmap(sourceFile);
       try {
         const canvas = document.createElement('canvas');

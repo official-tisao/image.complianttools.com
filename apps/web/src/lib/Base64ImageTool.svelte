@@ -1,13 +1,15 @@
 <script lang="ts">
   import {
-    Base64ToolOptionsSchema,
     DEFAULT_BASE64_MAX_BYTES,
     base64DataUrlSnippets,
     decodeBase64DataUrl,
     encodeBase64DataUrl,
-    isEngineError,
+  } from '@complianttools/image-engine/export/base64';
+  import { isEngineError } from '@complianttools/image-engine/errors';
+  import {
+    Base64ToolOptionsSchema,
     base64ToolOptionDescriptions,
-  } from '@complianttools/image-engine';
+  } from '@complianttools/image-engine/schemas/options';
   import GeneratedControls from '$lib/GeneratedControls.svelte';
   import { localizeOptions, translate, type Locale } from './i18n';
 

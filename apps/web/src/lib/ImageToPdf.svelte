@@ -1,14 +1,18 @@
 <script lang="ts">
   import {
-    ImageToPdfOptionsSchema,
     createPdfFromImagePages,
+    type PdfImagePage,
+  } from '@complianttools/image-engine/documents/pdf';
+  import {
     engineErrorMessage,
-    imageToPdfOptionDescriptions,
     isEngineError,
     withTypedEngineErrorsAsync,
+  } from '@complianttools/image-engine/errors';
+  import {
+    ImageToPdfOptionsSchema,
+    imageToPdfOptionDescriptions,
     type ImageToPdfOptions,
-    type PdfImagePage,
-  } from '@complianttools/image-engine';
+  } from '@complianttools/image-engine/schemas/options';
   import GeneratedControls from '$lib/GeneratedControls.svelte';
   import { localizeOptions, translate, type Locale } from './i18n';
 

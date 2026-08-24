@@ -1,17 +1,18 @@
 <script lang="ts">
   import { onDestroy, tick } from 'svelte';
+  import { encodeAnimatedWebp } from '@complianttools/image-engine/codecs/animated-webp';
+  import { encodeApng } from '@complianttools/image-engine/codecs/apng';
+  import { decodeGif } from '@complianttools/image-engine/codecs/gif';
+  import {
+    decodeWithTypedErrors,
+    engineErrorMessage,
+    isEngineError,
+  } from '@complianttools/image-engine/errors';
   import {
     GifConverterToolOptionsSchema,
-    decodeGif,
-    decodeWithTypedErrors,
-    encodeAnimatedWebp,
-    encodeAnimationVideo,
-    encodeApng,
-    engineErrorMessage,
     gifConverterToolOptionDescriptions,
-    isEngineError,
-    type RasterImage,
-  } from '@complianttools/image-engine';
+  } from '@complianttools/image-engine/schemas/options';
+  import type { RasterImage } from '@complianttools/image-engine/types';
   import GeneratedControls from '$lib/GeneratedControls.svelte';
   import { localizeOptions, translate, type Locale } from './i18n';
 
@@ -105,6 +106,8 @@
       }
       if (options.output === 'mp4' || options.output === 'webm') {
         const canvas = document.createElement('canvas');
+        const { encodeAnimationVideo } =
+          await import('@complianttools/image-engine/codecs/animation-video');
         const videoBytes = await encodeAnimationVideo(image, options.output, canvas);
         const mimeType = options.output === 'mp4' ? 'video/mp4' : 'video/webm';
         const url = URL.createObjectURL(new Blob([videoBytes], { type: mimeType }));

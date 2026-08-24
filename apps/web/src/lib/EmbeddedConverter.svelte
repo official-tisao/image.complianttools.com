@@ -1,22 +1,26 @@
 <script lang="ts">
   import {
-    EmbeddedToolOptionsSchema,
-    createRaster,
     embeddedByteSize,
-    embeddedToolOptionDescriptions,
     emitAdafruitGfxBitmap,
     emitEmbeddedCArray,
     emitEspIdfCArray,
     emitLvglV8CArray,
     emitLvglV8RawCArray,
     emitLvglV9CArray,
-    engineErrorMessage,
-    isEngineError,
     packGenericRawPixels,
     packLvglV8Binary,
     packLvglV9Binary,
+  } from '@complianttools/image-engine/export/embedded';
+  import {
+    engineErrorMessage,
+    isEngineError,
     withTypedEngineErrorsAsync,
-  } from '@complianttools/image-engine';
+  } from '@complianttools/image-engine/errors';
+  import { createRaster } from '@complianttools/image-engine/ops/raster';
+  import {
+    EmbeddedToolOptionsSchema,
+    embeddedToolOptionDescriptions,
+  } from '@complianttools/image-engine/schemas/options';
   import GeneratedControls from '$lib/GeneratedControls.svelte';
   import { localizeOptions, translate, type Locale } from './i18n';
 

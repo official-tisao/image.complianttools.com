@@ -1,17 +1,17 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
+  import { codecUnavailableError } from '@complianttools/image-engine/codecs/registry';
+  import { decodeCbz, encodeCbz, type ComicPage } from '@complianttools/image-engine/documents/cbz';
+  import { createPdfFromPngPages } from '@complianttools/image-engine/documents/pdf';
   import {
-    CbzToolOptionsSchema,
-    cbzToolOptionDescriptions,
-    codecUnavailableError,
-    createPdfFromPngPages,
-    decodeCbz,
-    encodeCbz,
     engineErrorMessage,
     isEngineError,
     withTypedEngineErrorsAsync,
-    type ComicPage,
-  } from '@complianttools/image-engine';
+  } from '@complianttools/image-engine/errors';
+  import {
+    CbzToolOptionsSchema,
+    cbzToolOptionDescriptions,
+  } from '@complianttools/image-engine/schemas/options';
   import GeneratedControls from '$lib/GeneratedControls.svelte';
   import { localizeOptions, translate, type Locale } from './i18n';
 

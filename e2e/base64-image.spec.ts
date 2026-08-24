@@ -1,6 +1,8 @@
 import { readFile } from 'node:fs/promises';
 
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
+
+const waitForHydration = (page: Page) => page.locator('html[data-hydrated="true"]').waitFor();
 
 test('encodes bytes with HTML and CSS snippets on the canonical local page', async ({ page }) => {
   const crossOrigin: string[] = [];
@@ -8,6 +10,7 @@ test('encodes bytes with HTML and CSS snippets on the canonical local page', asy
     if (new URL(request.url()).origin !== 'http://127.0.0.1:4173') crossOrigin.push(request.url());
   });
   await page.goto('/base64-image');
+  await waitForHydration(page);
   await page.getByLabel('Choose an image').setInputFiles({
     name: 'pixel.png',
     mimeType: 'image/png',
@@ -26,6 +29,7 @@ test('encodes bytes with HTML and CSS snippets on the canonical local page', asy
 test('decodes a bounded data URL back to exact local bytes', async ({ page }) => {
   test.setTimeout(60_000);
   await page.goto('/base64-image');
+  await waitForHydration(page);
   await page.getByLabel('Direction').selectOption('decode');
   await page.getByLabel('Base64 data URL').fill('data:image/png;base64,AAEC/f7/');
   const pending = page.waitForEvent('download');
@@ -41,6 +45,7 @@ test('decodes a bounded data URL back to exact local bytes', async ({ page }) =>
 test('Base64 decoding is keyboard-operable end to end', async ({ page }) => {
   test.setTimeout(60_000);
   await page.goto('/base64-image');
+  await waitForHydration(page);
   const direction = page.getByLabel('Direction');
   await direction.focus();
   await page.keyboard.press('End');

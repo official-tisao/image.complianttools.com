@@ -48,6 +48,7 @@ test('SVG rasterizer downloads exact intrinsic and explicitly sized PNG output',
 
 test('SVG rasterizer reports a typed remedy for unsafe external references', async ({ page }) => {
   await page.goto('/svg-to-png');
+  await page.locator('html[data-hydrated="true"]').waitFor();
   await page.locator('input[type=file]').setInputFiles({
     name: 'external.svg',
     mimeType: 'image/svg+xml',

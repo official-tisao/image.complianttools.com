@@ -1,19 +1,20 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
+  import { encodeRasterAsWebp } from '@complianttools/image-engine/codecs/jsquash';
+  import { encodeAnimatedWebp } from '@complianttools/image-engine/codecs/simple/animated-webp';
+  import { prepareWebpSequence } from '@complianttools/image-engine/codecs/simple/webp-export';
+  import { decodeGif } from '@complianttools/image-engine/codecs/third-party/gif';
   import {
-    WebpConverterToolOptionsSchema,
-    createRaster,
-    decodeGif,
     decodeWithTypedErrors,
-    encodeAnimatedWebp,
-    encodeRasterAsWebp,
     engineErrorMessage,
     isEngineError,
-    prepareWebpSequence,
+  } from '@complianttools/image-engine/errors';
+  import { createRaster } from '@complianttools/image-engine/ops/raster';
+  import {
+    WebpConverterToolOptionsSchema,
     webpConverterToolOptionDescriptions,
-    type RasterImage,
-    type FormatId,
-  } from '@complianttools/image-engine';
+  } from '@complianttools/image-engine/schemas/options';
+  import type { FormatId, RasterImage } from '@complianttools/image-engine/types';
   import GeneratedControls from '$lib/GeneratedControls.svelte';
   import { localizeOptions, translate, type Locale } from './i18n';
 

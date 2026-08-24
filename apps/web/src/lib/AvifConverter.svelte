@@ -1,16 +1,17 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
+  import { getCodec, loadEncoder } from '@complianttools/image-engine/codecs/registry';
+  import { decodeAvifToRaster } from '@complianttools/image-engine/codecs/third-party/avif-decode';
+  import {
+    decodeWithTypedErrors,
+    engineErrorMessage,
+    isEngineError,
+  } from '@complianttools/image-engine/errors';
+  import { createRaster } from '@complianttools/image-engine/ops/raster';
   import {
     AvifConverterToolOptionsSchema,
     avifConverterToolOptionDescriptions,
-    createRaster,
-    decodeAvifToRaster,
-    decodeWithTypedErrors,
-    engineErrorMessage,
-    getCodec,
-    isEngineError,
-    loadEncoder,
-  } from '@complianttools/image-engine';
+  } from '@complianttools/image-engine/schemas/options';
   import GeneratedControls from '$lib/GeneratedControls.svelte';
   import { localizeOptions, translate, type Locale } from './i18n';
 

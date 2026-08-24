@@ -1,14 +1,16 @@
 <script lang="ts">
+  import { developDng } from '@complianttools/image-engine/codecs/raw/develop';
+  import { extractRawCameraPreview } from '@complianttools/image-engine/codecs/raw/preview';
+  import { rawPreviewExtensionError } from '@complianttools/image-engine/codecs/raw/support';
+  import {
+    decodeWithTypedErrors,
+    engineErrorMessage,
+    isEngineError,
+  } from '@complianttools/image-engine/errors';
   import {
     RawToolOptionsSchema,
-    decodeWithTypedErrors,
-    developDng,
-    engineErrorMessage,
-    extractRawCameraPreview,
-    isEngineError,
     rawToolOptionDescriptions,
-    rawPreviewExtensionError,
-  } from '@complianttools/image-engine';
+  } from '@complianttools/image-engine/schemas/options';
   import GeneratedControls from '$lib/GeneratedControls.svelte';
   import { localizeOptions, translate, type Locale } from './i18n';
 

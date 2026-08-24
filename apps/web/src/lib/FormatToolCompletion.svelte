@@ -467,18 +467,3 @@
     <a href="/docs/formats/jpeg">{translate(locale, 'nav.jpegGuide', 'JPEG guide')}</a>
   </nav>
 </section>
-
-<style>
-  .format-completion {
-    margin-block: 2rem;
-  }
-  details {
-    margin-block: 0.75rem;
-  }
-  nav {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem 1rem;
-    margin-block-start: 1.25rem;
-  }
-</style>

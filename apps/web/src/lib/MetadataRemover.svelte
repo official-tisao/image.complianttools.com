@@ -1,10 +1,10 @@
 <script lang="ts">
   import {
-    MetadataRemovalOptionsSchema,
-    MetadataRemovalPresetSchema,
     engineErrorMessage,
     isEngineError,
-    metadataRemovalOptionDescriptions,
+    withTypedEngineErrors,
+  } from '@complianttools/image-engine/errors';
+  import {
     stripGifMetadata,
     stripJpegExifTags,
     stripJpegGpsMetadata,
@@ -13,8 +13,12 @@
     stripJpegMetadataExceptOrientationCopyright,
     stripPngMetadata,
     stripWebpMetadata,
-    withTypedEngineErrors,
-  } from '@complianttools/image-engine';
+  } from '@complianttools/image-engine/metadata/container';
+  import {
+    MetadataRemovalOptionsSchema,
+    MetadataRemovalPresetSchema,
+    metadataRemovalOptionDescriptions,
+  } from '@complianttools/image-engine/schemas/options';
   import GeneratedControls from '$lib/GeneratedControls.svelte';
   import ToolPageCompletion from './ToolPageCompletion.svelte';
   import { localizeOptions, translate, type Locale } from './i18n';

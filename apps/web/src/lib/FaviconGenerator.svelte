@@ -1,15 +1,19 @@
 <script lang="ts">
   import {
-    FaviconToolOptionsSchema,
     createFaviconPackage,
-    createRaster,
+    type FaviconPackage,
+  } from '@complianttools/image-engine/export/favicon';
+  import {
     engineErrorMessage,
-    faviconToolOptionDescriptions,
     isEngineError,
     withTypedEngineErrorsAsync,
-    type FaviconPackage,
+  } from '@complianttools/image-engine/errors';
+  import { createRaster } from '@complianttools/image-engine/ops/raster';
+  import {
+    FaviconToolOptionsSchema,
+    faviconToolOptionDescriptions,
     type FaviconToolOptions,
-  } from '@complianttools/image-engine';
+  } from '@complianttools/image-engine/schemas/options';
   import GeneratedControls from '$lib/GeneratedControls.svelte';
   import { localizeOptions, translate, type Locale } from './i18n';
 

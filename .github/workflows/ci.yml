@@ -104,6 +104,39 @@ jobs:
       - run: pnpm exec playwright install --with-deps chromium firefox webkit
       - run: pnpm test:e2e
 
+  lighthouse:
+    name: lighthouse (${{ matrix.group }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - group: core
+            urls: --url=http://127.0.0.1:4174/convert --url=http://127.0.0.1:4174/compress --url=http://127.0.0.1:4174/resize --url=http://127.0.0.1:4174/heic-converter --url=http://127.0.0.1:4174/raw-converter
+          - group: modern-formats
+            urls: --url=http://127.0.0.1:4174/avif-converter --url=http://127.0.0.1:4174/webp-converter --url=http://127.0.0.1:4174/jxl-converter --url=http://127.0.0.1:4174/svg-to-png --url=http://127.0.0.1:4174/image-to-svg
+          - group: document-and-export
+            urls: --url=http://127.0.0.1:4174/pdf-to-image --url=http://127.0.0.1:4174/image-to-pdf --url=http://127.0.0.1:4174/favicon-generator --url=http://127.0.0.1:4174/gif-converter --url=http://127.0.0.1:4174/embedded-converter
+          - group: data-and-metadata
+            urls: --url=http://127.0.0.1:4174/base64-image --url=http://127.0.0.1:4174/cbz-converter --url=http://127.0.0.1:4174/exif-viewer --url=http://127.0.0.1:4174/remove-exif --url=http://127.0.0.1:4174/image-info
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.5
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - name: Collect three fresh-browser measurements per route
+        run: pnpm exec lhci collect ${{ matrix.urls }} --numberOfRuns=3
+      - name: Enforce Lighthouse thresholds
+        run: pnpm exec lhci assert
+
   embedded-compile:
     name: embedded-compile
     runs-on: ubuntu-24.04

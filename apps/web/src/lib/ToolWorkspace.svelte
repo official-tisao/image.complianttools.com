@@ -1,7 +1,8 @@
 <script lang="ts">
   import { onDestroy, untrack } from 'svelte';
   import { searchTargetSize } from '@complianttools/image-engine/pipeline/target-size';
-  import { decodeBmp, getCodec, productionEncoderFormats } from '@complianttools/image-engine';
+  import { getCodec, productionEncoderFormats } from '@complianttools/image-engine/codecs/registry';
+  import { decodeBmp } from '@complianttools/image-engine/codecs/simple/bmp';
   import { phaseOneOptionDescriptions } from '@complianttools/image-engine/schemas/options';
   import type { Recipe } from '@complianttools/image-engine/types';
   import CompareCanvas from './CompareCanvas.svelte';

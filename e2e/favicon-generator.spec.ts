@@ -5,6 +5,8 @@ import fflate from '../packages/engine/node_modules/fflate/lib/node.cjs';
 
 const { unzipSync } = fflate;
 
+const waitForHydration = (page: Page) => page.locator('html[data-hydrated="true"]').waitFor();
+
 async function faviconPng(page: Page) {
   return Buffer.from(
     await page.evaluate(async () => {
@@ -28,6 +30,7 @@ test('downloads the complete deterministic favicon package without network fallb
     if (new URL(request.url()).origin !== 'http://127.0.0.1:4173') crossOrigin.push(request.url());
   });
   await page.goto('/favicon-generator');
+  await waitForHydration(page);
   const png = await faviconPng(page);
   await page.getByLabel('Site name').fill('Example Site');
   await page.getByLabel('Choose an image').setInputFiles({
@@ -76,6 +79,7 @@ test('downloads the complete deterministic favicon package without network fallb
 test('creates and downloads a favicon package with the keyboard', async ({ page }) => {
   test.setTimeout(60_000);
   await page.goto('/favicon-generator');
+  await waitForHydration(page);
   const fileInput = page.locator('input[type=file]');
   await fileInput.focus();
   await expect(fileInput).toBeFocused();

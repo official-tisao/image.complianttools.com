@@ -1,12 +1,14 @@
 <script lang="ts">
+  import { rasterizeSvg } from '@complianttools/image-engine/codecs/svg/rasterize';
   import {
-    SvgRasterizeToolOptionsSchema,
     engineErrorMessage,
     isEngineError,
-    rasterizeSvg,
-    svgRasterizeOptionDescriptions,
     withTypedEngineErrorsAsync,
-  } from '@complianttools/image-engine';
+  } from '@complianttools/image-engine/errors';
+  import {
+    SvgRasterizeToolOptionsSchema,
+    svgRasterizeOptionDescriptions,
+  } from '@complianttools/image-engine/schemas/options';
   import GeneratedControls from '$lib/GeneratedControls.svelte';
   import { localizeOptions, translate, type Locale } from './i18n';
 

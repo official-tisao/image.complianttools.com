@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { OptionDescription } from '@complianttools/image-engine';
+  import type { OptionDescription } from '@complianttools/image-engine/schemas/options';
   import { translate, type Locale } from './i18n';
   let {
     descriptions,

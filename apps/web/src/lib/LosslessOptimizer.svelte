@@ -1,13 +1,13 @@
 <script lang="ts">
+  import { optimizeJpegLossless } from '@complianttools/image-engine/codecs/jpeg-lossless';
+  import { optimizePngLossless } from '@complianttools/image-engine/codecs/jsquash';
+  import { optimizeGifLossless } from '@complianttools/image-engine/codecs/third-party/gif';
   import {
-    createRaster,
     engineErrorMessage,
     isEngineError,
-    optimizeGifLossless,
-    optimizeJpegLossless,
-    optimizePngLossless,
     withTypedEngineErrorsAsync,
-  } from '@complianttools/image-engine';
+  } from '@complianttools/image-engine/errors';
+  import { createRaster } from '@complianttools/image-engine/ops/raster';
   import { onDestroy } from 'svelte';
   import { translate, type Locale } from './i18n';
 

@@ -1,17 +1,21 @@
 <script lang="ts">
   import {
-    MetadataEditOptionsSchema,
-    editJpegExifFields,
     engineErrorMessage,
     isEngineError,
-    metadataEditOptionDescriptions,
-    readContainerMetadata,
     withTypedEngineErrors,
-    type EngineError,
-    type ExifFieldEdits,
-    type MetadataEditOptions,
+  } from '@complianttools/image-engine/errors';
+  import type { ExifFieldEdits } from '@complianttools/image-engine/metadata/exif';
+  import {
+    editJpegExifFields,
+    readContainerMetadata,
     type MetadataTag,
-  } from '@complianttools/image-engine';
+  } from '@complianttools/image-engine/metadata/container';
+  import {
+    MetadataEditOptionsSchema,
+    metadataEditOptionDescriptions,
+    type MetadataEditOptions,
+  } from '@complianttools/image-engine/schemas/options';
+  import type { EngineError } from '@complianttools/image-engine/types';
   import GeneratedControls from './GeneratedControls.svelte';
   import ToolPageCompletion from './ToolPageCompletion.svelte';
   import { localizeOptions, translate, type Locale } from './i18n';
