@@ -1,5 +1,11 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const portableProjects = [
+  { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+  { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
+  { name: 'webkit', use: { ...devices['Desktop Safari'] } },
+];
+
 export default defineConfig({
   testDir: './e2e',
   forbidOnly: true,
@@ -17,13 +23,13 @@ export default defineConfig({
     headless: true,
     trace: 'retain-on-failure',
   },
-  projects: [
-    {
-      name: 'installed-edge',
-      use: { ...devices['Desktop Chrome'], channel: 'msedge' },
-    },
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
-    { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
-    { name: 'webkit', use: { ...devices['Desktop Safari'] } },
-  ],
+  projects: process.env.CI
+    ? portableProjects
+    : [
+        {
+          name: 'installed-edge',
+          use: { ...devices['Desktop Chrome'], channel: 'msedge' },
+        },
+        ...portableProjects,
+      ],
 });
