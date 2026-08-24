@@ -13,6 +13,7 @@ const tools = [
   'favicon-generator',
   'svg-to-png',
   'image-to-svg',
+  'pdf-to-image',
 ] as const;
 
 export const entries: EntryGenerator = () =>

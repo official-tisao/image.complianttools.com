@@ -255,6 +255,29 @@ const arabic: Readonly<Record<string, string>> = {
   'option.vector.curveTolerance.label': 'سماحية المنحنى',
   'option.vector.curveTolerance.help':
     'تعمل القيم الأعلى على تبسيط الخطوط والمنحنيات التربيعية المتتبعة بقوة أكبر.',
+  'pdfImage.back': '← تحويل',
+  'pdfImage.title': 'PDF أو Illustrator إلى صورة',
+  'pdfImage.description':
+    'حوّل صفحة واحدة من PDF أو Illustrator حديث متوافق مع PDF إلى PNG على جهازك. تُرفض ملفات Illustrator القديمة المبنية على PostScript بوضوح. لا يُرفع ملفك مطلقًا.',
+  'pdfImage.choose': 'اختر ملف PDF أو AI',
+  'pdfImage.failure': 'فشل تحويل صفحة PDF إلى صورة',
+  'pdfImage.remedy':
+    'اختر ملف PDF أو Illustrator متوافقًا مع PDF صالحًا، وحدد صفحة موجودة، أو قلّل DPI.',
+  'pdfImage.hasPages': 'يحتوي PDF على {value}',
+  'pdfImage.page': 'صفحة',
+  'pdfImage.pages': 'صفحات',
+  'pdfImage.unavailablePage': 'الصفحة المحددة غير متاحة',
+  'pdfImage.canvasError': 'لا يستطيع متصفحك إنشاء لوحة محلية.',
+  'pdfImage.pngError': 'فشل ترميز PNG.',
+  'pdfImage.renderedPage': 'تم تحويل الصفحة {value}',
+  'pdfImage.of': 'من',
+  'pdfImage.at': 'بدقة',
+  'pdfImage.locally': 'محليًا',
+  'pdfImage.unable': 'تعذر تحويل صفحة PDF هذه إلى صورة.',
+  'pdfImage.metaDescription': 'حوّل صفحة PDF أو Illustrator حديث متوافق مع PDF إلى PNG محليًا.',
+  'option.pdf.pageNumber.label': 'الصفحة',
+  'option.pdf.dpi.label': 'دقة الإخراج DPI',
+  'option.pdf.dpi.help': 'تتحكم في أبعاد الصورة النقطية نسبةً إلى نظام إحداثيات PDF ذي 72 DPI.',
 };
 
 const accents: Readonly<Record<string, string>> = {

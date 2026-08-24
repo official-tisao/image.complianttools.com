@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import { expect, test } from '@playwright/test';
 import { createPdfFromPngPages } from '../packages/engine/src/documents/pdf.js';
 
@@ -6,6 +7,11 @@ const onePixelPng = new Uint8Array([
   0, 31, 21, 196, 137, 0, 0, 0, 13, 73, 68, 65, 84, 8, 215, 99, 248, 207, 192, 240, 31, 0, 5, 0, 1,
   255, 137, 153, 61, 29, 0, 0, 0, 0, 73, 69, 78, 68, 174, 66, 96, 130,
 ]);
+
+function inspectPng(bytes: Buffer) {
+  expect(bytes.subarray(0, 8)).toEqual(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
+  return { width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20) };
+}
 
 test('PDF to Image reads a real document page count before rendering', async ({ page }) => {
   const fixture = await createPdfFromPngPages([
@@ -21,7 +27,10 @@ test('PDF to Image reads a real document page count before rendering', async ({ 
     mimeType: 'application/pdf',
     buffer: Buffer.from(fixture),
   });
-  await expect(page.getByRole('alert')).toHaveText('PDF has 2 pages; page 3 is unavailable.');
+  await expect(page.getByRole('alert')).toContainText(
+    'PDF has 2 pages; the selected page is unavailable.',
+  );
+  await expect(page.getByRole('alert')).toContainText('Remedy:');
 });
 
 test('PDF to Image renders a real page at the selected DPI', async ({ page }) => {
@@ -37,7 +46,11 @@ test('PDF to Image renders a real page at the selected DPI', async ({ page }) =>
     mimeType: 'application/pdf',
     buffer: Buffer.from(fixture),
   });
-  expect((await pending).suggestedFilename()).toBe('one-page-page-1.png');
+  const download = await pending;
+  expect(download.suggestedFilename()).toBe('one-page-page-1.png');
+  const path = await download.path();
+  expect(path).not.toBeNull();
+  expect(inspectPng(await readFile(path!))).toEqual({ width: 144, height: 72 });
   await expect(page.getByRole('status')).toHaveText(
     'Rendered page 1 of 1 at 144 DPI (144×72) locally.',
   );
@@ -53,7 +66,9 @@ test('PDF to Image accepts modern PDF-compatible AI and names legacy AI', async 
     mimeType: 'application/postscript',
     buffer: Buffer.from(fixture),
   });
-  await expect(page.getByRole('alert')).toHaveText('PDF has 1 page; page 2 is unavailable.');
+  await expect(page.getByRole('alert')).toContainText(
+    'PDF has 1 page; the selected page is unavailable.',
+  );
 
   await page.locator('input[type=file]').setInputFiles({
     name: 'legacy.ai',
@@ -62,3 +77,36 @@ test('PDF to Image accepts modern PDF-compatible AI and names legacy AI', async 
   });
   await expect(page.getByRole('alert')).toContainText('legacy pre-PDF Illustrator');
 });
+
+test('PDF page and DPI controls lead to the file picker by keyboard', async ({ page }) => {
+  await page.goto('/pdf-to-image');
+  await page.waitForLoadState('networkidle');
+  await page.getByLabel('Page').focus();
+  await page.keyboard.press('Tab');
+  await expect(page.getByLabel('Output DPI')).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(page.locator('input[type=file]')).toBeFocused();
+});
+
+for (const locale of ['en-XA', 'ar'] as const) {
+  test(`${locale} PDF route renders exact PNG dimensions with locale layout`, async ({ page }) => {
+    const fixture = await createPdfFromPngPages([{ pngBytes: onePixelPng, width: 72, height: 36 }]);
+    await page.goto(`/${locale}/pdf-to-image`);
+    await page.waitForLoadState('networkidle');
+    const pending = page.waitForEvent('download');
+    await page.locator('input[type=file]').setInputFiles({
+      name: `${locale}.pdf`,
+      mimeType: 'application/pdf',
+      buffer: Buffer.from(fixture),
+    });
+    const path = await (await pending).path();
+    expect(path).not.toBeNull();
+    expect(inspectPng(await readFile(path!))).toEqual({ width: 72, height: 36 });
+    await expect(page.locator('main')).toHaveAttribute('dir', locale === 'ar' ? 'rtl' : 'ltr');
+    await expect(page.locator('link[rel=canonical]')).toHaveAttribute(
+      'href',
+      `https://image.complianttools.com/${locale}/pdf-to-image`,
+    );
+    await expect(page.getByRole('status')).toContainText('72×36');
+  });
+}
