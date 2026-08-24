@@ -45,6 +45,8 @@ const phase2Routes = [
   '/ar/gif-converter',
   '/en-XA/avif-converter',
   '/ar/avif-converter',
+  '/en-XA/webp-converter',
+  '/ar/webp-converter',
   '/lossless-optimize',
 ] as const;
 

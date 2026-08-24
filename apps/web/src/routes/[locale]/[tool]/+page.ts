@@ -18,6 +18,7 @@ const tools = [
   'cbz-converter',
   'gif-converter',
   'avif-converter',
+  'webp-converter',
 ] as const;
 
 export const entries: EntryGenerator = () =>
