@@ -4,12 +4,13 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { extractRawCameraPreview } from '../packages/engine/dist/index.js';
+import { decodeBmp } from '../packages/engine/dist/codecs/simple/bmp.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const manifestPath = path.join(root, 'packages/engine/test/fixtures/raw-real-corpus.json');
 const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
 const outputDirectory = path.resolve(process.argv[2] ?? path.join(root, '.cache/raw-corpus'));
-const maximumFileBytes = 64 * 1024 * 1024;
+const maximumFileBytes = 80 * 1024 * 1024;
 
 if (manifest.files.length < 15)
   throw new Error('The real RAW corpus must contain at least 15 files.');
@@ -41,10 +42,10 @@ async function loadVerified(entry) {
     throw new Error(`${entry.filename}: download returned HTTP ${response.status}.`);
   const declaredLength = Number(response.headers.get('content-length'));
   if (Number.isFinite(declaredLength) && declaredLength > maximumFileBytes)
-    throw new Error(`${entry.filename}: declared size exceeds the 64 MiB corpus limit.`);
+    throw new Error(`${entry.filename}: declared size exceeds the 80 MiB corpus limit.`);
   const bytes = new Uint8Array(await response.arrayBuffer());
   if (bytes.byteLength > maximumFileBytes)
-    throw new Error(`${entry.filename}: downloaded size exceeds the 64 MiB corpus limit.`);
+    throw new Error(`${entry.filename}: downloaded size exceeds the 80 MiB corpus limit.`);
   const actual = digest(bytes);
   if (actual !== entry.sha256)
     throw new Error(`${entry.filename}: expected SHA-256 ${entry.sha256}, received ${actual}.`);
@@ -77,6 +78,17 @@ for (const entry of manifest.files) {
     throw new Error(
       `${entry.filename}: extractor did not return a complete labelled camera preview.`,
     );
+  if (entry.preview === 'bmp') {
+    if (preview.mimeType !== 'image/bmp')
+      throw new Error(`${entry.filename}: expected an uncompressed TIFF preview exported as BMP.`);
+    const decoded = decodeBmp(preview.bytes);
+    if (
+      decoded.width < 1 ||
+      decoded.height < 1 ||
+      decoded.frames[0]?.data.length !== decoded.width * decoded.height * 4
+    )
+      throw new Error(`${entry.filename}: exported BMP did not decode to a complete RGBA frame.`);
+  }
   results.push(`${entry.vendor}/${entry.model} ${entry.format} ${preview.bytes.length}B preview`);
 }
 
