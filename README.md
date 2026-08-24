@@ -467,10 +467,11 @@ CloudConvert's published sets.
 
 **Two-stage support, and the stages are advertised separately so nothing is oversold:**
 
-- **Stage 1 — embedded preview (all formats below, ships first).** Every camera RAW file carries a
-  full-size JPEG preview in its IFD structure. Extracting it needs only our existing TIFF/EXIF parser,
-  is near-instant, and gives the camera's own rendering — which is what most people converting a RAW
-  to JPEG actually want. Labelled *"camera preview"* in the UI, never passed off as a raw develop.
+- **Stage 1 — embedded preview (all formats below, ships first).** Extract the largest camera-rendered
+  preview exposed by the container/IFD structure. JPEG previews remain byte-for-byte intact; TIFF-derived
+  formats that store an uncompressed RGB preview are exported losslessly as BMP. This uses bounded
+  container/IFD parsing and no demosaic. Labelled *"camera preview"* in the UI, never passed off as a raw
+  develop. Preview availability and dimensions remain camera/file-dependent.
 - **Stage 2 — full develop (phased, DNG first).** Our own demosaic and colour pipeline, per §5.3's
   option list. Formats without Stage 2 support say so plainly rather than silently using Stage 1.
 
@@ -833,7 +834,7 @@ own origin with long-lived immutable cache headers and SRI-equivalent integrity 
 | GIF decode | `gifuct-js` | MIT | eager |
 | GIF encode + optimize | **our own**, `codecs/gif/` | `gifsicle` is **GPL-2.0** and cannot ship. We implement LZW (patent expired 2004), palette quantization, frame differencing, transparency optimization, and the `-O1..3`-equivalent passes ourselves. See §25.4 | eager |
 | HEIC / HEIF decode | **platform `ImageDecoder`** (WebCodecs) | `libheif` is **LGPL-3.0** and HEVC carries active patent pools. We use the OS decoder where the platform provides one and report unavailable elsewhere. **No HEIC encode, ever** | none — platform |
-| Camera RAW | **our own**, `codecs/raw/` | `LibRaw` is **LGPL-2.1**. Stage 1 extracts the full-size embedded JPEG preview that essentially every RAW file carries — reusing our TIFF/EXIF parser, no decoder needed, and enough for most users. Stage 2 is our own demosaic pipeline, starting with DNG (Adobe's spec is published) | lazy |
+| Camera RAW | **our own**, `codecs/raw/` | `LibRaw` is **LGPL-2.1**. Stage 1 extracts the largest embedded camera rendering — preserving JPEG previews byte-for-byte and losslessly exporting uncompressed RGB TIFF previews as BMP — using bounded container/IFD parsing and no demosaic. Stage 2 is our own demosaic pipeline, starting with DNG (Adobe's spec is published) | lazy |
 | SVG → raster | `@resvg/resvg-wasm` | MPL-2.0 — file-level copyleft, allowlisted, no linking obligation | lazy |
 | Raster → SVG | `imagetracerjs` | **Public domain (Unlicense).** Explicitly *not* `potrace`, which is **GPL-2.0** | lazy |
 | PDF read | `pdfjs-dist` | Apache-2.0 | lazy |
@@ -3689,7 +3690,7 @@ deliberate engineering commitment with a home in the repo, not a hand-wave.
 | --- | --- | --- | --- |
 | **Simple-format codec framework** | `codecs/simple/` | BMP, DIB, TGA, PCX, PPM/PGM/PBM/PNM/PAM, WBMP, XBM/XPM, ICO, CUR, DDS (BCn), QOI, SGI, Sun Raster, Radiance HDR, PFM, FITS | Public specs, fixed byte layouts, no entropy coding beyond RLE. 100–400 lines each. A shared `BitReader`/`BitWriter` and a declarative header-descriptor DSL make them near-mechanical |
 | **GIF encoder + optimizer** | `codecs/gif/` | LZW encode, palette quantization (Wu / median-cut / octree), frame differencing, transparency optimization, dispose-method selection, `-O1..3` equivalents | Format is fully specified; LZW is patent-free; the optimization passes are well-documented techniques |
-| **RAW pipeline** | `codecs/raw/` | **Stage 1:** extract the full-size embedded JPEG preview (TIFF/IFD walk — reuses our EXIF parser). **Stage 2:** our own demosaic (AHD, VNG, bilinear), black/white level, WB, colour-matrix, tone curve, starting with DNG | Stage 1 is nearly free and covers the common need. DNG's spec is published by Adobe; the major proprietary formats are TIFF-derived and well documented by the open community |
+| **RAW pipeline** | `codecs/raw/` | **Stage 1:** extract the largest embedded camera rendering (byte-preserved JPEG or lossless BMP from an uncompressed RGB TIFF preview) using bounded container/IFD parsing. **Stage 2:** our own demosaic (AHD, VNG, bilinear), black/white level, WB, colour-matrix, tone curve, starting with DNG | Stage 1 covers the common need without pretending that a camera preview is a raw develop. DNG's spec is published by Adobe; the major proprietary formats are TIFF-derived and well documented by the open community |
 | **EPS preview extractor + PS subset** | `codecs/eps/` | DCS/EPSF binary-header preview extraction; a small interpreter for path/fill/stroke/transform operators | Preview extraction is trivial and handles most real EPS files. The subset is bounded, and anything outside it is reported unsupported, not guessed |
 | **Pixel-art scaler** | `ops/upscale/pixelart/` | Our own 3×3-neighbourhood rule set for ×2/×3/×4, with edge-continuation and corner-rounding rules of our own design, tuned against a sprite corpus | The technique class is public; the specific rule tables are what is copyrighted, so we write our own. This is a fun, bounded, testable problem |
 | **Saliency-guided retargeting** (T81) | `ops/retarget/` | Non-uniform column/row scaling driven by a smoothed saliency profile, with protect/remove masks — replaces seam carving | Continuous warping, not discrete seam removal: a different mechanism, simpler to implement, and it avoids the temporal artefacts seam carving produces |

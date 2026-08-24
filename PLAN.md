@@ -392,7 +392,7 @@ upstreams are permissive (BSD-3, BSD-2), so the obstacle is a build we do not ow
 - **Spec:** README §6.10, §25.4 · **Done when:** output size is within 10 % of the GPL reference on a 20-file corpus, with zero GPL code
 
 #### P2-06 · RAW pipeline Stage 1 (**ours**)
-- [x] Embedded full-size JPEG preview extraction via IFD walk, reusing the EXIF parser
+- [x] Embedded camera-rendered preview extraction via bounded container/IFD parsing: byte-preserved JPEG and lossless BMP export for uncompressed RGB TIFF previews
 - [x] Labelled **"camera preview"** in the UI — never passed off as a raw develop
 - [x] Real-corpus acceptance: 15 hash-pinned CC0 camera files across 11 vendors extract a structurally valid JPEG preview through the production engine; CI re-downloads/cache-restores and verifies every SHA-256 before extraction
 - [ ] Covers every vendor in README §5.3
@@ -1212,6 +1212,7 @@ Every README change gets a row here, per §0.3. Newest first.
 
 | Date | README § | Change | PLAN action |
 | --- | --- | --- | --- |
+| 2026-08-24 | §5.3 | Audited additional real RAW families and extended Stage 1 to losslessly export uncompressed RGB TIFF camera previews as BMP while preserving embedded JPEGs byte-for-byte. Production extraction plus BMP decode round-trips were verified for real 3FR, DCR, ERF, FFF, and IIQ files; MRW samples without a rendered preview remain unsupported by Stage 1 | Broadened truthful preview extraction without marking the every-listed-format/vendor acceptance item complete |
 | 2026-08-24 | §5.5 | Generated complete Arduino sketches from the production Adafruit and RGB565 emitters, including real `drawBitmap` / `pushImage` bindings. Compiled locally with official Arduino CLI 1.5.1 against Arduino AVR 1.8.6 + Adafruit GFX 1.12.6 (6,084-byte flash / 193-byte RAM result) and ESP32 3.3.8 + TFT_eSPI 2.5.43 (318,292-byte flash / 22,500-byte RAM result); CI installs the same pinned versions and repeats both builds | Completed the Appendix B Adafruit GFX and ESP-IDF/TFT_eSPI rows and extended P2-11's real-project compile job to all C/header targets |
 | 2026-08-24 | §5.3 | Added a standalone manifest for 15 real CC0 camera files from raw.pixls.us across 11 vendors, with the catalog's published SHA-256 for every object; a dedicated CI job verifies hashes and production preview extraction. Tightened the scanner to require a valid JPEG Start-of-Frame, rejecting an observed 8-byte SOI/EOI false positive | Completed the P2-06 ≥15-file/≥8-vendor real-corpus acceptance condition; the broader every-listed-vendor checkbox remains open |
 | 2026-08-24 | §5.5 | Corrected LVGL v9 descriptors to include the mandatory magic, flags, stride, and reserved fields; generated production v8/v9 descriptor-and-binding translation units and compiled them with C11 warnings-as-errors against official LVGL v8.4.0 (`4495f428630cc1741bd8bfd977f080e8460e8e8d`) and v9.5.0 (`85aa60d18b3d5e5588d7b247abf90198f07c8a63`) source trees | Completed the P2-11 real-project compile condition and the Appendix B LVGL v8/v9 C-array rows; Adafruit GFX and ESP-IDF/TFT_eSPI remain unchecked pending target-header compilation |

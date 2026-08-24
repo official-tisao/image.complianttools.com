@@ -619,7 +619,7 @@ export const metadataEditOptionDescriptions: Readonly<Record<string, OptionDescr
 export const rawToolOptionDescriptions: Readonly<Record<string, OptionDescription>> = {
   'raw.instantPreview': {
     label: 'Extract embedded preview first',
-    help: "Downloads the camera's embedded JPEG before developing DNG pixels.",
+    help: "Downloads the camera's embedded rendering before developing DNG pixels.",
     control: 'toggle',
     group: 'RAW',
     advanced: false,

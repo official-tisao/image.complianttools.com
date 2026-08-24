@@ -65,13 +65,13 @@
           const preview = await decodeWithTypedErrors('raw', () => extractRawCameraPreview(bytes));
           previewUrl = replaceUrl(
             previewUrl,
-            URL.createObjectURL(new Blob([preview.bytes], { type: 'image/jpeg' })),
+            URL.createObjectURL(new Blob([preview.bytes], { type: preview.mimeType })),
           );
           const download = document.createElement('a');
           download.href = previewUrl;
-          download.download = `${baseName}-camera-preview.jpg`;
+          download.download = `${baseName}-camera-preview.${preview.extension}`;
           download.click();
-          status = `${t('raw.extracted', 'Extracted')} ${preview.label}. ${t('raw.previewNotice', "This is the camera's embedded JPEG preview, not a RAW develop")}.`;
+          status = `${t('raw.extracted', 'Extracted')} ${preview.label}. ${t('raw.previewNotice', "This is the camera's embedded rendering, not a RAW develop")}.`;
         } catch (reason) {
           if (!isDng) throw reason;
           status = t(

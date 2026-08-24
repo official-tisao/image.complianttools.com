@@ -2,6 +2,28 @@ import { readFile } from 'node:fs/promises';
 
 import { expect, test } from '@playwright/test';
 
+function validJpeg(width = 320, height = 240): Buffer {
+  return Buffer.from([
+    0xff,
+    0xd8,
+    0xff,
+    0xc0,
+    0,
+    11,
+    8,
+    height >> 8,
+    height & 0xff,
+    width >> 8,
+    width & 0xff,
+    1,
+    1,
+    0x11,
+    0,
+    0xff,
+    0xd9,
+  ]);
+}
+
 function uncompressedDng(): Buffer {
   const tags: Array<readonly [number, number, number, number]> = [
     [256, 4, 1, 2],
@@ -53,7 +75,7 @@ test('RAW converter labels and downloads the largest embedded camera preview', a
   const container = Buffer.alloc(96);
   container.set([0x46, 0x55, 0x4a, 0x49], 0);
   container.set([0xff, 0xd8, 0xff, 0xe0, 0xff, 0xd9], 8);
-  const preview = Buffer.from([0xff, 0xd8, 0xff, 0xe1, 1, 2, 3, 4, 5, 6, 7, 8, 0xff, 0xd9]);
+  const preview = validJpeg();
   container.set(preview, 48);
 
   await page.goto('/raw-converter');
@@ -70,7 +92,7 @@ test('RAW converter labels and downloads the largest embedded camera preview', a
   expect(path).not.toBeNull();
   expect(await readFile(path!)).toEqual(preview);
   await expect(page.getByRole('status')).toContainText(
-    "camera's embedded JPEG preview, not a RAW develop",
+    "camera's embedded rendering, not a RAW develop",
   );
 });
 
@@ -82,7 +104,7 @@ test('RAW converter surfaces a useful malformed-input error', async ({ page }) =
     mimeType: 'application/octet-stream',
     buffer: Buffer.alloc(32),
   });
-  await expect(page.getByRole('alert')).toContainText('No embedded JPEG camera preview');
+  await expect(page.getByRole('alert')).toContainText('No embedded camera preview');
   await expect(page.getByRole('alert')).toContainText('Remedy:');
 });
 

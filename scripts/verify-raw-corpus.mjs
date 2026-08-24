@@ -66,13 +66,16 @@ for (const entry of manifest.files) {
   if (
     preview.label !== 'camera preview' ||
     preview.bytes.length < 4 ||
-    preview.bytes[0] !== 0xff ||
-    preview.bytes[1] !== 0xd8 ||
-    preview.bytes.at(-2) !== 0xff ||
-    preview.bytes.at(-1) !== 0xd9
+    !['image/jpeg', 'image/bmp'].includes(preview.mimeType) ||
+    (preview.mimeType === 'image/jpeg' &&
+      (preview.bytes[0] !== 0xff ||
+        preview.bytes[1] !== 0xd8 ||
+        preview.bytes.at(-2) !== 0xff ||
+        preview.bytes.at(-1) !== 0xd9)) ||
+    (preview.mimeType === 'image/bmp' && (preview.bytes[0] !== 0x42 || preview.bytes[1] !== 0x4d))
   )
     throw new Error(
-      `${entry.filename}: extractor did not return a complete labelled JPEG preview.`,
+      `${entry.filename}: extractor did not return a complete labelled camera preview.`,
     );
   results.push(`${entry.vendor}/${entry.model} ${entry.format} ${preview.bytes.length}B preview`);
 }

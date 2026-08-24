@@ -504,7 +504,7 @@ const arabic: Readonly<Record<string, string>> = {
   'raw.choose': 'اختر ملف RAW',
   'raw.pngError': 'تعذر على المتصفح ترميز معاينة DNG المطوّرة بصيغة PNG.',
   'raw.extracted': 'تم استخراج',
-  'raw.previewNotice': 'هذه معاينة JPEG المضمنة في الكاميرا وليست تطوير RAW',
+  'raw.previewNotice': 'هذه هي المعالجة المضمنة في الكاميرا وليست تطوير RAW',
   'raw.noPreview': 'لم يُعثر على معاينة كاميرا مضمنة؛ جارٍ متابعة تطوير DNG الكامل.',
   'raw.dngOnly':
     'يتوفر تطوير RAW الكامل حاليًا لملفات DNG فقط؛ وتظل هذه الصيغة للمعاينة المضمنة فقط.',
