@@ -22,6 +22,7 @@ const tools = [
   'jxl-converter',
   'heic-converter',
   'raw-converter',
+  'embedded-converter',
 ] as const;
 
 export const entries: EntryGenerator = () =>

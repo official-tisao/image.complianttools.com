@@ -53,6 +53,8 @@ const phase2Routes = [
   '/ar/heic-converter',
   '/en-XA/raw-converter',
   '/ar/raw-converter',
+  '/en-XA/embedded-converter',
+  '/ar/embedded-converter',
   '/lossless-optimize',
 ] as const;
 

@@ -45,3 +45,48 @@ test('embedded converter reports corrupt input with a typed remedy', async ({ pa
   await expect(page.getByRole('alert')).toContainText('Remedy:');
   await expect(page.getByRole('button', { name: 'Download output' })).toBeDisabled();
 });
+
+test('embedded converter supports keyboard-only option changes', async ({ page }) => {
+  await page.goto('/embedded-converter');
+  await page.waitForLoadState('networkidle');
+  await page.getByLabel('Target').focus();
+  await page.keyboard.press('End');
+  await expect(page.getByLabel('Target')).toHaveValue('esp-idf');
+  await page.keyboard.press('Tab');
+  await expect(page.getByLabel('Dithering')).toBeFocused();
+  await page.keyboard.press('ArrowDown');
+  await expect(page.getByLabel('Dithering')).toHaveValue('ordered');
+});
+
+for (const locale of ['en-XA', 'ar'] as const) {
+  test(`${locale} embedded converter generates and downloads exact generic bytes`, async ({
+    page,
+  }) => {
+    await page.goto(`/${locale}/embedded-converter`);
+    await page.waitForLoadState('networkidle');
+    await expect(page.locator('main')).toHaveAttribute('dir', locale === 'ar' ? 'rtl' : 'ltr');
+    await expect(page.locator('link[rel=canonical]')).toHaveAttribute(
+      'href',
+      `https://image.complianttools.com/${locale}/embedded-converter`,
+    );
+    await page.getByLabel(locale === 'ar' ? 'الهدف' : /Tàrgët/u).selectOption('generic-bin');
+    await page
+      .getByLabel(locale === 'ar' ? 'تنسيق البكسل' : /Pïxël fôrmàt/u)
+      .selectOption('rgba8888');
+    await page.locator('input[type=file]').setInputFiles({
+      name: 'pixel.png',
+      mimeType: 'image/png',
+      buffer: redPixelPng,
+    });
+    await page
+      .getByRole('button', { name: locale === 'ar' ? 'إنشاء الناتج' : /Gënëràtë ôütpüt/u })
+      .click();
+    const pending = page.waitForEvent('download');
+    await page
+      .getByRole('button', { name: locale === 'ar' ? 'تنزيل الناتج' : /Dôwnlôàd ôütpüt/u })
+      .click();
+    const path = await (await pending).path();
+    expect(path).not.toBeNull();
+    expect(await readFile(path!)).toEqual(Buffer.from([0, 0, 0, 255]));
+  });
+}
