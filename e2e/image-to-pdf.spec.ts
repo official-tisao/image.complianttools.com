@@ -53,11 +53,20 @@ test('creates, previews, orders, and downloads a configured local PDF', async ({
   await page.getByRole('button', { name: 'Create PDF' }).click();
   await expect(page.getByRole('status')).toContainText('Created a 2-page PDF locally');
   await expect(page.getByTitle('Exported PDF preview')).toBeVisible();
+  const previewUrl = await page.getByTitle('Exported PDF preview').getAttribute('src');
+  const previewBytes = Buffer.from(
+    await page.evaluate(
+      async (url) => [...new Uint8Array(await (await fetch(url!)).arrayBuffer())],
+      previewUrl,
+    ),
+  );
   const pending = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Download PDF' }).click();
   const path = await (await pending).path();
   expect(path).not.toBeNull();
-  const pdf = await PDFDocument.load(await readFile(path!));
+  const downloadedBytes = await readFile(path!);
+  expect(downloadedBytes).toEqual(previewBytes);
+  const pdf = await PDFDocument.load(downloadedBytes);
   expect(pdf.getPageCount()).toBe(2);
   expect(pdf.getPage(0).getSize()).toEqual({ width: 792, height: 612 });
 
@@ -84,3 +93,42 @@ test('reports corrupt image input without producing an export', async ({ page })
   await expect(page.getByRole('alert')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Download PDF' })).toBeDisabled();
 });
+
+test('image-to-PDF generated controls and file picker follow keyboard focus order', async ({
+  page,
+}) => {
+  await page.goto('/image-to-pdf');
+  await page.waitForLoadState('networkidle');
+  await page.getByLabel('Page size').focus();
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('button', { name: 'Auto' })).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('button', { name: 'Portrait' })).toBeFocused();
+});
+
+for (const locale of ['en-XA', 'ar'] as const) {
+  test(`${locale} image-to-PDF exports a valid PDF with locale layout`, async ({ page }) => {
+    await page.goto(`/${locale}/image-to-pdf`);
+    await page.waitForLoadState('networkidle');
+    const png = await pngFixture(page);
+    await page.locator('input[type=file]').setInputFiles({
+      name: `${locale}.png`,
+      mimeType: 'image/png',
+      buffer: png,
+    });
+    await page.locator('main > button').first().click();
+    await expect(page.locator('iframe')).toBeVisible();
+    const pending = page.waitForEvent('download');
+    await page.locator('main > button').nth(1).click();
+    const path = await (await pending).path();
+    expect(path).not.toBeNull();
+    const pdf = await PDFDocument.load(await readFile(path!));
+    expect(pdf.getPageCount()).toBe(1);
+    expect(pdf.getPage(0).getSize()).toEqual({ width: 16, height: 8 });
+    await expect(page.locator('main')).toHaveAttribute('dir', locale === 'ar' ? 'rtl' : 'ltr');
+    await expect(page.locator('link[rel=canonical]')).toHaveAttribute(
+      'href',
+      `https://image.complianttools.com/${locale}/image-to-pdf`,
+    );
+  });
+}

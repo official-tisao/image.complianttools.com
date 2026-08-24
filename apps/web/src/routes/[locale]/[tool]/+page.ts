@@ -14,6 +14,7 @@ const tools = [
   'svg-to-png',
   'image-to-svg',
   'pdf-to-image',
+  'image-to-pdf',
 ] as const;
 
 export const entries: EntryGenerator = () =>

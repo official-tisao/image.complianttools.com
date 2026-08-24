@@ -8,6 +8,7 @@
   import SvgRasterizer from '$lib/SvgRasterizer.svelte';
   import Vectorizer from '$lib/Vectorizer.svelte';
   import PdfToImage from '$lib/PdfToImage.svelte';
+  import ImageToPdf from '$lib/ImageToPdf.svelte';
   import { toolCopy } from '$lib/i18n';
   import type { PageData } from './$types';
 
@@ -41,6 +42,8 @@
   <Vectorizer locale={data.locale} />
 {:else if data.tool === 'pdf-to-image'}
   <PdfToImage locale={data.locale} />
+{:else if data.tool === 'image-to-pdf'}
+  <ImageToPdf locale={data.locale} />
 {:else}
   <FaviconGenerator locale={data.locale} />
 {/if}
