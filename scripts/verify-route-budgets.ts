@@ -3,6 +3,26 @@ import { gzipSync } from 'node:zlib';
 import path from 'node:path';
 
 const buildDirectory = path.join(process.cwd(), 'apps', 'web', 'build');
+const phaseTwoToolRoutes = [
+  'heic-converter',
+  'raw-converter',
+  'avif-converter',
+  'webp-converter',
+  'jxl-converter',
+  'svg-to-png',
+  'image-to-svg',
+  'pdf-to-image',
+  'image-to-pdf',
+  'favicon-generator',
+  'gif-converter',
+  'embedded-converter',
+  'base64-image',
+  'cbz-converter',
+  'exif-viewer',
+  'remove-exif',
+  'image-info',
+  'lossless-optimize',
+] as const;
 const cases = [
   // The generated Svelte tool workspace baseline is ~102 KB compressed. The shipped Phase 2 routes add
   // roughly 2 KB of generated route-manifest metadata; retain a small explicit headroom for that and
@@ -17,6 +37,12 @@ const cases = [
   { archetype: 'reference', route: 'docs/formats/jpeg.html', budget: 0, requiresInput: false },
   { archetype: 'connect-ai', route: 'connect-ai.html', budget: 45_000, requiresInput: false },
   { archetype: 'app-shell', route: 'editor.html', budget: 220_000, requiresInput: false },
+  ...phaseTwoToolRoutes.map((route) => ({
+    archetype: `phase-two:${route}`,
+    route: `${route}.html`,
+    budget: 115_000,
+    requiresInput: true,
+  })),
 ] as const;
 
 for (const check of cases) {

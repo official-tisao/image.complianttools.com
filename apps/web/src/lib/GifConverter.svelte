@@ -1,8 +1,5 @@
 <script lang="ts">
   import { onDestroy, tick } from 'svelte';
-  import { encodeAnimatedWebp } from '@complianttools/image-engine/codecs/animated-webp';
-  import { encodeApng } from '@complianttools/image-engine/codecs/apng';
-  import { decodeGif } from '@complianttools/image-engine/codecs/gif';
   import {
     decodeWithTypedErrors,
     engineErrorMessage,
@@ -91,9 +88,12 @@
     if (!file) return;
     try {
       const bytes = await file.arrayBuffer();
+      const { decodeGif } = await import('@complianttools/image-engine/codecs/gif');
       const image = await decodeWithTypedErrors('gif', () => decodeGif(bytes));
       await startPreview(image);
       if (options.output === 'webp') {
+        const { encodeAnimatedWebp } =
+          await import('@complianttools/image-engine/codecs/animated-webp');
         const webpBytes = await encodeAnimatedWebp(image);
         const url = URL.createObjectURL(new Blob([webpBytes], { type: 'image/webp' }));
         const download = document.createElement('a');
@@ -120,6 +120,7 @@
         return;
       }
       if (options.output === 'apng') {
+        const { encodeApng } = await import('@complianttools/image-engine/codecs/apng');
         const bytes = await encodeApng(image);
         const url = URL.createObjectURL(new Blob([bytes], { type: 'image/png' }));
         const download = document.createElement('a');

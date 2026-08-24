@@ -1,8 +1,5 @@
 <script lang="ts">
-  import {
-    createFaviconPackage,
-    type FaviconPackage,
-  } from '@complianttools/image-engine/export/favicon';
+  import type { FaviconPackage } from '@complianttools/image-engine/export/favicon';
   import {
     engineErrorMessage,
     isEngineError,
@@ -67,6 +64,7 @@
       return;
     }
     try {
+      const { createFaviconPackage } = await import('@complianttools/image-engine/export/favicon');
       const bitmap = await createImageBitmap(sourceFile);
       try {
         const size = Math.min(512, bitmap.width, bitmap.height);

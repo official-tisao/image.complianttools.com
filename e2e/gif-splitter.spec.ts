@@ -160,6 +160,7 @@ for (const format of ['webp', 'webm', 'mp4'] as const) {
 test('honours reduced motion and keeps preview stepping keyboard-operable', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/gif-converter');
+  await page.locator('html[data-hydrated="true"]').waitFor();
   await page.getByLabel('Choose a GIF').setInputFiles({
     name: 'two-frames.gif',
     mimeType: 'image/gif',

@@ -1,8 +1,5 @@
 <script lang="ts">
-  import {
-    createPdfFromImagePages,
-    type PdfImagePage,
-  } from '@complianttools/image-engine/documents/pdf';
+  import type { PdfImagePage } from '@complianttools/image-engine/documents/pdf';
   import {
     engineErrorMessage,
     isEngineError,
@@ -104,6 +101,8 @@
       return;
     }
     try {
+      const { createPdfFromImagePages } =
+        await import('@complianttools/image-engine/documents/pdf');
       const pages = await Promise.all(orderedFiles.map(encodePage));
       outputBytes = await withTypedEngineErrorsAsync(
         t('imagePdf.failure', 'PDF creation failed'),

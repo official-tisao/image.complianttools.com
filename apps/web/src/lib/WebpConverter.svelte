@@ -1,15 +1,10 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
-  import { encodeRasterAsWebp } from '@complianttools/image-engine/codecs/jsquash';
-  import { encodeAnimatedWebp } from '@complianttools/image-engine/codecs/simple/animated-webp';
-  import { prepareWebpSequence } from '@complianttools/image-engine/codecs/simple/webp-export';
-  import { decodeGif } from '@complianttools/image-engine/codecs/third-party/gif';
   import {
     decodeWithTypedErrors,
     engineErrorMessage,
     isEngineError,
   } from '@complianttools/image-engine/errors';
-  import { createRaster } from '@complianttools/image-engine/ops/raster';
   import {
     WebpConverterToolOptionsSchema,
     webpConverterToolOptionDescriptions,
@@ -47,7 +42,10 @@
             ? 'webp'
             : 'jpeg';
     return decodeWithTypedErrors(format, async () => {
-      if (format === 'gif') return decodeGif(await file.arrayBuffer());
+      if (format === 'gif') {
+        const { decodeGif } = await import('@complianttools/image-engine/codecs/gif');
+        return decodeGif(await file.arrayBuffer());
+      }
       const bitmap = await createImageBitmap(file);
       try {
         const canvas = document.createElement('canvas');
@@ -57,6 +55,7 @@
         if (!context)
           throw new Error(t('webp.canvasError', 'Your browser cannot create a local canvas.'));
         context.drawImage(bitmap, 0, 0);
+        const { createRaster } = await import('@complianttools/image-engine/ops/raster');
         return createRaster(
           bitmap.width,
           bitmap.height,
@@ -75,10 +74,14 @@
     if (files.length === 0) return;
     try {
       const decoded = await Promise.all(files.map(decodeFile));
+      const { prepareWebpSequence } =
+        await import('@complianttools/image-engine/codecs/simple/webp-export');
       const prepared = prepareWebpSequence(decoded, options);
       let output: Uint8Array;
       let frameCount = 1;
       if (options.animated) {
+        const { encodeAnimatedWebp } =
+          await import('@complianttools/image-engine/codecs/animated-webp');
         output = await encodeAnimatedWebp(prepared, {
           quality: options.quality,
           lossless: options.lossless,
@@ -86,6 +89,7 @@
         });
         frameCount = prepared.frames.length;
       } else {
+        const { encodeRasterAsWebp } = await import('@complianttools/image-engine/codecs/jsquash');
         output = new Uint8Array(
           await encodeRasterAsWebp(prepared, {
             quality: options.quality,
