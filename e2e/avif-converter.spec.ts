@@ -72,6 +72,12 @@ test('encodes lossy and lossless AVIF then decodes the real output to PNG locall
   expect(decodedPng.subarray(0, 8)).toEqual(
     Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
   );
+  const decodedPreviewBytes = await page.evaluate(async () => {
+    const image = document.querySelector('img[alt="Exact converted output preview"]');
+    if (!(image instanceof HTMLImageElement)) throw new Error('PNG preview is missing.');
+    return [...new Uint8Array(await (await fetch(image.src)).arrayBuffer())];
+  });
+  expect(Buffer.from(decodedPreviewBytes)).toEqual(decodedPng);
   const pixel = await page.evaluate(
     async (bytes) => {
       const bitmap = await createImageBitmap(
@@ -92,6 +98,45 @@ test('encodes lossy and lossless AVIF then decodes the real output to PNG locall
   expect(crossOrigin).toEqual([]);
 });
 
+test('AVIF direction and encoding controls are keyboard operable', async ({ page }) => {
+  await page.goto('/avif-converter');
+  await page.waitForLoadState('networkidle');
+  const directions = page.getByTestId('option-avif-direction').locator('.segments button');
+  await directions.first().focus();
+  await page.keyboard.press('Tab');
+  await expect(directions.nth(1)).toBeFocused();
+  await page.keyboard.press('Space');
+  await expect(directions.nth(1)).toHaveAttribute('aria-pressed', 'true');
+  await page.keyboard.press('Tab');
+  await expect(page.getByLabel('Use lossless encoding')).toBeFocused();
+});
+
+for (const locale of ['en-XA', 'ar'] as const) {
+  test(`${locale} AVIF route exports exact preview bytes with locale layout`, async ({ page }) => {
+    await page.goto(`/${locale}/avif-converter`);
+    await page.waitForLoadState('networkidle');
+    const png = await pngFixture(page);
+    await page.getByTestId('option-avif-direction').locator('.segments button').nth(1).click();
+    const avif = await uploadAndRead(page, `${locale}.png`, 'image/png', png);
+    expect(avif.subarray(4, 8).toString('ascii')).toBe('ftyp');
+    const preview = page.locator('figure img');
+    await expect(preview).toBeVisible();
+    const previewUrl = await preview.getAttribute('src');
+    const previewBytes = Buffer.from(
+      await page.evaluate(
+        async (url) => [...new Uint8Array(await (await fetch(url!)).arrayBuffer())],
+        previewUrl,
+      ),
+    );
+    expect(previewBytes).toEqual(avif);
+    await expect(page.locator('main')).toHaveAttribute('dir', locale === 'ar' ? 'rtl' : 'ltr');
+    await expect(page.locator('link[rel=canonical]')).toHaveAttribute(
+      'href',
+      `https://image.complianttools.com/${locale}/avif-converter`,
+    );
+  });
+}
+
 test('reports malformed AVIF with a typed remedy and no network fallback', async ({ page }) => {
   const crossOrigin: string[] = [];
   page.on('request', (request) => {
@@ -99,6 +144,7 @@ test('reports malformed AVIF with a typed remedy and no network fallback', async
     if (url.origin !== 'http://127.0.0.1:4173') crossOrigin.push(request.url());
   });
   await page.goto('/avif-converter');
+  await page.waitForLoadState('networkidle');
   await page.locator('input[type=file]').setInputFiles({
     name: 'broken.avif',
     mimeType: 'image/avif',

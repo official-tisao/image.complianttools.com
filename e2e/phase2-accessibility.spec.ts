@@ -43,6 +43,8 @@ const phase2Routes = [
   '/ar/cbz-converter',
   '/en-XA/gif-converter',
   '/ar/gif-converter',
+  '/en-XA/avif-converter',
+  '/ar/avif-converter',
   '/lossless-optimize',
 ] as const;
 

@@ -11,6 +11,7 @@
   import ImageToPdf from '$lib/ImageToPdf.svelte';
   import CbzConverter from '$lib/CbzConverter.svelte';
   import GifConverter from '$lib/GifConverter.svelte';
+  import AvifConverter from '$lib/AvifConverter.svelte';
   import { toolCopy } from '$lib/i18n';
   import type { PageData } from './$types';
 
@@ -50,6 +51,8 @@
   <CbzConverter locale={data.locale} />
 {:else if data.tool === 'gif-converter'}
   <GifConverter locale={data.locale} />
+{:else if data.tool === 'avif-converter'}
+  <AvifConverter locale={data.locale} />
 {:else}
   <FaviconGenerator locale={data.locale} />
 {/if}
