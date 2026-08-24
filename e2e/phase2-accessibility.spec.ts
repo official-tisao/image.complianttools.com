@@ -31,6 +31,8 @@ const phase2Routes = [
   '/ar/base64-image',
   '/en-XA/favicon-generator',
   '/ar/favicon-generator',
+  '/en-XA/svg-to-png',
+  '/ar/svg-to-png',
   '/lossless-optimize',
 ] as const;
 

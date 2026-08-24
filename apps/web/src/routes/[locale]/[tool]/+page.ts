@@ -11,6 +11,7 @@ const tools = [
   'exif-viewer',
   'base64-image',
   'favicon-generator',
+  'svg-to-png',
 ] as const;
 
 export const entries: EntryGenerator = () =>

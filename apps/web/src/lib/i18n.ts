@@ -210,6 +210,26 @@ const arabic: Readonly<Record<string, string>> = {
     'أنشئ حزمة أيقونة مفضلة متعددة الدقات مع أيقونات PNG وبيان وHTML محليًا.',
   'option.favicon.siteName.label': 'اسم الموقع',
   'option.favicon.siteName.help': 'يُستخدم لحقلي name وshort_name في site.webmanifest.',
+  'svgRaster.back': '← تحويل',
+  'svgRaster.title': 'SVG إلى PNG',
+  'svgRaster.description':
+    'حوّل SVG مستقلًا إلى صورة نقطية محليًا. تُرفض المراجع الخارجية ومحتويات SVG النشطة.',
+  'svgRaster.choose': 'اختر ملف SVG',
+  'svgRaster.failure': 'فشل تحويل SVG إلى صورة نقطية',
+  'svgRaster.remedy': 'اختر SVG مستقلًا صالحًا أو قلّل أبعاد الإخراج.',
+  'svgRaster.canvasError': 'لا يستطيع متصفحك إنشاء لوحة محلية.',
+  'svgRaster.pngError': 'فشل ترميز PNG.',
+  'svgRaster.done': 'حُوّل {value} إلى PNG محليًا بالمقاس',
+  'svgRaster.unable': 'تعذر تحويل ملف SVG هذا إلى صورة نقطية.',
+  'svgRaster.metaDescription': 'حوّل SVG مستقلًا إلى PNG محليًا في متصفحك.',
+  'option.svg.mode.label': 'حجم الإخراج',
+  'option.svg.mode.option.original': 'الأبعاد الأصلية',
+  'option.svg.mode.option.width': 'عرض محدد',
+  'option.svg.mode.option.height': 'ارتفاع محدد',
+  'option.svg.mode.option.scale': 'معامل القياس',
+  'option.svg.value.label': 'قيمة البعد أو القياس',
+  'option.svg.value.help':
+    'تُتجاهل مع الأبعاد الأصلية. يستخدم العرض والارتفاع بكسلات كاملة، ويُحد معامل القياس عند 100×.',
 };
 
 const accents: Readonly<Record<string, string>> = {

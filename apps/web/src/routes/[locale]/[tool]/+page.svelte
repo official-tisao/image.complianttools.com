@@ -5,6 +5,7 @@
   import MetadataViewer from '$lib/MetadataViewer.svelte';
   import Base64ImageTool from '$lib/Base64ImageTool.svelte';
   import FaviconGenerator from '$lib/FaviconGenerator.svelte';
+  import SvgRasterizer from '$lib/SvgRasterizer.svelte';
   import { toolCopy } from '$lib/i18n';
   import type { PageData } from './$types';
 
@@ -32,6 +33,8 @@
   <MetadataViewer locale={data.locale} />
 {:else if data.tool === 'base64-image'}
   <Base64ImageTool locale={data.locale} />
+{:else if data.tool === 'svg-to-png'}
+  <SvgRasterizer locale={data.locale} />
 {:else}
   <FaviconGenerator locale={data.locale} />
 {/if}
