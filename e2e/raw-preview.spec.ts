@@ -94,6 +94,9 @@ test('RAW converter labels and downloads the largest embedded camera preview', a
   await expect(page.getByRole('status')).toContainText(
     "camera's embedded rendering, not a RAW develop",
   );
+  await expect(page.getByRole('status')).toContainText(
+    'proprietary sensor-data decoding is not shipped',
+  );
 });
 
 test('RAW converter surfaces a useful malformed-input error', async ({ page }) => {
@@ -106,6 +109,22 @@ test('RAW converter surfaces a useful malformed-input error', async ({ page }) =
   });
   await expect(page.getByRole('alert')).toContainText('No embedded camera preview');
   await expect(page.getByRole('alert')).toContainText('Remedy:');
+});
+
+test('RAW converter reports a specific reason for an unverified legacy extension', async ({
+  page,
+}) => {
+  await page.goto('/raw-converter');
+  await page.waitForLoadState('networkidle');
+  await page.locator('input[type=file]').setInputFiles({
+    name: 'legacy.ptx',
+    mimeType: 'application/octet-stream',
+    buffer: Buffer.alloc(32),
+  });
+  await expect(page.getByRole('alert')).toContainText('Pentax PTX preview extraction');
+  await expect(page.getByRole('alert')).toContainText('no hash-pinned');
+  await expect(page.getByRole('alert')).toContainText('Remedy:');
+  await expect(page.getByRole('alert')).toContainText('export DNG, TIFF, or JPEG');
 });
 
 test('RAW converter runs a selected 16-bit DNG develop path', async ({ page }) => {

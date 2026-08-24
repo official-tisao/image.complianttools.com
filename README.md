@@ -484,10 +484,10 @@ CloudConvert's published sets.
 | Olympus / OM System | `.orf` |
 | Panasonic | `.rw2 .raw` |
 | Pentax / Ricoh | `.pef .ptx` |
-| Leica | `.rwl .drf .dng` |
+| Leica | `.rwl .dng` |
 | Sigma | `.x3f` |
 | Samsung | `.srw` |
-| Kodak | `.dcr .kdc .k25 .dcs` |
+| Kodak | `.dcr .kdc .k25 .dcs .drf` |
 | Epson | `.erf` |
 | Mamiya | `.mef` |
 | Minolta | `.mrw .mdc` |
@@ -497,6 +497,15 @@ CloudConvert's published sets.
 | Casio | `.bay` |
 | Adobe (open standard) | `.dng` |
 | Other / generic | `.raw .rwz .cs1` |
+
+Stage 1 has a SHA-verified real-file corpus for `.3fr`, `.arw`, `.cr2`, `.cr3`, `.crw`, `.dcr`,
+`.dng`, `.erf`, `.fff`, `.iiq`, `.kdc`, `.mos`, `.nef`, `.nrw`, `.orf`, `.pef`, `.raf`, `.raw`,
+`.rw2`, `.rwl`, `.sr2`, `.srf`, `.srw`, and `.x3f`. The following v1 extensions are deliberately
+reported unavailable before processing rather than guessed: `.bay`, `.cap`, `.crf`, `.cs1`, `.dcs`,
+`.drf`, `.k25`, `.mef`, `.ptx`, and `.rwz` have no hash-pinned redistributable real-file corpus or
+published container conformance evidence recorded in this repository. Verified `.mdc` and `.mrw`
+samples contain no embedded camera rendering, and Stage 2 does not ship a proprietary sensor decoder.
+The RAW tool gives the camera-software → DNG/TIFF/JPEG export remedy for each unavailable extension.
 
 **RAW pipeline options** (T03): white balance (`as-shot` / `camera` / `auto` / `daylight` / custom
 temp + tint), demosaic algorithm (`AHD` / `VNG` / `PPG` / `DCB` / `linear`), highlight recovery

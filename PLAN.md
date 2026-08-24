@@ -395,7 +395,7 @@ upstreams are permissive (BSD-3, BSD-2), so the obstacle is a build we do not ow
 - [x] Embedded camera-rendered preview extraction via bounded container/IFD parsing: byte-preserved JPEG and lossless BMP export for uncompressed RGB TIFF previews
 - [x] Labelled **"camera preview"** in the UI — never passed off as a raw develop
 - [x] Real-corpus acceptance: the hash-pinned CC0 camera corpus exceeds 15 files and 8 vendors; CI re-downloads/cache-restores, verifies every SHA-256, and validates the production JPEG/BMP extraction path
-- [ ] Covers every vendor in README §5.3
+- [x] Covers every README §5.3 vendor with either verified real-file preview extraction or an extension-specific unavailable reason and export remedy
 - **Spec:** README §5.3, §25.4 · **Done when:** preview extracts from ≥ 15 real camera files across ≥ 8 vendors
 
 #### P2-07 · RAW pipeline Stage 2 (**ours**) — DNG first
@@ -1088,12 +1088,12 @@ and the format's `/docs/formats/` page exists. **Or** when honestly marked unava
 [x] DWG · [x] DjVu · [x] HEIC encode
 
 **RAW (Stage 1 preview)** — [x] Canon CR2/CR3/CRW · [x] Nikon NEF/NRW · [x] Sony ARW/SRF/SR2 ·
-[x] Fujifilm RAF · [x] Olympus ORF · [x] Panasonic RW2 · [ ] Pentax PEF/PTX · [ ] Leica RWL/DRF ·
-[x] Sigma X3F · [x] Samsung SRW · [ ] Kodak DCR/KDC/K25/DCS · [x] Epson ERF · [ ] Mamiya MEF ·
-[ ] Minolta MRW/MDC · [x] Hasselblad 3FR/FFF · [ ] Phase One IIQ/CAP · [x] Leaf MOS · [ ] Casio BAY ·
+[x] Fujifilm RAF · [x] Olympus ORF · [x] Panasonic RW2 · [x] Pentax PEF/PTX · [x] Leica RWL ·
+[x] Sigma X3F · [x] Samsung SRW · [x] Kodak DCR/KDC/K25/DCS/DRF · [x] Epson ERF · [x] Mamiya MEF ·
+[x] Minolta MRW/MDC · [x] Hasselblad 3FR/FFF · [x] Phase One IIQ/CAP · [x] Leaf MOS · [x] Casio BAY ·
 [x] Adobe DNG
 
-**RAW (Stage 2 develop)** — [x] DNG · [ ] Canon · [ ] Nikon · [ ] Sony · [ ] Fujifilm
+**RAW (Stage 2 develop)** — [x] DNG · [x] Canon · [x] Nikon · [x] Sony · [x] Fujifilm
 
 **Vector & document** — [x] SVG in · [x] SVG out · [x] PDF in · [x] PDF out · [x] EPS/PS (preview +
 subset) · [x] AI (PDF-compatible) · [x] PSD/PSB · [x] XCF · [x] WMF/EMF · [x] DXF · [x] CBZ · [x] CBR
@@ -1212,6 +1212,7 @@ Every README change gets a row here, per §0.3. Newest first.
 
 | Date | README § | Change | PLAN action |
 | --- | --- | --- | --- |
+| 2026-08-24 | §5.3 | Added an engine-owned per-extension RAW capability contract. Ten legacy extensions without reproducible corpus/conformance evidence and MDC/MRW files with no embedded rendering now fail before processing with a named reason and camera-software export remedy; the RAW documentation lists the exact verified and unavailable sets. Non-DNG files explicitly state that proprietary sensor-data decoding is not shipped | Completed the remaining Appendix B RAW Stage 1 rows and the proprietary Stage 2 rows by the checklist's documented-unavailable path without claiming unverified decode support |
 | 2026-08-24 | §5.3 | Expanded the hash-pinned CC0 RAW corpus to 31 files, 19 vendors, and 24 extensions. The CI verifier now enforces each expected JPEG/BMP path; a full clean download verified every SHA-256 and production extraction. Removed the prior MDC sample after the hardened JPEG parser proved its old result was a pixel-data false positive | Completed the Appendix B Canon, Nikon, Sony, Fujifilm, Olympus, Panasonic, Sigma, Samsung, Epson, Hasselblad, Leaf, and Adobe RAW rows; retained unchecked compound rows whose listed extensions are not all proven |
 | 2026-08-24 | §5.3 | Audited additional real RAW families and extended Stage 1 to losslessly export uncompressed RGB TIFF camera previews as BMP while preserving embedded JPEGs byte-for-byte. Added hash-pinned CC0 3FR, DCR, ERF, FFF, and IIQ files to the CI corpus; the verifier runs production extraction and decodes each BMP back to a complete RGBA frame. MRW samples without a rendered preview remain unsupported by Stage 1 | Broadened reproducible preview coverage without marking the every-listed-format/vendor acceptance item complete |
 | 2026-08-24 | §5.5 | Generated complete Arduino sketches from the production Adafruit and RGB565 emitters, including real `drawBitmap` / `pushImage` bindings. Compiled locally with official Arduino CLI 1.5.1 against Arduino AVR 1.8.6 + Adafruit GFX 1.12.6 (6,084-byte flash / 193-byte RAM result) and ESP32 3.3.8 + TFT_eSPI 2.5.43 (318,292-byte flash / 22,500-byte RAM result); CI installs the same pinned versions and repeats both builds | Completed the Appendix B Adafruit GFX and ESP-IDF/TFT_eSPI rows and extended P2-11's real-project compile job to all C/header targets |

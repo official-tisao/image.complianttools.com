@@ -7,6 +7,7 @@
     extractRawCameraPreview,
     isEngineError,
     rawToolOptionDescriptions,
+    rawPreviewExtensionError,
   } from '@complianttools/image-engine';
   import GeneratedControls from '$lib/GeneratedControls.svelte';
   import { localizeOptions, translate, type Locale } from './i18n';
@@ -57,6 +58,8 @@
     developedDownload = replaceUrl(developedDownload, '');
     if (!file) return;
     try {
+      const extensionError = rawPreviewExtensionError(file.name);
+      if (extensionError) throw extensionError;
       const bytes = await file.arrayBuffer(),
         baseName = file.name.replace(/\.[^.]+$/u, '');
       const isDng = file.name.toLowerCase().endsWith('.dng');
@@ -81,7 +84,7 @@
         }
       }
       if (!isDng) {
-        status = `${status ? `${status} ` : ''}${t('raw.dngOnly', 'Full RAW development is currently available for DNG only; this format remains camera-preview only.')}`;
+        status = `${status ? `${status} ` : ''}${t('raw.dngOnly', 'Full RAW development is available for DNG only; proprietary sensor-data decoding is not shipped, so this format remains camera-preview only.')}`;
         return;
       }
       status = `${status ? `${status} ` : ''}${t('raw.developing', 'Developing the DNG in the background…')}`;

@@ -507,7 +507,7 @@ const arabic: Readonly<Record<string, string>> = {
   'raw.previewNotice': 'هذه هي المعالجة المضمنة في الكاميرا وليست تطوير RAW',
   'raw.noPreview': 'لم يُعثر على معاينة كاميرا مضمنة؛ جارٍ متابعة تطوير DNG الكامل.',
   'raw.dngOnly':
-    'يتوفر تطوير RAW الكامل حاليًا لملفات DNG فقط؛ وتظل هذه الصيغة للمعاينة المضمنة فقط.',
+    'يتوفر تطوير RAW الكامل لملفات DNG فقط؛ ولا يتضمن هذا الإصدار فك ترميز بيانات المستشعر الخاصة، لذلك تظل هذه الصيغة لمعاينة الكاميرا فقط.',
   'raw.developing': 'جارٍ تطوير DNG في الخلفية…',
   'raw.complete': 'اكتمل تطوير DNG بعمق',
   'raw.bitUsing': 'بت باستخدام',
@@ -520,7 +520,7 @@ const arabic: Readonly<Record<string, string>> = {
   'raw.bitOutput': 'بت',
   'raw.metaDescription': 'استخرج معاينات كاميرا RAW وطوّر ملفات DNG محليًا.',
   'option.raw.instantPreview.label': 'استخراج المعاينة المضمنة أولًا',
-  'option.raw.instantPreview.help': 'ينزّل JPEG المضمن في الكاميرا قبل تطوير بكسلات DNG.',
+  'option.raw.instantPreview.help': 'ينزّل معالجة الكاميرا المضمنة قبل تطوير بكسلات DNG.',
   'option.raw.demosaic.label': 'إزالة فسيفساء اللون',
   'option.raw.whiteBalance.label': 'توازن الأبيض',
   'option.raw.whiteBalance.option.as-shot': 'كما التُقطت',

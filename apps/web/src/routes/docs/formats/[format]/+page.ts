@@ -65,9 +65,9 @@ const unavailableFormats = {
 const supportedFormats = {
   raw: {
     name: 'Camera RAW / DNG',
-    summary: 'Camera RAW files preserve sensor data and commonly include an embedded JPEG preview.',
+    summary: 'Camera RAW files preserve sensor data and may include an embedded camera rendering.',
     notes:
-      'The local RAW tool extracts bounded embedded JPEG previews and labels them as camera previews. Full local development is limited to uncompressed, single-plane 8-bit or 16-bit Bayer DNG files; other RAW families remain preview-only and that limitation is reported before processing.',
+      'The local RAW tool has a SHA-verified real-file corpus for 3FR, ARW, CR2, CR3, CRW, DCR, DNG, ERF, FFF, IIQ, KDC, MOS, NEF, NRW, ORF, PEF, RAF, RAW, RW2, RWL, SR2, SRF, SRW, and X3F. JPEG previews are preserved byte-for-byte; uncompressed RGB TIFF previews are exported losslessly as BMP. BAY, CAP, CRF, CS1, DCS, DRF, K25, MEF, PTX, and RWZ are unavailable because no hash-pinned redistributable real-file corpus or published container conformance evidence is recorded. Verified MDC/MRW samples contain no embedded rendering. Full local development is limited to bounded Bayer DNG files.',
   },
   ai: {
     name: 'Illustrator (AI)',
