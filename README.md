@@ -438,7 +438,7 @@ degrades to something honest rather than to nothing.
 | TIFF | `.tif .tiff` | D | E | A | UTIF.js (MIT) | LZW / Deflate / PackBits / JPEG / none, multipage, tiled, CMYK, 16-bit |
 | ICO | `.ico` | D | E | — | custom muxer | Multi-image; 16 → 512 px; PNG or BMP payload |
 | CUR | `.cur` | D | E | — | custom muxer | ICO variant with hotspot |
-| HEIC / HEIF | `.heic .heif .hif` | D† | **never** | A | platform `ImageDecoder` | †Decode only, and only where the OS provides a decoder (macOS/iOS, recent Windows) — capability-probed per §5.7. **Encode is permanently excluded**: HEVC has multiple active patent pools and the only encoders are GPL or commercial (§25.3.2). The UI states this as a deliberate decision, not a missing feature |
+| HEIC / HEIF | `.heic .heif .hif` | D† | **never** | A | platform image decoder | †Decode only, and only where the OS/browser provides a decoder (macOS/iOS, recent Windows) — WebCodecs `ImageDecoder` is probed first, then the native `createImageBitmap` / image-element path. **Encode is permanently excluded**: HEVC has multiple active patent pools and the only encoders are GPL or commercial (§25.3.2). The UI states this as a deliberate decision, not a missing feature |
 | TGA | `.tga .icb .vda .vst` | D | E | — | our own | RLE, 16/24/32-bit, origin flag |
 | PCX | `.pcx` | D | E | — | our own | |
 | PPM / PGM / PBM / PNM | `.ppm .pgm .pbm .pnm` | D | E | — | our own | ASCII + binary |
@@ -842,7 +842,7 @@ own origin with long-lived immutable cache headers and SRI-equivalent integrity 
 | JPEG 2000 | **v1 unsupported** | No verified browser distribution or reproducible, licence-recorded OpenJPEG WASM build exists | none |
 | GIF decode | `gifuct-js` | MIT | eager |
 | GIF encode + optimize | **our own**, `codecs/gif/` | `gifsicle` is **GPL-2.0** and cannot ship. We implement LZW (patent expired 2004), palette quantization, frame differencing, transparency optimization, and the `-O1..3`-equivalent passes ourselves. See §25.4 | eager |
-| HEIC / HEIF decode | **platform `ImageDecoder`** (WebCodecs) | `libheif` is **LGPL-3.0** and HEVC carries active patent pools. We use the OS decoder where the platform provides one and report unavailable elsewhere. **No HEIC encode, ever** | none — platform |
+| HEIC / HEIF decode | **platform image APIs** (`ImageDecoder`, then `createImageBitmap` / image element) | `libheif` is **LGPL-3.0** and HEVC carries active patent pools. We use the OS/browser decoder where the platform provides one and report unavailable elsewhere. **No HEIC encode, ever** | none — platform |
 | Camera RAW | **our own**, `codecs/raw/` | `LibRaw` is **LGPL-2.1**. Stage 1 extracts the largest embedded camera rendering — preserving JPEG previews byte-for-byte and losslessly exporting uncompressed RGB TIFF previews as BMP — using bounded container/IFD parsing and no demosaic. Stage 2 is our own demosaic pipeline, starting with DNG (Adobe's spec is published) | lazy |
 | SVG → raster | `@resvg/resvg-wasm` | MPL-2.0 — file-level copyleft, allowlisted, no linking obligation | lazy |
 | Raster → SVG | `imagetracerjs` | **Public domain (Unlicense).** Explicitly *not* `potrace`, which is **GPL-2.0** | lazy |
@@ -3509,7 +3509,7 @@ record of what changed and why, and it is the answer to "did you check?".
 | --- | --- | --- | --- |
 | `wasm-vips` (libvips) | LGPL-2.1 | Our own decoders for ~16 simple formats (§25.4), `UTIF.js` (MIT) for TIFF, `tinyexr` (BSD-3), `OpenJPEG` (BSD-2) | Real work — this was one dependency covering ~40 formats. But those formats are mostly trivial byte layouts, and we lose a 12 MB download |
 | `gifsicle` | GPL-2.0 | Our own GIF encoder and optimizer (§25.4); `gifuct-js` (MIT) to decode | Moderate. LZW has been patent-free since 2004 |
-| `libheif` + `x265` | LGPL-3.0 / GPL-2.0 | Platform `ImageDecoder` (WebCodecs). **HEIC encode dropped entirely** | Decode narrows to platforms with OS support. Honest capability reporting handles it (P8) |
+| `libheif` + `x265` | LGPL-3.0 / GPL-2.0 | Platform image decoding (`ImageDecoder`, then native bitmap/image fallback). **HEIC encode dropped entirely** | Decode narrows to platforms with OS/browser support. Honest capability reporting handles it (P8) |
 | `LibRaw` | LGPL-2.1 | Our own RAW pipeline (§25.4) — embedded-preview extraction first, then our own demosaic | Significant, phased. Preview extraction alone satisfies most users and is nearly free given our TIFF/EXIF parser |
 | Ghostscript | AGPL-3.0 | Our own EPS preview extractor + minimal PS subset | Full PostScript rendering is gone. Reported honestly rather than half-working |
 | `potrace` | GPL-2.0 | `imagetracerjs` (public domain) | None — comparable quality for our use |

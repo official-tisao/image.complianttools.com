@@ -405,7 +405,7 @@ upstreams are permissive (BSD-3, BSD-2), so the obstacle is a build we do not ow
 - **Spec:** README §5.3 · **Done when:** DNG develops correctly vs a reference; unsupported formats report honestly
 
 #### P2-08 · HEIC via platform decoder
-- [x] `ImageDecoder` (WebCodecs) wrapper; capability-probed
+- [x] Platform decoder wrapper: capability-probed WebCodecs `ImageDecoder`, then native `createImageBitmap` / image-element fallback for Safari-class platforms
 - [x] **Encode permanently excluded** — UI states this as a decision, not a missing feature
 - [x] Unsupported platforms get the specific message from README §11.8
 - [ ] Record real-device decode evidence on macOS/iOS Safari and recent Windows Chrome
@@ -1212,6 +1212,7 @@ Every README change gets a row here, per §0.3. Newest first.
 
 | Date | README § | Change | PLAN action |
 | --- | --- | --- | --- |
+| 2026-08-24 | §5.2, §25.3.2 | Corrected the HEIC platform path to fall back from WebCodecs `ImageDecoder` to native bitmap/image decoding. A secure-context probe of installed Windows Chrome 151 showed `ImageDecoder` present but `image/heic` and `image/heif` both unsupported, while Safari does not expose WebCodecs `ImageDecoder`; the fallback is therefore required rather than optional | Kept P2-08 real-device decode evidence open; added browser coverage for both WebCodecs and native-image branches without fabricating platform support |
 | 2026-08-24 | §5.3 | Added an engine-owned per-extension RAW capability contract. Ten legacy extensions without reproducible corpus/conformance evidence and MDC/MRW files with no embedded rendering now fail before processing with a named reason and camera-software export remedy; the RAW documentation lists the exact verified and unavailable sets. Non-DNG files explicitly state that proprietary sensor-data decoding is not shipped | Completed the remaining Appendix B RAW Stage 1 rows and the proprietary Stage 2 rows by the checklist's documented-unavailable path without claiming unverified decode support |
 | 2026-08-24 | §5.3 | Expanded the hash-pinned CC0 RAW corpus to 31 files, 19 vendors, and 24 extensions. The CI verifier now enforces each expected JPEG/BMP path; a full clean download verified every SHA-256 and production extraction. Removed the prior MDC sample after the hardened JPEG parser proved its old result was a pixel-data false positive | Completed the Appendix B Canon, Nikon, Sony, Fujifilm, Olympus, Panasonic, Sigma, Samsung, Epson, Hasselblad, Leaf, and Adobe RAW rows; retained unchecked compound rows whose listed extensions are not all proven |
 | 2026-08-24 | §5.3 | Audited additional real RAW families and extended Stage 1 to losslessly export uncompressed RGB TIFF camera previews as BMP while preserving embedded JPEGs byte-for-byte. Added hash-pinned CC0 3FR, DCR, ERF, FFF, and IIQ files to the CI corpus; the verifier runs production extraction and decodes each BMP back to a complete RGBA frame. MRW samples without a rendered preview remain unsupported by Stage 1 | Broadened reproducible preview coverage without marking the every-listed-format/vendor acceptance item complete |

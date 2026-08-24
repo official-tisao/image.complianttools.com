@@ -3,9 +3,11 @@
     HEIC_UNSUPPORTED_MESSAGE,
     decodeHeic,
     decodeWithTypedErrors,
+    detectHeicMimeType,
     engineErrorMessage,
     isEngineError,
     supportsHeicDecode,
+    type RasterImage,
     withTypedEngineErrorsAsync,
   } from '@complianttools/image-engine';
   import { translate, type Locale } from './i18n';
@@ -17,6 +19,51 @@
 
   let status = $state('');
   let error = $state('');
+
+  function rasterFromSource(source: unknown, width: number, height: number): RasterImage {
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext('2d');
+    if (!context)
+      throw new Error(t('heic.canvasError', 'Your browser cannot create a local canvas.'));
+    context.drawImage(source as never, 0, 0);
+    return {
+      width,
+      height,
+      colorSpace: 'srgb',
+      bitDepth: 8,
+      premultipliedAlpha: false,
+      frames: [{ data: context.getImageData(0, 0, width, height).data, durationMs: 0 }],
+    };
+  }
+
+  async function decodeWithNativeImagePipeline(bytes: ArrayBuffer): Promise<RasterImage> {
+    const blob = new Blob([bytes], { type: detectHeicMimeType(bytes) });
+    if (typeof globalThis.createImageBitmap === 'function') {
+      try {
+        const bitmap = await globalThis.createImageBitmap(blob);
+        try {
+          return rasterFromSource(bitmap, bitmap.width, bitmap.height);
+        } finally {
+          bitmap.close();
+        }
+      } catch {
+        // Safari may support HEIC through its native image element but not createImageBitmap.
+      }
+    }
+    const url = URL.createObjectURL(blob);
+    try {
+      const image = new globalThis.Image();
+      image.src = url;
+      await image.decode();
+      return rasterFromSource(image, image.naturalWidth, image.naturalHeight);
+    } catch {
+      throw new Error(HEIC_UNSUPPORTED_MESSAGE);
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  }
 
   async function convert(file: File | undefined) {
     status = '';
@@ -30,9 +77,10 @@
           'Open the file in a browser with HEIC support, export it as JPEG on its source device, or choose a valid HEIC/HEIF image.',
         ),
         async () => {
-          if (!(await supportsHeicDecode())) throw new Error(HEIC_UNSUPPORTED_MESSAGE);
           const bytes = await file.arrayBuffer();
-          const image = await decodeWithTypedErrors('heic', () => decodeHeic(bytes));
+          const image = await decodeWithTypedErrors('heic', async () =>
+            (await supportsHeicDecode()) ? decodeHeic(bytes) : decodeWithNativeImagePipeline(bytes),
+          );
           const frame = image.frames[0];
           if (!frame)
             throw new Error(t('heic.noFrame', 'The HEIC decoder returned no image frame.'));

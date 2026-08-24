@@ -80,6 +80,44 @@ test('surfaces the named platform limitation when HEIC is unavailable', async ({
   await expect(page.getByRole('alert')).toContainText('Remedy:');
 });
 
+test('uses the native browser image pipeline when WebCodecs ImageDecoder is unavailable', async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(globalThis, 'ImageDecoder', {
+      configurable: true,
+      value: undefined,
+    });
+    const nativeCreateImageBitmap = globalThis.createImageBitmap.bind(globalThis);
+    Object.defineProperty(globalThis, 'createImageBitmap', {
+      configurable: true,
+      value: async () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 2;
+        canvas.height = 1;
+        const context = canvas.getContext('2d')!;
+        context.fillStyle = 'rgb(12, 34, 56)';
+        context.fillRect(0, 0, 2, 1);
+        return nativeCreateImageBitmap(canvas);
+      },
+    });
+  });
+  await page.goto('/heic-converter');
+  await page.waitForLoadState('networkidle');
+  const pending = page.waitForEvent('download');
+  await page.getByLabel('Choose a HEIC or HEIF image').setInputFiles({
+    name: 'native.heic',
+    mimeType: 'image/heic',
+    buffer: heifBytes,
+  });
+  const png = Buffer.concat(await (await (await pending).createReadStream()).toArray());
+  expect({ width: png.readUInt32BE(16), height: png.readUInt32BE(20) }).toEqual({
+    width: 2,
+    height: 1,
+  });
+  await expect(page.getByRole('status')).toHaveText('Converted 2×1 HEIC image to PNG locally.');
+});
+
 test('HEIC file picker is keyboard reachable', async ({ page }) => {
   await page.goto('/heic-converter');
   await page.waitForLoadState('networkidle');
