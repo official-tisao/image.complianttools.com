@@ -18,6 +18,7 @@
   import RawConverter from '$lib/RawConverter.svelte';
   import EmbeddedConverter from '$lib/EmbeddedConverter.svelte';
   import LosslessOptimizer from '$lib/LosslessOptimizer.svelte';
+  import FormatToolCompletion from '$lib/FormatToolCompletion.svelte';
   import { toolCopy } from '$lib/i18n';
   import type { PageData } from './$types';
 
@@ -28,6 +29,11 @@
       : null,
   );
   const copy = $derived(phaseOneTool ? toolCopy(data.locale, phaseOneTool) : null);
+  const formatCompletionTool = $derived(
+    ['heic-converter', 'raw-converter', 'avif-converter', 'webp-converter', 'jxl-converter'].find(
+      (tool) => tool === data.tool,
+    ),
+  );
 </script>
 
 {#if phaseOneTool && copy}
@@ -73,4 +79,7 @@
   <LosslessOptimizer locale={data.locale} />
 {:else}
   <FaviconGenerator locale={data.locale} />
+{/if}
+{#if formatCompletionTool}
+  <FormatToolCompletion route={formatCompletionTool} locale={data.locale} />
 {/if}
