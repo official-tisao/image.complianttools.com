@@ -24,6 +24,7 @@ async function faviconPng(page: Page) {
 
 test('downloads the complete deterministic favicon package without network fallback', async ({
   page,
+  context,
 }) => {
   const crossOrigin: string[] = [];
   page.on('request', (request) => {
@@ -73,6 +74,10 @@ test('downloads the complete deterministic favicon package without network fallb
     name: 'Example Site',
   });
   await expect(page.getByLabel('HTML link snippet')).toHaveValue(/apple-touch-icon/u);
+  await context.setOffline(true);
+  await page.getByRole('button', { name: 'Create package' }).click();
+  await expect(page.getByRole('status')).toContainText('Created favicon.ico');
+  await context.setOffline(false);
   expect(crossOrigin).toEqual([]);
 });
 

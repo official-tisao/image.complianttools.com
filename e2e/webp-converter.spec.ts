@@ -43,6 +43,7 @@ async function uploadAndRead(page: import('@playwright/test').Page, animated: bo
 
 test('creates lossy, lossless, and animated WebP locally with exact-byte preview', async ({
   page,
+  context,
 }) => {
   const crossOrigin: string[] = [];
   page.on('request', (request) => {
@@ -122,6 +123,14 @@ test('creates lossy, lossless, and animated WebP locally with exact-byte preview
   expect(decoded.frames[1]![0]).toBeLessThan(80);
   expect(decoded.frames[1]![2]).toBeGreaterThan(180);
   expect(Buffer.from(decoded.previewBytes)).toEqual(animation);
+  await context.setOffline(true);
+  const offlineAnimation = await uploadAndRead(page, true);
+  expect(inspectImageContainer(offlineAnimation)).toMatchObject({
+    format: 'webp',
+    animated: true,
+    frameCount: 2,
+  });
+  await context.setOffline(false);
   expect(crossOrigin).toEqual([]);
 });
 

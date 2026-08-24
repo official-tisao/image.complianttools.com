@@ -200,7 +200,7 @@ test('exports every GIF frame as an exact PNG download', async ({ page }) => {
   }
 });
 
-test('converts a GIF to a real two-frame APNG locally', async ({ page }) => {
+test('converts a GIF to a real two-frame APNG locally', async ({ page, context }) => {
   await page.goto('/gif-converter');
   await page.waitForLoadState('networkidle');
   await page.getByLabel('Output').selectOption('apng');
@@ -219,6 +219,18 @@ test('converts a GIF to a real two-frame APNG locally', async ({ page }) => {
     animated: true,
     frameCount: 2,
   });
+  await context.setOffline(true);
+  const offlinePending = page.waitForEvent('download');
+  await page.locator('input[type=file]').setInputFiles({
+    name: 'offline-two-frames.gif',
+    mimeType: 'image/gif',
+    buffer: Buffer.from(animatedGifFixture()),
+  });
+  const offlineBytes = Buffer.concat(
+    await (await (await offlinePending).createReadStream()).toArray(),
+  );
+  expect(inspectImageContainer(offlineBytes)).toMatchObject({ animated: true, frameCount: 2 });
+  await context.setOffline(false);
 });
 
 test('GIF output control leads to the file picker by keyboard', async ({ page }) => {

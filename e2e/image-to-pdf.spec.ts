@@ -26,7 +26,10 @@ async function pngFixture(page: import('@playwright/test').Page): Promise<Buffer
   );
 }
 
-test('creates, previews, orders, and downloads a configured local PDF', async ({ page }) => {
+test('creates, previews, orders, and downloads a configured local PDF', async ({
+  page,
+  context,
+}) => {
   const crossOrigin: string[] = [];
   page.on('request', (request) => {
     const url = new URL(request.url());
@@ -78,6 +81,10 @@ test('creates, previews, orders, and downloads a configured local PDF', async ({
   const jpegPath = await (await jpegPending).path();
   expect(jpegPath).not.toBeNull();
   expect((await readFile(jpegPath!)).toString('latin1')).toContain('/DCTDecode');
+  await context.setOffline(true);
+  await page.getByRole('button', { name: 'Create PDF' }).click();
+  await expect(page.getByRole('status')).toContainText('Created a 2-page PDF locally');
+  await context.setOffline(false);
   expect(crossOrigin).toEqual([]);
 });
 
