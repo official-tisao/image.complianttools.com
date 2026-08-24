@@ -19,6 +19,7 @@ const tools = [
   'gif-converter',
   'avif-converter',
   'webp-converter',
+  'jxl-converter',
 ] as const;
 
 export const entries: EntryGenerator = () =>

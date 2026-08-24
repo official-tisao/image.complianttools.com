@@ -13,6 +13,7 @@
   import GifConverter from '$lib/GifConverter.svelte';
   import AvifConverter from '$lib/AvifConverter.svelte';
   import WebpConverter from '$lib/WebpConverter.svelte';
+  import JxlConverter from '$lib/JxlConverter.svelte';
   import { toolCopy } from '$lib/i18n';
   import type { PageData } from './$types';
 
@@ -56,6 +57,8 @@
   <AvifConverter locale={data.locale} />
 {:else if data.tool === 'webp-converter'}
   <WebpConverter locale={data.locale} />
+{:else if data.tool === 'jxl-converter'}
+  <JxlConverter locale={data.locale} />
 {:else}
   <FaviconGenerator locale={data.locale} />
 {/if}

@@ -451,6 +451,35 @@ const arabic: Readonly<Record<string, string>> = {
   'option.webp.frameDelayMs.help': 'تُستخدم لملفات الصور المنفصلة؛ ويحافظ إدخال GIF على توقيته.',
   'option.webp.loopCount.label': 'عدد التكرارات',
   'option.webp.loopCount.help': 'القيمة 0 تعني التكرار إلى الأبد.',
+  'jxl.back': '← تحويل',
+  'jxl.title': 'محول JPEG XL',
+  'jxl.description':
+    'رمّز بكسلات PNG أو JPEG أو WebP بصيغة JPEG XL، أو فك JPEG XL إلى PNG محليًا. لا يتم رفع أي شيء. لا يُنزّل المرمّز المحلي إلا بعد اختيار ملف وحجمه نحو',
+  'jxl.reconstructionNotice':
+    'يحافظ وضع الصورة النقطية بلا فقدان على البكسلات المفكوكة. لا يتيح مرمّز المتصفح المثبّت إعادة ضغط JPEG القابلة لإعادة البناء، ولا يُدّعى دعمها هنا.',
+  'jxl.chooseSource': 'اختر صورة PNG أو JPEG أو WebP',
+  'jxl.chooseJxl': 'اختر صورة JPEG XL',
+  'jxl.canvasError': 'لا يستطيع متصفحك إنشاء لوحة محلية.',
+  'jxl.pngError': 'تعذر ترميز PNG محليًا.',
+  'jxl.remedy': 'اختر صورة مدعومة صالحة، أو قلّل أبعادها، أو غيّر إعدادات JPEG XL.',
+  'jxl.created': 'تم إنشاء',
+  'jxl.losslessRaster': 'صورة نقطية بلا فقدان',
+  'jxl.lossyQuality': 'بجودة ضائعة',
+  'jxl.converted': 'تم تحويل',
+  'jxl.toPng': 'صورة JPEG XL إلى PNG محليًا',
+  'jxl.locally': 'محليًا',
+  'jxl.previewAlt': 'معاينة الإخراج المحول المطابق',
+  'jxl.previewUnavailable': 'تتطلب معاينة JPEG XL فك الترميز؛ وتبقى البايتات المنزلة محليًا.',
+  'jxl.previewDescription': 'تم إنشاء الإخراج بالكامل في هذا المتصفح.',
+  'jxl.metaDescription': 'رمّز الصور بصيغة JPEG XL أو فك JPEG XL إلى PNG محليًا.',
+  'option.jxl.direction.label': 'الاتجاه',
+  'option.jxl.direction.option.decode': 'JPEG XL إلى PNG',
+  'option.jxl.direction.option.encode': 'الصورة إلى JPEG XL',
+  'option.jxl.lossless.label': 'استخدام ترميز نقطي بلا فقدان',
+  'option.jxl.lossless.help':
+    'يحافظ على البكسلات المفكوكة؛ وهذا ليس إعادة ضغط JPEG قابلة لإعادة البناء.',
+  'option.jxl.quality.label': 'الجودة الضائعة',
+  'option.jxl.quality.help': 'تُستخدم فقط لترميز JPEG XL الضائع.',
 };
 
 const accents: Readonly<Record<string, string>> = {

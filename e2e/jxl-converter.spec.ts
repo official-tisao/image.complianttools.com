@@ -64,6 +64,12 @@ test('encodes lossy and lossless raster JPEG XL then decodes real output to PNG 
   expect(decodedPng.subarray(0, 8)).toEqual(
     Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
   );
+  const previewBytes = await page.evaluate(async () => {
+    const image = document.querySelector('figure img');
+    if (!(image instanceof HTMLImageElement)) throw new Error('PNG preview is missing.');
+    return [...new Uint8Array(await (await fetch(image.src)).arrayBuffer())];
+  });
+  expect(Buffer.from(previewBytes)).toEqual(decodedPng);
   const pixel = await page.evaluate(
     async (bytes) => {
       const bitmap = await createImageBitmap(
@@ -91,6 +97,7 @@ test('reports malformed JPEG XL with a typed remedy and no network fallback', as
     if (url.origin !== 'http://127.0.0.1:4173') crossOrigin.push(request.url());
   });
   await page.goto('/jxl-converter');
+  await page.waitForLoadState('networkidle');
   await page.locator('input[type=file]').setInputFiles({
     name: 'broken.jxl',
     mimeType: 'image/jxl',
@@ -101,3 +108,48 @@ test('reports malformed JPEG XL with a typed remedy and no network fallback', as
   });
   expect(crossOrigin).toEqual([]);
 });
+
+test('JPEG XL direction and raster encoding controls are keyboard operable', async ({ page }) => {
+  await page.goto('/jxl-converter');
+  await page.waitForLoadState('networkidle');
+  const directions = page.getByTestId('option-jxl-direction').locator('.segments button');
+  await directions.first().focus();
+  await page.keyboard.press('Tab');
+  await expect(directions.nth(1)).toBeFocused();
+  await page.keyboard.press('Space');
+  await expect(directions.nth(1)).toHaveAttribute('aria-pressed', 'true');
+  await page.keyboard.press('Tab');
+  await expect(page.getByLabel('Use lossless raster encoding')).toBeFocused();
+});
+
+for (const locale of ['en-XA', 'ar'] as const) {
+  test(`${locale} JPEG XL route completes a real lossless raster round trip`, async ({ page }) => {
+    await page.goto(`/${locale}/jxl-converter`);
+    await page.waitForLoadState('networkidle');
+    const png = await pngFixture(page);
+    const directions = page.getByTestId('option-jxl-direction').locator('.segments button');
+    await directions.nth(1).click();
+    await page.getByTestId('option-jxl-lossless').locator('input[type=checkbox]').check();
+    const jxl = await uploadAndRead(page, `${locale}.png`, 'image/png', png);
+    expect(jxl.length).toBeGreaterThan(20);
+
+    await directions.first().click();
+    const decoded = await uploadAndRead(page, `${locale}.jxl`, 'image/jxl', jxl);
+    expect(decoded.subarray(0, 8)).toEqual(
+      Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    );
+    const previewUrl = await page.locator('figure img').getAttribute('src');
+    const preview = Buffer.from(
+      await page.evaluate(
+        async (url) => [...new Uint8Array(await (await fetch(url!)).arrayBuffer())],
+        previewUrl,
+      ),
+    );
+    expect(preview).toEqual(decoded);
+    await expect(page.locator('main')).toHaveAttribute('dir', locale === 'ar' ? 'rtl' : 'ltr');
+    await expect(page.locator('link[rel=canonical]')).toHaveAttribute(
+      'href',
+      `https://image.complianttools.com/${locale}/jxl-converter`,
+    );
+  });
+}
