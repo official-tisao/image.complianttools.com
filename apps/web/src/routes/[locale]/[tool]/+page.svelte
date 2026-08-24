@@ -30,9 +30,22 @@
   );
   const copy = $derived(phaseOneTool ? toolCopy(data.locale, phaseOneTool) : null);
   const formatCompletionTool = $derived(
-    ['heic-converter', 'raw-converter', 'avif-converter', 'webp-converter', 'jxl-converter'].find(
-      (tool) => tool === data.tool,
-    ),
+    [
+      'heic-converter',
+      'raw-converter',
+      'avif-converter',
+      'webp-converter',
+      'jxl-converter',
+      'svg-to-png',
+      'image-to-svg',
+      'pdf-to-image',
+      'image-to-pdf',
+      'favicon-generator',
+      'gif-converter',
+      'embedded-converter',
+      'base64-image',
+      'cbz-converter',
+    ].find((tool) => tool === data.tool),
   );
 </script>
 

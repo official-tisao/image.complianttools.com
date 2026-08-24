@@ -6,6 +6,15 @@ const routes = [
   'avif-converter',
   'webp-converter',
   'jxl-converter',
+  'svg-to-png',
+  'image-to-svg',
+  'pdf-to-image',
+  'image-to-pdf',
+  'favicon-generator',
+  'gif-converter',
+  'embedded-converter',
+  'base64-image',
+  'cbz-converter',
 ] as const;
 
 for (const locale of ['en', 'en-XA', 'ar'] as const) {

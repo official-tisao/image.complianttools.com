@@ -134,6 +134,225 @@
         ],
       ],
     },
+    'svg-to-png': {
+      title: ['SVG to PNG', 'تحويل SVG إلى PNG'],
+      description: [
+        'Rasterize safe SVG files to exact-size PNG locally.',
+        'حوّل ملفات SVG الآمنة إلى PNG بحجم دقيق محليًا.',
+      ],
+      note: [
+        'External references, scripts, event handlers, and unsafe nested content are rejected before rasterization. PNG output replaces scalable vector geometry with a fixed pixel grid.',
+        'تُرفض المراجع الخارجية والبرامج النصية ومعالجات الأحداث والمحتوى المتداخل غير الآمن قبل التحويل. يستبدل PNG هندسة المتجهات القابلة للتكبير بشبكة بكسلات ثابتة.',
+      ],
+      faqs: [
+        ['Why are external SVG resources refused?', 'لماذا تُرفض موارد SVG الخارجية؟'],
+        [
+          'The local sanitizer prevents network access and removes active content before any renderer receives the document.',
+          'يمنع المطهّر المحلي الوصول إلى الشبكة ويزيل المحتوى النشط قبل وصول المستند إلى العارض.',
+        ],
+        ['How is the PNG size chosen?', 'كيف يُختار حجم PNG؟'],
+        [
+          'Intrinsic SVG dimensions are used by default; explicit width and height controls generate the requested pixel dimensions.',
+          'تُستخدم أبعاد SVG الأصلية افتراضيًا؛ وتنتج عناصر العرض والارتفاع الأبعاد المطلوبة بالبكسل.',
+        ],
+      ],
+    },
+    'image-to-svg': {
+      title: ['Image to SVG Vectorizer', 'تحويل الصورة إلى SVG'],
+      description: [
+        'Trace raster pixels into editable SVG paths locally.',
+        'تتبّع البكسلات النقطية إلى مسارات SVG قابلة للتحرير محليًا.',
+      ],
+      note: [
+        'Vectorization approximates raster edges and colours with paths. Fine photographic texture may be simplified, while increasing detail produces a larger SVG.',
+        'يقرب التحويل المتجهي الحواف والألوان النقطية بمسارات. قد تُبسّط تفاصيل الصور الدقيقة، بينما تزيد التفاصيل الأعلى حجم SVG.',
+      ],
+      faqs: [
+        [
+          'Does vectorization recover the original artwork?',
+          'هل يستعيد التحويل المتجهي العمل الأصلي؟',
+        ],
+        [
+          'No. It creates a new path approximation from pixels; it cannot recover layers, fonts, or source control points.',
+          'لا. ينشئ تقريبًا جديدًا للمسارات من البكسلات ولا يمكنه استعادة الطبقات أو الخطوط أو نقاط التحكم الأصلية.',
+        ],
+        ['What changes SVG file size?', 'ما الذي يغيّر حجم ملف SVG؟'],
+        [
+          'More colours, tighter path fitting, and less simplification preserve detail but create more path data.',
+          'تحافظ الألوان الأكثر وملاءمة المسارات الأدق والتبسيط الأقل على التفاصيل لكنها تنشئ بيانات مسار أكثر.',
+        ],
+      ],
+    },
+    'pdf-to-image': {
+      title: ['PDF to Image', 'تحويل PDF إلى صورة'],
+      description: [
+        'Render selected PDF pages to PNG locally.',
+        'حوّل صفحات PDF المحددة إلى PNG محليًا.',
+      ],
+      note: [
+        'Rendering flattens text, vectors, transparency, and annotations into pixels at the chosen scale. Password-protected or unsupported PDFs fail with a named remedy.',
+        'يدمج العرض النص والمتجهات والشفافية والتعليقات في بكسلات وفق المقياس المختار. تفشل ملفات PDF المحمية أو غير المدعومة مع حل واضح.',
+      ],
+      faqs: [
+        ['Will text remain selectable?', 'هل يبقى النص قابلاً للتحديد؟'],
+        [
+          'No. Each exported page is a PNG raster image, so text and vector objects become pixels.',
+          'لا. كل صفحة مصدّرة هي صورة PNG نقطية، لذلك يصبح النص والكائنات المتجهية بكسلات.',
+        ],
+        ['How does render scale affect output?', 'كيف يؤثر مقياس العرض في الناتج؟'],
+        [
+          'A higher scale produces more pixels and sharper detail, but increases memory use and file size.',
+          'ينتج المقياس الأعلى بكسلات أكثر وتفاصيل أوضح لكنه يزيد استخدام الذاكرة وحجم الملف.',
+        ],
+      ],
+    },
+    'image-to-pdf': {
+      title: ['Image to PDF', 'تحويل الصورة إلى PDF'],
+      description: [
+        'Place local images onto deterministic PDF pages.',
+        'ضع الصور المحلية على صفحات PDF حتمية.',
+      ],
+      note: [
+        'Images are embedded on pages using the selected paper, margins, fit, and orientation. The PDF does not recreate editable source layers or searchable text.',
+        'تُضمّن الصور في الصفحات باستخدام الورق والهوامش والملاءمة والاتجاه المحددة. لا يعيد PDF إنشاء طبقات قابلة للتحرير أو نص قابل للبحث.',
+      ],
+      faqs: [
+        ['Are images cropped when fitted to a page?', 'هل تُقص الصور عند ملاءمتها للصفحة؟'],
+        [
+          'Contain preserves the whole image with possible whitespace; cover fills the area and may crop edges.',
+          'يحافظ الاحتواء على الصورة كاملة مع مساحة فارغة محتملة؛ أما التغطية فتملأ المساحة وقد تقص الحواف.',
+        ],
+        ['Is the PDF generated on a server?', 'هل يُنشأ PDF على خادم؟'],
+        [
+          'No. Page layout, image embedding, and download all happen in this browser.',
+          'لا. يجري تخطيط الصفحات وتضمين الصور والتنزيل داخل هذا المتصفح.',
+        ],
+      ],
+    },
+    'favicon-generator': {
+      title: ['Favicon Generator', 'منشئ الأيقونة المفضلة'],
+      description: [
+        'Generate a deterministic favicon package locally.',
+        'أنشئ حزمة أيقونات مفضلة حتمية محليًا.',
+      ],
+      note: [
+        'The package includes exact browser and manifest sizes derived from one source image. Small icons necessarily discard detail; transparent padding and edge contrast should be reviewed.',
+        'تتضمن الحزمة أحجام المتصفح والبيان الدقيقة المشتقة من صورة مصدر واحدة. تفقد الأيقونات الصغيرة بعض التفاصيل، لذا راجع الحشو الشفاف وتباين الحواف.',
+      ],
+      faqs: [
+        ['Which files are included?', 'ما الملفات المضمنة؟'],
+        [
+          'The ZIP contains ICO and PNG icon sizes plus the web manifest and HTML link snippet required by the page.',
+          'تحتوي ZIP على أحجام ICO وPNG إضافة إلى بيان الويب ومقتطف روابط HTML المطلوب.',
+        ],
+        [
+          'Why can a detailed logo look unclear at 16 px?',
+          'لماذا قد يبدو الشعار المفصل غير واضح عند 16 بكسل؟',
+        ],
+        [
+          'Very small favicons cannot retain fine lines; use a simplified high-contrast source and inspect the generated preview.',
+          'لا تحتفظ الأيقونات الصغيرة جدًا بالخطوط الدقيقة؛ استخدم مصدرًا مبسطًا عالي التباين وافحص المعاينة.',
+        ],
+      ],
+    },
+    'gif-converter': {
+      title: ['GIF Frame Splitter', 'مقسّم إطارات GIF'],
+      description: [
+        'Decode GIF frames and export exact composed PNGs locally.',
+        'فك إطارات GIF وتصدير PNG مركبة بدقة محليًا.',
+      ],
+      note: [
+        'Frames are composited with source/over blending and none/background/previous disposal before PNG export. Timing and loop metadata are reported but PNG frames are not animated.',
+        'تُركّب الإطارات بمزج المصدر/فوق ومعالجة التخلص قبل تصدير PNG. تُعرض بيانات التوقيت والتكرار لكن إطارات PNG غير متحركة.',
+      ],
+      faqs: [
+        [
+          'Why do exported frames include earlier pixels?',
+          'لماذا تتضمن الإطارات المصدّرة بكسلات سابقة؟',
+        ],
+        [
+          'GIF frames can update only a rectangle; the splitter applies disposal and blending to produce each complete displayed frame.',
+          'قد يحدّث إطار GIF مستطيلاً فقط؛ يطبق المقسّم التخلص والمزج لإنتاج كل إطار معروض كامل.',
+        ],
+        ['Are frame delays preserved?', 'هل تُحفظ مدد الإطارات؟'],
+        [
+          'The delay and loop count are reported in the interface; individual PNG downloads contain pixels, not animation timing.',
+          'تُعرض المدة وعدد التكرارات في الواجهة؛ تحتوي ملفات PNG الفردية على البكسلات لا توقيت الحركة.',
+        ],
+      ],
+    },
+    'embedded-converter': {
+      title: ['Embedded Image Converter', 'محول الصور للأنظمة المضمنة'],
+      description: [
+        'Export pixels for LVGL, Arduino, ESP32, and raw targets locally.',
+        'صدّر البكسلات لـ LVGL وArduino وESP32 والأهداف الخام محليًا.',
+      ],
+      note: [
+        'Colour depth, byte order, alpha layout, stride, and target descriptor fields affect the emitted bytes. Generated bindings are compiled against pinned target headers in CI.',
+        'يؤثر عمق اللون وترتيب البايت وتخطيط ألفا والخطوة وحقول واصف الهدف في البايتات الناتجة. تُجمع الروابط المولدة مقابل رؤوس أهداف مثبتة في CI.',
+      ],
+      faqs: [
+        ['Why can colours differ on the target display?', 'لماذا قد تختلف الألوان على شاشة الهدف؟'],
+        [
+          'RGB565 and other reduced-depth layouts quantize channels; byte order and display configuration must also match the export.',
+          'تكمّم تخطيطات RGB565 وغيرها القنوات؛ ويجب أن يطابق ترتيب البايت وإعداد الشاشة التصدير.',
+        ],
+        ['Are generated C descriptors compile-checked?', 'هل تُفحص واصفات C المولدة بالتجميع؟'],
+        [
+          'Yes. Production fixtures compile against pinned LVGL, Adafruit GFX, and TFT_eSPI target headers.',
+          'نعم. تُجمع تجهيزات الإنتاج مقابل رؤوس LVGL وAdafruit GFX وTFT_eSPI المثبتة.',
+        ],
+      ],
+    },
+    'base64-image': {
+      title: ['Image to Base64', 'تحويل الصورة إلى Base64'],
+      description: [
+        'Encode images as data URLs or decode data URLs locally.',
+        'رمّز الصور كعناوين بيانات أو فك عناوين البيانات محليًا.',
+      ],
+      note: [
+        'Base64 preserves the source bytes but expands them by roughly one third before the data-URL prefix. It is convenient for small inline assets, not large photographs.',
+        'يحافظ Base64 على بايتات المصدر لكنه يزيد حجمها بنحو الثلث قبل بادئة عنوان البيانات. يناسب الأصول الصغيرة المضمنة لا الصور الكبيرة.',
+      ],
+      faqs: [
+        ['Does Base64 change image quality?', 'هل يغيّر Base64 جودة الصورة؟'],
+        [
+          'No. Encoding and decoding round-trip the exact bytes; only the textual representation changes.',
+          'لا. يعيد الترميز وفك الترميز البايتات نفسها؛ يتغير التمثيل النصي فقط.',
+        ],
+        ['Why is the Base64 text larger?', 'لماذا يكون نص Base64 أكبر؟'],
+        [
+          'Four text characters represent each three source bytes, plus a short MIME prefix.',
+          'تمثل أربعة محارف نصية كل ثلاثة بايتات مصدر إضافة إلى بادئة MIME قصيرة.',
+        ],
+      ],
+    },
+    'cbz-converter': {
+      title: ['CBZ Converter', 'محول CBZ'],
+      description: [
+        'Pack ordered images into CBZ or extract pages locally.',
+        'احزم الصور المرتبة في CBZ أو استخرج الصفحات محليًا.',
+      ],
+      note: [
+        'CBZ is a ZIP container of image pages. Natural filename sorting controls reading order; image bytes are preserved and unsafe archive paths are rejected.',
+        'CBZ حاوية ZIP لصفحات الصور. يتحكم ترتيب أسماء الملفات الطبيعي في ترتيب القراءة؛ تُحفظ بايتات الصور وتُرفض مسارات الأرشيف غير الآمنة.',
+      ],
+      faqs: [
+        ['How is page order determined?', 'كيف يُحدد ترتيب الصفحات؟'],
+        [
+          'Names are sorted naturally, so page2 precedes page10. Rename files before packing when a different order is required.',
+          'تُرتب الأسماء طبيعيًا، لذلك تسبق page2 ملف page10. أعد تسمية الملفات قبل الحزم لترتيب مختلف.',
+        ],
+        [
+          'Can a CBZ write outside the extraction folder?',
+          'هل يمكن لـ CBZ الكتابة خارج مجلد الاستخراج؟',
+        ],
+        [
+          'No. Absolute paths and parent-directory traversal are rejected before entries are exposed.',
+          'لا. تُرفض المسارات المطلقة واجتياز المجلد الأب قبل إظهار العناصر.',
+        ],
+      ],
+    },
   };
 
   let { route, locale = 'en' }: { route: string; locale?: Locale } = $props();
