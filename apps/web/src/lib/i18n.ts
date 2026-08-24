@@ -27,6 +27,37 @@ const arabic: Readonly<Record<string, string>> = {
   'nav.jpegGuide': 'دليل JPEG',
   'nav.editor': 'المحرر',
   'nav.connectAi': 'ربط الذكاء الاصطناعي',
+  'seo.questions': 'أسئلة حول هذه الأداة',
+  'seo.related': 'أدوات وأدلة ذات صلة',
+  'seo.metadataViewer': 'عارض البيانات الوصفية',
+  'seo.metadataRemover': 'مزيل البيانات الوصفية',
+  'seo.imageInspector': 'فاحص الصور',
+  'seo.localQuestion': 'هل يغادر ملفي هذا الجهاز؟',
+  'seo.localAnswer': 'لا. تتم قراءة الملف ومعالجته محليًا في متصفحك دون رفعه.',
+  'viewer.formatNote':
+    'تقرأ الأداة حقول EXIF وIPTC وXMP وICC وغيرها من الحاويات المدعومة. يقتصر تعديل EXIF حاليًا على JPEG.',
+  'viewer.faqReadable': 'ما البيانات الوصفية التي يمكن قراءتها؟',
+  'viewer.faqReadableAnswer':
+    'تُعرض الحقول المدعومة في PNG وJPEG وGIF وWebP وAVIF وHEIF، بما في ذلك ملاحظات الشركة المصنّعة كبايتات غير شفافة.',
+  'viewer.faqEdit': 'هل يمكن تعديل كل صيغة؟',
+  'viewer.faqEditAnswer':
+    'لا. تعديل حقول EXIF متحقق لملفات JPEG فقط؛ وتبقى الحقول غير المحددة دون تغيير.',
+  'remover.formatNote':
+    'يُنسخ محتوى الصورة كما هو عند إزالة بيانات PNG وJPEG وGIF وWebP الوصفية؛ وتتطلب الإزالة الانتقائية ملف JPEG.',
+  'remover.faqPixels': 'هل تتغير بكسلات الصورة؟',
+  'remover.faqPixelsAnswer':
+    'لا. تنسخ مسارات الإزالة المتحققة بيانات الصورة وتزيل مقاطع البيانات الوصفية فقط.',
+  'remover.faqDefault': 'ماذا يفعل الإعداد الافتراضي؟',
+  'remover.faqDefaultAnswer':
+    'الاحتفاظ بكل شيء إعداد لا يغيّر الملف ويعيد كل بايت كما هو حتى تختار سياسة إزالة.',
+  'inspector.formatNote':
+    'يفحص الفاحص بنية PNG وJPEG وGIF وWebP ويعرض الأبعاد والعمق والشفافية والحركة والإنتروبيا والبيانات الوصفية المدعومة.',
+  'inspector.faqEstimate': 'هل تقديرات الجودة والإنتروبيا دقيقة تمامًا؟',
+  'inspector.faqEstimateAnswer':
+    'الإنتروبيا عينة محدودة وجودة JPEG تقدير من جداول التكميم؛ وتُعرض القيمتان بوضوح كتقدير.',
+  'inspector.faqFormats': 'ما الصيغ التي تحصل على فحص كامل للحاوية؟',
+  'inspector.faqFormatsAnswer':
+    'يوفر PNG وJPEG وGIF وWebP فحصًا حتميًا كاملًا حاليًا. ترفض الصيغ الأخرى برسالة قابلة للتنفيذ.',
   'compare.mode': 'وضع المقارنة',
   'compare.split': 'قبل وبعد',
   'compare.fit': 'ملاءمة',

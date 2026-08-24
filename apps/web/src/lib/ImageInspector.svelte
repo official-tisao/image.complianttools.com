@@ -8,12 +8,42 @@
     type ImageInspection,
     type MetadataTag,
   } from '@complianttools/image-engine';
+  import ToolPageCompletion from './ToolPageCompletion.svelte';
   import { translate, type Locale } from './i18n';
 
   let { locale = 'en' }: { locale?: Locale } = $props();
   const t = (key: string, fallback: string, value?: string | number) =>
     translate(locale, key, fallback, value);
-  const localizedPath = $derived(locale === 'en' ? '/image-info' : `/${locale}/image-info`);
+  const title = $derived(t('inspector.title', 'Image Inspector'));
+  const metaDescription = $derived(
+    t(
+      'inspector.metaDescription',
+      'Inspect image dimensions, colour, depth, alpha, animation, structure, and metadata locally.',
+    ),
+  );
+  const seoFaqs = $derived([
+    {
+      question: t('seo.localQuestion', 'Does my file leave this device?'),
+      answer: t(
+        'seo.localAnswer',
+        'No. The file is read and processed locally in your browser without an upload.',
+      ),
+    },
+    {
+      question: t('inspector.faqEstimate', 'Are the quality and entropy figures exact?'),
+      answer: t(
+        'inspector.faqEstimateAnswer',
+        'Entropy is a bounded sample and JPEG quality is inferred from quantization tables; both are clearly labelled as estimates.',
+      ),
+    },
+    {
+      question: t('inspector.faqFormats', 'Which formats receive full container inspection?'),
+      answer: t(
+        'inspector.faqFormatsAnswer',
+        'PNG, JPEG, GIF, and WebP currently receive complete deterministic inspection. Other formats fail with an actionable message.',
+      ),
+    },
+  ]);
 
   let details = $state<{
     name: string;
@@ -54,18 +84,6 @@
     }
   }
 </script>
-
-<svelte:head>
-  <title>{t('inspector.title', 'Image Inspector')} — Image Compliant Tools</title>
-  <meta
-    name="description"
-    content={t(
-      'inspector.metaDescription',
-      'Inspect image dimensions, colour, depth, alpha, animation, structure, and metadata locally.',
-    )}
-  />
-  <link rel="canonical" href={`https://image.complianttools.com${localizedPath}`} />
-</svelte:head>
 
 <main lang={locale === 'en-XA' ? 'en-XA' : locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}>
   <a href={locale === 'en' ? '/convert' : `/${locale}/convert`}
@@ -156,4 +174,15 @@
     {/if}
   {/if}
   {#if error}<p role="alert">{error}</p>{/if}
+  <ToolPageCompletion
+    {locale}
+    route="image-info"
+    {title}
+    description={metaDescription}
+    formatNote={t(
+      'inspector.formatNote',
+      'The inspector parses PNG, JPEG, GIF, and WebP structure and reports dimensions, depth, alpha, animation, entropy, and supported metadata.',
+    )}
+    faqs={seoFaqs}
+  />
 </main>

@@ -16,12 +16,42 @@
     withTypedEngineErrors,
   } from '@complianttools/image-engine';
   import GeneratedControls from '$lib/GeneratedControls.svelte';
+  import ToolPageCompletion from './ToolPageCompletion.svelte';
   import { localizeOptions, translate, type Locale } from './i18n';
 
   let { locale = 'en' }: { locale?: Locale } = $props();
   const t = (key: string, fallback: string, value?: string | number) =>
     translate(locale, key, fallback, value);
-  const localizedPath = $derived(locale === 'en' ? '/remove-exif' : `/${locale}/remove-exif`);
+  const title = $derived(t('remover.title', 'Metadata Remover'));
+  const metaDescription = $derived(
+    t(
+      'remover.metaDescription',
+      'Remove supported PNG, JPEG, GIF, and WebP metadata locally in your browser.',
+    ),
+  );
+  const seoFaqs = $derived([
+    {
+      question: t('seo.localQuestion', 'Does my file leave this device?'),
+      answer: t(
+        'seo.localAnswer',
+        'No. The file is read and processed locally in your browser without an upload.',
+      ),
+    },
+    {
+      question: t('remover.faqPixels', 'Does metadata removal change image pixels?'),
+      answer: t(
+        'remover.faqPixelsAnswer',
+        'No. Verified removal paths copy the image payload and remove only metadata segments.',
+      ),
+    },
+    {
+      question: t('remover.faqDefault', 'What does the default option do?'),
+      answer: t(
+        'remover.faqDefaultAnswer',
+        'Keep everything is a no-op that returns every byte unchanged until you select a removal policy.',
+      ),
+    },
+  ]);
 
   let fileName = $state('');
   let status = $state('');
@@ -127,18 +157,6 @@
   }
 </script>
 
-<svelte:head>
-  <title>{t('remover.title', 'Metadata Remover')} — Image Compliant Tools</title>
-  <meta
-    name="description"
-    content={t(
-      'remover.metaDescription',
-      'Remove supported PNG, JPEG, GIF, and WebP metadata locally in your browser.',
-    )}
-  />
-  <link rel="canonical" href={`https://image.complianttools.com${localizedPath}`} />
-</svelte:head>
-
 <main lang={locale === 'en-XA' ? 'en-XA' : locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}>
   <a href={locale === 'en' ? '/exif-viewer' : `/${locale}/exif-viewer`}
     >{t('remover.back', '← Metadata Viewer')}</a
@@ -182,4 +200,15 @@
   {#if fileName}<p>{fileName}</p>{/if}
   {#if status}<p role="status">{status}</p>{/if}
   {#if error}<p role="alert">{error}</p>{/if}
+  <ToolPageCompletion
+    {locale}
+    route="remove-exif"
+    {title}
+    description={metaDescription}
+    formatNote={t(
+      'remover.formatNote',
+      'Image payloads are copied unchanged while PNG, JPEG, GIF, and WebP metadata is removed; selective removal requires JPEG.',
+    )}
+    faqs={seoFaqs}
+  />
 </main>

@@ -241,6 +241,52 @@ test('metadata tools are keyboard-operable end to end', async ({ page }) => {
   await expect(page.getByText('2 × 3 px')).toBeVisible();
 });
 
+for (const route of ['exif-viewer', 'remove-exif', 'image-info'] as const) {
+  test(`${route} emits complete static discovery metadata and substantive links`, async ({
+    page,
+  }) => {
+    await page.goto(`/${route}`);
+    await page.waitForLoadState('networkidle');
+    await expect(page.locator('link[rel=alternate]')).toHaveCount(4);
+    await expect(page.locator('meta[property="og:image"]')).toHaveAttribute(
+      'content',
+      'https://image.complianttools.com/og/tools.svg',
+    );
+    await expect(page.locator('meta[name="twitter:image"]')).toHaveAttribute(
+      'content',
+      'https://image.complianttools.com/og/tools.svg',
+    );
+    const graph = JSON.parse(
+      (await page.locator('script[type="application/ld+json"]').textContent()) ?? '{}',
+    )['@graph'] as Array<{ '@type': string; mainEntity?: unknown[] }>;
+    expect(graph.map((entry) => entry['@type'])).toEqual([
+      'SoftwareApplication',
+      'FAQPage',
+      'BreadcrumbList',
+    ]);
+    expect(graph.find((entry) => entry['@type'] === 'FAQPage')?.mainEntity).toHaveLength(3);
+    await expect(page.locator('.tool-completion details')).toHaveCount(3);
+    await expect(page.locator('.tool-completion nav a')).toHaveCount(6);
+  });
+}
+
+test('metadata pages remain useful with JavaScript disabled', async ({ browser }) => {
+  const context = await browser.newContext({ javaScriptEnabled: false });
+  const page = await context.newPage();
+  try {
+    for (const route of ['exif-viewer', 'remove-exif', 'image-info'] as const) {
+      await page.goto(`/${route}`);
+      await expect(page.locator('h1')).toHaveCount(1);
+      await expect(page.locator('input[type=file]')).toHaveCount(1);
+      await expect(page.locator('script[type="application/ld+json"]')).toHaveCount(1);
+      await expect(page.locator('.tool-completion details')).toHaveCount(3);
+      await expect(page.locator('.tool-completion nav a')).toHaveCount(6);
+    }
+  } finally {
+    await context.close();
+  }
+});
+
 for (const locale of ['en-XA', 'ar'] as const) {
   test(`image inspector survives ${locale} localization`, async ({ page }) => {
     await page.goto(`/${locale}/image-info`);
@@ -264,7 +310,9 @@ for (const locale of ['en-XA', 'ar'] as const) {
       ),
     });
     await expect(page.getByText('2 × 3 px')).toBeVisible();
-    await expect(page.getByText(locale === 'ar' ? 'الأبعاد' : /Dïmënsïôns/u)).toBeVisible();
+    await expect(
+      locale === 'ar' ? page.getByText('الأبعاد', { exact: true }) : page.getByText(/Dïmënsïôns/u),
+    ).toBeVisible();
   });
 
   test(`metadata remover survives ${locale} localization`, async ({ page }) => {

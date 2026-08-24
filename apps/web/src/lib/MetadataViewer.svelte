@@ -13,12 +13,39 @@
     type MetadataTag,
   } from '@complianttools/image-engine';
   import GeneratedControls from './GeneratedControls.svelte';
+  import ToolPageCompletion from './ToolPageCompletion.svelte';
   import { localizeOptions, translate, type Locale } from './i18n';
 
   let { locale = 'en' }: { locale?: Locale } = $props();
   const t = (key: string, fallback: string, value?: string | number) =>
     translate(locale, key, fallback, value);
-  const localizedPath = $derived(locale === 'en' ? '/exif-viewer' : `/${locale}/exif-viewer`);
+  const title = $derived(t('viewer.title', 'Metadata Viewer'));
+  const metaDescription = $derived(
+    t('viewer.metaDescription', 'Read and edit supported image metadata locally in your browser.'),
+  );
+  const seoFaqs = $derived([
+    {
+      question: t('seo.localQuestion', 'Does my file leave this device?'),
+      answer: t(
+        'seo.localAnswer',
+        'No. The file is read and processed locally in your browser without an upload.',
+      ),
+    },
+    {
+      question: t('viewer.faqReadable', 'Which metadata can be read?'),
+      answer: t(
+        'viewer.faqReadableAnswer',
+        'Supported PNG, JPEG, GIF, WebP, AVIF, and HEIF fields are shown, including opaque MakerNote bytes.',
+      ),
+    },
+    {
+      question: t('viewer.faqEdit', 'Can every format be edited?'),
+      answer: t(
+        'viewer.faqEditAnswer',
+        'No. EXIF field editing is verified for JPEG files only, and unselected fields remain unchanged.',
+      ),
+    },
+  ]);
 
   type EditKey = Exclude<keyof ExifFieldEdits, 'gpsCoordinates'> | 'latitude' | 'longitude';
   const editSpecs: ReadonlyArray<{
@@ -210,15 +237,6 @@
   }
 </script>
 
-<svelte:head
-  ><title>{t('viewer.title', 'Metadata Viewer')} — Image Compliant Tools</title><meta
-    name="description"
-    content={t(
-      'viewer.metaDescription',
-      'Read and edit supported image metadata locally in your browser.',
-    )}
-  /><link rel="canonical" href={`https://image.complianttools.com${localizedPath}`} /></svelte:head
->
 <main lang={locale === 'en-XA' ? 'en-XA' : locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}>
   <a href={locale === 'en' ? '/convert' : `/${locale}/convert`}>{t('viewer.back', '← Convert')}</a>
   <h1>{t('viewer.title', 'Metadata Viewer')}</h1>
@@ -275,4 +293,15 @@
       >
     </section>
   {/if}
+  <ToolPageCompletion
+    {locale}
+    route="exif-viewer"
+    {title}
+    description={metaDescription}
+    formatNote={t(
+      'viewer.formatNote',
+      'The viewer reads EXIF, IPTC, XMP, ICC, and other supported container fields. EXIF editing is currently limited to JPEG.',
+    )}
+    faqs={seoFaqs}
+  />
 </main>
