@@ -9,6 +9,7 @@
   import Vectorizer from '$lib/Vectorizer.svelte';
   import PdfToImage from '$lib/PdfToImage.svelte';
   import ImageToPdf from '$lib/ImageToPdf.svelte';
+  import CbzConverter from '$lib/CbzConverter.svelte';
   import { toolCopy } from '$lib/i18n';
   import type { PageData } from './$types';
 
@@ -44,6 +45,8 @@
   <PdfToImage locale={data.locale} />
 {:else if data.tool === 'image-to-pdf'}
   <ImageToPdf locale={data.locale} />
+{:else if data.tool === 'cbz-converter'}
+  <CbzConverter locale={data.locale} />
 {:else}
   <FaviconGenerator locale={data.locale} />
 {/if}

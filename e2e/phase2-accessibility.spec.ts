@@ -39,6 +39,8 @@ const phase2Routes = [
   '/ar/pdf-to-image',
   '/en-XA/image-to-pdf',
   '/ar/image-to-pdf',
+  '/en-XA/cbz-converter',
+  '/ar/cbz-converter',
   '/lossless-optimize',
 ] as const;
 

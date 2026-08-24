@@ -15,6 +15,7 @@ const tools = [
   'image-to-svg',
   'pdf-to-image',
   'image-to-pdf',
+  'cbz-converter',
 ] as const;
 
 export const entries: EntryGenerator = () =>
