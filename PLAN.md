@@ -394,7 +394,7 @@ upstreams are permissive (BSD-3, BSD-2), so the obstacle is a build we do not ow
 #### P2-06 · RAW pipeline Stage 1 (**ours**)
 - [x] Embedded camera-rendered preview extraction via bounded container/IFD parsing: byte-preserved JPEG and lossless BMP export for uncompressed RGB TIFF previews
 - [x] Labelled **"camera preview"** in the UI — never passed off as a raw develop
-- [x] Real-corpus acceptance: 15 hash-pinned CC0 camera files across 11 vendors extract a structurally valid JPEG preview through the production engine; CI re-downloads/cache-restores and verifies every SHA-256 before extraction
+- [x] Real-corpus acceptance: the hash-pinned CC0 camera corpus exceeds 15 files and 8 vendors; CI re-downloads/cache-restores, verifies every SHA-256, and validates the production JPEG/BMP extraction path
 - [ ] Covers every vendor in README §5.3
 - **Spec:** README §5.3, §25.4 · **Done when:** preview extracts from ≥ 15 real camera files across ≥ 8 vendors
 
@@ -1087,11 +1087,11 @@ and the format's `/docs/formats/` page exists. **Or** when honestly marked unava
 **Explicitly unsupported (page explaining why)** — [x] PICT · [x] MNG · [x] FLIF · [x] CDR ·
 [x] DWG · [x] DjVu · [x] HEIC encode
 
-**RAW (Stage 1 preview)** — [ ] Canon CR2/CR3/CRW · [ ] Nikon NEF/NRW · [ ] Sony ARW/SRF/SR2 ·
-[ ] Fujifilm RAF · [ ] Olympus ORF · [ ] Panasonic RW2 · [ ] Pentax PEF/PTX · [ ] Leica RWL/DRF ·
-[ ] Sigma X3F · [ ] Samsung SRW · [ ] Kodak DCR/KDC/K25/DCS · [ ] Epson ERF · [ ] Mamiya MEF ·
-[ ] Minolta MRW/MDC · [ ] Hasselblad 3FR/FFF · [ ] Phase One IIQ/CAP · [ ] Leaf MOS · [ ] Casio BAY ·
-[ ] Adobe DNG
+**RAW (Stage 1 preview)** — [x] Canon CR2/CR3/CRW · [x] Nikon NEF/NRW · [x] Sony ARW/SRF/SR2 ·
+[x] Fujifilm RAF · [x] Olympus ORF · [x] Panasonic RW2 · [ ] Pentax PEF/PTX · [ ] Leica RWL/DRF ·
+[x] Sigma X3F · [x] Samsung SRW · [ ] Kodak DCR/KDC/K25/DCS · [x] Epson ERF · [ ] Mamiya MEF ·
+[ ] Minolta MRW/MDC · [x] Hasselblad 3FR/FFF · [ ] Phase One IIQ/CAP · [x] Leaf MOS · [ ] Casio BAY ·
+[x] Adobe DNG
 
 **RAW (Stage 2 develop)** — [x] DNG · [ ] Canon · [ ] Nikon · [ ] Sony · [ ] Fujifilm
 
@@ -1212,6 +1212,7 @@ Every README change gets a row here, per §0.3. Newest first.
 
 | Date | README § | Change | PLAN action |
 | --- | --- | --- | --- |
+| 2026-08-24 | §5.3 | Expanded the hash-pinned CC0 RAW corpus to 31 files, 19 vendors, and 24 extensions. The CI verifier now enforces each expected JPEG/BMP path; a full clean download verified every SHA-256 and production extraction. Removed the prior MDC sample after the hardened JPEG parser proved its old result was a pixel-data false positive | Completed the Appendix B Canon, Nikon, Sony, Fujifilm, Olympus, Panasonic, Sigma, Samsung, Epson, Hasselblad, Leaf, and Adobe RAW rows; retained unchecked compound rows whose listed extensions are not all proven |
 | 2026-08-24 | §5.3 | Audited additional real RAW families and extended Stage 1 to losslessly export uncompressed RGB TIFF camera previews as BMP while preserving embedded JPEGs byte-for-byte. Added hash-pinned CC0 3FR, DCR, ERF, FFF, and IIQ files to the CI corpus; the verifier runs production extraction and decodes each BMP back to a complete RGBA frame. MRW samples without a rendered preview remain unsupported by Stage 1 | Broadened reproducible preview coverage without marking the every-listed-format/vendor acceptance item complete |
 | 2026-08-24 | §5.5 | Generated complete Arduino sketches from the production Adafruit and RGB565 emitters, including real `drawBitmap` / `pushImage` bindings. Compiled locally with official Arduino CLI 1.5.1 against Arduino AVR 1.8.6 + Adafruit GFX 1.12.6 (6,084-byte flash / 193-byte RAM result) and ESP32 3.3.8 + TFT_eSPI 2.5.43 (318,292-byte flash / 22,500-byte RAM result); CI installs the same pinned versions and repeats both builds | Completed the Appendix B Adafruit GFX and ESP-IDF/TFT_eSPI rows and extended P2-11's real-project compile job to all C/header targets |
 | 2026-08-24 | §5.3 | Added a standalone manifest for 15 real CC0 camera files from raw.pixls.us across 11 vendors, with the catalog's published SHA-256 for every object; a dedicated CI job verifies hashes and production preview extraction. Tightened the scanner to require a valid JPEG Start-of-Frame, rejecting an observed 8-byte SOI/EOI false positive | Completed the P2-06 ≥15-file/≥8-vendor real-corpus acceptance condition; the broader every-listed-vendor checkbox remains open |

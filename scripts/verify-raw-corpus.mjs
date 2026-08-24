@@ -89,6 +89,8 @@ for (const entry of manifest.files) {
     )
       throw new Error(`${entry.filename}: exported BMP did not decode to a complete RGBA frame.`);
   }
+  if (entry.preview === 'jpeg' && preview.mimeType !== 'image/jpeg')
+    throw new Error(`${entry.filename}: expected a byte-preserved embedded JPEG preview.`);
   results.push(`${entry.vendor}/${entry.model} ${entry.format} ${preview.bytes.length}B preview`);
 }
 
