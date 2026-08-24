@@ -56,6 +56,8 @@ const phase2Routes = [
   '/en-XA/embedded-converter',
   '/ar/embedded-converter',
   '/lossless-optimize',
+  '/en-XA/lossless-optimize',
+  '/ar/lossless-optimize',
 ] as const;
 
 for (const route of phase2Routes) {

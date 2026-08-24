@@ -17,6 +17,7 @@
   import HeicConverter from '$lib/HeicConverter.svelte';
   import RawConverter from '$lib/RawConverter.svelte';
   import EmbeddedConverter from '$lib/EmbeddedConverter.svelte';
+  import LosslessOptimizer from '$lib/LosslessOptimizer.svelte';
   import { toolCopy } from '$lib/i18n';
   import type { PageData } from './$types';
 
@@ -68,6 +69,8 @@
   <RawConverter locale={data.locale} />
 {:else if data.tool === 'embedded-converter'}
   <EmbeddedConverter locale={data.locale} />
+{:else if data.tool === 'lossless-optimize'}
+  <LosslessOptimizer locale={data.locale} />
 {:else}
   <FaviconGenerator locale={data.locale} />
 {/if}

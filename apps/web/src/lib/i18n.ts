@@ -593,6 +593,25 @@ const arabic: Readonly<Record<string, string>> = {
   'option.embedded.lineWidth.label': 'عدد البايتات في سطر المصدر',
   'option.embedded.format.label': 'تنسيق البكسل',
   'option.embedded.outputName.label': 'اسم رمز C',
+  'lossless.back': '← تحويل',
+  'lossless.title': 'محسن PNG وGIF وJPEG بلا فقدان',
+  'lossless.metaTitle': 'محسن الصور بلا فقدان',
+  'lossless.description':
+    'حسّن ملفات PNG أو GIF أو JPEG محليًا. يُفك ترميز كل ناتج ويُعاد فقط عندما لا تتغير البكسلات المعروضة، كما تُفحص أزمنة GIF وإعدادات التكرار. لا تغادر الملفات متصفحك.',
+  'lossless.canvasError': 'لا يستطيع متصفحك إنشاء لوحة رسم محلية.',
+  'lossless.unsupported': 'اختر صورة PNG أو GIF أو JPEG للتحسين بلا فقدان.',
+  'lossless.failure': 'فشل التحسين بلا فقدان',
+  'lossless.remedy': 'اختر صورة PNG أو GIF أو JPEG صالحة ثم حاول مجددًا.',
+  'lossless.optimized': 'تم التحسين والتحقق من البكسلات محليًا: {value}',
+  'lossless.preserved':
+    'تم التحقق من البكسلات محليًا؛ لم يُعثر على ناتج آمن أصغر، لذلك تم الاحتفاظ بالملف الأصلي بحجم {value} بايت.',
+  'lossless.bytes': 'بايت',
+  'lossless.unable': 'تعذر تحسين هذه الصورة.',
+  'lossless.choose': 'اختر PNG أو GIF أو JPEG',
+  'lossless.preview': 'معاينة الناتج المتحقق منه',
+  'lossless.previewAlt': 'الناتج المحسن والمتحقق من بكسلاته',
+  'lossless.download': 'تنزيل الناتج',
+  'lossless.metaDescription': 'حسّن ملفات PNG وGIF وJPEG محليًا من دون تغيير البكسلات المعروضة.',
 };
 
 const accents: Readonly<Record<string, string>> = {

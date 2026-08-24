@@ -23,6 +23,7 @@ const tools = [
   'heic-converter',
   'raw-converter',
   'embedded-converter',
+  'lossless-optimize',
 ] as const;
 
 export const entries: EntryGenerator = () =>

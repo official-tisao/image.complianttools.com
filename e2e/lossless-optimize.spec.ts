@@ -23,12 +23,20 @@ test('downloads a smaller independently verified GIF without a network fallback'
   });
   await page.goto('/lossless-optimize');
   await page.waitForLoadState('networkidle');
-  const pending = page.waitForEvent('download');
   await page.getByLabel('Choose a PNG, GIF, or JPEG').setInputFiles({
     name: 'animation.gif',
     mimeType: 'image/gif',
     buffer: source,
   });
+  await expect(page.getByRole('status')).toContainText('Optimized and pixel-verified locally');
+  await expect(page.getByRole('img', { name: 'Pixel-verified optimized output' })).toBeVisible();
+  const previewBytes = await page
+    .getByRole('img')
+    .evaluate(async (image: HTMLImageElement) => [
+      ...new Uint8Array(await (await fetch(image.src)).arrayBuffer()),
+    ]);
+  const pending = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Download output' }).click();
   const download = await pending;
   const path = await download.path();
   expect(path).not.toBeNull();
@@ -36,7 +44,7 @@ test('downloads a smaller independently verified GIF without a network fallback'
   expect(download.suggestedFilename()).toBe('animation-optimized.gif');
   expect(output.byteLength).toBeLessThan(source.byteLength);
   expect(output.subarray(0, 6).toString('ascii')).toMatch(/^GIF8[79]a$/u);
-  await expect(page.getByRole('status')).toContainText('Optimized and pixel-verified locally');
+  expect(Buffer.from(previewBytes)).toEqual(output);
   expect(crossOrigin).toEqual([]);
 });
 
@@ -62,12 +70,14 @@ test('strips JPEG metadata only after independent browser pixel verification', a
     metadata,
     encoded.subarray(2),
   ]);
-  const pending = page.waitForEvent('download');
   await page.getByLabel('Choose a PNG, GIF, or JPEG').setInputFiles({
     name: 'photo.jpg',
     mimeType: 'image/jpeg',
     buffer: source,
   });
+  await expect(page.getByRole('status')).toContainText('Optimized and pixel-verified locally');
+  const pending = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Download output' }).click();
   const download = await pending;
   const path = await download.path();
   expect(path).not.toBeNull();
@@ -75,5 +85,57 @@ test('strips JPEG metadata only after independent browser pixel verification', a
   expect(download.suggestedFilename()).toBe('photo-optimized.jpg');
   expect(output.byteLength).toBeLessThan(source.byteLength);
   expect(output.subarray(0, 2)).toEqual(Buffer.from([0xff, 0xd8]));
-  await expect(page.getByRole('status')).toContainText('Optimized and pixel-verified locally');
 });
+
+test('rejects malformed input with a typed remedy and no export', async ({ page }) => {
+  await page.goto('/lossless-optimize');
+  await page.waitForLoadState('networkidle');
+  await page.getByLabel('Choose a PNG, GIF, or JPEG').setInputFiles({
+    name: 'broken.gif',
+    mimeType: 'image/gif',
+    buffer: Buffer.from('not a gif'),
+  });
+  await expect(page.getByRole('alert')).toContainText('Remedy:');
+  await expect(page.getByRole('button', { name: 'Download output' })).toHaveCount(0);
+});
+
+test('lossless optimization is keyboard-operable through download', async ({ page }) => {
+  await page.goto('/lossless-optimize');
+  await page.waitForLoadState('networkidle');
+  await page.getByLabel('Choose a PNG, GIF, or JPEG').focus();
+  await expect(page.getByLabel('Choose a PNG, GIF, or JPEG')).toBeFocused();
+  await page.getByLabel('Choose a PNG, GIF, or JPEG').setInputFiles({
+    name: 'animation.gif',
+    mimeType: 'image/gif',
+    buffer: gifWithRemovableComment(),
+  });
+  await page.getByRole('button', { name: 'Download output' }).focus();
+  const pending = page.waitForEvent('download');
+  await page.keyboard.press('Enter');
+  expect((await pending).suggestedFilename()).toBe('animation-optimized.gif');
+});
+
+for (const locale of ['en-XA', 'ar'] as const) {
+  test(`${locale} lossless optimizer previews and downloads identical bytes`, async ({ page }) => {
+    await page.goto(`/${locale}/lossless-optimize`);
+    await page.waitForLoadState('networkidle');
+    await expect(page.locator('main')).toHaveAttribute('dir', locale === 'ar' ? 'rtl' : 'ltr');
+    await page.locator('input[type=file]').setInputFiles({
+      name: 'animation.gif',
+      mimeType: 'image/gif',
+      buffer: gifWithRemovableComment(),
+    });
+    const image = page.getByRole('img');
+    await expect(image).toBeVisible();
+    const preview = Buffer.from(
+      await image.evaluate(async (element: HTMLImageElement) => [
+        ...new Uint8Array(await (await fetch(element.src)).arrayBuffer()),
+      ]),
+    );
+    const pending = page.waitForEvent('download');
+    await page.locator('button[type=button]').click();
+    const path = await (await pending).path();
+    expect(path).not.toBeNull();
+    expect(await readFile(path!)).toEqual(preview);
+  });
+}
