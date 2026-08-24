@@ -7,7 +7,10 @@ const redPixelPng = Buffer.from(
   'base64',
 );
 
-test('embedded converter emits an LVGL v9 RGB565A8 descriptor locally', async ({ page }) => {
+test('embedded converter emits an LVGL v9 RGB565A8 descriptor locally', async ({
+  page,
+  context,
+}) => {
   await page.goto('/embedded-converter');
   await page.waitForLoadState('networkidle');
   await page.getByLabel('Target').selectOption('lvgl-v9');
@@ -33,6 +36,10 @@ test('embedded converter emits an LVGL v9 RGB565A8 descriptor locally', async ({
   expect(source).toContain('0x00, 0x00, 0xff');
   await expect(page.getByRole('status')).toContainText('3 bytes flash footprint');
   expect(await page.getByLabel('Exact embedded output').inputValue()).toBe(source);
+  await context.setOffline(true);
+  await page.getByRole('button', { name: 'Generate output' }).click();
+  await expect(page.getByLabel('Exact embedded output')).toHaveValue(/LV_COLOR_FORMAT_RGB565A8/u);
+  await context.setOffline(false);
 });
 
 test('embedded converter reports corrupt input with a typed remedy', async ({ page }) => {

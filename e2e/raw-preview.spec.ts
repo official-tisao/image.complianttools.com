@@ -127,7 +127,7 @@ test('RAW converter reports a specific reason for an unverified legacy extension
   await expect(page.getByRole('alert')).toContainText('export DNG, TIFF, or JPEG');
 });
 
-test('RAW converter runs a selected 16-bit DNG develop path', async ({ page }) => {
+test('RAW converter runs a selected 16-bit DNG develop path', async ({ page, context }) => {
   await page.goto('/raw-converter');
   await page.waitForLoadState('networkidle');
   await page.getByLabel('Demosaic').selectOption('ppg');
@@ -163,6 +163,14 @@ test('RAW converter runs a selected 16-bit DNG develop path', async ({ page }) =
     width: 2,
     height: 2,
   });
+  await context.setOffline(true);
+  await page.locator('input[type=file]').setInputFiles({
+    name: 'offline-minimal.dng',
+    mimeType: 'image/x-adobe-dng',
+    buffer: uncompressedDng(),
+  });
+  await expect(page.getByRole('status')).toHaveText('DNG develop complete at 16-bit using PPG.');
+  await context.setOffline(false);
 });
 
 test('RAW generated controls begin with a keyboard-operable preview toggle', async ({ page }) => {

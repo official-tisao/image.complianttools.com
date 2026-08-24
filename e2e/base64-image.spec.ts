@@ -4,7 +4,10 @@ import { expect, test, type Page } from '@playwright/test';
 
 const waitForHydration = (page: Page) => page.locator('html[data-hydrated="true"]').waitFor();
 
-test('encodes bytes with HTML and CSS snippets on the canonical local page', async ({ page }) => {
+test('encodes bytes with HTML and CSS snippets on the canonical local page', async ({
+  page,
+  context,
+}) => {
   const crossOrigin: string[] = [];
   page.on('request', (request) => {
     if (new URL(request.url()).origin !== 'http://127.0.0.1:4173') crossOrigin.push(request.url());
@@ -23,6 +26,16 @@ test('encodes bytes with HTML and CSS snippets on the canonical local page', asy
   await expect(page.getByLabel('CSS snippet')).toHaveValue(
     'background-image: url("data:image/png;base64,AAEC");',
   );
+  await context.setOffline(true);
+  await page.getByLabel('Choose an image').setInputFiles({
+    name: 'offline.bin',
+    mimeType: 'application/octet-stream',
+    buffer: Buffer.from([3, 4, 5]),
+  });
+  await expect(page.getByLabel('Base64 data URL')).toHaveValue(
+    'data:application/octet-stream;base64,AwQF',
+  );
+  await context.setOffline(false);
   expect(crossOrigin).toEqual([]);
 });
 

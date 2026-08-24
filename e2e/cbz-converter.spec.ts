@@ -9,7 +9,7 @@ const onePixelPng = Buffer.from(
 );
 const onePageCbz = Buffer.from(encodeCbz([{ name: 'page1.png', bytes: onePixelPng }]));
 
-test('packs naturally named image pages into a local CBZ', async ({ page }) => {
+test('packs naturally named image pages into a local CBZ', async ({ page, context }) => {
   await page.goto('/cbz-converter');
   await page.waitForLoadState('networkidle');
   await page.getByLabel('Choose comic page images').setInputFiles([
@@ -26,6 +26,10 @@ test('packs naturally named image pages into a local CBZ', async ({ page }) => {
   const path = await download.path();
   expect(path).not.toBeNull();
   expect((await readFile(path!)).subarray(0, 2)).toEqual(Buffer.from('PK'));
+  await context.setOffline(true);
+  await page.getByRole('button', { name: 'Generate output' }).click();
+  await expect(page.getByRole('heading', { name: 'Exact CBZ page order' })).toBeVisible();
+  await context.setOffline(false);
 });
 
 test('converts a real local CBZ page to PDF', async ({ page }) => {

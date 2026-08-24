@@ -27,6 +27,7 @@ async function rasterize(page: Page, name: string) {
 
 test('SVG rasterizer downloads exact intrinsic and explicitly sized PNG output', async ({
   page,
+  context,
 }) => {
   await page.goto('/svg-to-png');
   await expect(page.getByLabel('Output sizing')).toHaveValue('original');
@@ -44,6 +45,10 @@ test('SVG rasterizer downloads exact intrinsic and explicitly sized PNG output',
   const explicit = await rasterize(page, 'explicit-width.svg');
   expect(explicit.download.suggestedFilename()).toBe('explicit-width.png');
   expect(explicit.inspection).toEqual({ width: 8, height: 4 });
+  await context.setOffline(true);
+  const offline = await rasterize(page, 'offline.svg');
+  expect(offline.inspection).toEqual({ width: 8, height: 4 });
+  await context.setOffline(false);
 });
 
 test('SVG rasterizer reports a typed remedy for unsafe external references', async ({ page }) => {

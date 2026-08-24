@@ -34,6 +34,7 @@ async function uploadAndRead(
 
 test('encodes lossy and lossless raster JPEG XL then decodes real output to PNG locally', async ({
   page,
+  context,
 }) => {
   const crossOrigin: string[] = [];
   const localRequests: string[] = [];
@@ -87,6 +88,12 @@ test('encodes lossy and lossless raster JPEG XL then decodes real output to PNG 
     [...decodedPng],
   );
   expect(pixel).toEqual([239, 24, 8, 255]);
+  await context.setOffline(true);
+  const offlineDecodedPng = await uploadAndRead(page, 'offline-red.jxl', 'image/jxl', lossless);
+  expect(offlineDecodedPng.subarray(0, 8)).toEqual(
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+  );
+  await context.setOffline(false);
   expect(crossOrigin).toEqual([]);
 });
 

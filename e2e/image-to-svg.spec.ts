@@ -23,7 +23,10 @@ async function pngFixture(page: import('@playwright/test').Page): Promise<Buffer
   );
 }
 
-test('traces configured raster input into the exact previewed SVG locally', async ({ page }) => {
+test('traces configured raster input into the exact previewed SVG locally', async ({
+  page,
+  context,
+}) => {
   const crossOrigin: string[] = [];
   page.on('request', (request) => {
     const url = new URL(request.url());
@@ -59,6 +62,10 @@ test('traces configured raster input into the exact previewed SVG locally', asyn
   expect(exported).toBe(previewText);
   expect(exported).toContain('<svg');
   expect(exported).not.toMatch(/(?:href|xlink:href)=["']https?:/u);
+  await context.setOffline(true);
+  await page.getByRole('button', { name: 'Trace image' }).click();
+  await expect(page.getByRole('status')).toContainText('Traced two-colours.png locally');
+  await context.setOffline(false);
   expect(crossOrigin).toEqual([]);
 });
 

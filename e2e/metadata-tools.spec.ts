@@ -73,16 +73,23 @@ function copyrightJpeg() {
   return jpegWithExif(tiff, 'copyright.jpg');
 }
 
-test('metadata viewer reports an opaque MakerNote locally', async ({ page }) => {
+test('metadata viewer reports an opaque MakerNote locally', async ({ page, context }) => {
   await page.goto('/exif-viewer');
   await page.waitForLoadState('networkidle');
   await page.locator('input[type=file]').setInputFiles(makerNoteJpeg());
   await expect(page.getByRole('heading', { name: 'maker-note.jpg' })).toBeVisible();
   await expect(page.getByRole('cell', { name: 'MakerNote' })).toBeVisible();
   await expect(page.getByRole('cell', { name: /5 bytes \(deadbeef01\)/u })).toBeVisible();
+  await context.setOffline(true);
+  await page.locator('input[type=file]').setInputFiles(makerNoteJpeg());
+  await expect(page.getByRole('cell', { name: /5 bytes \(deadbeef01\)/u })).toBeVisible();
+  await context.setOffline(false);
 });
 
-test('GPS-only preset downloads a JPEG with coordinate storage wiped', async ({ page }) => {
+test('GPS-only preset downloads a JPEG with coordinate storage wiped', async ({
+  page,
+  context,
+}) => {
   await page.goto('/remove-exif');
   await page.waitForLoadState('networkidle');
   await page.getByLabel('Removal preset').selectOption('gps');
@@ -95,6 +102,11 @@ test('GPS-only preset downloads a JPEG with coordinate storage wiped', async ({ 
   expect([...output.subarray(22, 34)]).toEqual(new Array(12).fill(0));
   expect([...output.subarray(76, 100)]).toEqual(new Array(24).fill(0));
   await expect(page.getByRole('status')).toContainText('Removed metadata locally');
+  await context.setOffline(true);
+  const offlinePending = page.waitForEvent('download');
+  await page.locator('input[type=file]').setInputFiles(gpsJpeg());
+  expect(await (await offlinePending).path()).not.toBeNull();
+  await context.setOffline(false);
 });
 
 test('metadata removal defaults to a byte-identical no-op', async ({ page }) => {
@@ -146,7 +158,7 @@ test('metadata viewer reports generated edit validation as a typed remedy', asyn
   await expect(page.getByRole('alert')).toContainText('Remedy:');
 });
 
-test('image inspector reports deterministic PNG container facts', async ({ page }) => {
+test('image inspector reports deterministic PNG container facts', async ({ page, context }) => {
   await page.goto('/image-info');
   await page.waitForLoadState('networkidle');
   const png = Buffer.from(
@@ -162,6 +174,14 @@ test('image inspector reports deterministic PNG container facts', async ({ page 
   await expect(page.getByText('Grayscale + alpha')).toBeVisible();
   await expect(page.getByText('IHDR (13 bytes)')).toBeVisible();
   await expect(page.getByText(/bits\/byte \(estimate\)/u)).toBeVisible();
+  await context.setOffline(true);
+  await page.locator('input[type=file]').setInputFiles({
+    name: 'offline-two-by-three.png',
+    mimeType: 'image/png',
+    buffer: png,
+  });
+  await expect(page.getByText('2 × 3 px')).toBeVisible();
+  await context.setOffline(false);
 });
 
 test('metadata and inspector adversarial failures surface a typed remedy', async ({ page }) => {
