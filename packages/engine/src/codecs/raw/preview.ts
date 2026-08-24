@@ -8,6 +8,34 @@ export interface RawCameraPreview {
 
 type PreviewCandidate = { readonly offset: number; readonly length: number };
 
+function hasJpegFrame(bytes: Uint8Array, offset: number, length: number): boolean {
+  const end = offset + length;
+  if (length < 15 || bytes[offset] !== 0xff || bytes[offset + 1] !== 0xd8) return false;
+  let cursor = offset + 2;
+  while (cursor + 3 < end) {
+    if (bytes[cursor] !== 0xff) {
+      cursor += 1;
+      continue;
+    }
+    while (cursor < end && bytes[cursor] === 0xff) cursor += 1;
+    const marker = bytes[cursor++];
+    if (marker === undefined || marker === 0xd9 || marker === 0xda) return false;
+    if (marker === 0x00 || marker === 0x01 || (marker >= 0xd0 && marker <= 0xd8)) continue;
+    if (cursor + 1 >= end) return false;
+    const segmentLength = (bytes[cursor]! << 8) | bytes[cursor + 1]!;
+    if (segmentLength < 2 || cursor + segmentLength > end) return false;
+    const isStartOfFrame = marker >= 0xc0 && marker <= 0xcf && ![0xc4, 0xc8, 0xcc].includes(marker);
+    if (isStartOfFrame) {
+      if (segmentLength < 8) return false;
+      const height = (bytes[cursor + 3]! << 8) | bytes[cursor + 4]!;
+      const width = (bytes[cursor + 5]! << 8) | bytes[cursor + 6]!;
+      return width > 0 && height > 0;
+    }
+    cursor += segmentLength;
+  }
+  return false;
+}
+
 function tiffPreviewCandidates(bytes: Uint8Array): PreviewCandidate[] {
   let ifds;
   try {
@@ -31,7 +59,8 @@ function tiffPreviewCandidates(bytes: Uint8Array): PreviewCandidate[] {
       bytes[jpegOffset] === 0xff &&
       bytes[jpegOffset + 1] === 0xd8 &&
       bytes[jpegOffset + jpegLength - 2] === 0xff &&
-      bytes[jpegOffset + jpegLength - 1] === 0xd9
+      bytes[jpegOffset + jpegLength - 1] === 0xd9 &&
+      hasJpegFrame(bytes, jpegOffset, jpegLength)
     )
       candidates.push({ offset: jpegOffset, length: jpegLength });
   }
@@ -45,7 +74,8 @@ function scannedPreviewCandidates(bytes: Uint8Array): PreviewCandidate[] {
       continue;
     for (let end = offset + 3; end < bytes.length; end += 1) {
       if (bytes[end - 1] === 0xff && bytes[end] === 0xd9) {
-        candidates.push({ offset, length: end + 1 - offset });
+        const length = end + 1 - offset;
+        if (hasJpegFrame(bytes, offset, length)) candidates.push({ offset, length });
         offset = end;
         break;
       }

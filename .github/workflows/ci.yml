@@ -136,6 +136,28 @@ jobs:
           cc -std=c11 -Wall -Wextra -Werror -DLV_CONF_SKIP -I .lvgl/v8 -c .generated/lvgl/lvgl-v8.c -o .generated/lvgl/lvgl-v8.o
           cc -std=c11 -Wall -Wextra -Werror -DLV_CONF_SKIP -I .lvgl/v9 -c .generated/lvgl/lvgl-v9.c -o .generated/lvgl/lvgl-v9.o
 
+  raw-corpus:
+    name: raw-corpus
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.5
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Cache hash-pinned CC0 RAW corpus
+        uses: actions/cache@v4
+        with:
+          path: .cache/raw-corpus
+          key: raw-corpus-${{ hashFiles('packages/engine/test/fixtures/raw-real-corpus.json') }}
+      - run: pnpm verify:raw-corpus
+
   credential-leak:
     name: credential-leak
     runs-on: ubuntu-latest

@@ -394,6 +394,7 @@ upstreams are permissive (BSD-3, BSD-2), so the obstacle is a build we do not ow
 #### P2-06 · RAW pipeline Stage 1 (**ours**)
 - [x] Embedded full-size JPEG preview extraction via IFD walk, reusing the EXIF parser
 - [x] Labelled **"camera preview"** in the UI — never passed off as a raw develop
+- [x] Real-corpus acceptance: 15 hash-pinned CC0 camera files across 11 vendors extract a structurally valid JPEG preview through the production engine; CI re-downloads/cache-restores and verifies every SHA-256 before extraction
 - [ ] Covers every vendor in README §5.3
 - **Spec:** README §5.3, §25.4 · **Done when:** preview extracts from ≥ 15 real camera files across ≥ 8 vendors
 
@@ -1211,6 +1212,7 @@ Every README change gets a row here, per §0.3. Newest first.
 
 | Date | README § | Change | PLAN action |
 | --- | --- | --- | --- |
+| 2026-08-24 | §5.3 | Added a network-isolated manifest for 15 real CC0 camera files from raw.pixls.us across 11 vendors, with the catalog's published SHA-256 for every object; CI verifies hashes and production preview extraction. Tightened the scanner to require a valid JPEG Start-of-Frame, rejecting an observed 8-byte SOI/EOI false positive | Completed the P2-06 ≥15-file/≥8-vendor real-corpus acceptance condition; the broader every-listed-vendor checkbox remains open |
 | 2026-08-24 | §5.5 | Corrected LVGL v9 descriptors to include the mandatory magic, flags, stride, and reserved fields; generated production v8/v9 descriptor-and-binding translation units and compiled them with C11 warnings-as-errors against official LVGL v8.4.0 (`4495f428630cc1741bd8bfd977f080e8460e8e8d`) and v9.5.0 (`85aa60d18b3d5e5588d7b247abf90198f07c8a63`) source trees | Completed the P2-11 real-project compile condition and the Appendix B LVGL v8/v9 C-array rows; Adafruit GFX and ESP-IDF/TFT_eSPI remain unchecked pending target-header compilation |
 | 2026-08-23 | §5.6 | Added installed-Edge evidence that records real WebM and MP4 containers, decodes them through the production local container/WebCodecs path, exports GIF, and independently verifies the decoded RGBA pixel with zero cross-origin requests; the MP4 bytes pass under MP4, M4V, and MOV extensions | Completed the Appendix B WebM and MP4/M4V/MOV rows and the P2-10 real frame-extraction condition |
 | 2026-08-22 | §5.6 | Corrected video-container scope to the formats parsed by the pinned local readers; AVI/WMV/FLV/MTS/M2TS now surface a specific unavailable reason instead of falling through as MP4 | Completed the Appendix B AVI row by the documented-unavailable path; retained real-decode requirements for the supported video rows |
