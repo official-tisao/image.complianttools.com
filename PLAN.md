@@ -83,18 +83,18 @@ Update these counts as you go. They are the honest status of the project at a gl
 | --- | --- | :-: | :-: | :-: |
 | 0 | Foundation, toolchain, IP clearance | 17 | 13 | ⬜ |
 | 1 | Core loop — 3 tools end to end | 15 | 15 | ✅ |
-| 2 | Format breadth + our own codecs | 18 | 0 | ⬜ |
+| 2 | Format breadth + our own codecs | 18 | 15 | ⬜ |
 | 3 | Editing, batch, recipes | 15 | 0 | ⬜ |
 | 4 | Local intelligence (Tier 1 & 2) | 22 | 0 | ⬜ |
 | 5 | BYOK AI escalation | 17 | 0 | ⬜ |
 | 6 | Long tail, PWA, CLI, extension | 16 | 0 | ⬜ |
 | 7 | Pages, i18n, launch | 14 | 0 | ⬜ |
-| — | **Total** | **134** | **28** | |
+| — | **Total** | **134** | **43** | |
 
 | Artefact | Target | Done |
 | --- | :-: | :-: |
 | Tools (Appendix A) | 81 | 3 |
-| Formats (Appendix B) | 74 | 0 |
+| Formats (Appendix B) | 74 | 73 |
 | AI adapters (Appendix C) | 10 | 0 |
 | Clearance items (Appendix D) | 31 | 0 |
 | Prerendered pages | ~680 | 0 |
