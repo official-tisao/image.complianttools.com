@@ -156,6 +156,12 @@ describe('P2 codec registry', () => {
       encode: 'unavailable',
       lazyBytes: 24_000,
     });
+    for (const id of ['avif', 'jxl'] as const)
+      expect(capabilities.find((entry) => entry.id === id)).toMatchObject({
+        decode: 'lazy',
+        encode: 'lazy',
+        animation: false,
+      });
     for (const id of ['mp4', 'm4v', 'mov', '3gp', 'webm', 'mkv', 'ogv'] as const)
       expect(capabilities.find((entry) => entry.id === id)).toMatchObject({
         decode: 'unavailable',

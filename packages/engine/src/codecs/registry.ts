@@ -388,7 +388,7 @@ export const codecRegistry: readonly CodecDescriptor[] = [
   },
   {
     id: 'avif',
-    animation: true,
+    animation: false,
     lazyBytes: 1_900_000,
     supports: ['decode', 'encode'],
     load: () => import('./third-party/avif-decode.js'),
@@ -436,7 +436,7 @@ export const codecRegistry: readonly CodecDescriptor[] = [
   },
   {
     id: 'jxl',
-    animation: true,
+    animation: false,
     lazyBytes: 1_200_000,
     supports: ['decode', 'encode'],
     load: () => import('./third-party/jxl-decode.js'),
