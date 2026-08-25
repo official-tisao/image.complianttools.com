@@ -280,6 +280,7 @@ export const WebpConverterToolOptionsSchema = z.object({
   animated: z.boolean().default(false),
   lossless: z.boolean().default(false),
   quality: z.number().min(0).max(100).default(75),
+  method: z.number().int().min(0).max(6).default(4),
   frameDelayMs: z.number().int().min(10).max(60_000).default(100),
   loopCount: z.number().int().min(0).max(65_535).default(0),
 });
@@ -288,12 +289,16 @@ export const AvifConverterToolOptionsSchema = z.object({
   direction: z.enum(['decode', 'encode']).default('decode'),
   lossless: z.boolean().default(false),
   quality: z.number().min(0).max(100).default(50),
+  speed: z.number().int().min(0).max(10).default(6),
+  chroma: z.enum(['444', '422', '420']).default('420'),
+  bitDepth: z.union([z.literal(8), z.literal(10), z.literal(12)]).default(8),
 });
 
 export const JxlConverterToolOptionsSchema = z.object({
   direction: z.enum(['decode', 'encode']).default('decode'),
   lossless: z.boolean().default(false),
   quality: z.number().min(0).max(100).default(75),
+  effort: z.number().int().min(1).max(9).default(7),
 });
 
 const embeddedFormats = [
@@ -955,6 +960,17 @@ export const webpConverterToolOptionDescriptions: Readonly<Record<string, Option
     step: 1,
     defaultValue: 75,
   },
+  'webp.method': {
+    label: 'Encoding method',
+    help: 'Higher values spend more time searching for a smaller file.',
+    control: 'slider',
+    group: 'WebP',
+    advanced: true,
+    min: 0,
+    max: 6,
+    step: 1,
+    defaultValue: 4,
+  },
   'webp.frameDelayMs': {
     label: 'Frame delay',
     help: 'Used for separate image files; GIF input keeps its own timing.',
@@ -1010,6 +1026,39 @@ export const avifConverterToolOptionDescriptions: Readonly<Record<string, Option
     step: 1,
     defaultValue: 50,
   },
+  'avif.speed': {
+    label: 'Encoding speed',
+    help: 'Lower values spend more time searching for a smaller file.',
+    control: 'slider',
+    group: 'AVIF',
+    advanced: true,
+    min: 0,
+    max: 10,
+    step: 1,
+    defaultValue: 6,
+  },
+  'avif.chroma': {
+    label: 'Chroma sampling',
+    help: '4:4:4 preserves full colour detail; subsampling can reduce file size.',
+    control: 'segmented',
+    group: 'AVIF',
+    advanced: true,
+    options: ['444', '422', '420'],
+    optionLabels: { '444': '4:4:4', '422': '4:2:2', '420': '4:2:0' },
+    defaultValue: '420',
+  },
+  'avif.bitDepth': {
+    label: 'Bit depth',
+    help: 'Higher depths preserve finer sample precision in the AVIF bitstream.',
+    unit: 'bit',
+    control: 'number',
+    group: 'AVIF',
+    advanced: true,
+    min: 8,
+    max: 12,
+    step: 2,
+    defaultValue: 8,
+  },
 };
 
 export const jxlConverterToolOptionDescriptions: Readonly<Record<string, OptionDescription>> = {
@@ -1041,6 +1090,17 @@ export const jxlConverterToolOptionDescriptions: Readonly<Record<string, OptionD
     max: 100,
     step: 1,
     defaultValue: 75,
+  },
+  'jxl.effort': {
+    label: 'Encoding effort',
+    help: 'Higher values spend more time searching for a smaller file.',
+    control: 'slider',
+    group: 'JPEG XL',
+    advanced: true,
+    min: 1,
+    max: 9,
+    step: 1,
+    defaultValue: 7,
   },
 };
 

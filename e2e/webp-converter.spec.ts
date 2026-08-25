@@ -53,6 +53,8 @@ test('creates lossy, lossless, and animated WebP locally with exact-byte preview
   });
   await page.goto('/webp-converter');
   await page.waitForLoadState('networkidle');
+  await page.getByText('Advanced', { exact: true }).click();
+  await page.getByRole('spinbutton', { name: 'Encoding method value' }).fill('6');
 
   const lossy = await uploadAndRead(page, false);
   await expect(page.getByRole('status')).toContainText('Created lossy quality 75 WebP locally');

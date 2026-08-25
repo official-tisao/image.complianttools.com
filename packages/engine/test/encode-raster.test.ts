@@ -41,10 +41,12 @@ describe('production raster encoder', () => {
       animated: false,
       lossless: false,
       quality: 75,
+      method: 4,
       frameDelayMs: 100,
       loopCount: 0,
     });
     expect(() => WebpConverterToolOptionsSchema.parse({ quality: 101 })).toThrow();
+    expect(() => WebpConverterToolOptionsSchema.parse({ method: 7 })).toThrow();
     expect(() => WebpConverterToolOptionsSchema.parse({ frameDelayMs: 0 })).toThrow();
     expect(() => WebpConverterToolOptionsSchema.parse({ loopCount: 65_536 })).toThrow();
   });

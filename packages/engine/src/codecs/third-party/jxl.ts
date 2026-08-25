@@ -25,7 +25,7 @@ export async function decodeJxlToRaster(bytes: ArrayBuffer): Promise<RasterImage
 /** Encodes the first local raster frame as JPEG XL. */
 export function encodeRasterAsJxl(
   image: RasterImage,
-  options: { quality?: number; lossless?: boolean } = {},
+  options: { quality?: number; lossless?: boolean; effort?: number } = {},
 ): Promise<ArrayBuffer> {
   return encodeJxl(toImageData(image), options);
 }

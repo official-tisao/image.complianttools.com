@@ -78,6 +78,9 @@
         const bytes = await encodeRasterAsAvif(raster, {
           quality: options.quality,
           lossless: options.lossless,
+          speed: options.speed,
+          subsample: { '444': 3, '422': 2, '420': 1 }[options.chroma],
+          bitDepth: options.bitDepth,
         });
         blob = new Blob([bytes], { type: 'image/avif' });
         extension = 'avif';

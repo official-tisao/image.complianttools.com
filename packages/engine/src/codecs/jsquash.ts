@@ -134,7 +134,7 @@ export async function optimizePngLossless(
 
 export function encodeRasterAsWebp(
   image: RasterImage,
-  options: { quality?: number; lossless?: number } = {},
+  options: { quality?: number; lossless?: number; method?: number } = {},
 ): Promise<ArrayBuffer> {
   return encodeWebp(toImageData(image), options);
 }

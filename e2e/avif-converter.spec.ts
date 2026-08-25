@@ -50,6 +50,10 @@ test('encodes lossy and lossless AVIF then decodes the real output to PNG locall
   const png = await pngFixture(page);
 
   await page.getByRole('button', { name: 'Image to AVIF' }).click();
+  await page.getByText('Advanced', { exact: true }).click();
+  await page.getByRole('spinbutton', { name: 'Encoding speed value' }).fill('10');
+  await page.getByRole('button', { name: '4:4:4' }).click();
+  await page.getByRole('spinbutton', { name: 'Bit depth' }).fill('10');
   const lossy = await uploadAndRead(page, 'red.png', 'image/png', png);
   await expect(page.getByRole('status').last()).toContainText('Created lossy quality 50');
   expect(lossy.subarray(4, 8).toString('ascii')).toBe('ftyp');

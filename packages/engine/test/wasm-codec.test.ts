@@ -44,9 +44,15 @@ describe('cleared WASM codecs', () => {
       direction: 'decode',
       lossless: false,
       quality: 50,
+      speed: 6,
+      chroma: '420',
+      bitDepth: 8,
     });
     expect(() => AvifConverterToolOptionsSchema.parse({ direction: 'transcode' })).toThrow();
     expect(() => AvifConverterToolOptionsSchema.parse({ quality: 101 })).toThrow();
+    expect(() => AvifConverterToolOptionsSchema.parse({ speed: 11 })).toThrow();
+    expect(() => AvifConverterToolOptionsSchema.parse({ chroma: '411' })).toThrow();
+    expect(() => AvifConverterToolOptionsSchema.parse({ bitDepth: 9 })).toThrow();
   });
 
   it('validates bidirectional JPEG XL converter options', () => {
@@ -54,9 +60,11 @@ describe('cleared WASM codecs', () => {
       direction: 'decode',
       lossless: false,
       quality: 75,
+      effort: 7,
     });
     expect(() => JxlConverterToolOptionsSchema.parse({ direction: 'transcode' })).toThrow();
     expect(() => JxlConverterToolOptionsSchema.parse({ quality: -1 })).toThrow();
+    expect(() => JxlConverterToolOptionsSchema.parse({ effort: 10 })).toThrow();
   });
 
   it('round-trips a local AVIF fixture', async () => {
@@ -74,6 +82,22 @@ describe('cleared WASM codecs', () => {
     const decoded = await decodeAvifToRaster(encoded);
     expect(decoded.frames[0]?.data).toEqual(fixture.frames[0].data);
   }, 30_000);
+
+  it.each([10, 12] as const)(
+    'encodes a real %i-bit AVIF stream',
+    async (bitDepth) => {
+      const encoded = await encodeRasterAsAvif(fixture, {
+        quality: 80,
+        speed: 10,
+        subsample: 3,
+        bitDepth,
+      });
+      const decoded = await decodeAvifToRaster(encoded);
+      expect(decoded).toMatchObject({ width: 1, height: 1 });
+      expect(decoded.frames[0]?.data[3]).toBe(255);
+    },
+    30_000,
+  );
 
   it('round-trips a local JPEG XL fixture', async () => {
     const encoded = await encodeRasterAsJxl(fixture, { quality: 100 });

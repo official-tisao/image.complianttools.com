@@ -11,7 +11,7 @@ function toImageData(image: RasterImage): ImageData {
 /** Browser-deliverable JPEG XL encoding without importing the decoder graph. */
 export function encodeRasterAsJxl(
   image: RasterImage,
-  options: { quality?: number; lossless?: boolean } = {},
+  options: { quality?: number; lossless?: boolean; effort?: number } = {},
 ): Promise<ArrayBuffer> {
   return encodeJxl(toImageData(image), options);
 }

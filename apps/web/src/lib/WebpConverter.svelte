@@ -85,6 +85,7 @@
         output = await encodeAnimatedWebp(prepared, {
           quality: options.quality,
           lossless: options.lossless,
+          method: options.method,
           loopCount: options.loopCount,
         });
         frameCount = prepared.frames.length;
@@ -94,6 +95,7 @@
           await encodeRasterAsWebp(prepared, {
             quality: options.quality,
             lossless: options.lossless ? 1 : 0,
+            method: options.method,
           }),
         );
       }

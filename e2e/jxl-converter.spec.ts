@@ -49,6 +49,8 @@ test('encodes lossy and lossless raster JPEG XL then decodes real output to PNG 
   const png = await pngFixture(page);
 
   await page.getByRole('button', { name: 'Image to JPEG XL' }).click();
+  await page.getByText('Advanced', { exact: true }).click();
+  await page.getByRole('spinbutton', { name: 'Encoding effort value' }).fill('9');
   const lossy = await uploadAndRead(page, 'red.png', 'image/png', png);
   await expect(page.getByRole('status').last()).toContainText('Created lossy quality 75');
   expect(lossy.length).toBeGreaterThan(20);

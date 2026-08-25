@@ -78,6 +78,7 @@
         const bytes = await encodeRasterAsJxl(raster, {
           quality: options.quality,
           lossless: options.lossless,
+          effort: options.effort,
         });
         blob = new Blob([bytes], { type: 'image/jxl' });
         extension = 'jxl';
