@@ -46,6 +46,7 @@ test('encodes lossy and lossless AVIF then decodes the real output to PNG locall
   });
   await page.goto('/avif-converter');
   await page.waitForLoadState('networkidle');
+  await expect(page.getByText(/AVIF encoding is slower than JPEG or WebP/u)).toBeVisible();
   expect(localRequests.some((path) => /avif_enc|avif-encode/u.test(path))).toBe(false);
   const png = await pngFixture(page);
 

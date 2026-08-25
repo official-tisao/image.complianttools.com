@@ -144,6 +144,12 @@
     )}
     {Math.round((lazyBytes / 1_000_000) * 10) / 10} MB.
   </p>
+  <p class="encoding-notice">
+    {t(
+      'avif.slowNotice',
+      'AVIF encoding is slower than JPEG or WebP because it searches more compression choices to produce smaller files. Higher speed settings finish sooner.',
+    )}
+  </p>
   <GeneratedControls
     descriptions={localizeOptions(locale, avifConverterToolOptionDescriptions)}
     values={Object.fromEntries(

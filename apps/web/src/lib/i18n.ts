@@ -435,6 +435,8 @@ const arabic: Readonly<Record<string, string>> = {
   'avif.title': 'محول AVIF',
   'avif.description':
     'حوّل PNG أو JPEG أو WebP إلى AVIF، أو فك AVIF إلى PNG محليًا. لا يتم رفع أي شيء. لا يُنزّل المرمّز المحلي إلا بعد اختيار ملف وحجمه نحو',
+  'avif.slowNotice':
+    'ترميز AVIF أبطأ من JPEG أو WebP لأنه يبحث في خيارات ضغط أكثر لإنتاج ملفات أصغر. تنتهي إعدادات السرعة الأعلى في وقت أقصر.',
   'avif.chooseSource': 'اختر صورة PNG أو JPEG أو WebP',
   'avif.chooseAvif': 'اختر صورة AVIF',
   'avif.canvasError': 'لا يستطيع متصفحك إنشاء لوحة محلية.',
