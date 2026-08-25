@@ -82,7 +82,7 @@ export function encodeRasterAsJpeg(
   image: RasterImage,
   options: { quality?: number; progressive?: boolean } = {},
 ): Promise<ArrayBuffer> {
-  return encodeJpeg(toImageData(image), options);
+  return encodeJpeg(toImageData(image), { progressive: false, ...options });
 }
 
 export function encodeRasterAsPng(image: RasterImage): Promise<ArrayBuffer> {

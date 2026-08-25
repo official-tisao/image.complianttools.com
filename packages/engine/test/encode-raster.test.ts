@@ -84,7 +84,14 @@ describe('production raster encoder', () => {
   });
   it('executes JPEG, PNG, and WebP through the central dispatcher', async () => {
     const output = await encodeInWorker();
-    expect(new Uint8Array(output.jpeg).subarray(0, 3)).toEqual(new Uint8Array([0xff, 0xd8, 0xff]));
+    const jpeg = new Uint8Array(output.jpeg);
+    expect(jpeg.subarray(0, 3)).toEqual(new Uint8Array([0xff, 0xd8, 0xff]));
+    expect(
+      jpeg.some(
+        (byte, index) => byte === 0xff && (jpeg[index + 1] === 0xc0 || jpeg[index + 1] === 0xc1),
+      ),
+    ).toBe(true);
+    expect(jpeg.some((byte, index) => byte === 0xff && jpeg[index + 1] === 0xc2)).toBe(false);
     expect(new Uint8Array(output.png).subarray(0, 8)).toEqual(
       new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
     );
