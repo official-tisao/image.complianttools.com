@@ -55,6 +55,7 @@ test('creates lossy, lossless, and animated WebP locally with exact-byte preview
   await page.waitForLoadState('networkidle');
   await page.getByText('Advanced', { exact: true }).click();
   await page.getByRole('spinbutton', { name: 'Encoding method value' }).fill('6');
+  await page.getByRole('spinbutton', { name: 'Alpha quality value' }).fill('80');
 
   const lossy = await uploadAndRead(page, false);
   await expect(page.getByRole('status')).toContainText('Created lossy quality 75 WebP locally');
@@ -66,6 +67,12 @@ test('creates lossy, lossless, and animated WebP locally with exact-byte preview
     return [...new Uint8Array(await (await fetch(image.src)).arrayBuffer())];
   });
   expect(Buffer.from(previewBytes)).toEqual(lossy);
+
+  await page.getByLabel('Near-lossless strength').selectOption('80');
+  const nearLossless = await uploadAndRead(page, false);
+  await expect(page.getByRole('status')).toContainText('Created near-lossless 80 WebP locally');
+  expect(nearLossless.includes(Buffer.from('VP8L'))).toBe(true);
+  await page.getByLabel('Near-lossless strength').selectOption('off');
 
   await page.getByLabel('Use lossless encoding').check();
   const lossless = await uploadAndRead(page, false);

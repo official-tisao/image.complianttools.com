@@ -27,6 +27,7 @@
   function updateOption(path: string, value: unknown) {
     const name = path.slice('webp.'.length);
     if (!(name in options)) return;
+    if (name === 'nearLossless' && value !== 'off') value = Number(value);
     const parsed = WebpConverterToolOptionsSchema.safeParse({ ...options, [name]: value });
     if (parsed.success) options = parsed.data;
   }
@@ -85,6 +86,8 @@
         output = await encodeAnimatedWebp(prepared, {
           quality: options.quality,
           lossless: options.lossless,
+          nearLossless: options.nearLossless,
+          alphaQuality: options.alphaQuality,
           method: options.method,
           loopCount: options.loopCount,
         });
@@ -94,7 +97,11 @@
         output = new Uint8Array(
           await encodeRasterAsWebp(prepared, {
             quality: options.quality,
-            lossless: options.lossless ? 1 : 0,
+            lossless: options.lossless || options.nearLossless !== 'off' ? 1 : 0,
+            ...(typeof options.nearLossless === 'number'
+              ? { near_lossless: options.nearLossless }
+              : {}),
+            alpha_quality: options.alphaQuality,
             method: options.method,
           }),
         );
@@ -105,7 +112,12 @@
       download.href = previewUrl;
       download.download = `${files[0]!.name.replace(/\.[^.]+$/u, '')}.webp`;
       download.click();
-      status = `${t('webp.created', 'Created')} ${options.lossless ? t('webp.lossless', 'lossless') : `${t('webp.lossyQuality', 'lossy quality')} ${options.quality}`} WebP ${t('webp.locally', 'locally')} (${frameCount} ${t(frameCount === 1 ? 'webp.frame' : 'webp.frames', frameCount === 1 ? 'frame' : 'frames')}, ${output.byteLength.toLocaleString()} ${t('webp.bytes', 'bytes')}).`;
+      const encodingLabel = options.lossless
+        ? t('webp.lossless', 'lossless')
+        : options.nearLossless !== 'off'
+          ? `${t('webp.nearLossless', 'near-lossless')} ${options.nearLossless}`
+          : `${t('webp.lossyQuality', 'lossy quality')} ${options.quality}`;
+      status = `${t('webp.created', 'Created')} ${encodingLabel} WebP ${t('webp.locally', 'locally')} (${frameCount} ${t(frameCount === 1 ? 'webp.frame' : 'webp.frames', frameCount === 1 ? 'frame' : 'frames')}, ${output.byteLength.toLocaleString()} ${t('webp.bytes', 'bytes')}).`;
     } catch (reason) {
       error = isEngineError(reason)
         ? `${engineErrorMessage(reason)} ${t('error.remedyLabel', 'Remedy')}: ${reason.remedy}`
