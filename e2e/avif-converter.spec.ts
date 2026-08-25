@@ -73,6 +73,7 @@ test('encodes lossy and lossless AVIF then decodes the real output to PNG locall
   expect(lossy.subarray(4, 8).toString('ascii')).toBe('ftyp');
   expect(lossy.subarray(8, 32).toString('ascii')).toMatch(/avi[fs]/u);
   expect(localRequests.some((path) => /avif_enc|avif-encode/u.test(path))).toBe(true);
+  expect(localRequests.some((path) => /avif_enc_mt/u.test(path))).toBe(true);
   expect(localRequests.some((path) => /format-encode-worker/u.test(path))).toBe(true);
   expect(
     await page.evaluate(() =>
