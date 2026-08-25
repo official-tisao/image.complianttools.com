@@ -102,7 +102,7 @@ describe('jSquash worker codecs', () => {
       png: 'd307f87bcaf95c4d4058338771a8fce6004b456962ca3e945470dedb828a6b1b',
       optimizedPng: '9cdf9196e8fa231160c070325b1911607b899671fad294069be2bdaaf7162061',
       webp: 'ea93240f4ce2156ec6edcd7afa471c077e44a25d4a799bb4aab4baaa45eb5390',
-      favicon: 'ac69eee1652cf94cfcd0e4599fd152b6cd0000ac4e7f79320937024ae9c34484',
+      favicon: '681391c04b364215677b87d3bff1cac4e22ca9e83449eaddd6be08401b30c521',
     });
   }, 30_000);
 

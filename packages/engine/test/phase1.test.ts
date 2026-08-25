@@ -206,6 +206,80 @@ describe('P1 geometry and resize options', () => {
       ).toBe(6);
   });
 
+  it('executes distinct resampling kernels with premultiplied-alpha interpolation', () => {
+    const opaque = createRaster(2, 1, new Uint8ClampedArray([255, 0, 0, 255, 0, 0, 255, 255]));
+    const bilinear = resizeRaster(
+      opaque,
+      ResizeOptionsSchema.parse({
+        mode: 'pixels',
+        width: 3,
+        height: 1,
+        lockAspect: false,
+        algorithm: 'bilinear',
+        allowUpscale: true,
+      }),
+    );
+    expect(bilinear.frames[0].data.slice(4, 8)).toEqual(new Uint8ClampedArray([128, 0, 128, 255]));
+
+    const transparent = createRaster(2, 1, new Uint8ClampedArray([255, 0, 0, 255, 0, 0, 255, 0]));
+    const alphaInterpolated = resizeRaster(
+      transparent,
+      ResizeOptionsSchema.parse({
+        mode: 'pixels',
+        width: 3,
+        height: 1,
+        lockAspect: false,
+        algorithm: 'bilinear',
+        allowUpscale: true,
+      }),
+    );
+    expect(alphaInterpolated.frames[0].data.slice(4, 8)).toEqual(
+      new Uint8ClampedArray([255, 0, 0, 128]),
+    );
+
+    const algorithms = [
+      'lanczos3',
+      'lanczos2',
+      'mitchell',
+      'catmull-rom',
+      'bicubic',
+      'bilinear',
+      'box',
+      'nearest',
+      'magic-kernel',
+    ] as const;
+    const hashes = algorithms.map((algorithm) =>
+      createHash('sha256')
+        .update(
+          resizeRaster(
+            fixture(12, 8),
+            ResizeOptionsSchema.parse({ mode: 'pixels', width: 7, algorithm }),
+          ).frames[0].data,
+        )
+        .digest('hex'),
+    );
+    expect(new Set(hashes).size).toBeGreaterThanOrEqual(7);
+  });
+
+  it('resizes every animation frame while preserving timing', () => {
+    const first = fixture(4, 2);
+    const animated = {
+      ...first,
+      frames: [
+        { ...first.frames[0], durationMs: 120 },
+        { data: first.frames[0].data.map((sample) => 255 - sample), durationMs: 180 },
+      ],
+    } as unknown as RasterImage;
+    const resized = resizeRaster(
+      animated,
+      ResizeOptionsSchema.parse({ mode: 'pixels', width: 2, algorithm: 'lanczos3' }),
+    );
+    expect(resized.frames).toHaveLength(2);
+    expect(resized.frames.map((frame) => frame.durationMs)).toEqual([120, 180]);
+    expect(resized.frames.every((frame) => frame.data.length === 8)).toBe(true);
+    expect(resized.frames[0].data).not.toEqual(resized.frames[1].data);
+  });
+
   it('resize identity, rotation cycle, flip involution, and crop composition hold', () => {
     fc.assert(
       fc.property(
@@ -343,7 +417,7 @@ describe('P1 export, target size, and recipes', () => {
         {
           "compress": "6dfc788e872b6ad508a54b9923481192c7a896a006f260f8836e6aaa387a0ea6",
           "convert": "6dfc788e872b6ad508a54b9923481192c7a896a006f260f8836e6aaa387a0ea6",
-          "resize": "8efcaf82fdeee519618c6a969e7377c1adbdb7dffb21897c04534f86f6ce73e2",
+          "resize": "f583bc248cf415e032704dfd68bb24addf2318a9b809d3b7deb60c2e7569bc9d",
         }
       `);
   });

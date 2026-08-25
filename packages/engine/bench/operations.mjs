@@ -23,7 +23,9 @@ import { encodeRasterAsAvif } from '../dist/codecs/third-party/avif-encode.js';
 const width = 4000;
 const height = 3000;
 const sampleCount = 3;
-const operationFilter = process.env.BENCH_OPERATION?.trim() || null;
+const operationFilter = process.argv
+  .find((argument) => argument.startsWith('--operation='))
+  ?.slice('--operation='.length);
 
 async function wasm(relativePath) {
   return globalThis.WebAssembly.compile(await readFile(new URL(relativePath, import.meta.url)));
@@ -60,8 +62,7 @@ function percentile95(samples) {
 }
 
 async function measure(operation, budgetMs, callback, count = sampleCount) {
-  if (operationFilter && !operation.includes(operationFilter))
-    return { operation, skipped: true, passed: true };
+  if (operationFilter && !operation.includes(operationFilter)) return undefined;
   if (count > 1) await callback();
   const samples = [];
   for (let iteration = 0; iteration < count; iteration += 1) {
@@ -135,11 +136,11 @@ const report = {
   width,
   height,
   megapixels: (width * height) / 1_000_000,
-  results,
+  results: results.filter(Boolean),
 };
 process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
 
-const failed = results.filter((result) => !result.passed);
+const failed = results.filter((result) => result && !result.passed);
 if (failed.length > 0) {
   throw new Error(
     `Operation latency budgets failed: ${failed.map(({ operation, p95Ms, budgetMs }) => `${operation} ${p95Ms}/${budgetMs} ms`).join(', ')}`,
