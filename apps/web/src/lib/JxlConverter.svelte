@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
-  import { getCodec, loadEncoder } from '@complianttools/image-engine/codecs/registry';
+  import { getCodec } from '@complianttools/image-engine/codecs/registry';
   import { decodeJxlToRaster } from '@complianttools/image-engine/codecs/third-party/jxl-decode';
   import {
     decodeWithTypedErrors,
@@ -13,6 +13,7 @@
     jxlConverterToolOptionDescriptions,
   } from '@complianttools/image-engine/schemas/options';
   import GeneratedControls from '$lib/GeneratedControls.svelte';
+  import { encodeInFormatWorker } from '$lib/formatEncoderWorker';
   import { localizeOptions, translate, type Locale } from './i18n';
 
   const lazyBytes = getCodec('jxl').lazyBytes;
@@ -72,10 +73,7 @@
         const raster = await decodeWithTypedErrors(sourceFormat, () =>
           rasterFromBrowserImage(file),
         );
-        const { encodeRasterAsJxl } = (await loadEncoder(
-          'jxl',
-        )) as typeof import('@complianttools/image-engine/codecs/jxl-encode');
-        const bytes = await encodeRasterAsJxl(raster, {
+        const bytes = await encodeInFormatWorker('jxl', raster, {
           quality: options.quality,
           lossless: options.lossless,
           effort: options.effort,

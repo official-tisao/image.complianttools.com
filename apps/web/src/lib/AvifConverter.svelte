@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
-  import { getCodec, loadEncoder } from '@complianttools/image-engine/codecs/registry';
+  import { getCodec } from '@complianttools/image-engine/codecs/registry';
   import { decodeAvifToRaster } from '@complianttools/image-engine/codecs/third-party/avif-decode';
   import {
     decodeWithTypedErrors,
@@ -13,6 +13,7 @@
     avifConverterToolOptionDescriptions,
   } from '@complianttools/image-engine/schemas/options';
   import GeneratedControls from '$lib/GeneratedControls.svelte';
+  import { encodeInFormatWorker } from '$lib/formatEncoderWorker';
   import { localizeOptions, translate, type Locale } from './i18n';
 
   const lazyBytes = getCodec('avif').lazyBytes;
@@ -72,10 +73,7 @@
         const raster = await decodeWithTypedErrors(sourceFormat, () =>
           rasterFromBrowserImage(file),
         );
-        const { encodeRasterAsAvif } = (await loadEncoder(
-          'avif',
-        )) as typeof import('@complianttools/image-engine/codecs/avif-encode');
-        const bytes = await encodeRasterAsAvif(raster, {
+        const bytes = await encodeInFormatWorker('avif', raster, {
           quality: options.quality,
           lossless: options.lossless,
           speed: options.speed,

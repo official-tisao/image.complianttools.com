@@ -46,6 +46,14 @@ test('encodes lossy and lossless AVIF then decodes the real output to PNG locall
   });
   await page.goto('/avif-converter');
   await page.waitForLoadState('networkidle');
+  await page.evaluate(() => {
+    const durations: number[] = [];
+    new PerformanceObserver((entries) =>
+      durations.push(...entries.getEntries().map((entry) => entry.duration)),
+    ).observe({ type: 'longtask' });
+    (globalThis as typeof globalThis & { formatEncodeLongTasks: number[] }).formatEncodeLongTasks =
+      durations;
+  });
   await expect(page.getByText(/AVIF encoding is slower than JPEG or WebP/u)).toBeVisible();
   expect(localRequests.some((path) => /avif_enc|avif-encode/u.test(path))).toBe(false);
   const png = await pngFixture(page);
@@ -55,11 +63,26 @@ test('encodes lossy and lossless AVIF then decodes the real output to PNG locall
   await page.getByRole('spinbutton', { name: 'Encoding speed value' }).fill('10');
   await page.getByRole('button', { name: '4:4:4' }).click();
   await page.getByRole('spinbutton', { name: 'Bit depth' }).fill('10');
+  await page.evaluate(() => {
+    (
+      globalThis as typeof globalThis & { formatEncodeLongTasks: number[] }
+    ).formatEncodeLongTasks.length = 0;
+  });
   const lossy = await uploadAndRead(page, 'red.png', 'image/png', png);
   await expect(page.getByRole('status').last()).toContainText('Created lossy quality 50');
   expect(lossy.subarray(4, 8).toString('ascii')).toBe('ftyp');
   expect(lossy.subarray(8, 32).toString('ascii')).toMatch(/avi[fs]/u);
   expect(localRequests.some((path) => /avif_enc|avif-encode/u.test(path))).toBe(true);
+  expect(localRequests.some((path) => /format-encode-worker/u.test(path))).toBe(true);
+  expect(
+    await page.evaluate(() =>
+      Math.max(
+        0,
+        ...(globalThis as typeof globalThis & { formatEncodeLongTasks: number[] })
+          .formatEncodeLongTasks,
+      ),
+    ),
+  ).toBeLessThanOrEqual(50);
 
   await page.getByLabel('Use lossless encoding').check();
   const lossless = await uploadAndRead(page, 'red.png', 'image/png', png);

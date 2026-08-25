@@ -55,6 +55,7 @@ test('encodes lossy and lossless raster JPEG XL then decodes real output to PNG 
   await expect(page.getByRole('status').last()).toContainText('Created lossy quality 75');
   expect(lossy.length).toBeGreaterThan(20);
   expect(localRequests.some((path) => /jxl_enc|jxl-encode/u.test(path))).toBe(true);
+  expect(localRequests.some((path) => /format-encode-worker/u.test(path))).toBe(true);
 
   await page.getByLabel('Use lossless raster encoding').check();
   const lossless = await uploadAndRead(page, 'red.png', 'image/png', png);

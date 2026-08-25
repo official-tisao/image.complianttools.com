@@ -46,10 +46,12 @@ test('creates lossy, lossless, and animated WebP locally with exact-byte preview
   context,
 }) => {
   const crossOrigin: string[] = [];
+  const localRequests: string[] = [];
   page.on('request', (request) => {
     const url = new URL(request.url());
     if (url.origin !== 'http://127.0.0.1:4173' && url.protocol !== 'blob:')
       crossOrigin.push(request.url());
+    if (url.origin === 'http://127.0.0.1:4173') localRequests.push(url.pathname);
   });
   await page.goto('/webp-converter');
   await page.waitForLoadState('networkidle');
@@ -60,6 +62,7 @@ test('creates lossy, lossless, and animated WebP locally with exact-byte preview
   const lossy = await uploadAndRead(page, false);
   await expect(page.getByRole('status')).toContainText('Created lossy quality 75 WebP locally');
   expect(lossy.includes(Buffer.from('VP8 '))).toBe(true);
+  expect(localRequests.some((path) => /format-encode-worker/u.test(path))).toBe(true);
   expect(inspectImageContainer(lossy)).toMatchObject({ width: 16, height: 16, frameCount: 1 });
   let previewBytes = await page.evaluate(async () => {
     const image = document.querySelector('figure img');

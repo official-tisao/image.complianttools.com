@@ -11,6 +11,7 @@
   } from '@complianttools/image-engine/schemas/options';
   import type { FormatId, RasterImage } from '@complianttools/image-engine/types';
   import GeneratedControls from '$lib/GeneratedControls.svelte';
+  import { encodeInFormatWorker } from '$lib/formatEncoderWorker';
   import { localizeOptions, translate, type Locale } from './i18n';
 
   let { locale = 'en' }: { locale?: Locale } = $props();
@@ -81,21 +82,20 @@
       let output: Uint8Array;
       let frameCount = 1;
       if (options.animated) {
-        const { encodeAnimatedWebp } =
-          await import('@complianttools/image-engine/codecs/animated-webp');
-        output = await encodeAnimatedWebp(prepared, {
-          quality: options.quality,
-          lossless: options.lossless,
-          nearLossless: options.nearLossless,
-          alphaQuality: options.alphaQuality,
-          method: options.method,
-          loopCount: options.loopCount,
-        });
+        output = new Uint8Array(
+          await encodeInFormatWorker('webp', prepared, {
+            quality: options.quality,
+            lossless: options.lossless,
+            nearLossless: options.nearLossless,
+            alphaQuality: options.alphaQuality,
+            method: options.method,
+            loopCount: options.loopCount,
+          }),
+        );
         frameCount = prepared.frames.length;
       } else {
-        const { encodeRasterAsWebp } = await import('@complianttools/image-engine/codecs/jsquash');
         output = new Uint8Array(
-          await encodeRasterAsWebp(prepared, {
+          await encodeInFormatWorker('webp', prepared, {
             quality: options.quality,
             lossless: options.lossless || options.nearLossless !== 'off' ? 1 : 0,
             ...(typeof options.nearLossless === 'number'
