@@ -25,6 +25,17 @@ project, not a measurement gap: closing it needs engine-level work (faster decod
 native resize path, and AVIF speed-level selection), not a budget change. Budgets must not be relaxed
 to make this pass.
 
+### 1.1 Resize-path investigation (`@jsquash/resize`)
+
+`@jsquash/resize@2.1.1` (Apache-2.0) was investigated as the candidate SIMD/WASM resampler. Finding:
+**it is not suitable as a fix.** Its `squoosh_resize_bg.wasm` is a scalar build (34 KB, zero `v128`
+SIMD opcodes), so a 12 MP Lanczos3 downscale measures ~1.55 s versus ~2.0 s for the existing pure-JS
+implementation — a ~20% gain, still ~6× over the 250 ms budget. The package ships no SIMD variant, and
+its linear-light (`linearRGB: true`) default would also change pixel output versus the current
+gamma-space path. Meeting the resize budget requires either a custom SIMD WASM build (not a cleared,
+pinned package) or a browser-native resampler (`createImageBitmap`), which is unavailable in the Node
+benchmark. The integration was therefore reverted rather than shipped as a dead-end dependency.
+
 ## 2. External evidence — not producible in this environment
 
 None of these are claimed to pass; each requires a specific environment.
