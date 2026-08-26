@@ -153,6 +153,11 @@
         download.href = url;
         download.download = `${file.name.replace(/\.gif$/iu, '')}-frame-${String(index + 1).padStart(3, '0')}.png`;
         download.click();
+        // WebKit cancels an in-flight download when its blob URL is revoked in the same task as
+        // the click, and drops programmatic downloads fired back-to-back. Yield between frames and
+        // revoke only once the download has actually started, so every frame reaches the user
+        // instead of just the first.
+        await new Promise((resolve) => setTimeout(resolve, 150));
         URL.revokeObjectURL(url);
       }
       status = `${t('gif.exported', 'Exported {value}', image.frames.length)} ${t(image.frames.length === 1 ? 'gif.frame' : 'gif.frames', image.frames.length === 1 ? 'GIF frame' : 'GIF frames')} ${t('gif.locally', 'locally')}.`;

@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 
 import { expect, test } from '@playwright/test';
 import pdfLib from '../packages/engine/node_modules/pdf-lib/cjs/index.js';
+import { allowAllNetwork, denyAllNetwork } from './support/network.js';
 
 const { PDFDocument } = pdfLib;
 
@@ -81,10 +82,10 @@ test('creates, previews, orders, and downloads a configured local PDF', async ({
   const jpegPath = await (await jpegPending).path();
   expect(jpegPath).not.toBeNull();
   expect((await readFile(jpegPath!)).toString('latin1')).toContain('/DCTDecode');
-  await context.setOffline(true);
+  await denyAllNetwork(context);
   await page.getByRole('button', { name: 'Create PDF' }).click();
   await expect(page.getByRole('status')).toContainText('Created a 2-page PDF locally');
-  await context.setOffline(false);
+  await allowAllNetwork(context);
   expect(crossOrigin).toEqual([]);
 });
 

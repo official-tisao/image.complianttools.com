@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 
 import { expect, test, type Page } from '@playwright/test';
+import { allowAllNetwork, denyAllNetwork } from './support/network.js';
 
 const waitForHydration = (page: Page) => page.locator('html[data-hydrated="true"]').waitFor();
 
@@ -26,7 +27,7 @@ test('encodes bytes with HTML and CSS snippets on the canonical local page', asy
   await expect(page.getByLabel('CSS snippet')).toHaveValue(
     'background-image: url("data:image/png;base64,AAEC");',
   );
-  await context.setOffline(true);
+  await denyAllNetwork(context);
   await page.getByLabel('Choose an image').setInputFiles({
     name: 'offline.bin',
     mimeType: 'application/octet-stream',
@@ -35,7 +36,7 @@ test('encodes bytes with HTML and CSS snippets on the canonical local page', asy
   await expect(page.getByLabel('Base64 data URL')).toHaveValue(
     'data:application/octet-stream;base64,AwQF',
   );
-  await context.setOffline(false);
+  await allowAllNetwork(context);
   expect(crossOrigin).toEqual([]);
 });
 

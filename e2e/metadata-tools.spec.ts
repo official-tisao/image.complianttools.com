@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 
 import { expect, test } from '@playwright/test';
+import { allowAllNetwork, denyAllNetwork } from './support/network.js';
 
 function jpegWithExif(tiff: Uint8Array, name: string) {
   const payload = Buffer.concat([Buffer.from('Exif\0\0', 'latin1'), Buffer.from(tiff)]);
@@ -80,10 +81,10 @@ test('metadata viewer reports an opaque MakerNote locally', async ({ page, conte
   await expect(page.getByRole('heading', { name: 'maker-note.jpg' })).toBeVisible();
   await expect(page.getByRole('cell', { name: 'MakerNote' })).toBeVisible();
   await expect(page.getByRole('cell', { name: /5 bytes \(deadbeef01\)/u })).toBeVisible();
-  await context.setOffline(true);
+  await denyAllNetwork(context);
   await page.locator('input[type=file]').setInputFiles(makerNoteJpeg());
   await expect(page.getByRole('cell', { name: /5 bytes \(deadbeef01\)/u })).toBeVisible();
-  await context.setOffline(false);
+  await allowAllNetwork(context);
 });
 
 test('GPS-only preset downloads a JPEG with coordinate storage wiped', async ({
@@ -102,11 +103,11 @@ test('GPS-only preset downloads a JPEG with coordinate storage wiped', async ({
   expect([...output.subarray(22, 34)]).toEqual(new Array(12).fill(0));
   expect([...output.subarray(76, 100)]).toEqual(new Array(24).fill(0));
   await expect(page.getByRole('status')).toContainText('Removed metadata locally');
-  await context.setOffline(true);
+  await denyAllNetwork(context);
   const offlinePending = page.waitForEvent('download');
   await page.locator('input[type=file]').setInputFiles(gpsJpeg());
   expect(await (await offlinePending).path()).not.toBeNull();
-  await context.setOffline(false);
+  await allowAllNetwork(context);
 });
 
 test('metadata removal defaults to a byte-identical no-op', async ({ page }) => {
@@ -174,14 +175,14 @@ test('image inspector reports deterministic PNG container facts', async ({ page,
   await expect(page.getByText('Grayscale + alpha')).toBeVisible();
   await expect(page.getByText('IHDR (13 bytes)')).toBeVisible();
   await expect(page.getByText(/bits\/byte \(estimate\)/u)).toBeVisible();
-  await context.setOffline(true);
+  await denyAllNetwork(context);
   await page.locator('input[type=file]').setInputFiles({
     name: 'offline-two-by-three.png',
     mimeType: 'image/png',
     buffer: png,
   });
   await expect(page.getByText('2 × 3 px')).toBeVisible();
-  await context.setOffline(false);
+  await allowAllNetwork(context);
 });
 
 test('metadata and inspector adversarial failures surface a typed remedy', async ({ page }) => {

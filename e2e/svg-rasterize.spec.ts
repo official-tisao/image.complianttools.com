@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { expect, test, type Page } from '@playwright/test';
+import { allowAllNetwork, denyAllNetwork } from './support/network.js';
 
 const svg = Buffer.from(
   '<svg xmlns="http://www.w3.org/2000/svg" width="4" height="2"><rect width="4" height="2" fill="#ef1808"/></svg>',
@@ -45,10 +46,10 @@ test('SVG rasterizer downloads exact intrinsic and explicitly sized PNG output',
   const explicit = await rasterize(page, 'explicit-width.svg');
   expect(explicit.download.suggestedFilename()).toBe('explicit-width.png');
   expect(explicit.inspection).toEqual({ width: 8, height: 4 });
-  await context.setOffline(true);
+  await denyAllNetwork(context);
   const offline = await rasterize(page, 'offline.svg');
   expect(offline.inspection).toEqual({ width: 8, height: 4 });
-  await context.setOffline(false);
+  await allowAllNetwork(context);
 });
 
 test('SVG rasterizer reports a typed remedy for unsafe external references', async ({ page }) => {

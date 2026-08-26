@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 
 import { expect, test, type Page } from '@playwright/test';
 import fflate from '../packages/engine/node_modules/fflate/lib/node.cjs';
+import { allowAllNetwork, denyAllNetwork } from './support/network.js';
 
 const { unzipSync } = fflate;
 
@@ -74,10 +75,10 @@ test('downloads the complete deterministic favicon package without network fallb
     name: 'Example Site',
   });
   await expect(page.getByLabel('HTML link snippet')).toHaveValue(/apple-touch-icon/u);
-  await context.setOffline(true);
+  await denyAllNetwork(context);
   await page.getByRole('button', { name: 'Create package' }).click();
   await expect(page.getByRole('status')).toContainText('Created favicon.ico');
-  await context.setOffline(false);
+  await allowAllNetwork(context);
   expect(crossOrigin).toEqual([]);
 });
 

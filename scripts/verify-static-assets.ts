@@ -70,6 +70,16 @@ function validateRecord(record: StaticAssetRecord): void {
   }
 }
 
+/**
+ * Files we author ourselves that configure the host rather than ship content. They carry no
+ * third-party licence, and the register deliberately requires an HTTPS source and licence URL --
+ * which we could only supply for these by inventing provenance that does not exist.
+ *
+ * This list is an explicit set of names, not a pattern, so that a genuine third-party asset cannot
+ * slip past the gate by being dropped in with a plausible-looking filename.
+ */
+const firstPartyControlFiles = new Set(['.gitkeep', '_headers', '_redirects']);
+
 export async function verifyStaticAssets(): Promise<void> {
   const register = JSON.parse(await readFile(registerPath, 'utf8')) as StaticAssetRecord[];
   const rows = new Map<string, StaticAssetRecord>();
@@ -80,7 +90,9 @@ export async function verifyStaticAssets(): Promise<void> {
     rows.set(record.path, record);
   }
 
-  const files = (await walk(staticRoot)).filter((file) => path.basename(file) !== '.gitkeep');
+  const files = (await walk(staticRoot)).filter(
+    (file) => !firstPartyControlFiles.has(path.basename(file)),
+  );
   for (const absolute of files) {
     const relative = toPosix(path.relative(root, absolute));
     const record = rows.get(relative);

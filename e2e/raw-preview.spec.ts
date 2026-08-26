@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 
 import { expect, test } from '@playwright/test';
+import { allowAllNetwork, denyAllNetwork } from './support/network.js';
 
 function validJpeg(width = 320, height = 240): Buffer {
   return Buffer.from([
@@ -163,14 +164,14 @@ test('RAW converter runs a selected 16-bit DNG develop path', async ({ page, con
     width: 2,
     height: 2,
   });
-  await context.setOffline(true);
+  await denyAllNetwork(context);
   await page.locator('input[type=file]').setInputFiles({
     name: 'offline-minimal.dng',
     mimeType: 'image/x-adobe-dng',
     buffer: uncompressedDng(),
   });
   await expect(page.getByRole('status')).toHaveText('DNG develop complete at 16-bit using PPG.');
-  await context.setOffline(false);
+  await allowAllNetwork(context);
 });
 
 test('RAW generated controls begin with a keyboard-operable preview toggle', async ({ page }) => {

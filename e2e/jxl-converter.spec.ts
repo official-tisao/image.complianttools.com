@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { allowAllNetwork, denyAllNetwork } from './support/network.js';
 
 async function pngFixture(page: import('@playwright/test').Page): Promise<Buffer> {
   const bytes = await page.evaluate(async () => {
@@ -91,12 +92,12 @@ test('encodes lossy and lossless raster JPEG XL then decodes real output to PNG 
     [...decodedPng],
   );
   expect(pixel).toEqual([239, 24, 8, 255]);
-  await context.setOffline(true);
+  await denyAllNetwork(context);
   const offlineDecodedPng = await uploadAndRead(page, 'offline-red.jxl', 'image/jxl', lossless);
   expect(offlineDecodedPng.subarray(0, 8)).toEqual(
     Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
   );
-  await context.setOffline(false);
+  await allowAllNetwork(context);
   expect(crossOrigin).toEqual([]);
 });
 

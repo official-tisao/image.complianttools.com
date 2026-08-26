@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 
 import { expect, test } from '@playwright/test';
 import { decodeCbz, encodeCbz } from '../packages/engine/src/documents/cbz.js';
+import { allowAllNetwork, denyAllNetwork } from './support/network.js';
 
 const onePixelPng = Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
@@ -26,10 +27,10 @@ test('packs naturally named image pages into a local CBZ', async ({ page, contex
   const path = await download.path();
   expect(path).not.toBeNull();
   expect((await readFile(path!)).subarray(0, 2)).toEqual(Buffer.from('PK'));
-  await context.setOffline(true);
+  await denyAllNetwork(context);
   await page.getByRole('button', { name: 'Generate output' }).click();
   await expect(page.getByRole('heading', { name: 'Exact CBZ page order' })).toBeVisible();
-  await context.setOffline(false);
+  await allowAllNetwork(context);
 });
 
 test('converts a real local CBZ page to PDF', async ({ page }) => {

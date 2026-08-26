@@ -14,17 +14,22 @@ type PsdModule = {
   readPsd(input: ArrayBuffer | Uint8Array, options: { useImageData: true }): PsdDocument;
 };
 
+/**
+ * ag-psd only ever calls `getContext('2d')` and reads width/height off the object it is handed, so
+ * an OffscreenCanvas satisfies it structurally. We use that rather than `document.createElement`
+ * because the engine runs inside workers, where there is no `document` to create anything with --
+ * the DOM path would have thrown at runtime, not merely tripped the DOM-free lint rule.
+ */
+function createDetachedCanvas(width: number, height: number): HTMLCanvasElement {
+  if (typeof OffscreenCanvas === 'undefined')
+    throw new Error('PSD layer rendering requires OffscreenCanvas support.');
+  return new OffscreenCanvas(width, height) as unknown as HTMLCanvasElement;
+}
+
 async function loadPsd(): Promise<PsdModule> {
   const module = (await import('ag-psd')) as PsdModule;
   module.initializeCanvas(
-    (width, height) => {
-      if (typeof document === 'undefined')
-        throw new Error('PSD layer rendering requires a browser canvas.');
-      const canvas = document.createElement('canvas');
-      canvas.width = width;
-      canvas.height = height;
-      return canvas;
-    },
+    (width, height) => createDetachedCanvas(width, height),
     (width, height) => {
       if (typeof ImageData !== 'undefined') {
         try {

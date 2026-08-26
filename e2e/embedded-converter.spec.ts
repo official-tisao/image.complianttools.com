@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 
 import { expect, test } from '@playwright/test';
+import { allowAllNetwork, denyAllNetwork } from './support/network.js';
 
 const redPixelPng = Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
@@ -36,10 +37,10 @@ test('embedded converter emits an LVGL v9 RGB565A8 descriptor locally', async ({
   expect(source).toContain('0x00, 0x00, 0xff');
   await expect(page.getByRole('status')).toContainText('3 bytes flash footprint');
   expect(await page.getByLabel('Exact embedded output').inputValue()).toBe(source);
-  await context.setOffline(true);
+  await denyAllNetwork(context);
   await page.getByRole('button', { name: 'Generate output' }).click();
   await expect(page.getByLabel('Exact embedded output')).toHaveValue(/LV_COLOR_FORMAT_RGB565A8/u);
-  await context.setOffline(false);
+  await allowAllNetwork(context);
 });
 
 test('embedded converter reports corrupt input with a typed remedy', async ({ page }) => {
