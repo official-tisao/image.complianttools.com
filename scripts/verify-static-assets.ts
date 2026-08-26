@@ -33,6 +33,10 @@ const allowedLicenses = new Set([
 
 const toPosix = (value: string) => value.split(path.sep).join('/');
 
+// First-party deployment config is not a third-party licensable asset and has no
+// source/licence URL; it is excluded from the register walk rather than registered.
+const deploymentConfigFiles = new Set(['_headers', '_redirects', '_routes.json']);
+
 async function walk(directory: string): Promise<string[]> {
   if (!existsSync(directory)) return [];
   const entries = await readdir(directory, { withFileTypes: true });
@@ -80,7 +84,9 @@ export async function verifyStaticAssets(): Promise<void> {
     rows.set(record.path, record);
   }
 
-  const files = (await walk(staticRoot)).filter((file) => path.basename(file) !== '.gitkeep');
+  const files = (await walk(staticRoot)).filter(
+    (file) => path.basename(file) !== '.gitkeep' && !deploymentConfigFiles.has(path.basename(file)),
+  );
   for (const absolute of files) {
     const relative = toPosix(path.relative(root, absolute));
     const record = rows.get(relative);
