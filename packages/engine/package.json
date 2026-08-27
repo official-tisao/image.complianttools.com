@@ -3,11 +3,94 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "exports": "./dist/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./ops/raster": {
+      "types": "./dist/ops/raster.d.ts",
+      "default": "./dist/ops/raster.js"
+    },
+    "./codecs/encode": {
+      "types": "./dist/codecs/encode.d.ts",
+      "default": "./dist/codecs/encode.js"
+    },
+    "./codecs/gif": {
+      "types": "./dist/codecs/third-party/gif.d.ts",
+      "default": "./dist/codecs/third-party/gif.js"
+    },
+    "./codecs/apng": {
+      "types": "./dist/codecs/simple/apng.d.ts",
+      "default": "./dist/codecs/simple/apng.js"
+    },
+    "./codecs/animated-webp": {
+      "types": "./dist/codecs/simple/animated-webp.d.ts",
+      "default": "./dist/codecs/simple/animated-webp.js"
+    },
+    "./codecs/animation-video": {
+      "types": "./dist/codecs/platform/animation-video.d.ts",
+      "default": "./dist/codecs/platform/animation-video.js"
+    },
+    "./codecs/svg/vectorize": {
+      "types": "./dist/codecs/svg/vectorize.d.ts",
+      "default": "./dist/codecs/svg/vectorize.js"
+    },
+    "./codecs/avif-encode": {
+      "types": "./dist/codecs/third-party/avif-encode.d.ts",
+      "default": "./dist/codecs/third-party/avif-encode.js"
+    },
+    "./codecs/jxl-encode": {
+      "types": "./dist/codecs/third-party/jxl-encode.d.ts",
+      "default": "./dist/codecs/third-party/jxl-encode.js"
+    },
+    "./pipeline/execute": {
+      "types": "./dist/pipeline/execute.d.ts",
+      "default": "./dist/pipeline/execute.js"
+    },
+    "./pipeline/target-size": {
+      "types": "./dist/pipeline/target-size.d.ts",
+      "default": "./dist/pipeline/target-size.js"
+    },
+    "./documents/pdf": {
+      "types": "./dist/documents/pdf.d.ts",
+      "default": "./dist/documents/pdf.js"
+    },
+    "./documents/pdf-read": {
+      "types": "./dist/documents/pdf-read.d.ts",
+      "default": "./dist/documents/pdf-read.js"
+    },
+    "./errors": {
+      "types": "./dist/errors.d.ts",
+      "default": "./dist/errors.js"
+    },
+    "./export/embedded": {
+      "types": "./dist/export/embedded.d.ts",
+      "default": "./dist/export/embedded.js"
+    },
+    "./metadata/container": {
+      "types": "./dist/metadata/container.d.ts",
+      "default": "./dist/metadata/container.js"
+    },
+    "./schemas/options": {
+      "types": "./dist/schemas/options.d.ts",
+      "default": "./dist/schemas/options.js"
+    },
+    "./types": {
+      "types": "./dist/types.d.ts",
+      "default": "./dist/types.js"
+    },
+    "./*": {
+      "types": "./dist/*.d.ts",
+      "default": "./dist/*.js"
+    }
+  },
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "test": "node test/all.test.mjs && vitest run test/codec-roundtrip.test.ts test/phase1.test.ts test/bmp-codec.test.ts test/codec-registry.test.ts test/simple-codec-framework.test.ts test/qoi-codec.test.ts test/tga-codec.test.ts test/exr-codec.test.ts test/tiff-codec.test.ts",
+    "bench": "node bench/run.mjs",
+    "bench:operations": "node bench/operations.mjs",
+    "test": "node test/all.test.mjs && vitest run test --exclude test/**/*.test.mjs",
     "lint": "tsc -p tsconfig.json --noEmit",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
@@ -23,9 +106,17 @@
     "@jsquash/oxipng": "2.3.0",
     "@jsquash/png": "3.1.1",
     "@jsquash/webp": "1.5.0",
+    "@resvg/resvg-wasm": "2.6.2",
+    "ag-psd": "31.0.2",
+    "dxf-parser": "1.1.2",
     "fflate": "0.8.3",
     "gifuct-js": "2.1.2",
+    "imagetracerjs": "1.2.6",
+    "mediabunny": "1.25.1",
+    "mp4box": "2.4.1",
     "parse-exr": "1.0.2",
+    "pdf-lib": "1.17.1",
+    "pdfjs-dist": "5.4.624",
     "utif": "3.1.0",
     "zod": "4.4.3"
   }

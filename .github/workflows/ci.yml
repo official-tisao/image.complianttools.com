@@ -68,6 +68,27 @@ jobs:
               body: '⚠️ `[plan-exempt]` was used: `README.md` changed without `PLAN.md` in this pull request.'
             })
 
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Test
+        run: pnpm test && pnpm test:gates
+
+      - name: Build
+        run: pnpm build
+
+      - name: Enforce absolute metadata-read latency budget
+        run: pnpm --filter @complianttools/image-engine bench
+
+      - name: Verify every shipped route budget
+        run: pnpm verify:route-budgets
+
+      - name: Enforce artifact size limits
+        run: pnpm size
+
   no-network:
     name: no-network
     runs-on: ubuntu-latest
@@ -86,6 +107,125 @@ jobs:
       - run: pnpm exec playwright install --with-deps chromium firefox webkit
       - run: pnpm test:no-network
 
+  browser-e2e:
+    name: browser-e2e
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.5
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium firefox webkit
+      - run: pnpm test:e2e
+
+  lighthouse:
+    name: lighthouse (${{ matrix.group }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - group: core
+            urls: --url=http://127.0.0.1:4174/convert --url=http://127.0.0.1:4174/compress --url=http://127.0.0.1:4174/resize --url=http://127.0.0.1:4174/heic-converter --url=http://127.0.0.1:4174/raw-converter
+          - group: modern-formats
+            urls: --url=http://127.0.0.1:4174/avif-converter --url=http://127.0.0.1:4174/webp-converter --url=http://127.0.0.1:4174/jxl-converter --url=http://127.0.0.1:4174/svg-to-png --url=http://127.0.0.1:4174/image-to-svg
+          - group: document-and-export
+            urls: --url=http://127.0.0.1:4174/pdf-to-image --url=http://127.0.0.1:4174/image-to-pdf --url=http://127.0.0.1:4174/favicon-generator --url=http://127.0.0.1:4174/gif-converter --url=http://127.0.0.1:4174/embedded-converter
+          - group: data-and-metadata
+            urls: --url=http://127.0.0.1:4174/base64-image --url=http://127.0.0.1:4174/cbz-converter --url=http://127.0.0.1:4174/exif-viewer --url=http://127.0.0.1:4174/remove-exif --url=http://127.0.0.1:4174/image-info
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.5
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - name: Collect three fresh-browser measurements per route
+        run: pnpm exec lhci collect ${{ matrix.urls }} --numberOfRuns=3
+      - name: Enforce Lighthouse thresholds
+        run: pnpm exec lhci assert
+
+  embedded-compile:
+    name: embedded-compile
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: lvgl/lvgl
+          ref: 4495f428630cc1741bd8bfd977f080e8460e8e8d
+          path: .lvgl/v8
+      - uses: actions/checkout@v4
+        with:
+          repository: lvgl/lvgl
+          ref: 85aa60d18b3d5e5588d7b247abf90198f07c8a63
+          path: .lvgl/v9
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.5
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @complianttools/image-engine build
+      - run: node scripts/write-embedded-compile-fixtures.mjs .generated/lvgl
+      - name: Compile generated sources against real LVGL v8 and v9
+        run: |
+          cc -std=c11 -Wall -Wextra -Werror -DLV_CONF_SKIP -I .lvgl/v8 -c .generated/lvgl/lvgl-v8.c -o .generated/lvgl/lvgl-v8.o
+          cc -std=c11 -Wall -Wextra -Werror -DLV_CONF_SKIP -I .lvgl/v9 -c .generated/lvgl/lvgl-v9.c -o .generated/lvgl/lvgl-v9.o
+      - uses: arduino/setup-arduino-cli@v2
+      - name: Install pinned Arduino targets and libraries
+        run: |
+          arduino-cli config init
+          arduino-cli config add board_manager.additional_urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
+          arduino-cli core update-index
+          arduino-cli core install arduino:avr@1.8.6
+          arduino-cli core install esp32:esp32@3.3.8
+          arduino-cli lib install "Adafruit GFX Library@1.12.6"
+          arduino-cli lib install "TFT_eSPI@2.5.43"
+      - name: Compile generated Adafruit GFX and TFT_eSPI sketches
+        run: |
+          arduino-cli compile --fqbn arduino:avr:uno .generated/lvgl/adafruit
+          arduino-cli compile --fqbn esp32:esp32:esp32 .generated/lvgl/tft-espi
+
+  raw-corpus:
+    name: raw-corpus
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.5
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Cache hash-pinned CC0 RAW corpus
+        uses: actions/cache@v4
+        with:
+          path: .cache/raw-corpus
+          key: raw-corpus-${{ hashFiles('packages/engine/test/fixtures/raw-real-corpus.json') }}
+      - run: pnpm verify:raw-corpus
+
   credential-leak:
     name: credential-leak
     runs-on: ubuntu-latest
@@ -102,15 +242,3 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm test:credential-leak
-
-      - name: Lint
-        run: pnpm lint
-
-      - name: Typecheck
-        run: pnpm typecheck
-
-      - name: Test
-        run: pnpm test && pnpm test:gates
-
-      - name: Build
-        run: pnpm build

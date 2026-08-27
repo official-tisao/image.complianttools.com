@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { OptionDescription } from '@complianttools/image-engine';
+  import type { OptionDescription } from '@complianttools/image-engine/schemas/options';
   import { translate, type Locale } from './i18n';
   let {
     descriptions,
@@ -48,6 +48,7 @@
           type="range"
           min={description.min}
           max={description.max}
+          step={description.step}
           value={Number(current(path, description))}
           oninput={(event) => onChange(path, Number(event.currentTarget.value))}
         /><input
@@ -55,6 +56,7 @@
           type="number"
           min={description.min}
           max={description.max}
+          step={description.step}
           value={Number(current(path, description))}
           oninput={(event) => onChange(path, Number(event.currentTarget.value))}
         /><span>{description.unit}</span>
@@ -65,6 +67,8 @@
           id={`control-${path}`}
           type="number"
           min={description.min}
+          max={description.max}
+          step={description.step}
           value={Number(current(path, description))}
           oninput={(event) => onChange(path, Number(event.currentTarget.value))}
         /><span>{description.unit}</span>
@@ -74,21 +78,24 @@
         {#each description.options ?? [] as option (option)}<button
             type="button"
             aria-pressed={current(path, description) === option}
-            onclick={() => onChange(path, option)}>{option}</button
+            onclick={() => onChange(path, option)}
+            >{description.optionLabels?.[option] ?? option}</button
           >{/each}
       </div>
     {:else if description.control === 'select' || description.control === 'segmented'}
       <select
         id={`control-${path}`}
         value={String(current(path, description))}
-        onchange={(event) => onChange(path, event.currentTarget.value)}
-        >{#each description.options ?? [] as option (option)}<option value={option}>{option}</option
+        oninput={(event) => onChange(path, event.currentTarget.value)}
+        >{#each description.options ?? [] as option (option)}<option value={option}
+            >{description.optionLabels?.[option] ?? option}</option
           >{/each}</select
       >
     {:else}
       <input
         id={`control-${path}`}
         type={description.control === 'color' ? 'color' : 'text'}
+        pattern={description.pattern}
         value={String(current(path, description))}
         oninput={(event) => onChange(path, event.currentTarget.value)}
       />

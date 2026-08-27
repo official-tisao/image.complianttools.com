@@ -438,7 +438,7 @@ degrades to something honest rather than to nothing.
 | TIFF | `.tif .tiff` | D | E | A | UTIF.js (MIT) | LZW / Deflate / PackBits / JPEG / none, multipage, tiled, CMYK, 16-bit |
 | ICO | `.ico` | D | E | — | custom muxer | Multi-image; 16 → 512 px; PNG or BMP payload |
 | CUR | `.cur` | D | E | — | custom muxer | ICO variant with hotspot |
-| HEIC / HEIF | `.heic .heif .hif` | D† | **never** | A | platform `ImageDecoder` | †Decode only, and only where the OS provides a decoder (macOS/iOS, recent Windows) — capability-probed per §5.7. **Encode is permanently excluded**: HEVC has multiple active patent pools and the only encoders are GPL or commercial (§25.3.2). The UI states this as a deliberate decision, not a missing feature |
+| HEIC / HEIF | `.heic .heif .hif` | D† | **never** | A | platform image decoder | †Decode only, and only where the OS/browser provides a decoder (macOS/iOS, recent Windows) — WebCodecs `ImageDecoder` is probed first, then the native `createImageBitmap` / image-element path. **Encode is permanently excluded**: HEVC has multiple active patent pools and the only encoders are GPL or commercial (§25.3.2). The UI states this as a deliberate decision, not a missing feature |
 | TGA | `.tga .icb .vda .vst` | D | E | — | our own | RLE, 16/24/32-bit, origin flag |
 | PCX | `.pcx` | D | E | — | our own | |
 | PPM / PGM / PBM / PNM | `.ppm .pgm .pbm .pnm` | D | E | — | our own | ASCII + binary |
@@ -446,12 +446,12 @@ degrades to something honest rather than to nothing.
 | WBMP | `.wbmp` | D | E | — | custom | 1-bit wireless bitmap (OC parity) |
 | XBM / XPM | `.xbm .xpm` | D | E | — | our own | |
 | DDS | `.dds` | D | E | — | custom + BCn codec | DXT1/3/5, BC4/5/7, mipmaps, cubemaps |
-| KTX / KTX2 | `.ktx .ktx2` | D | E | — | custom + basis | Basis Universal / UASTC / ETC1S |
+| KTX / KTX2 | `.ktx .ktx2` | — | — | — | **v1 unsupported** | No pinned, verified Basis Universal transcoder is shipped for ETC1S/UASTC; a reproducible encoder build and conformance corpus are still required |
 | Radiance HDR | `.hdr .pic` | D | E | — | our own (RGBE) | 32-bit RGBE; tone-map on export to SDR |
-| OpenEXR | `.exr` | D | E | — | tinyexr (BSD-3) | Half / float, ZIP / PIZ compression |
+| OpenEXR | `.exr` | — | — | — | **v1 unsupported** | A small experimental parser is fixture-tested but does not establish complete ZIP/PIZ interoperability. A reproducible, licence-recorded TinyEXR WASM build has not been produced, so production decode/encode are not offered |
 | PFM | `.pfm` | D | E | — | our own | |
 | FITS | `.fits .fit` | D | — | — | our own | Astronomy |
-| JPEG 2000 | `.jp2 .j2k .jpf .jpx .jpm` | D | E | — | OpenJPEG (BSD-2) | |
+| JPEG 2000 | `.jp2 .j2k .jpf .jpx .jpm` | — | — | — | **v1 unsupported** | No verified permissive browser package exists, and a reproducible, licence-recorded OpenJPEG WASM build has not been produced |
 | SGI / RGB | `.sgi .rgb .bw` | D | E | — | our own | |
 | Sun Raster | `.ras .sun` | D | — | — | our own | |
 | PICT | `.pct .pict` | — | — | — | **dropped** — legacy, complex, and the only viable decoders are copyleft. Reported unsupported with the reason | Legacy Mac |
@@ -467,10 +467,11 @@ CloudConvert's published sets.
 
 **Two-stage support, and the stages are advertised separately so nothing is oversold:**
 
-- **Stage 1 — embedded preview (all formats below, ships first).** Every camera RAW file carries a
-  full-size JPEG preview in its IFD structure. Extracting it needs only our existing TIFF/EXIF parser,
-  is near-instant, and gives the camera's own rendering — which is what most people converting a RAW
-  to JPEG actually want. Labelled *"camera preview"* in the UI, never passed off as a raw develop.
+- **Stage 1 — embedded preview (all formats below, ships first).** Extract the largest camera-rendered
+  preview exposed by the container/IFD structure. JPEG previews remain byte-for-byte intact; TIFF-derived
+  formats that store an uncompressed RGB preview are exported losslessly as BMP. This uses bounded
+  container/IFD parsing and no demosaic. Labelled *"camera preview"* in the UI, never passed off as a raw
+  develop. Preview availability and dimensions remain camera/file-dependent.
 - **Stage 2 — full develop (phased, DNG first).** Our own demosaic and colour pipeline, per §5.3's
   option list. Formats without Stage 2 support say so plainly rather than silently using Stage 1.
 
@@ -483,10 +484,10 @@ CloudConvert's published sets.
 | Olympus / OM System | `.orf` |
 | Panasonic | `.rw2 .raw` |
 | Pentax / Ricoh | `.pef .ptx` |
-| Leica | `.rwl .drf .dng` |
+| Leica | `.rwl .dng` |
 | Sigma | `.x3f` |
 | Samsung | `.srw` |
-| Kodak | `.dcr .kdc .k25 .dcs` |
+| Kodak | `.dcr .kdc .k25 .dcs .drf` |
 | Epson | `.erf` |
 | Mamiya | `.mef` |
 | Minolta | `.mrw .mdc` |
@@ -496,6 +497,15 @@ CloudConvert's published sets.
 | Casio | `.bay` |
 | Adobe (open standard) | `.dng` |
 | Other / generic | `.raw .rwz .cs1` |
+
+Stage 1 has a SHA-verified real-file corpus for `.3fr`, `.arw`, `.cr2`, `.cr3`, `.crw`, `.dcr`,
+`.dng`, `.erf`, `.fff`, `.iiq`, `.kdc`, `.mos`, `.nef`, `.nrw`, `.orf`, `.pef`, `.raf`, `.raw`,
+`.rw2`, `.rwl`, `.sr2`, `.srf`, `.srw`, and `.x3f`. The following v1 extensions are deliberately
+reported unavailable before processing rather than guessed: `.bay`, `.cap`, `.crf`, `.cs1`, `.dcs`,
+`.drf`, `.k25`, `.mef`, `.ptx`, and `.rwz` have no hash-pinned redistributable real-file corpus or
+published container conformance evidence recorded in this repository. Verified `.mdc` and `.mrw`
+samples contain no embedded camera rendering, and Stage 2 does not ship a proprietary sensor decoder.
+The RAW tool gives the camera-software → DNG/TIFF/JPEG export remedy for each unavailable extension.
 
 **RAW pipeline options** (T03): white balance (`as-shot` / `camera` / `auto` / `daylight` / custom
 temp + tint), demosaic algorithm (`AHD` / `VNG` / `PPG` / `DCB` / `linear`), highlight recovery
@@ -544,12 +554,13 @@ an `LV_IMG_DECLARE` / `lv_image_set_src` usage snippet.
 
 ### 5.6 Video input (T13 only)
 
-Decode only, for frame extraction: `.mp4 .m4v .mov .webm .mkv .avi .ogv .wmv† .flv† .3gp .mts .m2ts`
-Implemented with the platform's **WebCodecs `VideoDecoder`** plus `mp4box.js` (BSD-3) and
-`jswebm` (MIT) for demuxing — no bundled codec, no download, no patent exposure, and hardware
-acceleration for free. Container and codec support is therefore **whatever the browser provides**, so
-it is capability-probed per §5.7 and reported honestly rather than promised. Formats the platform
-cannot decode say exactly that.
+Decode only, for frame extraction: `.mp4 .m4v .mov .webm .mkv .avi† .ogv .wmv† .flv† .3gp .mts† .m2ts†`
+Implemented with the platform's **WebCodecs `VideoDecoder`** plus `mp4box` (BSD-3) and
+`mediabunny` (MPL-2.0) for ISO-BMFF (MP4/M4V/MOV/3GP), Matroska/WebM, and Ogg container reading — no
+bundled codec, no patent exposure, and hardware acceleration for free. AVI, WMV, FLV, MTS, and M2TS
+are explicitly unavailable because the pinned local reader does not parse those containers and an
+FFmpeg fallback is deliberately excluded. For readable containers, codec support is **whatever the
+browser provides**, so it is capability-probed per §5.7 and reported honestly rather than promised.
 
 ### 5.7 Runtime capability probing
 
@@ -827,12 +838,12 @@ own origin with long-lived immutable cache headers and SRI-equivalent integrity 
 | Resize (high quality) | `@jsquash/resize` + `pica` | `pica` for the interactive path (fast, WebGL/worker), jSquash for final export fidelity | eager |
 | **Simple raster long tail** — BMP, DIB, TGA, PCX, PPM/PGM/PBM/PNM/PAM, WBMP, XBM/XPM, ICO, CUR, DDS, QOI, SGI/RGB, Sun Raster, Radiance HDR, PFM, FITS | **our own**, `packages/engine/src/codecs/simple/` | These are byte-layout formats with public specifications — each is 100–400 lines, and writing them removes the need for any copyleft mega-dependency. See §25.4 | eager (tiny) |
 | TIFF | `UTIF.js` | MIT. Baseline + LZW/Deflate/PackBits, multipage | lazy |
-| OpenEXR | `tinyexr` (WASM) | BSD-3 | lazy |
-| JPEG 2000 | `OpenJPEG` (WASM) | BSD-2 | lazy |
+| OpenEXR | **v1 unsupported**; experimental `parse-exr` is not exposed as production support | A complete, reproducible TinyEXR WASM build has not been produced | none |
+| JPEG 2000 | **v1 unsupported** | No verified browser distribution or reproducible, licence-recorded OpenJPEG WASM build exists | none |
 | GIF decode | `gifuct-js` | MIT | eager |
 | GIF encode + optimize | **our own**, `codecs/gif/` | `gifsicle` is **GPL-2.0** and cannot ship. We implement LZW (patent expired 2004), palette quantization, frame differencing, transparency optimization, and the `-O1..3`-equivalent passes ourselves. See §25.4 | eager |
-| HEIC / HEIF decode | **platform `ImageDecoder`** (WebCodecs) | `libheif` is **LGPL-3.0** and HEVC carries active patent pools. We use the OS decoder where the platform provides one and report unavailable elsewhere. **No HEIC encode, ever** | none — platform |
-| Camera RAW | **our own**, `codecs/raw/` | `LibRaw` is **LGPL-2.1**. Stage 1 extracts the full-size embedded JPEG preview that essentially every RAW file carries — reusing our TIFF/EXIF parser, no decoder needed, and enough for most users. Stage 2 is our own demosaic pipeline, starting with DNG (Adobe's spec is published) | lazy |
+| HEIC / HEIF decode | **platform image APIs** (`ImageDecoder`, then `createImageBitmap` / image element) | `libheif` is **LGPL-3.0** and HEVC carries active patent pools. We use the OS/browser decoder where the platform provides one and report unavailable elsewhere. **No HEIC encode, ever** | none — platform |
+| Camera RAW | **our own**, `codecs/raw/` | `LibRaw` is **LGPL-2.1**. Stage 1 extracts the largest embedded camera rendering — preserving JPEG previews byte-for-byte and losslessly exporting uncompressed RGB TIFF previews as BMP — using bounded container/IFD parsing and no demosaic. Stage 2 is our own demosaic pipeline, starting with DNG (Adobe's spec is published) | lazy |
 | SVG → raster | `@resvg/resvg-wasm` | MPL-2.0 — file-level copyleft, allowlisted, no linking obligation | lazy |
 | Raster → SVG | `imagetracerjs` | **Public domain (Unlicense).** Explicitly *not* `potrace`, which is **GPL-2.0** | lazy |
 | PDF read | `pdfjs-dist` | Apache-2.0 | lazy |
@@ -3498,7 +3509,7 @@ record of what changed and why, and it is the answer to "did you check?".
 | --- | --- | --- | --- |
 | `wasm-vips` (libvips) | LGPL-2.1 | Our own decoders for ~16 simple formats (§25.4), `UTIF.js` (MIT) for TIFF, `tinyexr` (BSD-3), `OpenJPEG` (BSD-2) | Real work — this was one dependency covering ~40 formats. But those formats are mostly trivial byte layouts, and we lose a 12 MB download |
 | `gifsicle` | GPL-2.0 | Our own GIF encoder and optimizer (§25.4); `gifuct-js` (MIT) to decode | Moderate. LZW has been patent-free since 2004 |
-| `libheif` + `x265` | LGPL-3.0 / GPL-2.0 | Platform `ImageDecoder` (WebCodecs). **HEIC encode dropped entirely** | Decode narrows to platforms with OS support. Honest capability reporting handles it (P8) |
+| `libheif` + `x265` | LGPL-3.0 / GPL-2.0 | Platform image decoding (`ImageDecoder`, then native bitmap/image fallback). **HEIC encode dropped entirely** | Decode narrows to platforms with OS/browser support. Honest capability reporting handles it (P8) |
 | `LibRaw` | LGPL-2.1 | Our own RAW pipeline (§25.4) — embedded-preview extraction first, then our own demosaic | Significant, phased. Preview extraction alone satisfies most users and is nearly free given our TIFF/EXIF parser |
 | Ghostscript | AGPL-3.0 | Our own EPS preview extractor + minimal PS subset | Full PostScript rendering is gone. Reported honestly rather than half-working |
 | `potrace` | GPL-2.0 | `imagetracerjs` (public domain) | None — comparable quality for our use |
@@ -3593,6 +3604,14 @@ unreviewed by being absent from both.
 | `utif` 3.1.0 (UTIF.js) | **MIT — verified 2026-08-18** | TIFF decode/encode. Upstream `photopea/UTIF.js`; the `utif2` fork was rejected in favour of the canonical package |
 | `gifuct-js` 2.1.2 | **MIT — verified 2026-08-18** | GIF decode |
 | `parse-exr` 1.0.2 | **MIT — verified 2026-08-18** | OpenEXR decode; ESM parser with bundled types, depends only on allowlisted `fflate` 0.8.3 |
+| `imagetracerjs` 1.2.6 | **Unlicense — verified 2026-08-19** | Browser-local raster-to-SVG vectorization; no runtime network access |
+| `@resvg/resvg-wasm` 2.6.2 | **MPL-2.0 — verified 2026-08-19** | Browser-local SVG rasterization. We use the upstream package unmodified through a local wrapper; its WASM only loads after an SVG is selected |
+| `pdfjs-dist` 5.4.624 | **Apache-2.0 — verified 2026-08-19** | Browser-local PDF page rendering with a bundled local worker; no document content is sent to a service |
+| `pdf-lib` 1.17.1 | **MIT — verified 2026-08-19** | Browser-local PDF creation for image-to-PDF output; generated documents remain on the device |
+| `mp4box` 2.4.1 | **BSD-3-Clause — verified 2026-08-19** | Browser-local MP4 container demuxing before WebCodecs decoding; no bundled video codec |
+| `mediabunny` 1.25.1 | **MPL-2.0 — verified 2026-08-19** | Browser-local MP4 and WebM container reading over platform WebCodecs; its TypeScript source is used unmodified and no media is uploaded |
+| `ag-psd` 31.0.2 | **MIT — verified 2026-08-19** | Browser-local PSD/PSB read and write; no upload or external service |
+| `dxf-parser` 1.1.2, transitive `loglevel` 1.9.2 | **MIT — verified 2026-08-22** | Browser-local DXF parsing; both installed manifests and bundled MIT licence files verified |
 | `pako` 1.0.11 | **MIT AND Zlib — verified 2026-08-18** | Deflate, pulled in by `utif`. Both terms of the conjunction are allowlisted |
 
 ##### Candidate register — not installed, licences unverified
@@ -3612,13 +3631,9 @@ meaningless.
 | `tinyexr` | BSD-3 | Superseded for browser decode by pinned `parse-exr` 1.0.2 (MIT); retain only as a possible future WASM implementation |
 | JPEG 2000 decoder | — | **No usable npm distribution.** The `openjpeg` package (0.2.3) publishes **no licence field at all**, which the gate denies by rule, and is an unaffiliated personal fork. Upstream OpenJPEG is BSD-2; a vendored WASM build would clear. See P2-04a |
 | `mp4box.js` | BSD-3 | MP4 demux |
-| `pdfjs-dist` | Apache-2.0 | PDF read |
 | `pdf-lib` | MIT | PDF write |
-| `ag-psd` | MIT | PSD |
 | `imagetracerjs` | Unlicense (public domain) | Vectorize |
-| `@resvg/resvg-wasm` | **MPL-2.0** | SVG rasterize. File-level copyleft — allowed, but we must publish the source of any MPL file we modify. **Do not modify it**; wrap it. Recorded as an ADR |
 | `libarchive.js` → libarchive | BSD-2 | CBZ/CBR. ⚠ Confirm the RAR reader used is libarchive's own BSD implementation and **not** derived from the `unrar` source, whose licence forbids reuse |
-| `dxf-parser` | MIT | DXF |
 | OpenCV (custom build: `core`, `imgproc`, `photo`) | Apache-2.0 (since 4.5.0) | Tier 1 CV heavy ops. Licence ✅; **algorithm patents cleared separately** in §25.3.2 |
 | `onnxruntime-web` | MIT | Tier 2 model runtime |
 | `tesseract.js` | Apache-2.0 | OCR engine |
@@ -3684,7 +3699,7 @@ deliberate engineering commitment with a home in the repo, not a hand-wave.
 | --- | --- | --- | --- |
 | **Simple-format codec framework** | `codecs/simple/` | BMP, DIB, TGA, PCX, PPM/PGM/PBM/PNM/PAM, WBMP, XBM/XPM, ICO, CUR, DDS (BCn), QOI, SGI, Sun Raster, Radiance HDR, PFM, FITS | Public specs, fixed byte layouts, no entropy coding beyond RLE. 100–400 lines each. A shared `BitReader`/`BitWriter` and a declarative header-descriptor DSL make them near-mechanical |
 | **GIF encoder + optimizer** | `codecs/gif/` | LZW encode, palette quantization (Wu / median-cut / octree), frame differencing, transparency optimization, dispose-method selection, `-O1..3` equivalents | Format is fully specified; LZW is patent-free; the optimization passes are well-documented techniques |
-| **RAW pipeline** | `codecs/raw/` | **Stage 1:** extract the full-size embedded JPEG preview (TIFF/IFD walk — reuses our EXIF parser). **Stage 2:** our own demosaic (AHD, VNG, bilinear), black/white level, WB, colour-matrix, tone curve, starting with DNG | Stage 1 is nearly free and covers the common need. DNG's spec is published by Adobe; the major proprietary formats are TIFF-derived and well documented by the open community |
+| **RAW pipeline** | `codecs/raw/` | **Stage 1:** extract the largest embedded camera rendering (byte-preserved JPEG or lossless BMP from an uncompressed RGB TIFF preview) using bounded container/IFD parsing. **Stage 2:** our own demosaic (AHD, VNG, bilinear), black/white level, WB, colour-matrix, tone curve, starting with DNG | Stage 1 covers the common need without pretending that a camera preview is a raw develop. DNG's spec is published by Adobe; the major proprietary formats are TIFF-derived and well documented by the open community |
 | **EPS preview extractor + PS subset** | `codecs/eps/` | DCS/EPSF binary-header preview extraction; a small interpreter for path/fill/stroke/transform operators | Preview extraction is trivial and handles most real EPS files. The subset is bounded, and anything outside it is reported unsupported, not guessed |
 | **Pixel-art scaler** | `ops/upscale/pixelart/` | Our own 3×3-neighbourhood rule set for ×2/×3/×4, with edge-continuation and corner-rounding rules of our own design, tuned against a sprite corpus | The technique class is public; the specific rule tables are what is copyrighted, so we write our own. This is a fun, bounded, testable problem |
 | **Saliency-guided retargeting** (T81) | `ops/retarget/` | Non-uniform column/row scaling driven by a smoothed saliency profile, with protect/remove masks — replaces seam carving | Continuous warping, not discrete seam removal: a different mechanism, simpler to implement, and it avoids the temporal artefacts seam carving produces |

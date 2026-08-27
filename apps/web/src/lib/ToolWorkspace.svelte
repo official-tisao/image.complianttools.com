@@ -1,10 +1,10 @@
 <script lang="ts">
   import { onDestroy, untrack } from 'svelte';
-  import {
-    phaseOneOptionDescriptions,
-    searchTargetSize,
-    type Recipe,
-  } from '@complianttools/image-engine';
+  import { searchTargetSize } from '@complianttools/image-engine/pipeline/target-size';
+  import { getCodec, productionEncoderFormats } from '@complianttools/image-engine/codecs/registry';
+  import { decodeBmp } from '@complianttools/image-engine/codecs/simple/bmp';
+  import { phaseOneOptionDescriptions } from '@complianttools/image-engine/schemas/options';
+  import type { Recipe } from '@complianttools/image-engine/types';
   import CompareCanvas from './CompareCanvas.svelte';
   import GeneratedControls from './GeneratedControls.svelte';
   import { localizeOptions, translate, type Locale } from './i18n';
@@ -15,11 +15,13 @@
     title,
     description,
     locale = 'en',
+    canonicalPath = kind,
   } = $props<{
     kind: ToolKind;
     title: string;
     description: string;
     locale?: Locale;
+    canonicalPath?: string;
   }>();
   const initialKind = untrack(() => kind);
   let values = $state<Record<string, unknown>>({
@@ -41,21 +43,38 @@
   let latency = $state(0);
   let targetProgress = $state('');
   let updateTimer: ReturnType<typeof setTimeout> | undefined;
-  const relevant = $derived(
-    Object.fromEntries(
-      Object.entries(localizeOptions(locale, phaseOneOptionDescriptions)).filter(([path]) =>
+  const encoderDisclosure = $derived(
+    productionEncoderFormats()
+      .map((format) => {
+        const codec = getCodec(format);
+        return `${format.toUpperCase()} ${formatBytes(codec.lazyBytes)}`;
+      })
+      .join(' · '),
+  );
+  const relevant = $derived.by(() => {
+    const localized = localizeOptions(locale, phaseOneOptionDescriptions);
+    const descriptions = {
+      ...localized,
+      'export.format': {
+        ...localized['export.format']!,
+        help: `Local encoder download before first use: ${encoderDisclosure}. The selected encoder is fetched only after you choose an image.`,
+        options: ['same', ...productionEncoderFormats()],
+      },
+    };
+    return Object.fromEntries(
+      Object.entries(descriptions).filter(([path]) =>
         kind === 'resize'
           ? path.startsWith('resize.') || path.startsWith('export.')
           : path.startsWith('export.'),
       ),
-    ),
-  );
+    );
+  });
   const summary = $derived(
     sourceBytes && outputBytes
       ? `${formatBytes(sourceBytes)} → ${formatBytes(outputBytes)} (${Math.round((outputBytes / sourceBytes - 1) * 100)}%)`
       : translate(locale, 'status.choose', 'Choose an image to begin'),
   );
-  const canonical = $derived(`https://image.complianttools.com/${kind}`);
+  const canonical = $derived(`https://image.complianttools.com/${canonicalPath}`);
   const jsonLd = $derived({
     '@context': 'https://schema.org',
     '@graph': [
@@ -129,14 +148,20 @@
     }
   }
   async function decode(file: File) {
-    const bitmap = await createImageBitmap(file);
-    const canvas = document.createElement('canvas');
-    canvas.width = bitmap.width;
-    canvas.height = bitmap.height;
-    const context = canvas.getContext('2d', { willReadFrequently: true })!;
-    context.drawImage(bitmap, 0, 0);
-    bitmap.close();
-    return context.getImageData(0, 0, canvas.width, canvas.height);
+    try {
+      const bitmap = await createImageBitmap(file);
+      const canvas = document.createElement('canvas');
+      canvas.width = bitmap.width;
+      canvas.height = bitmap.height;
+      const context = canvas.getContext('2d', { willReadFrequently: true })!;
+      context.drawImage(bitmap, 0, 0);
+      bitmap.close();
+      return context.getImageData(0, 0, canvas.width, canvas.height);
+    } catch (cause) {
+      if (file.type !== 'image/bmp' && !file.name.toLowerCase().endsWith('.bmp')) throw cause;
+      const decoded = decodeBmp(await file.arrayBuffer());
+      return new ImageData(decoded.frames[0].data.slice(), decoded.width, decoded.height);
+    }
   }
   function workerProcess(image: ImageData, recipe: Recipe): Promise<ImageData> {
     return new Promise((resolve, reject) => {
@@ -158,6 +183,24 @@
       worker.onerror = reject;
       const copy = image.data.slice().buffer;
       worker.postMessage({ width: image.width, height: image.height, data: copy, recipe }, [copy]);
+    });
+  }
+  function workerEncode(image: ImageData, format: 'jpeg' | 'png' | 'webp', quality: number) {
+    return new Promise<ArrayBuffer>((resolve, reject) => {
+      const worker = new Worker(new URL('../workers/encode-worker.ts', import.meta.url), {
+        type: 'module',
+      });
+      worker.onmessage = (event) => {
+        worker.terminate();
+        if (event.data.error) reject(new Error(event.data.error));
+        else resolve(event.data.bytes as ArrayBuffer);
+      };
+      worker.onerror = reject;
+      const copy = image.data.slice().buffer;
+      worker.postMessage(
+        { width: image.width, height: image.height, data: copy, format, quality },
+        [copy],
+      );
     });
   }
   async function predictSize(image: ImageData) {
@@ -241,23 +284,12 @@
         },
       };
       const result = await workerProcess(image, recipe);
-      const canvas = document.createElement('canvas');
-      canvas.width = result.width;
-      canvas.height = result.height;
-      canvas.getContext('2d')!.putImageData(result, 0, 0);
-      const format =
-        values['export.format'] === 'same' ? file.type : `image/${values['export.format']}`;
-      const quality = Number(values['export.quality']) / 100;
-      const blob = await new Promise<Blob>((resolve, reject) =>
-        canvas.toBlob(
-          (value) =>
-            value
-              ? resolve(value)
-              : reject(new Error('This browser cannot encode the selected format.')),
-          format,
-          quality,
-        ),
-      );
+      const selectedFormat = String(values['export.format']);
+      const inputFormat = file.type === 'image/jpeg' ? 'jpeg' : file.type.slice('image/'.length);
+      const format = (selectedFormat === 'same' ? inputFormat : selectedFormat) as
+        'jpeg' | 'png' | 'webp';
+      const bytes = await workerEncode(result, format, Number(values['export.quality']));
+      const blob = new Blob([bytes], { type: `image/${format}` });
       if (outputUrl) URL.revokeObjectURL(outputUrl);
       outputUrl = URL.createObjectURL(blob);
       outputBytes = blob.size;

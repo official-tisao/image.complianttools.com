@@ -55,14 +55,18 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `@jsquash/webp` | `1.5.0` | Apache-2.0 | [source](https://github.com/jamsinclair/jSquash#readme) |
 | `@lhci/cli` | `0.15.1` | Apache-2.0 | [source](https://github.com/GoogleChrome/lighthouse-ci#readme) |
 | `@lhci/utils` | `0.15.1` | Apache-2.0 | [source](https://github.com/GoogleChrome/lighthouse-ci#readme) |
+| `@napi-rs/canvas` | `0.1.100` | MIT | [source](https://github.com/Brooooooklyn/canvas#readme) |
 | `@nodelib/fs.scandir` | `2.1.5` | MIT | [source](https://github.com/nodelib/nodelib/tree/master#readme) |
 | `@nodelib/fs.stat` | `2.0.5` | MIT | [source](https://github.com/nodelib/nodelib/tree/master#readme) |
 | `@nodelib/fs.walk` | `1.2.8` | MIT | [source](https://github.com/nodelib/nodelib/tree/master#readme) |
 | `@oxc-project/types` | `0.143.0` | MIT | [source](https://oxc.rs) |
 | `@paulirish/trace_engine` | `0.0.53` | BSD-3-Clause | — |
+| `@pdf-lib/standard-fonts` | `1.0.0` | MIT | [source](https://github.com/Hopding/standard-fonts) |
+| `@pdf-lib/upng` | `1.0.1` | MIT | [source](https://github.com/Hopding/upng#readme) |
 | `@playwright/test` | `1.62.1` | Apache-2.0 | [source](https://playwright.dev) |
 | `@polka/url` | `1.0.0-next.29` | MIT | [source](https://github.com/lukeed/polka#readme) |
 | `@puppeteer/browsers` | `2.13.2` | Apache-2.0 | [source](https://github.com/puppeteer/puppeteer/tree/main#readme) |
+| `@resvg/resvg-wasm` | `2.6.2` | MPL-2.0 | [source](https://github.com/yisibl/resvg-js#readme) |
 | `@rolldown/pluginutils` | `1.0.1` | MIT | [source](https://github.com/rolldown/plugins/tree/main/packages/pluginutils#readme) |
 | `@sentry-internal/tracing` | `7.120.4` | MIT | [source](https://github.com/getsentry/sentry-javascript/tree/master/packages/tracing-internal) |
 | `@sentry/core` | `7.120.4` | MIT | [source](https://github.com/getsentry/sentry-javascript/tree/master/packages/core) |
@@ -83,6 +87,8 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `@types/chai` | `5.2.3` | MIT | [source](https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/chai) |
 | `@types/cookie` | `0.6.0` | MIT | [source](https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/cookie) |
 | `@types/deep-eql` | `4.0.2` | MIT | [source](https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/deep-eql) |
+| `@types/dom-mediacapture-transform` | `0.1.12` | MIT | [source](https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/dom-mediacapture-transform) |
+| `@types/dom-webcodecs` | `0.1.13` | MIT | [source](https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/dom-webcodecs) |
 | `@types/estree` | `1.0.9` | MIT | [source](https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/estree) |
 | `@types/json-schema` | `7.0.15` | MIT | [source](https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/json-schema) |
 | `@types/node` | `26.2.0` | MIT | [source](https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/node) |
@@ -107,6 +113,7 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `accepts` | `1.3.8` | MIT | [source](https://github.com/jshttp/accepts#readme) |
 | `acorn` | `8.18.0` | MIT | [source](https://github.com/acornjs/acorn) |
 | `acorn-jsx` | `5.3.2` | MIT | [source](https://github.com/acornjs/acorn-jsx) |
+| `ag-psd` | `31.0.2` | MIT | [source](https://github.com/Agamnentzar/ag-psd#readme) |
 | `agent-base` | `7.1.4` | MIT | [source](https://github.com/TooTallNate/proxy-agents#readme) |
 | `ajv` | `6.15.0` | MIT | [source](https://github.com/ajv-validator/ajv) |
 | `ansi-colors` | `4.1.3` | MIT | [source](https://github.com/doowb/ansi-colors) |
@@ -132,6 +139,7 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `bare-path` | `3.1.1` | Apache-2.0 | [source](https://github.com/holepunchto/bare-path#readme) |
 | `bare-stream` | `2.13.3` | Apache-2.0 | [source](https://github.com/holepunchto/bare-stream#readme) |
 | `bare-url` | `2.5.1` | Apache-2.0 | [source](https://github.com/holepunchto/bare-url) |
+| `base64-js` | `1.5.1` | MIT | [source](https://github.com/beatgammit/base64-js) |
 | `basic-ftp` | `5.3.1` | MIT | [source](https://github.com/patrickjuchli/basic-ftp#readme) |
 | `body-parser` | `1.20.6` | MIT | [source](https://github.com/expressjs/body-parser#readme) |
 | `brace-expansion` | `1.1.18` | MIT | [source](https://github.com/juliangruber/brace-expansion) |
@@ -195,6 +203,7 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `devtools-protocol` | `0.0.1608973` | BSD-3-Clause | [source](https://github.com/ChromeDevTools/devtools-protocol#readme) |
 | `dot-prop` | `5.3.0` | MIT | [source](https://github.com/sindresorhus/dot-prop#readme) |
 | `dunder-proto` | `1.0.1` | MIT | [source](https://github.com/es-shims/dunder-proto#readme) |
+| `dxf-parser` | `1.1.2` | MIT | [source](https://github.com/gdsestimating/dxf-parser) |
 | `ee-first` | `1.1.1` | MIT | [source](https://github.com/jonathanong/ee-first#readme) |
 | `emoji-regex` | `8.0.0` | MIT | [source](https://mths.be/emoji-regex) |
 | `encodeurl` | `2.0.0` | MIT | [source](https://github.com/pillarjs/encodeurl#readme) |
@@ -279,6 +288,7 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `iconv-lite` | `0.4.24` | MIT | [source](https://github.com/ashtuchkin/iconv-lite) |
 | `ignore` | `5.3.2` | MIT | [source](https://github.com/kaelzhang/node-ignore#readme) |
 | `image-ssim` | `0.2.0` | MIT | [source](https://github.com/darosh/image-ssim-js/issues) |
+| `imagetracerjs` | `1.2.6` | Unlicense | [source](https://github.com/jankovicsandras/imagetracerjs#readme) |
 | `immediate` | `3.0.6` | MIT | [source](https://github.com/calvinmetcalf/immediate#readme) |
 | `import-fresh` | `3.3.1` | MIT | [source](https://github.com/sindresorhus/import-fresh#readme) |
 | `imurmurhash` | `0.1.4` | MIT | [source](https://github.com/jensyt/imurmurhash-js) |
@@ -330,6 +340,7 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `lodash` | `4.18.1` | MIT | [source](https://lodash.com/) |
 | `lodash-es` | `4.18.1` | MIT | [source](https://lodash.com/custom-builds) |
 | `lodash.merge` | `4.6.2` | MIT | [source](https://lodash.com/) |
+| `loglevel` | `1.9.2` | MIT | [source](https://github.com/pimterry/loglevel) |
 | `lookup-closest-locale` | `6.2.0` | MIT | [source](https://github.com/format-message/format-message/tree/master/packages/lookup-closest-locale) |
 | `lru-cache` | `7.18.3` | ISC | [source](https://github.com/isaacs/node-lru-cache#readme) |
 | `magic-string` | `0.30.21` | MIT | [source](https://github.com/Rich-Harris/magic-string#readme) |
@@ -337,6 +348,7 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `marky` | `1.3.0` | Apache-2.0 | [source](https://github.com/nolanlawson/marky#readme) |
 | `math-intrinsics` | `1.1.0` | MIT | [source](https://github.com/es-shims/math-intrinsics#readme) |
 | `media-typer` | `0.3.0` | MIT | [source](https://github.com/jshttp/media-typer#readme) |
+| `mediabunny` | `1.25.1` | MPL-2.0 | [source](https://mediabunny.dev/) |
 | `merge-descriptors` | `1.0.3` | MIT | [source](https://github.com/sindresorhus/merge-descriptors#readme) |
 | `merge2` | `1.4.1` | MIT | [source](https://github.com/teambition/merge2) |
 | `metaviewport-parser` | `0.3.0` | MIT | [source](https://github.com/dontcallmedom/metaviewport-parser#readme) |
@@ -352,6 +364,7 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `minimist` | `1.2.8` | MIT | [source](https://github.com/minimistjs/minimist) |
 | `mitt` | `3.0.1` | MIT | [source](https://github.com/developit/mitt) |
 | `mkdirp` | `0.5.6` | MIT | [source](https://github.com/substack/node-mkdirp#readme) |
+| `mp4box` | `2.4.1` | BSD-3-Clause | [source](https://github.com/gpac/mp4box.js) |
 | `mri` | `1.2.0` | MIT | [source](https://github.com/lukeed/mri#readme) |
 | `mrmime` | `2.0.1` | MIT | [source](https://github.com/lukeed/mrmime#readme) |
 | `ms` | `2.0.0` | MIT | [source](https://github.com/vercel/ms#readme) |
@@ -364,6 +377,7 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `negotiator` | `0.6.4` | MIT | [source](https://github.com/jshttp/negotiator#readme) |
 | `netmask` | `2.1.1` | MIT | [source](https://github.com/rs/node-netmask) |
 | `node-fetch` | `2.7.0` | MIT | [source](https://github.com/bitinn/node-fetch) |
+| `node-readable-to-web-readable-stream` | `0.4.2` | MIT | [source](https://github.com/Borewit/node-readable-to-web-readable-stream#readme) |
 | `object-inspect` | `1.13.4` | MIT | [source](https://github.com/inspect-js/object-inspect) |
 | `obug` | `2.1.4` | MIT | [source](https://github.com/sxzz/obug#readme) |
 | `on-finished` | `2.4.1` | MIT | [source](https://github.com/jshttp/on-finished#readme) |
@@ -381,7 +395,8 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `p-try` | `2.2.0` | MIT | [source](https://github.com/sindresorhus/p-try#readme) |
 | `pac-proxy-agent` | `7.2.0` | MIT | [source](https://github.com/TooTallNate/proxy-agents#readme) |
 | `pac-resolver` | `7.0.1` | MIT | [source](https://github.com/TooTallNate/proxy-agents#readme) |
-| `pako` | `1.0.11` | (MIT AND Zlib) | [source](https://github.com/nodeca/pako) |
+| `pako` | `1.0.11` | (MIT AND Zlib) | [source](https://github.com/nodeca/pako#readme) |
+| `pako` | `2.1.0` | (MIT AND Zlib) | [source](https://github.com/nodeca/pako#readme) |
 | `parent-module` | `1.0.1` | MIT | [source](https://github.com/sindresorhus/parent-module#readme) |
 | `parse-cache-control` | `1.0.1` | BSD-2-Clause | [source](https://github.com/roryf/parse-cache-control#readme) |
 | `parse-exr` | `1.0.2` | MIT | [source](https://github.com/dmnsgn/parse-exr) |
@@ -391,6 +406,8 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `path-key` | `3.1.1` | MIT | [source](https://github.com/sindresorhus/path-key#readme) |
 | `path-to-regexp` | `0.1.13` | MIT | [source](https://github.com/pillarjs/path-to-regexp#readme) |
 | `pathe` | `2.0.3` | MIT | [source](https://github.com/unjs/pathe#readme) |
+| `pdf-lib` | `1.17.1` | MIT | [source](https://pdf-lib.js.org) |
+| `pdfjs-dist` | `5.4.624` | Apache-2.0 | [source](https://mozilla.github.io/pdf.js/) |
 | `pend` | `1.2.0` | MIT | [source](https://github.com/andrewrk/node-pend#readme) |
 | `picocolors` | `1.1.1` | ISC | [source](https://github.com/alexeyraspopov/picocolors#readme) |
 | `picomatch` | `2.3.2` | MIT | [source](https://github.com/micromatch/picomatch) |
@@ -562,6 +579,8 @@ Package metadata is not treated as sufficient for WASM codecs. The verifier walk
 | `@jsquash/oxipng` | `2.3.0` | Apache-2.0, MIT | `LICENSE`<br>`codec/LICENSE.codec.md` |
 | `@jsquash/png` | `3.1.1` | Apache-2.0, BSD-3-Clause | `LICENSE`<br>`codec/LICENSE.codec.md` |
 | `@jsquash/webp` | `1.5.0` | Apache-2.0, BSD-3-Clause | `LICENSE`<br>`codec/LICENSE.codec.md` |
+| `@resvg/resvg-wasm` | `2.6.2` | MPL-2.0 | `README.md` |
+| `pdfjs-dist` | `5.4.624` | Apache-2.0, BSD-3-Clause, MIT | `LICENSE`<br>`cmaps/LICENSE`<br>`iccs/LICENSE`<br>`standard_fonts/LICENSE_FOXIT`<br>`standard_fonts/LICENSE_LIBERATION`<br>`wasm/LICENSE_JBIG2`<br>`wasm/LICENSE_OPENJPEG`<br>`wasm/LICENSE_PDFJS_JBIG2`<br>`wasm/LICENSE_PDFJS_OPENJPEG`<br>`wasm/LICENSE_PDFJS_QCMS`<br>`wasm/LICENSE_QCMS` |
 | `playwright-core` | `1.62.1` | Apache-2.0 | `LICENSE`<br>`NOTICE` |
 
 ## Static assets

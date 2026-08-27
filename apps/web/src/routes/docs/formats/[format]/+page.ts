@@ -1,0 +1,294 @@
+const unavailableFormats = {
+  ktx: {
+    name: 'KTX / KTX2',
+    reason:
+      'No pinned, verified Basis Universal transcoder is shipped for ETC1S or UASTC payloads, and the project has not recorded a reproducible encoder build or conformance corpus.',
+    alternative: 'Export DDS BC1–BC5 for GPU textures, or PNG for lossless interchange.',
+  },
+  cbr: {
+    name: 'CBR',
+    reason:
+      'No pinned permissive browser RAR build has been verified to use libarchive’s BSD RAR implementation rather than restricted unrar-derived code.',
+    alternative: 'Rename numbered image pages into a CBZ/ZIP archive using the local CBZ tool.',
+  },
+  jp2: {
+    name: 'JPEG 2000',
+    reason:
+      'No verified permissive browser package exists, and a reproducible, licence-recorded OpenJPEG WASM build has not been produced.',
+    alternative: 'Use PNG for lossless interchange or JPEG/AVIF for photographs.',
+  },
+  exr: {
+    name: 'OpenEXR',
+    reason:
+      'The experimental parser does not establish complete ZIP/PIZ interoperability, and a reproducible, licence-recorded TinyEXR WASM build has not been produced.',
+    alternative:
+      'Export Radiance HDR, TIFF, or PNG from an application with complete OpenEXR support.',
+  },
+  pict: {
+    name: 'PICT',
+    reason: 'PICT is a complex legacy Mac format and the viable decoders are copyleft.',
+    alternative: 'Open the file in its source application and export PNG, SVG, or PDF.',
+  },
+  mng: {
+    name: 'MNG',
+    reason: 'MNG is a dormant legacy animation format and is deliberately outside the v1 scope.',
+    alternative: 'Use APNG for lossless animation or WebP for broader browser workflows.',
+  },
+  flif: {
+    name: 'FLIF',
+    reason: 'FLIF is superseded by JPEG XL and its reference decoder is copyleft.',
+    alternative: 'Use PNG, WebP, AVIF, or JPEG XL.',
+  },
+  cdr: {
+    name: 'CDR',
+    reason: 'CDR is proprietary and undocumented, so a reliable local decoder cannot be shipped.',
+    alternative: 'Export SVG or PDF from CorelDRAW before using this site.',
+  },
+  dwg: {
+    name: 'DWG',
+    reason: 'DWG is proprietary and no verified permissive browser decoder is available.',
+    alternative: 'Export DXF, SVG, or PDF from a CAD application.',
+  },
+  djvu: {
+    name: 'DjVu',
+    reason: 'DjVuLibre is GPL-2.0 and no permissive decoder with verified provenance is available.',
+    alternative: 'Convert the document to PDF or page images in a trusted desktop application.',
+  },
+  'heic-encode': {
+    name: 'HEIC encoding',
+    reason:
+      'HEIC encoding is deliberately excluded because HEVC has active patent pools and available browser encoders are GPL or commercial.',
+    alternative: 'Export JPEG, PNG, or WebP locally. HEIC decoding remains platform-dependent.',
+  },
+} as const;
+
+const supportedFormats = {
+  raw: {
+    name: 'Camera RAW / DNG',
+    summary: 'Camera RAW files preserve sensor data and may include an embedded camera rendering.',
+    notes:
+      'The local RAW tool has a SHA-verified real-file corpus for 3FR, ARW, CR2, CR3, CRW, DCR, DNG, ERF, FFF, IIQ, KDC, MOS, NEF, NRW, ORF, PEF, RAF, RAW, RW2, RWL, SR2, SRF, SRW, and X3F. JPEG previews are preserved byte-for-byte; uncompressed RGB TIFF previews are exported losslessly as BMP. BAY, CAP, CRF, CS1, DCS, DRF, K25, MEF, PTX, and RWZ are unavailable because no hash-pinned redistributable real-file corpus or published container conformance evidence is recorded. Verified MDC/MRW samples contain no embedded rendering. Full local development is limited to bounded Bayer DNG files.',
+  },
+  ai: {
+    name: 'Illustrator (AI)',
+    summary: 'Modern Illustrator files can use PDF as their compatible document representation.',
+    notes:
+      'The local PDF.js path reads modern PDF-compatible .ai files. Legacy PostScript Illustrator files are identified and refused with an export-as-PDF-or-SVG remedy.',
+  },
+  apng: {
+    name: 'APNG',
+    summary: 'Animated PNG stores lossless RGBA frames in standard PNG chunks.',
+    notes:
+      'The local codec handles frame offsets, source/over blending, loop metadata, and none/background/previous disposal.',
+  },
+  avif: {
+    name: 'AVIF',
+    summary: 'AVIF is an AV1-based image format designed for efficient still-image compression.',
+    notes:
+      'The pinned local WASM decoder is fixture-tested. Browser export remains hidden until its worker delivery path is build-verified, so the converter never advertises an encoder it cannot execute.',
+  },
+  bmp: {
+    name: 'BMP/DIB',
+    summary:
+      'BMP is an uncompressed Windows raster format suited to simple interchange and debugging.',
+    notes:
+      'The local codec reads and writes 32-bit RGBA pixels. BMP files are usually much larger than PNG.',
+  },
+  cbz: {
+    name: 'CBZ',
+    summary: 'CBZ is a ZIP archive whose naturally ordered image files form comic-book pages.',
+    notes:
+      'The local codec reads and writes bounded CBZ archives, rejects traversal paths, and orders numbered pages naturally. CBR/RAR remains unavailable pending verified permissive RAR provenance.',
+  },
+  eps: {
+    name: 'EPS / PostScript',
+    summary: 'EPS is a bounded PostScript document intended for placed vector artwork.',
+    notes:
+      'The local decoder extracts TIFF or WMF previews from EPSF binary headers. Preview-less files are accepted only when every executable token belongs to the documented path, transform, colour, fill, and stroke subset; any other operator is refused instead of partially rendered.',
+  },
+  dxf: {
+    name: 'DXF',
+    summary: 'DXF is an exchange format for CAD drawing geometry and metadata.',
+    notes:
+      'The pinned local parser converts bounded LINE, LWPOLYLINE, POLYLINE, CIRCLE, and ARC entities to SVG. Other records are counted and surfaced as warnings; a drawing with no renderable 2D geometry is refused rather than shown as an empty success.',
+  },
+  wmf: {
+    name: 'WMF',
+    summary: 'Windows Metafile stores drawing commands in a compact legacy binary stream.',
+    notes:
+      'The bounded local reader supports core move, line, polygon, rectangle, and ellipse records. Unsupported records are counted and shown as warnings; malformed sizes and empty partial renders are refused.',
+  },
+  emf: {
+    name: 'EMF',
+    summary: 'Enhanced Metafile is the 32-bit successor to WMF for Windows drawing records.',
+    notes:
+      'The bounded local reader supports core 2D geometry records and validates every record boundary. Unsupported records are counted and shown as warnings; a file with no supported geometry is refused.',
+  },
+  xcf: {
+    name: 'XCF',
+    summary: 'XCF stores a GIMP image as a named stack of tiled layers and editing state.',
+    notes:
+      'The bounded local reader supports 8-bit XCF v0–v3 RGB, RGBA, grayscale, and grayscale-alpha layers with uncompressed or GIMP RLE tiles. It returns named layers and a normal-mode flattened composite; masks and unsupported blend modes are refused rather than flattened inaccurately.',
+  },
+  fits: {
+    name: 'FITS',
+    summary: 'FITS is a block-aligned scientific image container widely used in astronomy.',
+    notes:
+      'The local codec reads and writes safe 8-bit primary grayscale images; higher-dimensional scientific datasets are outside this raster workflow.',
+  },
+  gif: {
+    name: 'GIF',
+    summary: 'GIF stores indexed still images and animations with LZW compression.',
+    notes:
+      'The local codec decodes animation and encodes GIF89a with configurable global, per-frame, or adaptive palettes; Wu, median-cut, octree, and independent neural quantizers; five dither modes; transparency, disposal, interlacing, looping, frame differencing, and reverse, bounce, or crossfade frame generation.',
+  },
+  jxl: {
+    name: 'JPEG XL',
+    summary: 'JPEG XL is a modern still-image format supporting lossless and lossy coding.',
+    notes:
+      'The pinned local WASM decoder is fixture-tested. Browser export remains hidden until its worker delivery path is build-verified.',
+  },
+  mp4: {
+    name: 'MP4/M4V/MOV',
+    summary:
+      'ISO base media containers can carry video streams that browsers expose through WebCodecs.',
+    notes:
+      'The local MP4Box demuxer adds no codec download. Frame extraction is offered only when the browser’s VideoDecoder supports the stream codec; video encoding is outside this image workflow.',
+  },
+  mkv: {
+    name: 'Matroska (MKV)',
+    summary: 'Matroska is an EBML media container that can carry many video codec families.',
+    notes:
+      'The pinned local demuxer reads Matroska tracks without downloading a codec. Frame extraction is offered only when the browser’s VideoDecoder supports the declared stream codec; unsupported codecs are reported by name.',
+  },
+  hdr: {
+    name: 'Radiance HDR',
+    summary: 'Radiance RGBE stores high-dynamic-range colour using a shared exponent.',
+    notes:
+      'The local decoder tone-maps RGBE to an 8-bit raster, while export converts the current raster back to RGBE.',
+  },
+  ico: {
+    name: 'ICO',
+    summary: 'ICO bundles one or more Windows icon images.',
+    notes:
+      'The local decoder selects the largest supported 32-bit BMP or PNG payload. Export writes a standards-compliant 32-bit BMP payload and alpha mask.',
+  },
+  cur: {
+    name: 'CUR',
+    summary: 'CUR is the Windows cursor counterpart to ICO and adds a pixel hotspot.',
+    notes: 'The local codec reads BMP and PNG payloads and validates the hotspot when exporting.',
+  },
+  dds: {
+    name: 'DDS',
+    summary: 'DirectDraw Surface stores GPU-oriented block-compressed texture data.',
+    notes:
+      'The local codec reads and writes single-mip BC1, BC2, BC3, BC4, and BC5 textures. BC7, mip chains, and cubemaps remain unavailable and are not advertised as complete support.',
+  },
+  pcx: {
+    name: 'PCX',
+    summary: 'PCX is a legacy indexed raster format using scanline run-length encoding.',
+    notes:
+      'The local codec supports exact opaque palettes within the PCX palette limit and rejects alpha rather than discarding it.',
+  },
+  pfm: {
+    name: 'PFM',
+    summary: 'Portable FloatMap stores floating-point RGB or grayscale samples.',
+    notes:
+      'The local codec handles little-endian RGB data and the format’s bottom-to-top row order.',
+  },
+  pnm: {
+    name: 'PPM/PGM/PBM/PNM',
+    summary:
+      'The Netpbm family provides deliberately simple monochrome, grayscale, and RGB raster interchange.',
+    notes: 'The local decoder supports ASCII and binary P1–P6 variants; export provides RGB PPM.',
+  },
+  pdf: {
+    name: 'PDF',
+    summary: 'PDF is a paged document container that can embed raster and vector content.',
+    notes:
+      'The dedicated local tools render selected pages with the pinned PDF.js worker and create ordered image-based PDFs with PDF-lib. The generic raster converter does not pretend PDF is a single raster frame.',
+  },
+  png: {
+    name: 'PNG',
+    summary: 'PNG provides lossless raster compression with full alpha transparency.',
+    notes:
+      'The pinned local WASM codec round-trips RGBA pixels exactly. The generic exporter also offers local lossless PNG optimization.',
+  },
+  pam: {
+    name: 'PAM',
+    summary: 'PAM extends Netpbm with explicit tuple types and alpha channels.',
+    notes: 'The local codec round-trips 8-bit RGB_ALPHA pixels without discarding transparency.',
+  },
+  qoi: {
+    name: 'QOI',
+    summary: 'Quite OK Image is a small, lossless RGB/RGBA format with a simple streaming codec.',
+    notes:
+      'The local implementation preserves RGBA exactly and checks hostile dimensions before allocation.',
+  },
+  sgi: {
+    name: 'SGI/RGB',
+    summary: 'SGI RGB stores planar colour channels used by legacy graphics workflows.',
+    notes:
+      'The local codec reads and writes uncompressed RGB/RGBA images. SGI RLE remains an explicitly reported variant limitation.',
+  },
+  'sun-raster': {
+    name: 'Sun Raster',
+    summary: 'Sun Raster is a legacy workstation bitmap format with padded scanlines.',
+    notes:
+      'The local codec reads and writes opaque 24-bit RGB data and rejects alpha instead of silently flattening it.',
+  },
+  tga: {
+    name: 'TGA',
+    summary: 'TGA is a straightforward raster format common in texture and game-asset workflows.',
+    notes:
+      'The local codec round-trips RGBA and reads true-colour run-length packets with strict packet bounds.',
+  },
+  tiff: {
+    name: 'TIFF',
+    summary:
+      'TIFF is a flexible tagged raster container used in scanning, publishing, and archival workflows.',
+    notes:
+      'The local UTIF-backed codec round-trips RGBA raster pages. Preserve an original when relying on specialized TIFF tags or uncommon compression variants.',
+  },
+  svg: {
+    name: 'SVG',
+    summary: 'SVG stores resolution-independent vector graphics as XML.',
+    notes:
+      'The local rasterizer refuses external references before rendering. SVG output uses the dedicated local vectorizer and emits self-contained paths rather than embedding remote assets.',
+  },
+  wbmp: {
+    name: 'WBMP',
+    summary: 'Wireless Bitmap is a compact one-bit monochrome format.',
+    notes:
+      'The local Type-0 codec uses MSB-first rows and rejects unsupported headers and hostile dimensions.',
+  },
+  webp: {
+    name: 'WebP',
+    summary: 'WebP supports compact lossy and lossless still images with alpha transparency.',
+    notes:
+      'The pinned local WASM codec is round-trip tested and the generic exporter exposes quality and lossless modes without uploading source pixels.',
+  },
+  webm: {
+    name: 'WebM',
+    summary: 'WebM is a media container commonly carrying VP8, VP9, or AV1 video.',
+    notes:
+      'Frame extraction uses the browser’s capability-probed WebCodecs decoder and never downloads a bundled video codec. Unsupported stream codecs are reported by name.',
+  },
+  xbm: {
+    name: 'XBM/XPM',
+    summary: 'XBM and XPM represent bitmap pixels as portable C source text.',
+    notes:
+      'The local codecs validate C identifiers, palette structure, payload size, and exact binary transparency.',
+  },
+} as const;
+
+const formatReferences = { ...unavailableFormats, ...supportedFormats };
+
+export const csr = false;
+export const entries = () => Object.keys(formatReferences).map((format) => ({ format }));
+
+export const load = ({ params }: { params: { format: string } }) => {
+  const format = formatReferences[params.format as keyof typeof formatReferences];
+  if (!format) throw new Error(`Unknown format reference: ${params.format}`);
+  return format;
+};

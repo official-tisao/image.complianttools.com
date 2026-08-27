@@ -1,0 +1,274 @@
+{
+  "source": "https://raw.pixls.us/",
+  "catalog": "https://raw.pixls.us/json/getrepository.php?set=all",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "checked": "2026-08-24",
+  "files": [
+    {
+      "filename": "blackmagic.dng",
+      "vendor": "Blackmagic",
+      "model": "Micro Cinema Camera",
+      "format": "DNG",
+      "url": "https://raw.pixls.us/getfile.php/7317/nice/Blackmagic%20-%20Micro%20Cinema%20Camera%20-%2012bit%20%2816%3A9%29.dng",
+      "sha256": "4c65b8cda205087cfb94d8931811e53e15eb4df538ad67c1b4a3e76c1185b277"
+    },
+    {
+      "filename": "blackmagic-2.dng",
+      "vendor": "Blackmagic",
+      "model": "Micro Cinema Camera",
+      "format": "DNG",
+      "url": "https://raw.pixls.us/getfile.php/7316/nice/Blackmagic%20-%20Micro%20Cinema%20Camera%20-%2012bit%20%2816%3A9%29.dng",
+      "sha256": "7d359fe7cecd38ce6f791d945ab973735fd161740bac3b5843d92fb556ef7047"
+    },
+    {
+      "filename": "canon.dng",
+      "vendor": "Canon",
+      "model": "EOS 5D Mark III",
+      "format": "DNG",
+      "url": "https://raw.pixls.us/getfile.php/2204/nice/Canon%20-%20EOS%205D%20Mark%20III%20-%2014bit%2014bit%20%282.3471882640587%29.dng",
+      "sha256": "1d77dcc6cdb839b10c1948f0b4471984ab48cf15e973fb77520584cee72b603e"
+    },
+    {
+      "filename": "blackmagic-3.dng",
+      "vendor": "Blackmagic",
+      "model": "Pocket Cinema Camera",
+      "format": "DNG",
+      "url": "https://raw.pixls.us/getfile.php/2433/nice/Blackmagic%20-%20Pocket%20Cinema%20Camera%20-%2012bit%20%2816%3A9%29.dng",
+      "sha256": "0ce97c657f9f1084cc25f313854bd1d1d8579a76f6b6bde2d2f19b5bceede4c4"
+    },
+    {
+      "filename": "nikon.nef",
+      "vendor": "Nikon",
+      "model": "D2H",
+      "format": "NEF",
+      "url": "https://raw.pixls.us/getfile.php/5227/nice/Nikon%20-%20D2H%20-%2012bit%2012bit%20compressed%20%28Lossy%20%28type%201%29%29%20%283%3A2%29.NEF",
+      "sha256": "155edb938f884ea7372ce98d4ff5f965c3e413b43b95bc9923da6e92082cf914"
+    },
+    {
+      "filename": "panasonic.rw2",
+      "vendor": "Panasonic",
+      "model": "DMC-LX7",
+      "format": "RW2",
+      "url": "https://raw.pixls.us/getfile.php/7008/nice/Panasonic%20-%20DMC-LX7%20-%201%3A1.RW2",
+      "sha256": "d142a23aca836053ed53e9ce3cb3ed2d434541d734d71a94a6eefadcd08bd31b"
+    },
+    {
+      "filename": "sony.arw",
+      "vendor": "Sony",
+      "model": "ILCE-7S",
+      "format": "ARW",
+      "url": "https://raw.pixls.us/getfile.php/1582/nice/Sony%20-%20ILCE-7S%20-%2014bit%2014bit%20compressed%20%283%3A2%29.ARW",
+      "sha256": "a35ebb2fbec929daa5beb20d1ce5c15a8aac7b1a7a231455387f3df8a7442e07"
+    },
+    {
+      "filename": "panasonic-2.rw2",
+      "vendor": "Panasonic",
+      "model": "DMC-LX7",
+      "format": "RW2",
+      "url": "https://raw.pixls.us/getfile.php/7011/nice/Panasonic%20-%20DMC-LX7%20-%2016%3A9.RW2",
+      "sha256": "c24a103e579089ef845c347e08b7e969f574a1c9efdfde54af51f2e1a4fc0900"
+    },
+    {
+      "filename": "olympus.orf",
+      "vendor": "Olympus",
+      "model": "E-10",
+      "format": "ORF",
+      "url": "https://raw.pixls.us/getfile.php/5424/nice/Olympus%20-%20E-10%20-%2016bit%20%284%3A3%29.ORF",
+      "sha256": "2bfdade72439017a60a47aad1e5bbcb1aca36f2be7a21e94a4257a678fb6f4da"
+    },
+    {
+      "filename": "pentax.pef",
+      "vendor": "Pentax",
+      "model": "K10D",
+      "format": "PEF",
+      "url": "https://raw.pixls.us/getfile.php/2239/nice/Pentax%20-%20K10D%20-%2012bit%2012bit%20compressed%20%283%3A2%29.PEF",
+      "sha256": "e35ae4154a468be3154f5f462e884ba5941f010d3e8f23d347fbec14809f44d3"
+    },
+    {
+      "filename": "apple.dng",
+      "vendor": "Apple",
+      "model": "iPhone 6s Plus",
+      "format": "DNG",
+      "url": "https://raw.pixls.us/getfile.php/915/nice/Apple%20-%20iPhone%206s%20Plus%20-%2016bit%20%284%3A3%29.DNG",
+      "sha256": "845fee4f09c832af3728778737f5ae9b99124debb821b6e2066b94aed1daa91c"
+    },
+    {
+      "filename": "leica.rwl",
+      "vendor": "Leica",
+      "model": "D-LUX 5",
+      "format": "RWL",
+      "url": "https://raw.pixls.us/getfile.php/2811/nice/Leica%20-%20D-LUX%205%20-%201%3A1.RWL",
+      "sha256": "ceeb5e5bf2358c04706e807bc023971e085d969b6f36491a57ecff051a05e8d3"
+    },
+    {
+      "filename": "google.dng",
+      "vendor": "Google",
+      "model": "Pixel 4 XL",
+      "format": "DNG",
+      "url": "https://raw.pixls.us/getfile.php/3502/nice/Google%20-%20Pixel%204%20XL%20-%2016bit%20%284%3A3%29.dng",
+      "sha256": "0c03a6c93b4b8593cd0e4426166e6389710007238b82eb23861ef191322f0c54"
+    },
+    {
+      "filename": "panasonic-3.rw2",
+      "vendor": "Panasonic",
+      "model": "DMC-LX7",
+      "format": "RW2",
+      "url": "https://raw.pixls.us/getfile.php/7010/nice/Panasonic%20-%20DMC-LX7%20-%203%3A2.RW2",
+      "sha256": "18dfc3877e944020299635a8c2fad61fca2485b1c9b67645a495ee870a86e599"
+    },
+    {
+      "filename": "hasselblad.3fr",
+      "vendor": "Hasselblad",
+      "model": "H3D",
+      "format": "3FR",
+      "url": "https://raw.pixls.us/getfile.php/2851/nice/Hasselblad%20-%20H3D%20-%2016bit%20%284%3A3%29.3FR",
+      "sha256": "34fdb93cb215e4f419ae0f7252c57b881fa381003124b4f9c143d27741f211b3",
+      "preview": "bmp"
+    },
+    {
+      "filename": "kodak.dcr",
+      "vendor": "Kodak",
+      "model": "DCS760C",
+      "format": "DCR",
+      "url": "https://raw.pixls.us/getfile.php/1347/nice/Kodak%20-%20DCS760C%20-%2012bit%20%283%3A2%29.DCR",
+      "sha256": "d0e6bd0a3339daff884e73a08fed8e75b20fe05bba438fc185e3f0bd019d0da8",
+      "preview": "bmp"
+    },
+    {
+      "filename": "epson.erf",
+      "vendor": "Epson",
+      "model": "R-D1",
+      "format": "ERF",
+      "url": "https://raw.pixls.us/getfile.php/2680/nice/Epson%20-%20R-D1%20-%2012bit%20%283%3A2%29.ERF",
+      "sha256": "09d8e533d93116294a9f3e161ed868e929454c7b946e083b644bd6bb75bcb5e4",
+      "preview": "bmp"
+    },
+    {
+      "filename": "hasselblad.fff",
+      "vendor": "Hasselblad",
+      "model": "H5D-40",
+      "format": "FFF",
+      "url": "https://raw.pixls.us/getfile.php/1640/nice/Hasselblad%20-%20H5D-40%20-%2016bit%20%284%3A3%29.fff",
+      "sha256": "209d464e13702de5f4fdb830ac26ac140c98a8d0dc3e81c5ba61d93677330832",
+      "preview": "bmp"
+    },
+    {
+      "filename": "phase-one.iiq",
+      "vendor": "Phase One",
+      "model": "P40+",
+      "format": "IIQ",
+      "url": "https://raw.pixls.us/getfile.php/8010/nice/Phase%20One%20-%20P40%2B%20-%20IIQ%20S%20%284%3A3%29.IIQ",
+      "sha256": "61aa32c5947d386f0d5ee465c5183185df6c9cd7ff7eb66ffec12e84b487878c",
+      "preview": "bmp"
+    },
+    {
+      "filename": "canon.cr2",
+      "vendor": "Canon",
+      "model": "EOS 40D",
+      "format": "CR2",
+      "url": "https://raw.pixls.us/getfile.php/2102/nice/Canon%20-%20EOS%2040D%20-%20sRAW2%20%28sRAW%29%20%283%3A2%29.CR2",
+      "sha256": "ba644e7dd2abe74eca260e67f0206ff113bf0f62e710f8130611e964d6be5bf1",
+      "preview": "jpeg"
+    },
+    {
+      "filename": "canon.cr3",
+      "vendor": "Canon",
+      "model": "EOS R6",
+      "format": "CR3",
+      "url": "https://raw.pixls.us/getfile.php/4659/nice/Canon%20-%20EOS%20R6%20-%203%3A2.CR3",
+      "sha256": "74abb0a113d075ad9887a058082f40dd2a938c4813a08474d82356f11a027778",
+      "preview": "jpeg"
+    },
+    {
+      "filename": "canon.crw",
+      "vendor": "Canon",
+      "model": "PowerShot G1",
+      "format": "CRW",
+      "url": "https://raw.pixls.us/getfile.php/2073/nice/Canon%20-%20PowerShot%20G1%20-%20RAW%20%284%3A3%29.crw",
+      "sha256": "f39be5acf14057ce04527fd8d0574e57ec8ed5fed082d7bfaff763075a44ee8a",
+      "preview": "jpeg"
+    },
+    {
+      "filename": "nikon.nrw",
+      "vendor": "Nikon",
+      "model": "COOLPIX P1000",
+      "format": "NRW",
+      "url": "https://raw.pixls.us/getfile.php/3381/nice/Nikon%20-%20COOLPIX%20P1000%20-%2012bit%2012bit%20uncompressed%20%284%3A3%29.NRW",
+      "sha256": "1d9470ee083f914e51aa0be782161b432f27f87dbef551a59ec435f5dbc289dd",
+      "preview": "jpeg"
+    },
+    {
+      "filename": "sony.sr2",
+      "vendor": "Sony",
+      "model": "DSC-R1",
+      "format": "SR2",
+      "url": "https://raw.pixls.us/getfile.php/3221/nice/Sony%20-%20DSC-R1%20-%2014bit%2014bit%20uncompressed%20%283%3A2%29.SR2",
+      "sha256": "921c5f2513dd1671a9089e73fc778fc3573bc4cb70a3a555d0414661d0e62274",
+      "preview": "jpeg"
+    },
+    {
+      "filename": "sony.srf",
+      "vendor": "Sony",
+      "model": "DSC-F828",
+      "format": "SRF",
+      "url": "https://raw.pixls.us/getfile.php/1351/nice/Sony%20-%20DSC-F828%20-%204%3A3.SRF",
+      "sha256": "07739f94bcab0c7e198d418ac65172d0dce04bb84a7683ecffd0bfe4b32f6d79",
+      "preview": "jpeg"
+    },
+    {
+      "filename": "fujifilm.raf",
+      "vendor": "Fujifilm",
+      "model": "FinePix S5000",
+      "format": "RAF",
+      "url": "https://raw.pixls.us/getfile.php/2726/nice/Fujifilm%20-%20FinePix%20S5000%20-%204%3A3.RAF",
+      "sha256": "dabd5e74521a6980156be9fd4b88d0c37b0fe4d0e0e6f5c12db8cffff1b76297",
+      "preview": "jpeg"
+    },
+    {
+      "filename": "panasonic.raw",
+      "vendor": "RaspberryPi",
+      "model": "RP_ov5647",
+      "format": "RAW",
+      "url": "https://raw.pixls.us/getfile.php/4199/nice/RaspberryPi%20-%20RP_ov5647%20-%203%3A2.raw",
+      "sha256": "12b4ff3a7f61abc5dd023235f9ea434270a8b111bc16b786696e063e64dd376d",
+      "preview": "jpeg"
+    },
+    {
+      "filename": "sigma.x3f",
+      "vendor": "Sigma",
+      "model": "DP1",
+      "format": "X3F",
+      "url": "https://raw.pixls.us/getfile.php/1116/nice/Sigma%20-%20DP1%20-%203%3A2.X3F",
+      "sha256": "44508f7df4191aacaecb6461e1841dae002e5b71a4f95a00aa3f52d1c6d6bc5f",
+      "preview": "jpeg"
+    },
+    {
+      "filename": "samsung.srw",
+      "vendor": "Samsung",
+      "model": "NX500",
+      "format": "SRW",
+      "url": "https://raw.pixls.us/getfile.php/3668/nice/Samsung%20-%20NX500%20-%2012bit%2012bit%20normal%20compression%20%283%3A2%29.SRW",
+      "sha256": "156e43118811bcecb6fcc600b5f41ee1773c4f00b6a5b2dd72e177e35f6596ab",
+      "preview": "jpeg"
+    },
+    {
+      "filename": "kodak.kdc",
+      "vendor": "Kodak",
+      "model": "KODAK P712 ZOOM DIGITAL CAMERA",
+      "format": "KDC",
+      "url": "https://raw.pixls.us/getfile.php/2345/nice/Kodak%20-%20KODAK%20P712%20ZOOM%20DIGITAL%20CAMERA%20-%20NAN.KDC",
+      "sha256": "b1c3870c8c794f0271053a80a15296e3a9b575ab736796cdb53929d50c86a084",
+      "preview": "jpeg"
+    },
+    {
+      "filename": "leaf.mos",
+      "vendor": "Leaf",
+      "model": "Aptus 22",
+      "format": "MOS",
+      "url": "https://raw.pixls.us/getfile.php/3196/nice/Leaf%20-%20Aptus%2022%20-%2016bit%20%284%3A3%29.mos",
+      "sha256": "8a1a101cb3940b0648af54a721d92e6fb8612dd29a0909036ea2753196a00ec2",
+      "preview": "jpeg"
+    }
+  ]
+}

@@ -35,6 +35,7 @@
     "verify:wasm": "tsx scripts/fetch-wasm.ts --verify",
     "verify:plan-sync": "tsx scripts/check-plan-sync.ts",
     "verify:route-budgets": "tsx scripts/verify-route-budgets.ts",
+    "verify:raw-corpus": "pnpm --filter @complianttools/image-engine build && node scripts/verify-raw-corpus.mjs",
     "size": "size-limit",
     "lighthouse": "lhci autorun",
     "wasm:fetch": "tsx scripts/fetch-wasm.ts",

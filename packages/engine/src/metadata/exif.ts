@@ -1,0 +1,769 @@
+export type ExifField = {
+  readonly tag: number;
+  readonly name: 'orientation' | 'copyright';
+  readonly value: string | number;
+};
+
+export type ExifGps = {
+  readonly latitude: number;
+  readonly longitude: number;
+  readonly latitudeDms: string;
+  readonly longitudeDms: string;
+  readonly geoUri: string;
+};
+
+export type ExifMakerNote = {
+  readonly byteLength: number;
+  readonly previewHex: string;
+};
+
+function tiffReader(bytes: Uint8Array) {
+  if (bytes.length < 8) throw new Error('EXIF TIFF header is truncated.');
+  const little = bytes[0] === 0x49 && bytes[1] === 0x49;
+  if (!little && !(bytes[0] === 0x4d && bytes[1] === 0x4d))
+    throw new Error('EXIF does not contain a TIFF header.');
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const u16 = (offset: number) => view.getUint16(offset, little);
+  const u32 = (offset: number) => view.getUint32(offset, little);
+  if (u16(2) !== 42) throw new Error('EXIF TIFF header is unsupported.');
+  return { view, little, u16, u32 };
+}
+
+export type TiffIfdEntry = {
+  readonly offset: number;
+  readonly tag: number;
+  readonly type: number;
+  readonly count: number;
+  readonly value: number;
+  readonly longValues: readonly number[];
+};
+
+export type TiffIfd = {
+  readonly offset: number;
+  readonly entries: readonly TiffIfdEntry[];
+};
+
+/** Bounded TIFF/EXIF IFD traversal shared by metadata and TIFF-based RAW readers. */
+export function walkExifIfds(
+  input: ArrayBuffer | Uint8Array,
+  followPointerTags: readonly number[] = [0x014a, 0x8769, 0x8825],
+): readonly TiffIfd[] {
+  const bytes = input instanceof Uint8Array ? input : new Uint8Array(input);
+  const { view, u16, u32 } = tiffReader(bytes);
+  const pointers = new Set(followPointerTags);
+  const pending = [u32(4)];
+  const visited = new Set<number>();
+  const ifds: TiffIfd[] = [];
+
+  while (pending.length && ifds.length < 4096) {
+    const offset = pending.pop()!;
+    if (visited.has(offset) || offset > view.byteLength - 2) continue;
+    visited.add(offset);
+    const count = u16(offset);
+    const end = offset + 2 + count * 12;
+    if (count > 4096 || end + 4 > view.byteLength) continue;
+    const entries: TiffIfdEntry[] = [];
+    for (let index = 0; index < count; index += 1) {
+      const entryOffset = offset + 2 + index * 12;
+      const tag = u16(entryOffset);
+      const type = u16(entryOffset + 2);
+      const values = u32(entryOffset + 4);
+      const value = u32(entryOffset + 8);
+      const longValues =
+        type !== 4 || values === 0 || values > 4096
+          ? []
+          : values === 1
+            ? [value]
+            : value <= view.byteLength - values * 4
+              ? Array.from({ length: values }, (_, valueIndex) => u32(value + valueIndex * 4))
+              : [];
+      entries.push({ offset: entryOffset, tag, type, count: values, value, longValues });
+      if (pointers.has(tag)) pending.push(...longValues);
+    }
+    const next = u32(end);
+    if (next) pending.push(next);
+    ifds.push({ offset, entries });
+  }
+  return ifds;
+}
+
+export type ExifDirectoryField = {
+  readonly ifdOffset: number;
+  readonly tag: number;
+  readonly name: string;
+  readonly type: number;
+  readonly count: number;
+  readonly value: string;
+};
+
+const exifTagNames: Readonly<Record<number, string>> = {
+  0x010e: 'image-description',
+  0x010f: 'make',
+  0x0110: 'model',
+  0x0112: 'orientation',
+  0x0131: 'software',
+  0x0132: 'date-time',
+  0x013b: 'artist',
+  0x4746: 'rating',
+  0x8298: 'copyright',
+  0x8769: 'exif-ifd-pointer',
+  0x8825: 'gps-ifd-pointer',
+  0x9003: 'date-time-original',
+  0x9286: 'user-comment',
+  0x927c: 'maker-note',
+  0x9c9e: 'keywords',
+};
+
+/** Reads every entry in every reachable standard EXIF IFD with bounded, non-executing values. */
+export function readExifAllIfds(input: ArrayBuffer | Uint8Array): readonly ExifDirectoryField[] {
+  const bytes = input instanceof Uint8Array ? input : new Uint8Array(input);
+  const { view, little } = tiffReader(bytes);
+  const typeSize: Readonly<Record<number, number>> = {
+    1: 1,
+    2: 1,
+    3: 2,
+    4: 4,
+    5: 8,
+    7: 1,
+    9: 4,
+    10: 8,
+  };
+  const fields: ExifDirectoryField[] = [];
+  for (const ifd of walkExifIfds(bytes))
+    for (const entry of ifd.entries) {
+      if (entry.tag === 0 && entry.type === 0 && entry.count === 0) continue;
+      const unit = typeSize[entry.type];
+      if (!unit || entry.count > 1_000_000)
+        throw new Error(`EXIF tag 0x${entry.tag.toString(16)} has an unsupported type or count.`);
+      const byteLength = unit * entry.count;
+      const start = byteLength <= 4 ? entry.offset + 8 : entry.value;
+      if (!Number.isSafeInteger(byteLength) || start > bytes.length - byteLength)
+        throw new Error(`EXIF tag 0x${entry.tag.toString(16)} points outside the file.`);
+      const shown = Math.min(entry.count, 64);
+      let values: string;
+      if (entry.type === 2) values = ascii(bytes.subarray(start, start + byteLength));
+      else if (entry.type === 7)
+        values = `${byteLength} opaque bytes (${[
+          ...bytes.subarray(start, start + Math.min(16, byteLength)),
+        ]
+          .map((value) => value.toString(16).padStart(2, '0'))
+          .join('')})`;
+      else {
+        const decoded: number[] = [];
+        for (let index = 0; index < shown; index += 1) {
+          const offset = start + index * unit;
+          if (entry.type === 1) decoded.push(view.getUint8(offset));
+          if (entry.type === 3) decoded.push(view.getUint16(offset, little));
+          if (entry.type === 4) decoded.push(view.getUint32(offset, little));
+          if (entry.type === 9) decoded.push(view.getInt32(offset, little));
+          if (entry.type === 5 || entry.type === 10) {
+            const numerator =
+              entry.type === 5 ? view.getUint32(offset, little) : view.getInt32(offset, little);
+            const denominator =
+              entry.type === 5
+                ? view.getUint32(offset + 4, little)
+                : view.getInt32(offset + 4, little);
+            decoded.push(denominator === 0 ? Number.NaN : numerator / denominator);
+          }
+        }
+        values = `${decoded.join(', ')}${entry.count > shown ? ', …' : ''}`;
+      }
+      fields.push({
+        ifdOffset: ifd.offset,
+        tag: entry.tag,
+        name: exifTagNames[entry.tag] ?? `tag-0x${entry.tag.toString(16).padStart(4, '0')}`,
+        type: entry.type,
+        count: entry.count,
+        value: values,
+      });
+    }
+  return fields;
+}
+
+function ascii(bytes: Uint8Array): string {
+  return new TextDecoder().decode(bytes).replace(/\0+$/u, '');
+}
+
+function dms(value: number, positive: string, negative: string): string {
+  const hemisphere = value < 0 ? negative : positive;
+  const absolute = Math.abs(value);
+  const degrees = Math.floor(absolute);
+  const minutesFloat = (absolute - degrees) * 60;
+  const minutes = Math.floor(minutesFloat);
+  const seconds = Math.round((minutesFloat - minutes) * 60_000) / 1_000;
+  return `${degrees}° ${minutes}′ ${seconds}″ ${hemisphere}`;
+}
+
+/** Reads selected safe EXIF IFD0 fields without following arbitrary MakerNote pointers. */
+export function readExifIfd0(input: ArrayBuffer | Uint8Array): readonly ExifField[] {
+  const bytes = input instanceof Uint8Array ? input : new Uint8Array(input);
+  if (bytes.length < 8) throw new Error('EXIF TIFF header is truncated.');
+  const little = bytes[0] === 0x49 && bytes[1] === 0x49;
+  if (!little && !(bytes[0] === 0x4d && bytes[1] === 0x4d))
+    throw new Error('EXIF does not contain a TIFF header.');
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const u16 = (offset: number) => view.getUint16(offset, little);
+  const u32 = (offset: number) => view.getUint32(offset, little);
+  if (u16(2) !== 42) throw new Error('EXIF TIFF header is unsupported.');
+  const ifd = u32(4);
+  if (ifd > bytes.length - 2) throw new Error('EXIF IFD offset is outside the file.');
+  const count = u16(ifd);
+  if (ifd + 2 + count * 12 > bytes.length) throw new Error('EXIF IFD entries are truncated.');
+  const fields: ExifField[] = [];
+  for (let index = 0; index < count; index += 1) {
+    const offset = ifd + 2 + index * 12;
+    const tag = u16(offset),
+      type = u16(offset + 2),
+      values = u32(offset + 4),
+      valueOffset = offset + 8;
+    if (tag === 0x0112 && type === 3 && values === 1)
+      fields.push({ tag, name: 'orientation', value: u16(valueOffset) });
+    if (tag === 0x8298 && type === 2 && values > 0) {
+      const start = values <= 4 ? valueOffset : u32(valueOffset);
+      if (start > bytes.length - values)
+        throw new Error('EXIF copyright offset is outside the file.');
+      fields.push({ tag, name: 'copyright', value: ascii(bytes.subarray(start, start + values)) });
+    }
+  }
+  return fields;
+}
+
+/** Reads GPS latitude/longitude from standard EXIF fields without loading map tiles or MakerNotes. */
+export function readExifGps(input: ArrayBuffer | Uint8Array): ExifGps | undefined {
+  const bytes = input instanceof Uint8Array ? input : new Uint8Array(input);
+  if (bytes.length < 8) throw new Error('EXIF TIFF header is truncated.');
+  const little = bytes[0] === 0x49 && bytes[1] === 0x49;
+  if (!little && !(bytes[0] === 0x4d && bytes[1] === 0x4d))
+    throw new Error('EXIF does not contain a TIFF header.');
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const u16 = (offset: number) => view.getUint16(offset, little);
+  const u32 = (offset: number) => view.getUint32(offset, little);
+  if (u16(2) !== 42) throw new Error('EXIF TIFF header is unsupported.');
+  const root = u32(4);
+  if (root > bytes.length - 2) throw new Error('EXIF IFD offset is outside the file.');
+  const rootCount = u16(root);
+  if (root + 2 + rootCount * 12 > bytes.length) throw new Error('EXIF IFD entries are truncated.');
+  let gpsOffset: number | undefined;
+  for (let index = 0; index < rootCount; index += 1) {
+    const entry = root + 2 + index * 12;
+    if (u16(entry) === 0x8825 && u16(entry + 2) === 4 && u32(entry + 4) === 1)
+      gpsOffset = u32(entry + 8);
+  }
+  if (gpsOffset === undefined) return undefined;
+  if (gpsOffset > bytes.length - 2) throw new Error('EXIF GPS offset is outside the file.');
+  const count = u16(gpsOffset);
+  if (gpsOffset + 2 + count * 12 > bytes.length) throw new Error('EXIF GPS entries are truncated.');
+  let latitude: number | undefined, longitude: number | undefined;
+  let latitudeRef = 'N',
+    longitudeRef = 'E';
+  const coordinate = (offset: number) => {
+    if (offset > bytes.length - 24)
+      throw new Error('EXIF GPS coordinate offset is outside the file.');
+    const rational = (index: number) => {
+      const denominator = u32(offset + index * 8 + 4);
+      if (denominator === 0) throw new Error('EXIF GPS coordinate denominator is zero.');
+      return u32(offset + index * 8) / denominator;
+    };
+    return rational(0) + rational(1) / 60 + rational(2) / 3600;
+  };
+  for (let index = 0; index < count; index += 1) {
+    const entry = gpsOffset + 2 + index * 12;
+    const tag = u16(entry),
+      type = u16(entry + 2),
+      values = u32(entry + 4),
+      value = entry + 8;
+    if (tag === 1 && type === 2 && values === 2) latitudeRef = String.fromCharCode(bytes[value]!);
+    if (tag === 3 && type === 2 && values === 2) longitudeRef = String.fromCharCode(bytes[value]!);
+    if (tag === 2 && type === 5 && values === 3) latitude = coordinate(u32(value));
+    if (tag === 4 && type === 5 && values === 3) longitude = coordinate(u32(value));
+  }
+  if (latitude === undefined || longitude === undefined) return undefined;
+  if (latitudeRef === 'S') latitude = -latitude;
+  if (longitudeRef === 'W') longitude = -longitude;
+  return {
+    latitude,
+    longitude,
+    latitudeDms: dms(latitude, 'N', 'S'),
+    longitudeDms: dms(longitude, 'E', 'W'),
+    geoUri: `geo:${latitude},${longitude}`,
+  };
+}
+
+/** Finds a proprietary MakerNote payload without attempting vendor-specific interpretation. */
+export function readExifMakerNote(input: ArrayBuffer | Uint8Array): ExifMakerNote | undefined {
+  const bytes = input instanceof Uint8Array ? input : new Uint8Array(input);
+  const { u16, u32 } = tiffReader(bytes);
+  const root = u32(4);
+  if (root > bytes.length - 2) throw new Error('EXIF IFD offset is outside the file.');
+  const rootCount = u16(root);
+  if (root + 2 + rootCount * 12 > bytes.length) throw new Error('EXIF IFD entries are truncated.');
+  let exifIfd: number | undefined;
+  for (let index = 0; index < rootCount; index += 1) {
+    const entry = root + 2 + index * 12;
+    if (u16(entry) === 0x8769 && u16(entry + 2) === 4 && u32(entry + 4) === 1)
+      exifIfd = u32(entry + 8);
+  }
+  if (exifIfd === undefined) return undefined;
+  if (exifIfd > bytes.length - 2) throw new Error('EXIF sub-IFD offset is outside the file.');
+  const count = u16(exifIfd);
+  if (exifIfd + 2 + count * 12 > bytes.length)
+    throw new Error('EXIF sub-IFD entries are truncated.');
+  for (let index = 0; index < count; index += 1) {
+    const entry = exifIfd + 2 + index * 12;
+    if (u16(entry) !== 0x927c) continue;
+    const byteLength = u32(entry + 4);
+    const start = byteLength <= 4 ? entry + 8 : u32(entry + 8);
+    if (start > bytes.length - byteLength)
+      throw new Error('EXIF MakerNote offset is outside the file.');
+    return {
+      byteLength,
+      previewHex: [...bytes.subarray(start, start + Math.min(byteLength, 16))]
+        .map((value) => value.toString(16).padStart(2, '0'))
+        .join(''),
+    };
+  }
+  return undefined;
+}
+
+/** Wipes the GPS IFD and referenced values in-place on a copy, leaving pixel/container data untouched. */
+export function stripExifGps(input: ArrayBuffer | Uint8Array): Uint8Array {
+  const source = input instanceof Uint8Array ? input : new Uint8Array(input);
+  const bytes = source.slice();
+  const { u16, u32 } = tiffReader(bytes);
+  const root = u32(4);
+  if (root > bytes.length - 2) throw new Error('EXIF IFD offset is outside the file.');
+  const rootCount = u16(root);
+  if (root + 2 + rootCount * 12 > bytes.length) throw new Error('EXIF IFD entries are truncated.');
+  const typeBytes: Record<number, number> = { 1: 1, 2: 1, 3: 2, 4: 4, 5: 8, 7: 1, 9: 4, 10: 8 };
+  for (let index = 0; index < rootCount; index += 1) {
+    const rootEntry = root + 2 + index * 12;
+    if (u16(rootEntry) !== 0x8825 || u16(rootEntry + 2) !== 4 || u32(rootEntry + 4) !== 1) continue;
+    const gps = u32(rootEntry + 8);
+    if (gps > bytes.length - 2) throw new Error('EXIF GPS offset is outside the file.');
+    const count = u16(gps);
+    const ifdEnd = gps + 2 + count * 12 + 4;
+    if (ifdEnd > bytes.length) throw new Error('EXIF GPS entries are truncated.');
+    for (let gpsIndex = 0; gpsIndex < count; gpsIndex += 1) {
+      const entry = gps + 2 + gpsIndex * 12;
+      const unit = typeBytes[u16(entry + 2)] ?? 0;
+      const valueBytes = unit * u32(entry + 4);
+      if (valueBytes > 4) {
+        const start = u32(entry + 8);
+        if (start > bytes.length - valueBytes)
+          throw new Error('EXIF GPS value offset is outside the file.');
+        bytes.fill(0, start, start + valueBytes);
+      }
+    }
+    bytes.fill(0, gps, ifdEnd);
+    bytes.fill(0, rootEntry, rootEntry + 12);
+  }
+  return bytes;
+}
+
+const exifTypeBytes: Readonly<Record<number, number>> = {
+  1: 1,
+  2: 1,
+  3: 2,
+  4: 4,
+  5: 8,
+  7: 1,
+  9: 4,
+  10: 8,
+};
+
+function stripExifEntries(
+  input: ArrayBuffer | Uint8Array,
+  remove: (entry: TiffIfdEntry) => boolean,
+): Uint8Array {
+  const source = input instanceof Uint8Array ? input : new Uint8Array(input);
+  const bytes = source.slice();
+  for (const ifd of walkExifIfds(source))
+    for (const entry of ifd.entries) {
+      if (!remove(entry)) continue;
+      const unit = exifTypeBytes[entry.type] ?? 0;
+      const byteLength = unit * entry.count;
+      if (unit && byteLength > 4 && Number.isSafeInteger(byteLength)) {
+        const start = entry.value;
+        if (start > source.length - byteLength)
+          throw new Error(`EXIF tag 0x${entry.tag.toString(16)} points outside the file.`);
+        bytes.fill(0, start, start + byteLength);
+      }
+      bytes.fill(0, entry.offset, entry.offset + 12);
+    }
+  return bytes;
+}
+
+/** Wipes selected numeric EXIF tags and any out-of-line payloads without relocating the TIFF. */
+export function stripExifTags(
+  input: ArrayBuffer | Uint8Array,
+  tags: readonly number[],
+): Uint8Array {
+  const selected = new Set(tags);
+  const source = selected.has(0x8825) ? stripExifGps(input) : input;
+  return stripExifEntries(source, (entry) => selected.has(entry.tag));
+}
+
+/** Removes proprietary MakerNote entries and payloads while preserving all other EXIF bytes. */
+export function stripExifMakerNotes(input: ArrayBuffer | Uint8Array): Uint8Array {
+  return stripExifEntries(input, (entry) => entry.tag === 0x927c);
+}
+
+/** Retains only Orientation and Copyright entries; every other reachable EXIF entry is wiped. */
+export function stripExifExceptOrientationCopyright(input: ArrayBuffer | Uint8Array): Uint8Array {
+  return stripExifEntries(input, (entry) => entry.tag !== 0x0112 && entry.tag !== 0x8298);
+}
+
+/** Rewrites an existing IFD0 copyright field without relocating any EXIF structures. */
+export function editExifCopyright(input: ArrayBuffer | Uint8Array, copyright: string): Uint8Array {
+  const source = input instanceof Uint8Array ? input : new Uint8Array(input);
+  const bytes = source.slice();
+  const { view, little, u16, u32 } = tiffReader(bytes);
+  const encoded = new TextEncoder().encode(`${copyright}\0`);
+  if (encoded.some((value) => value > 0x7f))
+    throw new Error('EXIF copyright editing currently accepts ASCII text only.');
+  const root = u32(4);
+  if (root > bytes.length - 2) throw new Error('EXIF IFD offset is outside the file.');
+  const count = u16(root);
+  if (root + 2 + count * 12 > bytes.length) throw new Error('EXIF IFD entries are truncated.');
+  for (let index = 0; index < count; index += 1) {
+    const entry = root + 2 + index * 12;
+    if (u16(entry) !== 0x8298 || u16(entry + 2) !== 2) continue;
+    const capacity = u32(entry + 4);
+    if (encoded.length > capacity)
+      throw new Error(
+        `Edited EXIF copyright requires ${encoded.length} bytes but the existing field has ${capacity}; shortening is safe, growing requires a metadata rebuild.`,
+      );
+    const start = capacity <= 4 ? entry + 8 : u32(entry + 8);
+    if (start > bytes.length - capacity)
+      throw new Error('EXIF copyright offset is outside the file.');
+    bytes.fill(0, start, start + capacity);
+    bytes.set(encoded, start);
+    view.setUint32(entry + 4, encoded.length, little);
+    return bytes;
+  }
+  throw new Error('EXIF does not contain an editable copyright field.');
+}
+
+export type EditableExifFieldName =
+  | 'artist'
+  | 'copyright'
+  | 'imageDescription'
+  | 'userComment'
+  | 'dateTimeOriginal'
+  | 'software'
+  | 'rating'
+  | 'keywords'
+  | 'orientation';
+
+export type ExifFieldEdits = Partial<Record<EditableExifFieldName, string | number>> & {
+  readonly gpsCoordinates?: { readonly latitude: number; readonly longitude: number };
+};
+
+const editableExifTags: Readonly<Record<EditableExifFieldName, number>> = {
+  artist: 0x013b,
+  copyright: 0x8298,
+  imageDescription: 0x010e,
+  userComment: 0x9286,
+  dateTimeOriginal: 0x9003,
+  software: 0x0131,
+  rating: 0x4746,
+  keywords: 0x9c9e,
+  orientation: 0x0112,
+};
+
+function entryStorage(bytes: Uint8Array, entry: TiffIfdEntry, unit: number): [number, number] {
+  const capacity = unit * entry.count;
+  const start = capacity <= 4 ? entry.offset + 8 : entry.value;
+  if (!Number.isSafeInteger(capacity) || start > bytes.length - capacity)
+    throw new Error(`EXIF tag 0x${entry.tag.toString(16)} points outside the file.`);
+  return [start, capacity];
+}
+
+type NewIfdEntry = { readonly tag: number; readonly type: number; readonly data: Uint8Array };
+
+function appendIfd(
+  input: Uint8Array,
+  oldOffset: number | undefined,
+  additions: readonly NewIfdEntry[],
+): { readonly bytes: Uint8Array; readonly offset: number } {
+  const { little, u16, u32 } = tiffReader(input);
+  const oldCount = oldOffset === undefined ? 0 : u16(oldOffset);
+  const oldEnd = oldOffset === undefined ? 0 : oldOffset + 2 + oldCount * 12;
+  if (oldOffset !== undefined && oldEnd + 4 > input.length)
+    throw new Error('EXIF IFD entries are truncated.');
+  const offset = input.length + (input.length & 1);
+  const count = oldCount + additions.length;
+  const tableEnd = offset + 2 + count * 12 + 4;
+  const externalBytes = additions.reduce(
+    (total, entry) =>
+      total + (entry.data.length > 4 ? entry.data.length + (entry.data.length & 1) : 0),
+    0,
+  );
+  const bytes = new Uint8Array(tableEnd + externalBytes);
+  bytes.set(input);
+  const view = new DataView(bytes.buffer);
+  view.setUint16(offset, count, little);
+  if (oldOffset !== undefined) {
+    bytes.set(input.subarray(oldOffset + 2, oldEnd), offset + 2);
+    view.setUint32(offset + 2 + count * 12, u32(oldEnd), little);
+  }
+  let payload = tableEnd;
+  additions.forEach((addition, index) => {
+    const entry = offset + 2 + (oldCount + index) * 12;
+    view.setUint16(entry, addition.tag, little);
+    view.setUint16(entry + 2, addition.type, little);
+    const unit = exifTypeBytes[addition.type];
+    if (!unit || addition.data.length % unit !== 0)
+      throw new Error(
+        `Cannot insert EXIF tag 0x${addition.tag.toString(16)} with invalid storage.`,
+      );
+    view.setUint32(entry + 4, addition.data.length / unit, little);
+    if (addition.data.length <= 4) bytes.set(addition.data, entry + 8);
+    else {
+      view.setUint32(entry + 8, payload, little);
+      bytes.set(addition.data, payload);
+      payload += addition.data.length + (addition.data.length & 1);
+    }
+  });
+  return { bytes, offset };
+}
+
+function ensureEditableExifEntries(input: Uint8Array, edits: ExifFieldEdits): Uint8Array {
+  let bytes = input;
+  const { little } = tiffReader(bytes);
+  const encodeU16 = (value: number) => {
+    const data = new Uint8Array(2);
+    new DataView(data.buffer).setUint16(0, value, little);
+    return data;
+  };
+  const encodeU32 = (value: number) => {
+    const data = new Uint8Array(4);
+    new DataView(data.buffer).setUint32(0, value, little);
+    return data;
+  };
+  const encodeText = (value: unknown) => new TextEncoder().encode(`${String(value)}\0`);
+  const encodeKeywords = (value: unknown) => {
+    const text = String(value),
+      data = new Uint8Array((text.length + 1) * 2),
+      view = new DataView(data.buffer);
+    for (let index = 0; index < text.length; index += 1)
+      view.setUint16(index * 2, text.charCodeAt(index), true);
+    return data;
+  };
+  const encodeComment = (value: unknown) => {
+    const text = new TextEncoder().encode(String(value)),
+      data = new Uint8Array(8 + text.length + 1);
+    data.set(new TextEncoder().encode('ASCII\0\0\0'));
+    data.set(text, 8);
+    return data;
+  };
+  let ifds = walkExifIfds(bytes);
+  let root = ifds[0]!;
+  const allEntries = () => ifds.flatMap((ifd) => [...ifd.entries]);
+  const rootAdditions: NewIfdEntry[] = [];
+  for (const name of [
+    'artist',
+    'copyright',
+    'imageDescription',
+    'software',
+    'rating',
+    'keywords',
+    'orientation',
+  ] as const) {
+    const value = edits[name];
+    if (value === undefined || allEntries().some((entry) => entry.tag === editableExifTags[name]))
+      continue;
+    const type = name === 'rating' || name === 'orientation' ? 3 : name === 'keywords' ? 1 : 2;
+    const data =
+      type === 3
+        ? encodeU16(Number(value))
+        : name === 'keywords'
+          ? encodeKeywords(value)
+          : encodeText(value);
+    rootAdditions.push({ tag: editableExifTags[name], type, data });
+  }
+  const exifAdditions: NewIfdEntry[] = [];
+  for (const name of ['dateTimeOriginal', 'userComment'] as const) {
+    const value = edits[name];
+    if (value === undefined || allEntries().some((entry) => entry.tag === editableExifTags[name]))
+      continue;
+    exifAdditions.push({
+      tag: editableExifTags[name],
+      type: name === 'userComment' ? 7 : 2,
+      data: name === 'userComment' ? encodeComment(value) : encodeText(value),
+    });
+  }
+  if (exifAdditions.length) {
+    const pointer = root.entries.find(
+      (entry) => entry.tag === 0x8769 && entry.type === 4 && entry.count === 1,
+    );
+    const appended = appendIfd(bytes, pointer?.value, exifAdditions);
+    bytes = appended.bytes;
+    if (pointer) new DataView(bytes.buffer).setUint32(pointer.offset + 8, appended.offset, little);
+    else rootAdditions.push({ tag: 0x8769, type: 4, data: encodeU32(appended.offset) });
+  }
+  if (edits.gpsCoordinates) {
+    ifds = walkExifIfds(bytes);
+    root = ifds[0]!;
+    const pointer = root.entries.find(
+      (entry) => entry.tag === 0x8825 && entry.type === 4 && entry.count === 1,
+    );
+    if (!pointer) {
+      const emptyRationals = new Uint8Array(24);
+      const appended = appendIfd(bytes, undefined, [
+        { tag: 1, type: 2, data: new Uint8Array([78, 0]) },
+        { tag: 2, type: 5, data: emptyRationals },
+        { tag: 3, type: 2, data: new Uint8Array([69, 0]) },
+        { tag: 4, type: 5, data: emptyRationals },
+      ]);
+      bytes = appended.bytes;
+      rootAdditions.push({ tag: 0x8825, type: 4, data: encodeU32(appended.offset) });
+    }
+  }
+  if (rootAdditions.length) {
+    const currentRoot = new DataView(bytes.buffer).getUint32(4, little);
+    const appended = appendIfd(bytes, currentRoot, rootAdditions);
+    bytes = appended.bytes;
+    new DataView(bytes.buffer).setUint32(4, appended.offset, little);
+  }
+  return bytes;
+}
+
+/** Edits existing EXIF fields, appending relocated value storage when a replacement grows. */
+export function editExifFields(input: ArrayBuffer | Uint8Array, edits: ExifFieldEdits): Uint8Array {
+  const initial = input instanceof Uint8Array ? input : new Uint8Array(input);
+  const source = ensureEditableExifEntries(initial, edits);
+  let bytes = source.slice();
+  let { view } = tiffReader(bytes);
+  const { little } = tiffReader(bytes);
+  const ifds = walkExifIfds(source);
+  const entries = ifds.flatMap((ifd) => [...ifd.entries]);
+  const writeBytes = (entry: TiffIfdEntry, encoded: Uint8Array, unit = 1) => {
+    const [start, capacity] = entryStorage(source, entry, unit);
+    if (encoded.length <= 4) {
+      bytes.fill(0, start, start + capacity);
+      bytes.fill(0, entry.offset + 8, entry.offset + 12);
+      bytes.set(encoded, entry.offset + 8);
+      view.setUint32(entry.offset + 4, encoded.length / unit, little);
+      return;
+    }
+    if (capacity > 4 && encoded.length <= capacity) {
+      bytes.fill(0, start, start + capacity);
+      bytes.set(encoded, start);
+      view.setUint32(entry.offset + 4, encoded.length / unit, little);
+      return;
+    }
+    const appended = bytes.length + (bytes.length & 1);
+    const grown = new Uint8Array(appended + encoded.length);
+    grown.set(bytes);
+    grown.fill(0, start, start + capacity);
+    grown.set(encoded, appended);
+    bytes = grown;
+    view = new DataView(bytes.buffer);
+    view.setUint32(entry.offset + 4, encoded.length / unit, little);
+    view.setUint32(entry.offset + 8, appended, little);
+  };
+  for (const [name, rawValue] of Object.entries(edits) as Array<[keyof ExifFieldEdits, unknown]>) {
+    if (name === 'gpsCoordinates' || rawValue === undefined) continue;
+    const tag = editableExifTags[name];
+    const entry = entries.find((candidate) => candidate.tag === tag);
+    if (!entry) throw new Error(`EXIF ${name} could not be created safely.`);
+    if (name === 'orientation' || name === 'rating') {
+      const value = Number(rawValue);
+      const maximum = name === 'orientation' ? 8 : 5;
+      if (
+        entry.type !== 3 ||
+        entry.count !== 1 ||
+        !Number.isInteger(value) ||
+        value < 0 ||
+        value > maximum
+      )
+        throw new Error(`EXIF ${name} must be an existing SHORT from 0 through ${maximum}.`);
+      view.setUint16(entry.offset + 8, value, little);
+      continue;
+    }
+    if (typeof rawValue !== 'string') throw new Error(`EXIF ${name} must be text.`);
+    if (name === 'keywords') {
+      if (entry.type !== 1)
+        throw new Error('EXIF keywords must use the existing XPKeywords BYTE field.');
+      const encoded = new Uint8Array((rawValue.length + 1) * 2);
+      const encodedView = new DataView(encoded.buffer);
+      for (let index = 0; index < rawValue.length; index += 1)
+        encodedView.setUint16(index * 2, rawValue.charCodeAt(index), true);
+      writeBytes(entry, encoded);
+      continue;
+    }
+    if (name === 'userComment') {
+      if (entry.type !== 7 || entry.count < 8)
+        throw new Error(
+          'EXIF UserComment must use an existing UNDEFINED field with an encoding prefix.',
+        );
+      const encoded = new TextEncoder().encode(rawValue);
+      if (encoded.some((value) => value > 0x7f))
+        throw new Error('EXIF UserComment editing currently accepts ASCII text only.');
+      const value = new Uint8Array(8 + encoded.length + 1);
+      value.set(new TextEncoder().encode('ASCII\0\0\0'));
+      value.set(encoded, 8);
+      writeBytes(entry, value);
+      continue;
+    }
+    if (entry.type !== 2) throw new Error(`EXIF ${name} must use an existing ASCII field.`);
+    const encoded = new TextEncoder().encode(`${rawValue}\0`);
+    if (encoded.some((value) => value > 0x7f))
+      throw new Error(`EXIF ${name} editing currently accepts ASCII text only.`);
+    writeBytes(entry, encoded);
+  }
+
+  if (edits.gpsCoordinates) {
+    const { latitude, longitude } = edits.gpsCoordinates;
+    if (
+      !Number.isFinite(latitude) ||
+      latitude < -90 ||
+      latitude > 90 ||
+      !Number.isFinite(longitude) ||
+      longitude < -180 ||
+      longitude > 180
+    )
+      throw new Error('EXIF GPS coordinates must be within latitude ±90 and longitude ±180.');
+    const root = ifds[0];
+    const gpsPointer = root?.entries.find(
+      (entry) => entry.tag === 0x8825 && entry.type === 4 && entry.count === 1,
+    );
+    const gps = gpsPointer ? ifds.find((ifd) => ifd.offset === gpsPointer.value) : undefined;
+    if (!gps) throw new Error('EXIF GPS fields could not be created safely.');
+    const coordinate = (absolute: number) => {
+      const degrees = Math.floor(absolute),
+        minutesFloat = (absolute - degrees) * 60;
+      const minutes = Math.floor(minutesFloat),
+        seconds = Math.round((minutesFloat - minutes) * 60 * 1_000_000);
+      return [
+        [degrees, 1],
+        [minutes, 1],
+        [seconds, 1_000_000],
+      ] as const;
+    };
+    for (const [refTag, valueTag, signed, positive, negative] of [
+      [1, 2, latitude, 'N', 'S'],
+      [3, 4, longitude, 'E', 'W'],
+    ] as const) {
+      const ref = gps.entries.find((entry) => entry.tag === refTag);
+      const value = gps.entries.find((entry) => entry.tag === valueTag);
+      if (
+        !ref ||
+        ref.type !== 2 ||
+        ref.count < 2 ||
+        !value ||
+        value.type !== 5 ||
+        value.count !== 3
+      )
+        throw new Error('EXIF GPS coordinate fields are incomplete; rebuilding is required.');
+      writeBytes(ref, new Uint8Array([(signed < 0 ? negative : positive).charCodeAt(0), 0]));
+      const [start] = entryStorage(source, value, 8);
+      coordinate(Math.abs(signed)).forEach(([numerator, denominator], index) => {
+        view.setUint32(start + index * 8, numerator, little);
+        view.setUint32(start + index * 8 + 4, denominator, little);
+      });
+    }
+  }
+  return bytes;
+}

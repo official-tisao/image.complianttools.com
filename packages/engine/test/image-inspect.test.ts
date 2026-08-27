@@ -1,0 +1,281 @@
+import { describe, expect, it } from 'vitest';
+import { inspectImageContainer } from '../src/index.js';
+
+function chunk(type: string, data: number[]) {
+  return [0, 0, 0, data.length, ...Buffer.from(type, 'ascii'), ...data, 0, 0, 0, 0];
+}
+
+describe('image container inspection', () => {
+  it('reports PNG colour, DPI, APNG frames, and chunk structure', () => {
+    const ihdr = [0, 0, 0, 2, 0, 0, 0, 3, 8, 6, 0, 0, 0];
+    const bytes = new Uint8Array([
+      137,
+      80,
+      78,
+      71,
+      13,
+      10,
+      26,
+      10,
+      ...chunk('IHDR', ihdr),
+      ...chunk('pHYs', [0, 0, 14, 195, 0, 0, 14, 195, 1]),
+      ...chunk('acTL', [0, 0, 0, 4, 0, 0, 0, 0]),
+      ...chunk('IEND', []),
+    ]);
+    expect(inspectImageContainer(bytes)).toMatchObject({
+      format: 'png',
+      width: 2,
+      height: 3,
+      bitDepth: 8,
+      channels: 4,
+      hasAlpha: true,
+      dpi: { x: 96, y: 96 },
+      frameCount: 4,
+      animated: true,
+      structures: ['IHDR (13 bytes)', 'pHYs (9 bytes)', 'acTL (8 bytes)', 'IEND (0 bytes)'],
+    });
+  });
+
+  it('recognizes transparency declared by an indexed PNG tRNS chunk', () => {
+    const bytes = new Uint8Array([
+      137,
+      80,
+      78,
+      71,
+      13,
+      10,
+      26,
+      10,
+      ...chunk('IHDR', [0, 0, 0, 1, 0, 0, 0, 1, 8, 3, 0, 0, 0]),
+      ...chunk('tRNS', [0]),
+      ...chunk('IEND', []),
+    ]);
+    expect(inspectImageContainer(bytes)).toMatchObject({
+      colorSpace: 'Indexed colour',
+      channels: 1,
+      hasAlpha: true,
+    });
+  });
+
+  it('reports GIF dimensions, palette depth, transparency, and frames', () => {
+    const bytes = new Uint8Array([
+      ...Buffer.from('GIF89a'),
+      2,
+      0,
+      3,
+      0,
+      0x07,
+      0,
+      0,
+      0x21,
+      0xf9,
+      4,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0x2c,
+      0,
+      0,
+      0,
+      0,
+      2,
+      0,
+      3,
+      0,
+      0,
+      2,
+      1,
+      0x2c,
+      0,
+      0x2c,
+      0,
+      0,
+      0,
+      0,
+      2,
+      0,
+      3,
+      0,
+      0,
+      2,
+      1,
+      0,
+      0,
+      0x3b,
+    ]);
+    expect(inspectImageContainer(bytes)).toMatchObject({
+      format: 'gif',
+      width: 2,
+      height: 3,
+      bitDepth: 8,
+      channels: 3,
+      hasAlpha: true,
+      frameCount: 2,
+      animated: true,
+    });
+  });
+
+  it('reports JPEG frame, JFIF density, segments, and a bounded quality estimate', () => {
+    const bytes = new Uint8Array([
+      0xff,
+      0xd8,
+      0xff,
+      0xe0,
+      0,
+      16,
+      ...Buffer.from('JFIF\0'),
+      1,
+      1,
+      1,
+      0,
+      72,
+      0,
+      72,
+      0,
+      0,
+      0xff,
+      0xdb,
+      0,
+      67,
+      0,
+      ...new Array(64).fill(10),
+      0xff,
+      0xc0,
+      0,
+      11,
+      8,
+      0,
+      3,
+      0,
+      2,
+      1,
+      1,
+      0,
+      0xff,
+      0xda,
+      0,
+      2,
+    ]);
+    expect(inspectImageContainer(bytes)).toMatchObject({
+      format: 'jpeg',
+      width: 2,
+      height: 3,
+      bitDepth: 8,
+      channels: 1,
+      hasAlpha: false,
+      dpi: { x: 72, y: 72 },
+      frameCount: 1,
+      animated: false,
+      estimatedQuality: 96,
+    });
+  });
+
+  it('reports extended WebP alpha, animation frames, and RIFF chunks', () => {
+    const bytes = new Uint8Array([
+      ...Buffer.from('RIFF'),
+      48,
+      0,
+      0,
+      0,
+      ...Buffer.from('WEBP'),
+      ...Buffer.from('VP8X'),
+      10,
+      0,
+      0,
+      0,
+      0x12,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      2,
+      0,
+      0,
+      ...Buffer.from('ANMF'),
+      0,
+      0,
+      0,
+      0,
+      ...Buffer.from('ANMF'),
+      0,
+      0,
+      0,
+      0,
+    ]);
+    expect(inspectImageContainer(bytes)).toMatchObject({
+      format: 'webp',
+      width: 2,
+      height: 3,
+      bitDepth: 8,
+      channels: 4,
+      hasAlpha: true,
+      frameCount: 2,
+      animated: true,
+      structures: ['VP8X (10 bytes)', 'ANMF (0 bytes)', 'ANMF (0 bytes)'],
+    });
+  });
+
+  it('reads dimensions from simple lossy and lossless WebP bitstream headers', () => {
+    const lossy = new Uint8Array([
+      ...Buffer.from('RIFF'),
+      22,
+      0,
+      0,
+      0,
+      ...Buffer.from('WEBP'),
+      ...Buffer.from('VP8 '),
+      10,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0x9d,
+      0x01,
+      0x2a,
+      2,
+      0,
+      3,
+      0,
+    ]);
+    expect(inspectImageContainer(lossy)).toMatchObject({
+      format: 'webp',
+      width: 2,
+      height: 3,
+      channels: 3,
+      hasAlpha: false,
+    });
+
+    const lossless = new Uint8Array([
+      ...Buffer.from('RIFF'),
+      18,
+      0,
+      0,
+      0,
+      ...Buffer.from('WEBP'),
+      ...Buffer.from('VP8L'),
+      5,
+      0,
+      0,
+      0,
+      0x2f,
+      1,
+      0x80,
+      0,
+      0,
+      0,
+    ]);
+    expect(inspectImageContainer(lossless)).toMatchObject({
+      format: 'webp',
+      width: 2,
+      height: 3,
+      channels: null,
+      hasAlpha: null,
+    });
+  });
+});

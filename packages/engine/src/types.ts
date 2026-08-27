@@ -1,10 +1,70 @@
 export type FormatId =
-  'avif' | 'bmp' | 'exr' | 'gif' | 'jpeg' | 'jxl' | 'png' | 'qoi' | 'tga' | 'tiff' | 'webp';
+  | 'ai'
+  | 'apng'
+  | 'avif'
+  | 'bmp'
+  | 'cbz'
+  | 'cbr'
+  | 'cdr'
+  | 'cur'
+  | 'dds'
+  | 'djvu'
+  | 'dwg'
+  | 'dxf'
+  | 'eps'
+  | 'emf'
+  | 'exr'
+  | 'fits'
+  | 'gif'
+  | 'flif'
+  | 'hdr'
+  | 'heic'
+  | 'ico'
+  | 'jpeg'
+  | 'jp2'
+  | 'jxl'
+  | 'ktx'
+  | 'mng'
+  | 'm4v'
+  | 'mp4'
+  | 'mov'
+  | 'mkv'
+  | 'avi'
+  | 'ogv'
+  | 'wmv'
+  | 'flv'
+  | '3gp'
+  | 'mts'
+  | 'm2ts'
+  | 'pcx'
+  | 'pdf'
+  | 'pfm'
+  | 'psd'
+  | 'png'
+  | 'pict'
+  | 'pnm'
+  | 'qoi'
+  | 'raw'
+  | 'sgi'
+  | 'svg'
+  | 'sun-raster'
+  | 'tga'
+  | 'tiff'
+  | 'wbmp'
+  | 'xbm'
+  | 'xcf'
+  | 'webm'
+  | 'webp'
+  | 'wmf';
 
 export type ColorSpaceId = 'srgb' | 'display-p3' | 'adobe-rgb' | 'gray' | 'cmyk';
 
 export interface Frame {
   readonly data: Uint8ClampedArray;
+  /** Full-precision RGBA samples when the parent raster has `bitDepth: 16`. */
+  readonly data16?: Uint16Array;
+  /** Linear-light RGB working values retained by RAW development before output quantization. */
+  readonly linearRgb?: Float64Array;
   readonly durationMs: number;
   readonly disposal?: 'none' | 'background' | 'previous';
 }
@@ -17,6 +77,11 @@ export interface RasterImage {
   readonly premultipliedAlpha: boolean;
   readonly frames: readonly [Frame, ...Frame[]];
   readonly iccProfile?: Uint8Array;
+  /** Byte-exact source-container metadata retained for same-format re-encoding. */
+  readonly encodedMetadata?: {
+    readonly format: Extract<FormatId, 'gif' | 'jpeg' | 'png' | 'webp'>;
+    readonly blocks: readonly Uint8Array[];
+  };
 }
 
 export interface ExportOptions {
@@ -64,7 +129,11 @@ export interface Plan {
   readonly steps: readonly PlanStep[];
   readonly tier: ExecutionTier;
   readonly estimatedPeakBytes: number;
-  readonly lazyDownloads: readonly { readonly id: string; readonly bytes: number }[];
+  readonly lazyDownloads: readonly {
+    readonly id: string;
+    readonly bytes: number;
+    readonly requiresConsent: boolean;
+  }[];
   readonly warnings: readonly string[];
   readonly memoryStrategy: 'whole' | 'reduced-concurrency' | 'tiled' | 'opfs-spill' | 'refuse';
   readonly tileSize?: number;

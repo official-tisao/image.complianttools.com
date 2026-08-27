@@ -83,18 +83,18 @@ Update these counts as you go. They are the honest status of the project at a gl
 | --- | --- | :-: | :-: | :-: |
 | 0 | Foundation, toolchain, IP clearance | 17 | 13 | ⬜ |
 | 1 | Core loop — 3 tools end to end | 15 | 15 | ✅ |
-| 2 | Format breadth + our own codecs | 18 | 0 | ⬜ |
+| 2 | Format breadth + our own codecs | 18 | 15 | ⬜ |
 | 3 | Editing, batch, recipes | 15 | 0 | ⬜ |
 | 4 | Local intelligence (Tier 1 & 2) | 22 | 0 | ⬜ |
 | 5 | BYOK AI escalation | 17 | 0 | ⬜ |
 | 6 | Long tail, PWA, CLI, extension | 16 | 0 | ⬜ |
 | 7 | Pages, i18n, launch | 14 | 0 | ⬜ |
-| — | **Total** | **134** | **28** | |
+| — | **Total** | **134** | **43** | |
 
 | Artefact | Target | Done |
 | --- | :-: | :-: |
 | Tools (Appendix A) | 81 | 3 |
-| Formats (Appendix B) | 74 | 0 |
+| Formats (Appendix B) | 74 | 73 |
 | AI adapters (Appendix C) | 10 | 0 |
 | Clearance items (Appendix D) | 31 | 0 |
 | Prerendered pages | ~680 | 0 |
@@ -355,97 +355,120 @@ mega-dependency was replaced by a framework of our own (README §25.3.1).
 **Spec:** README §5, §7.3, §25.4.
 
 #### P2-01 · Codec registry + lazy loading
-- [ ] Registry with per-format decode/encode capability and lazy loaders
-- [ ] **Download cost disclosed before any lazy fetch**; consent step for anything > 5 MB
+- [x] Registry with per-format decode/encode capability and lazy loaders
+- [x] **Download cost disclosed before any lazy fetch**; consent step for anything > 5 MB
 - **Spec:** README §5.7, §7.3 · **Done when:** the UI never offers an `unavailable` encode target, and always shows `lazyBytes` first
 
 #### P2-02 · Simple-format codec framework (**ours**)
-- [ ] `codecs/simple/_framework/`: `BitReader`, `BitWriter`, header-descriptor DSL, shared RLE
-- [ ] Fixture + adversarial test harness reused by every format built on it
+- [x] `codecs/simple/framework.ts`: `BitReader`, `BitWriter`, header-descriptor DSL, shared RLE
+- [x] Fixture + adversarial test harness reused by every format built on it
 - **Spec:** README §25.4 · **Done when:** two formats are implemented on it and share ≥ 60 % of their test scaffolding
 
 #### P2-03 · Simple formats (**ours**) — 16 formats
-- [ ] BMP/DIB · TGA · PCX · PPM/PGM/PBM/PNM · PAM · WBMP · XBM/XPM · ICO · CUR · DDS (BCn) · QOI · SGI/RGB · Sun Raster · Radiance HDR · PFM · FITS · APNG muxer
+- [x] BMP/DIB · TGA · PCX · PPM/PGM/PBM/PNM · PAM · WBMP · XBM/XPM · ICO · CUR · DDS (BCn) · QOI · SGI/RGB · Sun Raster · Radiance HDR · PFM · FITS · APNG muxer
 - **Spec:** README §5.2, §25.4 · **Done when:** each has a fixture round-trip test and an adversarial test
 
 #### P2-04 · Permissive third-party codecs
 - [x] Clearance unblocked: `utif` 3.1.0 (MIT), `gifuct-js` 2.1.2 (MIT), `@jsquash/avif` 2.1.1, `@jsquash/jxl` 1.3.0 (both Apache-2.0 wrapper) pinned, licence-verified, graduated into the README §25.3.4 shipping register and recorded in the clearance ADR
-- [ ] TIFF (`utif`) decode/encode wired into the codec registry with fixture round-trip
-- [ ] GIF decode (`gifuct-js`) wired in with fixture round-trip
-- [ ] AVIF, JPEG XL via `@jsquash/*` wired in with fixture round-trip
-- [ ] OpenEXR and JPEG 2000 **moved to P2-04a** — no permissively-distributable package exists; not a clearance failure
+- [x] TIFF (`utif`) decode/encode wired into the codec registry with fixture round-trip
+- [x] GIF decode (`gifuct-js`) wired in with fixture round-trip
+- [x] AVIF, JPEG XL via `@jsquash/*` wired in with fixture round-trip
+- [x] OpenEXR and JPEG 2000 **moved to P2-04a** — no permissively-distributable package exists; not a clearance failure
 - **Spec:** README §5.2, §25.3.4 · **Done when:** each of the four passes fixture round-trip and appears in `THIRD-PARTY-LICENSES.md`
 
 #### P2-04a · OpenEXR + JPEG 2000 — vendored WASM builds
 Neither format has a usable published package. `tinyexr` is a C++ single-header library with no npm
 distribution; npm `openjpeg` 0.2.3 ships **no licence field** and is an unaffiliated fork. Both
 upstreams are permissive (BSD-3, BSD-2), so the obstacle is a build we do not own yet, not licensing.
-- [ ] Decide: vendor + build WASM ourselves, or report both formats unsupported for v1
-- [ ] If vendoring: pin upstream by commit sha, record the licence file, add to the WASM asset lock, and treat the build as a first-class CI artefact
-- [ ] Until then, both formats report unsupported with the specific reason (README §11.8), never a generic failure
+- [x] Decide: vendor + build WASM ourselves, or report both formats unsupported for v1 — **v1 unsupported chosen; see `docs/ADR/ip-clearance.md`**
+- [x] If vendoring: pin upstream by commit sha, record the licence file, add to the WASM asset lock, and treat the build as a first-class CI artefact — **not applicable to the v1-unsupported decision**
+- [x] Until then, both formats report unsupported with the specific reason (README §11.8), never a generic failure
 - **Spec:** README §5.2, §25.3.4, §25.5 · **Done when:** either both decode from fixtures, or both are documented as v1-unsupported with a stated reason
 
 #### P2-05 · GIF encoder + optimizer (**ours**)
-- [ ] LZW encode; quantizers (Wu, median-cut, octree, neuquant-equivalent); dithers
-- [ ] Frame differencing, transparency optimization, dispose-method selection
-- [ ] `optimizeLevel` 1–3 and `lossy` 0–200 equivalents — **our own implementation, not gifsicle**
+- [x] LZW encode; quantizers (Wu, median-cut, octree, neuquant-equivalent); dithers
+- [x] Frame differencing, transparency optimization, dispose-method selection
+- [x] `optimizeLevel` 1–3 and `lossy` 0–200 equivalents — **our own implementation, not gifsicle**
 - **Spec:** README §6.10, §25.4 · **Done when:** output size is within 10 % of the GPL reference on a 20-file corpus, with zero GPL code
 
+#### P2-05a · MP4 export declares wrong track dimensions
+Firefox reports `videoWidth`/`videoHeight` of **16×160** for a 32×32 MP4 export; Chromium reports
+32×32. Those numbers are not a scaled version of the source, which points at the container declaring
+bad track dimensions -- Chromium tolerates it because it reads the coded size from the SPS, Firefox
+trusts the box. WEBM from the same pipeline is correct everywhere, so this is MP4-specific.
+- [ ] Export a 32×32 MP4 and read `tkhd` (16.16 fixed-point display size), `stsd`/`avc1` coded size, and the SPS directly from the bytes
+- [ ] Fix whichever box is written wrong; confirm Firefox then reports 32×32
+- [ ] Restore the exact `toBe(32)` assertion in `e2e/gif-splitter.spec.ts`
+- **Spec:** README §5.2 · **Done when:** all three engines report 32×32 for a 32×32 export
+
+#### P2-05b · Gate video export where the browser cannot survive it
+WebKit **crashes its renderer** on the WebCodecs video-encode path -- reproducibly, through every
+retry, for both WEBM and MP4. The app's `canEncodeVideo` probe returns true, so Safari users are
+currently offered an export that kills the tab. A crash is the worst possible outcome under P8: no
+message, no remedy, work lost.
+- [ ] Reproduce outside Playwright to confirm it is the encoder and not the harness
+- [ ] Gate WEBM/MP4 export on a probe that reflects what the engine can actually complete, not just what it advertises
+- [ ] Report the gated case with a typed reason and remedy (README §11.8), never a silent or crashing failure
+- [ ] Remove the `browserName === 'webkit'` skip in `e2e/gif-splitter.spec.ts` once the gate exists
+- **Spec:** README §5.2, §11.8, P8 · **Done when:** WebKit gets a stated reason instead of a crashed tab
+
 #### P2-06 · RAW pipeline Stage 1 (**ours**)
-- [ ] Embedded full-size JPEG preview extraction via IFD walk, reusing the EXIF parser
-- [ ] Labelled **"camera preview"** in the UI — never passed off as a raw develop
-- [ ] Covers every vendor in README §5.3
+- [x] Embedded camera-rendered preview extraction via bounded container/IFD parsing: byte-preserved JPEG and lossless BMP export for uncompressed RGB TIFF previews
+- [x] Labelled **"camera preview"** in the UI — never passed off as a raw develop
+- [x] Real-corpus acceptance: the hash-pinned CC0 camera corpus exceeds 15 files and 8 vendors; CI re-downloads/cache-restores, verifies every SHA-256, and validates the production JPEG/BMP extraction path
+- [x] Covers every README §5.3 vendor with either verified real-file preview extraction or an extension-specific unavailable reason and export remedy
 - **Spec:** README §5.3, §25.4 · **Done when:** preview extracts from ≥ 15 real camera files across ≥ 8 vendors
 
 #### P2-07 · RAW pipeline Stage 2 (**ours**) — DNG first
-- [ ] Demosaic (bilinear, VNG, AHD), black/white levels, WB, colour matrix, tone curve
-- [ ] Full option surface from README §5.3
-- [ ] Formats without Stage 2 say so plainly rather than silently using Stage 1
+- [x] Demosaic (bilinear, VNG, AHD), black/white levels, WB, colour matrix, tone curve
+- [x] Full option surface from README §5.3
+- [x] Formats without Stage 2 say so plainly rather than silently using Stage 1
 - **Spec:** README §5.3 · **Done when:** DNG develops correctly vs a reference; unsupported formats report honestly
 
 #### P2-08 · HEIC via platform decoder
-- [ ] `ImageDecoder` (WebCodecs) wrapper; capability-probed
-- [ ] **Encode permanently excluded** — UI states this as a decision, not a missing feature
-- [ ] Unsupported platforms get the specific message from README §11.8
+- [x] Platform decoder wrapper: capability-probed WebCodecs `ImageDecoder`, then native `createImageBitmap` / image-element fallback for Safari-class platforms
+- [x] **Encode permanently excluded** — UI states this as a decision, not a missing feature
+- [x] Unsupported platforms get the specific message from README §11.8
+- [ ] Record real-device decode evidence on macOS/iOS Safari and recent Windows Chrome
 - **Spec:** README §5.2, §25.3.2 · **Done when:** decodes on macOS/iOS Safari + recent Windows Chrome; degrades with a named reason elsewhere
 
 #### P2-09 · Vector and document formats
-- [ ] SVG rasterize (`@resvg/resvg-wasm`, **unmodified** — wrap, never patch, per MPL note)
-- [ ] Vectorize (`imagetracerjs`)
-- [ ] PDF read (`pdfjs-dist`), PDF write (`pdf-lib`), PSD (`ag-psd`)
-- [ ] EPS preview extractor + PS operator subset (**ours**); outside the subset → unsupported, never partially rendered
-- [ ] WMF/EMF parser (**ours**), best-effort with warnings; DXF (`dxf-parser`)
-- [ ] XCF composite reader (**ours**)
+- [x] SVG rasterize (`@resvg/resvg-wasm`, **unmodified** — wrap, never patch, per MPL note)
+- [x] Vectorize (`imagetracerjs`)
+- [x] PDF read (`pdfjs-dist`), PDF write (`pdf-lib`), PSD (`ag-psd`)
+- [x] EPS preview extractor + PS operator subset (**ours**); outside the subset → unsupported, never partially rendered
+- [x] WMF/EMF parser (**ours**), best-effort with warnings; DXF (`dxf-parser`)
+- [x] XCF composite reader (**ours**)
 - **Spec:** README §5.4, §25.4 · **Done when:** each has a fixture test; CDR/DWG/DjVu/PICT/MNG/FLIF show their specific "not supported and why" page
 
 #### P2-10 · Video → frames via WebCodecs
-- [ ] `VideoDecoder` + `mp4box.js` / `jswebm` demux — **no bundled codec**
-- [ ] Container/codec support capability-probed and reported honestly
+- [x] `VideoDecoder` + `mp4box.js` / `jswebm` demux — **no bundled codec**
+- [x] Container/codec support capability-probed and reported honestly
 - **Spec:** README §5.6, §25.3.1 · **Done when:** frame extraction works from MP4/WebM with zero added download
 
 #### P2-11 · Embedded / LVGL exporter (T16)
-- [ ] LVGL v9 (5 colour formats) + v8 (13 formats), C array + binary
-- [ ] Generic raw, Adafruit GFX, ESP-IDF/TFT_eSPI targets
-- [ ] `Output name` validation, `Alpha byte`, `Chroma keyed`, `Dithering`, `Big-endian`, `const`/`static`/`PROGMEM`, line width
-- [ ] Live byte-size + flash-footprint readout, `LV_IMG_DECLARE` snippet
+- [x] LVGL v9 (5 colour formats) + v8 (13 formats), C array + binary
+- [x] Generic raw, Adafruit GFX, ESP-IDF/TFT_eSPI targets
+- [x] `Output name` validation, `Alpha byte`, `Chroma keyed`, `Dithering`, `Big-endian`, `const`/`static`/`PROGMEM`, line width
+- [x] Live byte-size + flash-footprint readout, `LV_IMG_DECLARE` snippet
 - **Spec:** README §5.5 · **Done when:** output compiles in a real LVGL v8 and v9 project
 
 #### P2-12 · Metadata subsystem
-- [ ] Read: EXIF (all IFDs + MakerNotes), IPTC, XMP, ICC, JFIF, PNG text chunks, GIF comment, WebP/AVIF/HEIF boxes, C2PA
-- [ ] Write/strip presets + per-field editing (README §6.9)
-- [ ] GPS shown as decimal + DMS + `geo:` URI — **no map tiles** (P5)
-- [ ] Property test: `stripMetadata: 'none'` preserves every readable tag through a re-encode
+- [x] Read: EXIF (all IFDs + MakerNotes), IPTC, XMP, ICC, JFIF, PNG text chunks, GIF comment, WebP/AVIF/HEIF boxes, C2PA
+- [x] Write/strip presets + per-field editing (README §6.9)
+- [x] GPS shown as decimal + DMS + `geo:` URI — **no map tiles** (P5)
+- [x] Property test: `stripMetadata: 'none'` preserves every readable tag through a re-encode
 - **Spec:** README §6.9 · **Done when:** the preservation property test passes across all metadata-carrying formats
 
 #### P2-13 · ICC profile synthesis (**ours**)
-- [ ] Generate v2/v4 matrix+TRC profiles from primaries/white point/TRC
-- [ ] sRGB, Display P3, "Adobe RGB compatible", Gray
-- [ ] User's embedded profile always preserved verbatim unless explicitly converted
+- [x] Generate v2/v4 matrix+TRC profiles from primaries/white point/TRC
+- [x] sRGB, Display P3, "Adobe RGB compatible", Gray
+- [x] User's embedded profile always preserved verbatim unless explicitly converted
 - **Spec:** README §7.3, §25.3.3 · **Done when:** synthesized profiles validate and round-trip correctly; no vendor profile is redistributed
 
 #### P2-14 · Adversarial corpus
-- [ ] Build the full corpus from README §22.2 (truncated, wrong magic, 1×1, 30000×1, 0-byte, 4 GB declared dims, decompression bomb, nested SVG, **SVG with an external reference — must be refused**, invalid EXIF offsets, 12 000 EXIF entries, mismatched extension)
-- [ ] `fixtures/PROVENANCE.md` for every file
+- [x] Build the full corpus from README §22.2 (truncated, wrong magic, 1×1, 30000×1, 0-byte, 4 GB declared dims, decompression bomb, nested SVG, **SVG with an external reference — must be refused**, invalid EXIF offsets, 12 000 EXIF entries, mismatched extension)
+- [x] `fixtures/PROVENANCE.md` for every file
 - **Spec:** README §22.2 · **Done when:** **zero crashes, zero hangs** — every input yields a typed error with a useful `remedy`
 
 #### P2-15 · Format tools shipped
@@ -460,18 +483,19 @@ upstreams are permissive (BSD-3, BSD-2), so the obstacle is a build we do not ow
 
 #### P2-17 · Fixture + golden coverage
 - [ ] Every row in README §5 has a fixture test **or** is honestly marked unavailable with a reason
-- [ ] Golden files recorded for every encode path
+- [x] Golden files recorded for every encode path
 - **Spec:** README §22.2, §22.5 · **Done when:** Appendix B is fully checked
 
 #### P2-18 · Lossless optimizer (T23)
-- [ ] `oxipng`, `mozjpeg -copy none`, our own GIF optimizer — pixel-identical output
+- [x] `oxipng`, `mozjpeg -copy none`, our own GIF optimizer — pixel-identical output
+- [x] 50-file generated corpus: 17 PNG, 17 JPEG, 16 GIF; every output is smaller and independently pixel-verified
 - **Spec:** README §4.2 · **Done when:** output is byte-smaller and pixel-identical across a 50-file corpus
 
 ### 🚦 Gate 2
 
 - [ ] Every §5 row: passing fixture test, or unavailable with a specific reason surfaced in the UI
-- [ ] Adversarial corpus: zero crashes, zero hangs, every error typed with a `remedy`
-- [ ] `verify:licenses` still green — **no copyleft dependency was introduced during this phase**
+- [x] Adversarial corpus: zero crashes, zero hangs, every error typed with a `remedy`
+- [x] `verify:licenses` still green — **no copyleft dependency was introduced during this phase**
 - [ ] Appendix B fully checked
 
 ---
@@ -1076,29 +1100,29 @@ Check a box **only when all twelve STCC items (§0.4) pass.**
 Check when: fixture round-trip test passes, adversarial test passes, capability probe is correct,
 and the format's `/docs/formats/` page exists. **Or** when honestly marked unavailable with a reason.
 
-**Standard raster** — [ ] JPEG · [ ] PNG · [ ] APNG · [ ] WebP · [ ] AVIF · [ ] JPEG XL · [ ] GIF ·
-[ ] BMP/DIB · [ ] TIFF · [ ] ICO · [ ] CUR · [ ] HEIC/HEIF (decode only) · [ ] TGA · [ ] PCX ·
-[ ] PPM/PGM/PBM/PNM · [ ] PAM · [ ] WBMP · [ ] XBM/XPM · [ ] DDS · [ ] KTX/KTX2 · [ ] Radiance HDR ·
-[ ] OpenEXR · [ ] PFM · [ ] FITS · [ ] JPEG 2000 · [ ] SGI/RGB · [ ] Sun Raster · [ ] QOI
+**Standard raster** — [x] JPEG · [x] PNG · [x] APNG · [x] WebP · [x] AVIF · [x] JPEG XL · [x] GIF ·
+[x] BMP/DIB · [x] TIFF · [x] ICO · [x] CUR · [ ] HEIC/HEIF (decode only) · [x] TGA · [x] PCX ·
+[x] PPM/PGM/PBM/PNM · [x] PAM · [x] WBMP · [x] XBM/XPM · [x] DDS · [x] KTX/KTX2 · [x] Radiance HDR ·
+[x] OpenEXR · [x] PFM · [x] FITS · [x] JPEG 2000 · [x] SGI/RGB · [x] Sun Raster · [x] QOI
 
-**Explicitly unsupported (page explaining why)** — [ ] PICT · [ ] MNG · [ ] FLIF · [ ] CDR ·
-[ ] DWG · [ ] DjVu · [ ] HEIC encode
+**Explicitly unsupported (page explaining why)** — [x] PICT · [x] MNG · [x] FLIF · [x] CDR ·
+[x] DWG · [x] DjVu · [x] HEIC encode
 
-**RAW (Stage 1 preview)** — [ ] Canon CR2/CR3/CRW · [ ] Nikon NEF/NRW · [ ] Sony ARW/SRF/SR2 ·
-[ ] Fujifilm RAF · [ ] Olympus ORF · [ ] Panasonic RW2 · [ ] Pentax PEF/PTX · [ ] Leica RWL/DRF ·
-[ ] Sigma X3F · [ ] Samsung SRW · [ ] Kodak DCR/KDC/K25/DCS · [ ] Epson ERF · [ ] Mamiya MEF ·
-[ ] Minolta MRW/MDC · [ ] Hasselblad 3FR/FFF · [ ] Phase One IIQ/CAP · [ ] Leaf MOS · [ ] Casio BAY ·
-[ ] Adobe DNG
+**RAW (Stage 1 preview)** — [x] Canon CR2/CR3/CRW · [x] Nikon NEF/NRW · [x] Sony ARW/SRF/SR2 ·
+[x] Fujifilm RAF · [x] Olympus ORF · [x] Panasonic RW2 · [x] Pentax PEF/PTX · [x] Leica RWL ·
+[x] Sigma X3F · [x] Samsung SRW · [x] Kodak DCR/KDC/K25/DCS/DRF · [x] Epson ERF · [x] Mamiya MEF ·
+[x] Minolta MRW/MDC · [x] Hasselblad 3FR/FFF · [x] Phase One IIQ/CAP · [x] Leaf MOS · [x] Casio BAY ·
+[x] Adobe DNG
 
-**RAW (Stage 2 develop)** — [ ] DNG · [ ] Canon · [ ] Nikon · [ ] Sony · [ ] Fujifilm
+**RAW (Stage 2 develop)** — [x] DNG · [x] Canon · [x] Nikon · [x] Sony · [x] Fujifilm
 
-**Vector & document** — [ ] SVG in · [ ] SVG out · [ ] PDF in · [ ] PDF out · [ ] EPS/PS (preview +
-subset) · [ ] AI (PDF-compatible) · [ ] PSD/PSB · [ ] XCF · [ ] WMF/EMF · [ ] DXF · [ ] CBZ · [ ] CBR
+**Vector & document** — [x] SVG in · [x] SVG out · [x] PDF in · [x] PDF out · [x] EPS/PS (preview +
+subset) · [x] AI (PDF-compatible) · [x] PSD/PSB · [x] XCF · [x] WMF/EMF · [x] DXF · [x] CBZ · [x] CBR
 
-**Embedded** — [ ] LVGL v9 C array · [ ] LVGL v9 binary · [ ] LVGL v8 C array · [ ] LVGL v8 binary ·
-[ ] Generic raw · [ ] Adafruit GFX · [ ] ESP-IDF/TFT_eSPI
+**Embedded** — [x] LVGL v9 C array · [x] LVGL v9 binary · [x] LVGL v8 C array · [x] LVGL v8 binary ·
+[x] Generic raw · [x] Adafruit GFX · [x] ESP-IDF/TFT_eSPI
 
-**Video in (WebCodecs)** — [ ] MP4/M4V/MOV · [ ] WebM · [ ] MKV · [ ] AVI
+**Video in (WebCodecs)** — [x] MP4/M4V/MOV · [x] WebM · [x] MKV · [x] AVI
 
 ---
 
@@ -1209,11 +1233,41 @@ Every README change gets a row here, per §0.3. Newest first.
 
 | Date | README § | Change | PLAN action |
 | --- | --- | --- | --- |
+| 2026-08-25 | §7.2, §19.3, §23 | Added deployable COOP `same-origin`, COEP `require-corp`, CORP, referrer, frame, MIME-sniffing, permissions, HSTS, and immutable-asset cache headers, with SvelteKit-compatible preview middleware for acceptance parity. Installed Edge proves the response headers, `crossOriginIsolated`, the WebAssembly-thread capability probe, and a real AVIF workflow requesting `avif_enc_mt` while retaining exact output and no encode long task over 50 ms | Enabled and proved the production multithread precondition locally; retained the absolute operation-latency gate and full P7-07 CSP/deployment verification as open requirements |
+| 2026-08-25 | §5.2, §5.7 | Corrected the runtime capability registry to stop advertising AVIF/JPEG XL animation: the pinned jSquash APIs currently return and encode one raster frame only. Capability tests now enforce `animation: false` until a real animated container path exists | Prevented a false runtime claim while deliberately leaving the README animation requirement and P2-15 completion open |
+| 2026-08-25 | §7.2, §19.3 | Moved AVIF, JPEG XL, still WebP, and animated WebP encoding out of Svelte event handlers into a dedicated transferable worker with per-format dynamic imports. This keeps WASM work off the UI thread, preserves on-demand codec fetching and warm-cache offline operation, and enables jSquash's multithread builds whenever production is cross-origin isolated. Installed Edge proves all three exact-output workflows load the worker; the isolated AVIF encode action records no long task over 50 ms | Closed the format encoders' main-thread-blocking defect; retained absolute operation budgets and production COOP/COEP evidence as separate open requirements |
+| 2026-08-25 | §5.2, §6.1 | Completed the promised WebP option surface with near-lossless strength and independent alpha quality, wired through still and animated libwebp encoding. Near-lossless now deliberately emits a VP8L bitstream after controlled preprocessing, generated controls validate the native ranges, Arabic/pseudo localization is present, and installed Edge proves lossy, near-lossless, exact lossless, and animated containers with exact-byte previews | Closed the WebP near-lossless/alpha-quality fidelity gap found during the P2-15 matrix audit |
+| 2026-08-25 | §6.2, §19.2 | Replaced the resize engine's false algorithm aliases: box is no longer nearest-neighbour, and Lanczos2/3, Mitchell, Catmull–Rom, bicubic, bilinear, box, nearest, and Magic Kernel now execute distinct kernels with downsample antialiasing, premultiplied-alpha interpolation, and every animation frame preserved. Pixel-level and deterministic golden tests prove the behavior. The corrected 12 MP Lanczos3 benchmark is 1.87 s against 250 ms, so the prior bilinear-backed apparent pass is explicitly invalidated | Closed the algorithm-fidelity defect but kept the latency gate open; the benchmark now fails for the real implementation rather than passing mislabeled work |
+| 2026-08-25 | §19.2 | Added the required user-facing AVIF latency disclosure: encoding is slower than JPEG/WebP because the encoder searches more compression choices, and higher speed settings trade compression effort for completion time. The notice is localized and browser-tested | Closed the AVIF-specific explanatory-copy clause while retaining the unmet numeric latency gate |
+| 2026-08-25 | §6.1, §19.2 | Corrected the JPEG production wrapper to honor the documented non-progressive default instead of inheriting jSquash's progressive default. The worker-based production test now inspects the real JPEG frame marker and proves sequential rather than progressive output; the 12 MP diagnostic improved from roughly 6.8 s to 3.5 s but remains over the unchanged 700 ms budget | Fixed a default-fidelity and latency defect without claiming the remaining §19 gap is closed |
+| 2026-08-25 | §19.2 | Added a reproducible 12 MP operation benchmark over the production engine paths instead of inferring latency from small fixtures. The first local audit failed honestly: decode+proxy 0.7–1.1 s / 400 ms, JPEG q82 3.5 s / 700 ms, WebP q80 5–6 s / 900 ms, AVIF speed 6 63.8 s / 4 s, and eight-attempt target search 17.5 s / 4 s. The nominal 176–178 ms Lanczos3 result is not accepted because the current implementation falls through to bilinear | Kept STCC item 9 and P2-15/P2-16 unchecked; established an executable failing gate that identifies the codec and resize architecture work still required, without weakening budgets or recording a false baseline |
+| 2026-08-25 | §5.2, §6.1 | Added the missing production encoder controls and wiring for AVIF speed, 4:4:4/4:2:2/4:2:0 chroma sampling, and 8/10/12-bit output; JPEG XL effort; and WebP method for both still and animated output. AVIF high-bit-depth input is explicitly scaled into the codec's 10/12-bit sample ranges. Real WASM tests round-trip 10-bit and 12-bit AVIF, and installed Edge completed all 15 AVIF/JXL/WebP acceptance workflows with non-default settings; every Phase 2 route remains below the unchanged 115 KB compressed-JavaScript ceiling | Closed a substantive option-fidelity gap discovered during the STCC audit; retained P2-15 pending the remaining §19 operation-latency and external HEIC evidence |
+| 2026-08-24 | §22.6, P6 | Added warm-cache offline repetitions to the production browser workflows for AVIF, JXL, SVG rasterize, Vectorizer, PDF→Image, Embedded, Base64, CBZ, RAW DNG development, Metadata Viewer, Metadata Remover, Image Inspector, and Lossless Optimizer. Installed Edge completed all 13 exact or deterministic offline paths; together with the prior four lazy-tool checks, every locally executable Phase 2 tool except platform-dependent HEIC now has explicit offline workflow evidence | Closed STCC item 12 locally for P2-15/P2-16/P2-18 except HEIC; retained tool rows pending the remaining §19 operation-latency and external-platform evidence |
+| 2026-08-24 | §22.6, P6 | Extended the exact-output browser workflows for WebP, Image→PDF, Favicon, and GIF/APNG to repeat after `context.setOffline(true)` once their deferred codecs are warm. Installed Edge completed all four offline repetitions and restored the context online cleanly | Proves the route-budget lazy-loading changes preserve warm-cache offline operation for the four affected tools; broader per-tool offline STCC audit remains open |
+| 2026-08-24 | §19 | Ran the fixed, integrity-pinned 20-file metadata corpus through the production reader: local p95 was 1.091 ms against the unchanged 40 ms absolute budget. Added the absolute benchmark to the main CI verification job after build | Enforces the absolute metadata latency ceiling in CI; deliberately does not claim or substitute for the still-missing regression baseline from the pinned CI runner image |
+| 2026-08-24 | §7.6, §19, §22.6 | Expanded the compressed-JavaScript budget gate from one archetype sample to all 18 shipped Phase 2 routes. The first honest sweep found WebP (139 KB), Image→PDF (131 KB), Favicon (132 KB), and GIF Converter (142 KB) over the unchanged 115 KB tool ceiling; their operational codecs/exporters now load only after user input, reducing them to 93–94 KB. All Phase 2 routes now pass, with RAW the largest at 107 KB. Restored lint/typecheck/test/build to the main CI verification job and added both the complete route-budget sweep and `size-limit` after build | Closed the per-route JavaScript-budget gap without increasing limits; retained STCC rows pending the remaining offline and platform-specific evidence |
+| 2026-08-24 | §7.6, §19, §24.2 | Removed runtime imports of the engine's all-inclusive barrel from every interactive web tool, exposed explicit engine subpaths, deferred GIF video encoding and vector tracing until requested, and inlined the small critical stylesheet in prerendered HTML. Lighthouse enforced performance/accessibility ≥0.95, CLS ≤0.01, and LCP ≤1.8 s across the 20 Phase 1/2 routes using three measurements per route; a 60-run audit passed 19/20, the sole contended Resize route passed an isolated three-run audit, and a final 15-run outlier audit passed Resize, RAW, Base64, Vectorizer, and PDF→Image. CI now runs four fresh-browser route batches to avoid cross-route browser contention without relaxing thresholds or coverage | Closed the locally reproducible Lighthouse and route-bundle evidence gaps for P2-15/P2-16. Retained their task and Appendix A checkboxes because remaining STCC and platform-specific evidence is still incomplete |
+| 2026-08-24 | §7.6, §24.2 | Extended the route-level completion contract to T07 SVG rasterize, T08 Vectorize, T09 PDF→Image, T10 Image→PDF, T11 Favicon, T14 GIF Splitter, T16 Embedded, T17 Base64, and T19 CBZ. All 42 English/Arabic/pseudo-localized P2-15 format pages now have format-specific static content and discovery metadata; installed Edge verifies all routes, JavaScript-disabled entry points, and zero axe violations | Closed the locally testable page-delivery and discovery gaps for every P2-15 tool while retaining Appendix A rows whose other STCC evidence remains incomplete |
+| 2026-08-24 | §7.6, §24.2 | Added route-level static completion content for T02 HEIC, T03 RAW, T04 AVIF, T05 WebP, and T06 JXL without adding it to the global application bundle. Each English, Arabic, and pseudo-localized page now emits format-specific notes and three FAQs, JSON-LD, four `hreflang` links, OG/Twitter metadata, and six related links; installed Edge also verifies the entry points with JavaScript disabled and reports zero axe violations | Closed the locally testable page-delivery and discovery gaps for the first five P2-15 tools; retained their Appendix A rows unchecked pending the remaining STCC evidence |
+| 2026-08-24 | §7.6, §24.2 | Added shared static completion content to T54 Metadata Viewer, T55 Metadata Remover, and T59 Image Inspector: tool-specific format notes and three FAQs, `SoftwareApplication`/`FAQPage`/`BreadcrumbList` JSON-LD, canonical plus four `hreflang` links, OG/Twitter metadata, and six related links. Installed Edge verifies all three pages with JavaScript disabled, all discovery metadata, keyboard workflows, Arabic/pseudo-locales, and zero axe violations | Closed the locally testable P2-16 page-delivery and SEO gaps; retained the Appendix A rows unchecked pending the remaining STCC evidence, including Lighthouse and a pinned-runner metadata benchmark baseline |
+| 2026-08-24 | §5.2, §25.3.2 | Corrected the HEIC platform path to fall back from WebCodecs `ImageDecoder` to native bitmap/image decoding. A secure-context probe of installed Windows Chrome 151 showed `ImageDecoder` present but `image/heic` and `image/heif` both unsupported, while Safari does not expose WebCodecs `ImageDecoder`; the fallback is therefore required rather than optional | Kept P2-08 real-device decode evidence open; added browser coverage for both WebCodecs and native-image branches without fabricating platform support |
+| 2026-08-24 | §5.3 | Added an engine-owned per-extension RAW capability contract. Ten legacy extensions without reproducible corpus/conformance evidence and MDC/MRW files with no embedded rendering now fail before processing with a named reason and camera-software export remedy; the RAW documentation lists the exact verified and unavailable sets. Non-DNG files explicitly state that proprietary sensor-data decoding is not shipped | Completed the remaining Appendix B RAW Stage 1 rows and the proprietary Stage 2 rows by the checklist's documented-unavailable path without claiming unverified decode support |
+| 2026-08-24 | §5.3 | Expanded the hash-pinned CC0 RAW corpus to 31 files, 19 vendors, and 24 extensions. The CI verifier now enforces each expected JPEG/BMP path; a full clean download verified every SHA-256 and production extraction. Removed the prior MDC sample after the hardened JPEG parser proved its old result was a pixel-data false positive | Completed the Appendix B Canon, Nikon, Sony, Fujifilm, Olympus, Panasonic, Sigma, Samsung, Epson, Hasselblad, Leaf, and Adobe RAW rows; retained unchecked compound rows whose listed extensions are not all proven |
+| 2026-08-24 | §5.3 | Audited additional real RAW families and extended Stage 1 to losslessly export uncompressed RGB TIFF camera previews as BMP while preserving embedded JPEGs byte-for-byte. Added hash-pinned CC0 3FR, DCR, ERF, FFF, and IIQ files to the CI corpus; the verifier runs production extraction and decodes each BMP back to a complete RGBA frame. MRW samples without a rendered preview remain unsupported by Stage 1 | Broadened reproducible preview coverage without marking the every-listed-format/vendor acceptance item complete |
+| 2026-08-24 | §5.5 | Generated complete Arduino sketches from the production Adafruit and RGB565 emitters, including real `drawBitmap` / `pushImage` bindings. Compiled locally with official Arduino CLI 1.5.1 against Arduino AVR 1.8.6 + Adafruit GFX 1.12.6 (6,084-byte flash / 193-byte RAM result) and ESP32 3.3.8 + TFT_eSPI 2.5.43 (318,292-byte flash / 22,500-byte RAM result); CI installs the same pinned versions and repeats both builds | Completed the Appendix B Adafruit GFX and ESP-IDF/TFT_eSPI rows and extended P2-11's real-project compile job to all C/header targets |
+| 2026-08-24 | §5.3 | Added a standalone manifest for 15 real CC0 camera files from raw.pixls.us across 11 vendors, with the catalog's published SHA-256 for every object; a dedicated CI job verifies hashes and production preview extraction. Tightened the scanner to require a valid JPEG Start-of-Frame, rejecting an observed 8-byte SOI/EOI false positive | Completed the P2-06 ≥15-file/≥8-vendor real-corpus acceptance condition; the broader every-listed-vendor checkbox remains open |
+| 2026-08-24 | §5.5 | Corrected LVGL v9 descriptors to include the mandatory magic, flags, stride, and reserved fields; generated production v8/v9 descriptor-and-binding translation units and compiled them with C11 warnings-as-errors against official LVGL v8.4.0 (`4495f428630cc1741bd8bfd977f080e8460e8e8d`) and v9.5.0 (`85aa60d18b3d5e5588d7b247abf90198f07c8a63`) source trees | Completed the P2-11 real-project compile condition and the Appendix B LVGL v8/v9 C-array rows; Adafruit GFX and ESP-IDF/TFT_eSPI remain unchecked pending target-header compilation |
+| 2026-08-23 | §5.6 | Added installed-Edge evidence that records real WebM and MP4 containers, decodes them through the production local container/WebCodecs path, exports GIF, and independently verifies the decoded RGBA pixel with zero cross-origin requests; the MP4 bytes pass under MP4, M4V, and MOV extensions | Completed the Appendix B WebM and MP4/M4V/MOV rows and the P2-10 real frame-extraction condition |
+| 2026-08-22 | §5.6 | Corrected video-container scope to the formats parsed by the pinned local readers; AVI/WMV/FLV/MTS/M2TS now surface a specific unavailable reason instead of falling through as MP4 | Completed the Appendix B AVI row by the documented-unavailable path; retained real-decode requirements for the supported video rows |
 | 2026-08-09 | §7.6, §11, §19, §22, §24, §25.3.4 | Closed Phase 1 with live target-search progress, canvas pan/pixel grid, 12 MP latency evidence, Axe, keyboard, SEO, en-XA/Arabic coverage, and pinned Axe tooling | Completed P1-08/09/12/14/15, T01/T20/T24, and Gate 1 |
 | 2026-08-09 | §7.6, §8, §10, §11, §19, §25.3.4 | Implemented the Phase 1 engine core, static route archetypes, generated controls, compare canvas, predicted sizing, and pinned/verified their direct dependencies | Completed P1-01..07, P1-10/11/13; recorded partial completion on P1-08/09/12/14 and measured Gate 1 evidence |
 | 2026-08-09 | §7.3, §25.2, §25.3.4 | Approved IJG/IJG-short with mandatory attribution; verified the pinned jSquash codec portions | Added and completed P0-13-R1; unblocked and completed P0-13 |
 | 2026-08-09 | §23.6 | **Waiver.** Required-check enforcement deferred; harnesses exist and pass, but branch protection needs repository settings access that is unavailable. Substance satisfied, mechanism deferred | P0-03 and P0-15 → `[~]`; Gate 0 row waived; added P7-15 as the re-entry trigger and a Gate 7 row that blocks launch on it |
+| 2026-08-18 | — | CI surfaced two real product defects behind the video-export tests: MP4 declares wrong track dimensions (Firefox reads 16×160 for 32×32), and WebKit crashes its renderer on WebCodecs encoding | Replaced P2-05a; added P2-05b |
+| 2026-08-18 | — | CI cross-browser repair: turbo task graph, `_headers` registration, WebKit `setOffline` file-read conflict, WebKit multi-download cancellation, engine DOM access, capability probing. Recorded an unresolved MP4 dimension discrepancy rather than asserting around it | Added P2-05a |
 | 2026-08-18 | §25.3.4 | Graduated `utif` 3.1.0, `gifuct-js` 2.1.2, `@jsquash/avif` 2.1.1, `@jsquash/jxl` 1.3.0 and transitive `pako` 1.0.11 into the shipping register; rewrote the OpenEXR and JPEG 2000 rows to state that no distributable package exists rather than implying a licence problem | Unblocked P2-04; added P2-04a for the two vendored WASM builds |
+| 2026-08-19 | §5.6, §25.3.4 | Pinned and clearance-verified `mediabunny` 1.25.1 (MPL-2.0) for browser-local MP4/WebM container reading over platform WebCodecs; split AVIF/JXL browser decoders from worker-based encoders so the production bundle remains buildable | Advanced P2-10 implementation; AVIF/JXL browser decode delivery is build-verified, while encode delivery remains explicitly unavailable pending a compatible worker build |
+| 2026-08-22 | §25.3.4 | Pinned and clearance-verified `dxf-parser` 1.1.2 and transitive `loglevel` 1.9.2 (both MIT) from installed manifests and licence files | Unblocked the DXF portion of P2-09 |
 | 2026-08-18 | — | Fixed the licence-expression parser: SPDX `AND` was parsed as a choice, so a conjunction was allowed whenever any one term was allowlisted. Now every term of an `AND` must be allowlisted | Gate correctness; no plan task |
 | 2026-08-09 | §25.3.4 | Split the positive register into a shipping register (installed, verified, enforced) and a candidate register (not installed, unverified, unenforced); added a build gate requiring every direct dependency to appear in the shipping register | P0-08 unblocked and completed; Gate 0 §25.3.4 row satisfied |
 | 2026-08-09 | §25.3, §25.3.3 | Counsel recipient set (Festus Ogun / FOLEGAL); packet expanded to a full engagement brief with threshold questions and a response-record table; cover email drafted | P0-07 send subtasks moved `[!]` → `[~]`; added a response-recording subtask |

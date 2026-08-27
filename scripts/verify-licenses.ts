@@ -114,7 +114,13 @@ async function inspectPackageDirectory(
       if (item.isDirectory()) pending.push(absolute);
       else if (item.isFile()) {
         if (item.name.endsWith('.wasm')) hasWasm = true;
-        if (licenceFileName.test(item.name)) {
+        // Some upstream WASM packages keep their complete licence notice in a README "License"
+        // section instead of publishing a separate LICENSE file. Accept that narrow convention so
+        // the shipped binary remains traceable, but do not treat arbitrary documentation as notice.
+        const isReadmeWithLicenceSection =
+          item.name.toLowerCase() === 'readme.md' &&
+          /(?:^|\n)#{1,6}\s*licen[cs]e\b/imu.test(await readFile(absolute, 'utf8'));
+        if (licenceFileName.test(item.name) || isReadmeWithLicenceSection) {
           licenceFiles.push(path.relative(directory, absolute).replaceAll('\\', '/'));
           licenceTexts.push(await readFile(absolute, 'utf8'));
         }
@@ -136,6 +142,8 @@ const deniedBundledLicencePatterns = [
 function detectBundledLicences(text: string): string[] {
   const detected = new Set<string>();
   if (/Apache License[\s\S]{0,80}Version 2\.0/i.test(text)) detected.add('Apache-2.0');
+  if (/Mozilla Public License[\s\S]{0,80}Version 2\.0|\bMPLv?2(?:\.0)?\b/i.test(text))
+    detected.add('MPL-2.0');
   if (/The MIT License|Permission is hereby granted, free of charge/i.test(text))
     detected.add('MIT');
   if (/Independent JPEG Group|\bIJG License\b/i.test(text)) detected.add('IJG');

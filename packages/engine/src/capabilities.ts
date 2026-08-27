@@ -8,6 +8,8 @@ export interface FormatCapability {
   readonly animation: boolean;
   readonly lazyBytes?: number;
   readonly unavailableReason?: string;
+  readonly decodeUnavailableReason?: string;
+  readonly encodeUnavailableReason?: string;
 }
 
 export interface RuntimeCapabilities {

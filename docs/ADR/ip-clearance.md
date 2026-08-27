@@ -87,25 +87,35 @@ Every item below remains **excluded until its exact version appears in `pnpm-loc
 | `tinyexr`                                        | **Deferred, not excluded on licence.** Upstream is BSD-3 and would clear, but no npm/WASM distribution exists — it is a C++ single-header library. Adopting it requires vendoring source and owning a WASM build (P2-04a). OpenEXR reported unsupported until then               |
 | `parse-exr`                                      | Approved at 1.0.2: MIT verified from the installed package and npm metadata 2026-08-18. Browser-native ESM OpenEXR decoder; depends only on already-approved `fflate` 0.8.3. Replaces the immediate need to vendor tinyexr.                                                      |
 | OpenJPEG                                         | **Excluded as distributed.** npm `openjpeg` 0.2.3 publishes **no licence field**, which this gate denies by rule, and is an unaffiliated personal fork. Upstream OpenJPEG is BSD-2 and would clear via a vendored WASM build (P2-04a). JPEG 2000 reported unsupported until then |
-| `gifuct-js`                                      | Approved at 2.1.2; MIT verified 2026-08-18                                                                                                                                                                                                                                       |
-| `mp4box.js`                                      | Excluded until pinned and verified                                                                                                                                                                                                                                               |
-| `pdfjs-dist`                                     | Excluded until pinned and verified                                                                                                                                                                                                                                               |
-| `pdf-lib`                                        | Excluded until pinned and verified                                                                                                                                                                                                                                               |
-| `ag-psd`                                         | Excluded until pinned and verified                                                                                                                                                                                                                                               |
-| `imagetracerjs`                                  | Excluded until pinned and verified                                                                                                                                                                                                                                               |
-| `@resvg/resvg-wasm`                              | Excluded until pinned and verified; wrapper-only if approved                                                                                                                                                                                                                     |
-| `libarchive.js`                                  | Excluded until pinned and RAR provenance is verified; CBZ-only fallback                                                                                                                                                                                                          |
-| `dxf-parser`                                     | Excluded until pinned and verified                                                                                                                                                                                                                                               |
-| OpenCV                                           | Excluded until pinned and verified; algorithm review remains separate                                                                                                                                                                                                            |
-| `onnxruntime-web`                                | Excluded until pinned and verified                                                                                                                                                                                                                                               |
-| `tesseract.js`                                   | Excluded until pinned and verified                                                                                                                                                                                                                                               |
-| `@mediapipe/tasks-vision`                        | Excluded until pinned and verified                                                                                                                                                                                                                                               |
-| `exifr`                                          | Excluded until pinned and verified                                                                                                                                                                                                                                               |
-| `piexifjs`                                       | Excluded until pinned and verified                                                                                                                                                                                                                                               |
-| `fflate`                                         | Excluded until pinned and verified                                                                                                                                                                                                                                               |
-| `culori`                                         | Excluded until pinned and verified                                                                                                                                                                                                                                               |
-| Inter, JetBrains Mono, Anton                     | Excluded until exact font hashes and OFL conditions are registered                                                                                                                                                                                                               |
-| Noto Emoji                                       | Excluded until exact font hash and OFL conditions are registered                                                                                                                                                                                                                 |
+
+### P2-04a v1 decision (2026-08-22)
+
+OpenEXR and JPEG 2000 are both production-unavailable for v1. We are not vendoring either upstream
+for this release: no reproducible WASM artefact, pinned upstream commit, and recorded build chain has
+been produced. The experimental `parse-exr` fixture coverage remains useful implementation groundwork,
+but is not advertised as complete OpenEXR support. The capability registry and format documentation
+surface a format-specific reason for both decode and encode; neither format is offered as an output.
+| `gifuct-js` | Approved at 2.1.2; MIT verified 2026-08-18 |
+| `imagetracerjs` | Approved at 1.2.6; Unlicense verified from npm metadata and installed package 2026-08-19. Browser-local raster-to-SVG tracing; no network runtime. |
+| `mp4box.js` | Excluded until pinned and verified |
+| `pdfjs-dist` 5.4.624 | Approved — Apache-2.0 verified from the installed package manifest and bundled LICENSE 2026-08-19. PDF page rendering uses the package's local worker and never uploads document data. |
+| `pdf-lib` 1.17.1 | Approved — MIT verified 2026-08-19; browser-local PDF creation for image-to-PDF output |
+| `mp4box` 2.4.1 | Approved — BSD-3-Clause verified from the installed package manifest 2026-08-19; browser-local MP4 demuxing for WebCodecs, with no bundled codec |
+| `mediabunny` 1.25.1 | Approved — MPL-2.0 verified from the installed package manifest and bundled LICENSE 2026-08-19. Used unmodified for browser-local MP4/WebM container reading over platform WebCodecs; its two direct dependencies are type-only declarations and are covered by the dependency licence gate. |
+| `ag-psd` | Approved at 31.0.2 — MIT verified from the installed package manifest and npm metadata 2026-08-19; browser-local PSD/PSB read and write. Its `base64-js` and `pako` transitives are covered by the dependency licence gate. |
+| `@resvg/resvg-wasm` 2.6.2 | Approved — MPL-2.0 verified 2026-08-19. The upstream renderer and WASM binary are used unmodified behind our local SVG safety wrapper; any modification to MPL-covered source would require publishing that source. |
+| `libarchive.js` | Excluded until pinned and RAR provenance is verified; CBZ-only fallback |
+| `dxf-parser` | Approved at 1.1.2 — MIT verified from the installed manifest and bundled licence 2026-08-22. Its sole runtime dependency, `loglevel` 1.9.2, is also MIT with an installed bundled licence. |
+| OpenCV | Excluded until pinned and verified; algorithm review remains separate |
+| `onnxruntime-web` | Excluded until pinned and verified |
+| `tesseract.js` | Excluded until pinned and verified |
+| `@mediapipe/tasks-vision` | Excluded until pinned and verified |
+| `exifr` | Excluded until pinned and verified |
+| `piexifjs` | Excluded until pinned and verified |
+| `fflate` | Excluded until pinned and verified |
+| `culori` | Excluded until pinned and verified |
+| Inter, JetBrains Mono, Anton | Excluded until exact font hashes and OFL conditions are registered |
+| Noto Emoji | Excluded until exact font hash and OFL conditions are registered |
 
 ## Model and data assets
 

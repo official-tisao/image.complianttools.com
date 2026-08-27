@@ -1,4 +1,5 @@
 import { chooseMemoryStrategy } from '../scheduler/memory-governor.js';
+import { codecDownloadDisclosure, getCodec } from '../codecs/registry.js';
 import type { ExecutionTier, InputMeta, Plan, PlanStep, Recipe } from '../types.js';
 
 const pixelLocalOps = new Set(['adjust', 'filter']);
@@ -44,10 +45,10 @@ export async function compile(recipe: Recipe, inputMeta: InputMeta): Promise<Pla
   });
   const memory = chooseMemoryStrategy(inputMeta, 2);
   const lazyDownloads =
-    recipe.export.format === 'jpeg' ||
-    recipe.export.format === 'png' ||
-    recipe.export.format === 'webp'
-      ? [{ id: `codec:${recipe.export.format}`, bytes: 0 }]
-      : [];
+    recipe.export.format === 'same'
+      ? []
+      : getCodec(recipe.export.format).load
+        ? [codecDownloadDisclosure(recipe.export.format)]
+        : [];
   return { steps, tier: chooseTier(), lazyDownloads, ...memory };
 }

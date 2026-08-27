@@ -185,6 +185,7 @@ test('12 MP predicted-size updates stay within 250 ms', async ({ page, browserNa
   test.setTimeout(60_000);
   await page.goto('/compress');
   await page.waitForLoadState('networkidle');
+  await page.getByLabel('Format').selectOption('jpeg');
   await page.setInputFiles('[data-testid=file-input]', bmp12Megapixels());
   await expect(page.getByTestId('compare-canvas')).toBeVisible({ timeout: 45_000 });
   await page.getByTestId('option-export-quality').locator('input[type=range]').fill('55');

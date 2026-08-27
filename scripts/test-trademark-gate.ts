@@ -7,11 +7,9 @@ const fixture = path.join(process.cwd(), 'packages', 'ui', 'src', '__trademark-t
 await writeFile(fixture, `export const preset = 'Clarendon';\n`);
 
 try {
-  const command = process.platform === 'win32' ? 'pnpm.CMD' : 'pnpm';
-  const result = spawnSync(command, ['exec', 'tsx', 'scripts/verify-trademarks.ts'], {
+  const result = spawnSync(process.execPath, ['--import', 'tsx', 'scripts/verify-trademarks.ts'], {
     cwd: process.cwd(),
     encoding: 'utf8',
-    shell: process.platform === 'win32',
   });
   assert.notEqual(result.status, 0, 'A denied preset name must fail the trademark gate.');
   assert.match(`${result.stdout}${result.stderr}`, /__trademark-test\.ts: denied name "Clarendon"/);

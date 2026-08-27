@@ -3,6 +3,7 @@ import type { RasterImage } from '../../types.js';
 
 const endMarker = Uint8Array.from([0, 0, 0, 0, 0, 0, 0, 1]);
 const hash = (r: number, g: number, b: number, a: number) => (r * 3 + g * 5 + b * 7 + a * 11) % 64;
+const MAX_DECODE_PIXELS = 100_000_000;
 
 export function decodeQoi(input: ArrayBuffer | Uint8Array): RasterImage {
   const bytes = input instanceof Uint8Array ? input : new Uint8Array(input);
@@ -12,6 +13,8 @@ export function decodeQoi(input: ArrayBuffer | Uint8Array): RasterImage {
   const width = view.getUint32(4);
   const height = view.getUint32(8);
   if (width === 0 || height === 0 || bytes[12] !== 4) throw new Error('Unsupported QOI image.');
+  if (width > MAX_DECODE_PIXELS / height)
+    throw new Error('QOI dimensions exceed the safe decode limit.');
   const output = new Uint8ClampedArray(width * height * 4);
   const index = new Uint8Array(64 * 4);
   let offset = 14,
@@ -21,20 +24,24 @@ export function decodeQoi(input: ArrayBuffer | Uint8Array): RasterImage {
     b = 0,
     a = 255,
     run = 0;
+  const nextByte = (): number => {
+    const value = bytes[offset++];
+    if (value === undefined) throw new Error('Truncated QOI image.');
+    return value;
+  };
   while (pixel < width * height) {
     if (run > 0) run -= 1;
     else {
-      const tag = bytes[offset++];
-      if (tag === undefined) throw new Error('Truncated QOI image.');
+      const tag = nextByte();
       if (tag === 0xfe) {
-        r = bytes[offset++]!;
-        g = bytes[offset++]!;
-        b = bytes[offset++]!;
+        r = nextByte();
+        g = nextByte();
+        b = nextByte();
       } else if (tag === 0xff) {
-        r = bytes[offset++]!;
-        g = bytes[offset++]!;
-        b = bytes[offset++]!;
-        a = bytes[offset++]!;
+        r = nextByte();
+        g = nextByte();
+        b = nextByte();
+        a = nextByte();
       } else if ((tag & 0xc0) === 0x00) {
         const i = tag * 4;
         r = index[i]!;
@@ -46,7 +53,7 @@ export function decodeQoi(input: ArrayBuffer | Uint8Array): RasterImage {
         g = (g + (((tag >> 2) & 3) - 2) + 256) % 256;
         b = (b + ((tag & 3) - 2) + 256) % 256;
       } else if ((tag & 0xc0) === 0x80) {
-        const next = bytes[offset++]!;
+        const next = nextByte();
         const dg = (tag & 63) - 32;
         r = (r + dg + ((next >> 4) - 8) + 512) % 256;
         g = (g + dg + 256) % 256;
