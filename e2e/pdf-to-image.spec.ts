@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { expect, test } from '@playwright/test';
 import { createPdfFromPngPages } from '../packages/engine/src/documents/pdf.js';
+import { allowAllNetwork, denyAllNetwork } from './support/network.js';
 
 const onePixelPng = new Uint8Array([
   137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82, 0, 0, 0, 1, 0, 0, 0, 1, 8, 6, 0, 0,
@@ -54,7 +55,7 @@ test('PDF to Image renders a real page at the selected DPI', async ({ page, cont
   await expect(page.getByRole('status')).toHaveText(
     'Rendered page 1 of 1 at 144 DPI (144×72) locally.',
   );
-  await context.setOffline(true);
+  await denyAllNetwork(context);
   const offlinePending = page.waitForEvent('download');
   await page.locator('input[type=file]').setInputFiles({
     name: 'offline-one-page.pdf',
@@ -67,7 +68,7 @@ test('PDF to Image renders a real page at the selected DPI', async ({ page, cont
     width: 144,
     height: 72,
   });
-  await context.setOffline(false);
+  await allowAllNetwork(context);
 });
 
 test('PDF to Image accepts modern PDF-compatible AI and names legacy AI', async ({ page }) => {

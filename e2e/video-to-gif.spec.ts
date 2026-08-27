@@ -19,11 +19,16 @@ test('decodes real browser-recorded WebM pixels and exports them as GIF', async 
     context.fillStyle = '#ef1808';
     context.fillRect(0, 0, canvas.width, canvas.height);
 
+    // WebKit implements neither HTMLCanvasElement.captureStream nor WebM recording, so it cannot
+    // produce the fixture this test needs. Report that as "no recording" and let the test skip,
+    // matching how the MP4 case below already handles engines that cannot record.
+    if (typeof canvas.captureStream !== 'function' || typeof MediaRecorder === 'undefined')
+      return null;
     const stream = canvas.captureStream(10);
     const mimeType = ['video/webm;codecs=vp8', 'video/webm;codecs=vp9', 'video/webm'].find(
       (candidate) => MediaRecorder.isTypeSupported(candidate),
     );
-    if (!mimeType) throw new Error('This browser cannot record a WebM fixture.');
+    if (!mimeType) return null;
     const chunks: Blob[] = [];
     const recorder = new MediaRecorder(stream, { mimeType });
     recorder.ondataavailable = (event) => {
@@ -34,20 +39,33 @@ test('decodes real browser-recorded WebM pixels and exports them as GIF', async 
       recorder.onerror = () => reject(new Error('Unable to record the WebM fixture.'));
     });
     recorder.start(100);
-    (stream.getVideoTracks()[0] as CanvasCaptureMediaStreamTrack).requestFrame();
-    await new Promise((resolve) => setTimeout(resolve, 350));
+    // `requestFrame()` is a Chromium-only extension to CanvasCaptureMediaStreamTrack. A stream
+    // created with an explicit frame rate already emits frames on its own, so we nudge it only
+    // where the method exists and otherwise keep repainting the canvas so every engine has real
+    // pixel changes to encode.
+    const track = stream.getVideoTracks()[0] as CanvasCaptureMediaStreamTrack;
+    const requestFrame =
+      typeof track.requestFrame === 'function' ? () => track.requestFrame() : () => {};
+    const deadline = Date.now() + 350;
+    while (Date.now() < deadline) {
+      context.fillStyle = '#ef1808';
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      requestFrame();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
     recorder.stop();
     await stopped;
     stream.getTracks().forEach((track) => track.stop());
     return [...new Uint8Array(await new Blob(chunks, { type: mimeType }).arrayBuffer())];
   });
 
-  expect(webm.length).toBeGreaterThan(100);
+  test.skip(webm === null, 'This browser cannot record a WebM fixture for real decode proof.');
+  expect(webm!.length).toBeGreaterThan(100);
   const downloadPromise = page.waitForEvent('download');
   await page.locator('input[type=file]').setInputFiles({
     name: 'browser-recorded.webm',
     mimeType: 'video/webm',
-    buffer: Buffer.from(webm),
+    buffer: Buffer.from(webm!),
   });
   const download = await downloadPromise;
   await expect(page.getByRole('status')).toContainText(
@@ -74,11 +92,15 @@ test('decodes real browser-recorded MP4 family pixels and exports them as GIF', 
   await page.waitForLoadState('networkidle');
 
   const recording = await page.evaluate(async () => {
+    // WebKit exposes neither MediaRecorder nor canvas.captureStream, so probe before touching them
+    // rather than letting a ReferenceError escape as a test failure.
+    if (typeof MediaRecorder === 'undefined') return null;
     const mimeType = ['video/mp4;codecs=avc1.42E01E', 'video/mp4;codecs=avc1', 'video/mp4'].find(
       (candidate) => MediaRecorder.isTypeSupported(candidate),
     );
     if (!mimeType) return null;
     const canvas = document.createElement('canvas');
+    if (typeof canvas.captureStream !== 'function') return null;
     canvas.width = 32;
     canvas.height = 32;
     const context = canvas.getContext('2d');

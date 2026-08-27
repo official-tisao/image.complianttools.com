@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { allowAllNetwork, denyAllNetwork } from './support/network.js';
 
 async function pngFixture(page: import('@playwright/test').Page): Promise<Buffer> {
   return Buffer.from(
@@ -62,10 +63,10 @@ test('traces configured raster input into the exact previewed SVG locally', asyn
   expect(exported).toBe(previewText);
   expect(exported).toContain('<svg');
   expect(exported).not.toMatch(/(?:href|xlink:href)=["']https?:/u);
-  await context.setOffline(true);
+  await denyAllNetwork(context);
   await page.getByRole('button', { name: 'Trace image' }).click();
   await expect(page.getByRole('status')).toContainText('Traced two-colours.png locally');
-  await context.setOffline(false);
+  await allowAllNetwork(context);
   expect(crossOrigin).toEqual([]);
 });
 

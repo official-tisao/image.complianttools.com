@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 
 import { expect, test } from '@playwright/test';
+import { allowAllNetwork, denyAllNetwork } from './support/network.js';
 
 function gifWithRemovableComment(): Buffer {
   const base = Buffer.from('R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==', 'base64');
@@ -46,14 +47,14 @@ test('downloads a smaller independently verified GIF without a network fallback'
   expect(output.byteLength).toBeLessThan(source.byteLength);
   expect(output.subarray(0, 6).toString('ascii')).toMatch(/^GIF8[79]a$/u);
   expect(Buffer.from(previewBytes)).toEqual(output);
-  await context.setOffline(true);
+  await denyAllNetwork(context);
   await page.getByLabel('Choose a PNG, GIF, or JPEG').setInputFiles({
     name: 'offline-animation.gif',
     mimeType: 'image/gif',
     buffer: source,
   });
   await expect(page.getByRole('status')).toContainText('Optimized and pixel-verified locally');
-  await context.setOffline(false);
+  await allowAllNetwork(context);
   expect(crossOrigin).toEqual([]);
 });
 
