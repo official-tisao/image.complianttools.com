@@ -111,8 +111,12 @@ for (const locale of ['en-XA', 'ar'] as const) {
     const path = await (await pending).path();
     expect(path).not.toBeNull();
     expect(await readFile(path!)).toEqual(Buffer.from([0, 1, 2, 253, 254, 255]));
+    // CLDR's default numbering system for Arabic is arab, so `6` renders as the Arabic-Indic `٦`.
+    // Engines disagree on whether they honour that default -- WebKit does, Chromium and Firefox emit
+    // Latin digits -- and both are legitimate for an Arabic reader. Accept either digit rather than
+    // pinning the app to one numbering system to satisfy a test.
     await expect(page.getByRole('status')).toContainText(
-      locale === 'ar' ? 'فُك ترميز 6 بايت محليًا' : /Dëcôdëd 6 bytës lôcàlly/u,
+      locale === 'ar' ? /فُك ترميز [6٦] بايت محليًا/u : /Dëcôdëd 6 bytës lôcàlly/u,
     );
   });
 }
