@@ -14,3 +14,5 @@ test-results/
 !.env.example
 .DS_Store
 Thumbs.db
+
+debug.log
