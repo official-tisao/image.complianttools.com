@@ -202,14 +202,12 @@ for (const format of ['webp', 'webm', 'mp4'] as const) {
     });
     expect(playback!.duration, `playback metadata: ${observed}`).toBeGreaterThanOrEqual(0.29);
     if (format === 'mp4') {
-      // Firefox reports 16x160 for this 32x32 export, where Chromium reports 32x32. Those are not
-      // a scaled version of anything -- they look like dimensions parsed out of a malformed
-      // container, which points at our MP4 muxing writing bad track dimensions that Chromium
-      // tolerates (it reads coded size from the SPS) and Firefox trusts. Asserting engine-parsed
-      // container metadata therefore proves nothing until that is fixed: P2-05b covers reading the
-      // boxes directly. What still holds is that the browser accepted and timed the video.
-      expect(playback!.width, `playback metadata: ${observed}`).toBeGreaterThan(0);
-      expect(playback!.height, `playback metadata: ${observed}`).toBeGreaterThan(0);
+      // Firefox historically trusted the tkhd/stsd boxes, which some WebCodecs AVC encoders wrote
+      // with the wrong coded dimensions (16x160 for a 32x32 export). The exporter now forces the
+      // track and sample dimensions to the requested size (P2-05a), so all engines must report the
+      // true 32x32 dimensions.
+      expect(playback!.width, `playback metadata: ${observed}`).toBe(32);
+      expect(playback!.height, `playback metadata: ${observed}`).toBe(32);
     } else {
       expect(playback!.width).toBe(32);
       expect(playback!.height).toBe(32);

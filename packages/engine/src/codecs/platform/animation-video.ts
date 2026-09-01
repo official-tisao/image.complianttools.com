@@ -8,6 +8,8 @@ import {
   canEncodeVideo,
 } from 'mediabunny';
 
+import { patchMp4TrackDimensions } from './mp4-track-dimensions.js';
+
 import type { RasterImage } from '../../types.js';
 
 export type AnimationVideoFormat = 'mp4' | 'webm';
@@ -62,5 +64,11 @@ export async function encodeAnimationVideo(
 
   await output.finalize();
   if (!target.buffer) throw new Error(`${format.toUpperCase()} encoder produced no output.`);
-  return new Uint8Array(target.buffer);
+  const bytes = new Uint8Array(target.buffer);
+  // Some browsers (notably Firefox) misreport the WebCodecs decoderConfig coded dimensions for
+  // small AVC encodes (e.g. 16x160 for a 32x32 canvas). Mediabunny copies those into the MP4
+  // tkhd/stsd boxes, so we force the track and sample dimensions to the requested output size.
+  // See P2-05a.
+  if (format === 'mp4') return patchMp4TrackDimensions(bytes, image.width, image.height);
+  return bytes;
 }
