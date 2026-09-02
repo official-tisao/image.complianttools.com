@@ -196,8 +196,6 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     lazyBytes: 8_000,
     supports: ['decode', 'encode'],
     load: () => import('./simple/dds.js'),
-    unavailableReason:
-      'BC6H and BC7 DDS variants are not implemented; BC1 through BC5 are supported.',
   },
   {
     id: 'qoi',
@@ -233,8 +231,6 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     lazyBytes: 350_000,
     supports: ['decode'],
     load: () => import('../documents/psd.js'),
-    unavailableReason:
-      'PSD/PSB export is not implemented; the flattened local composite can be read.',
     encodeUnavailableReason:
       'PSD/PSB export is not implemented; the flattened local composite can be read.',
   },
@@ -337,7 +333,6 @@ export const codecRegistry: readonly CodecDescriptor[] = [
     lazyBytes: 7_000,
     supports: ['decode', 'encode'],
     load: () => import('./simple/sgi.js'),
-    unavailableReason: 'SGI RLE decoding is not implemented.',
   },
   {
     id: 'exr',
