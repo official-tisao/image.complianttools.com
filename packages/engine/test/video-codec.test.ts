@@ -17,9 +17,12 @@ import {
 import {
   demuxMp4FirstVideoSample,
   demuxContainerFirstVideoPacket,
+  encodeAnimationVideo,
   extractContainerVideoFrame,
   extractVideoFrame,
+  isWebKitVideoEncodeCrash,
   patchMp4TrackDimensions,
+  probeAnimationVideoEncode,
   supportsVideoDecoder,
   type VideoDecoderConstructor,
 } from '../src/index.js';
@@ -369,5 +372,72 @@ describe('MP4 track/sample dimension correction (P2-05a)', () => {
     expect(() => patchMp4TrackDimensions(bytes, 0, 32)).toThrow(/positive integers/);
     expect(() => patchMp4TrackDimensions(bytes, 1.5, 32)).toThrow(/positive integers/);
     expect(() => patchMp4TrackDimensions(bytes, 33, 32)).toThrow(/must be even/);
+  });
+});
+
+const webkitEnv = { isWebKit: true };
+const nonWebkitEnv = { isWebKit: false };
+
+function tinyRaster() {
+  const frame = new Uint8ClampedArray(16 * 16 * 4);
+  return {
+    width: 16,
+    height: 16,
+    colorSpace: 'srgb' as const,
+    bitDepth: 8,
+    premultipliedAlpha: false,
+    frames: [{ data: frame, durationMs: 40 }],
+  };
+}
+
+describe('video encode capability gating (P2-05b)', () => {
+  it('detects the WebKit renderer from the Apple vendor string and the Safari UA', () => {
+    expect(isWebKitVideoEncodeCrash({ vendor: 'Apple Computer, Inc.' })).toBe(true);
+    expect(
+      isWebKitVideoEncodeCrash({
+        userAgent:
+          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15',
+      }),
+    ).toBe(true);
+    expect(isWebKitVideoEncodeCrash({ vendor: 'Google Inc.' })).toBe(false);
+    expect(
+      isWebKitVideoEncodeCrash({
+        vendor: 'Google Inc.',
+        userAgent: 'Mozilla/5.0 Chrome/120 Safari/537.36',
+      }),
+    ).toBe(false);
+    expect(isWebKitVideoEncodeCrash(undefined)).toBe(false);
+  });
+
+  it('refuses to encode on WebKit and reports a typed unavailable error with a WebKit remedy', async () => {
+    await expect(
+      encodeAnimationVideo(tinyRaster(), 'mp4', {} as HTMLCanvasElement, webkitEnv),
+    ).rejects.toMatchObject({
+      kind: 'codec-unavailable',
+      reason: expect.stringContaining('cannot encode'),
+      remedy: expect.stringContaining('WebKit'),
+    });
+  });
+
+  it('uses the generic remedy when the codec is simply not advertised (non-WebKit, no encoder)', async () => {
+    await expect(
+      encodeAnimationVideo(tinyRaster(), 'webm', {} as HTMLCanvasElement, nonWebkitEnv),
+    ).rejects.toMatchObject({
+      kind: 'codec-unavailable',
+      reason: expect.stringContaining('cannot encode'),
+      remedy: expect.not.stringContaining('WebKit'),
+    });
+  });
+
+  it('probe reports WebKit video encode as unsupported before any encode is attempted', async () => {
+    const probe = await probeAnimationVideoEncode('mp4', 32, 32, webkitEnv);
+    expect(probe.supported).toBe(false);
+    expect(probe.reason).toContain('cannot encode');
+  });
+
+  it('probe reports unsupported when no WebCodecs encoder is available', async () => {
+    const probe = await probeAnimationVideoEncode('webm', 32, 32, nonWebkitEnv);
+    expect(probe.supported).toBe(false);
+    expect(probe.reason).toContain('cannot encode');
   });
 });

@@ -32,16 +32,7 @@ function animatedGifFixture(): Uint8Array {
 for (const format of ['webp', 'webm', 'mp4'] as const) {
   test(`converts an animated GIF to a playable ${format.toUpperCase()} locally`, async ({
     page,
-    browserName,
   }) => {
-    // WebKit's renderer *crashes* on the WebCodecs video-encode path ("Page crashed", reproducibly,
-    // through all retries). That is a browser defect we cannot fix from here, but it also means the
-    // app currently offers Safari users an export that kills their tab -- tracked as P2-05b, where
-    // the fix is to gate video export on WebKit rather than let it crash.
-    test.skip(
-      browserName === 'webkit' && format !== 'webp',
-      'WebKit crashes its renderer on WebCodecs video encoding; see PLAN.md P2-05b.',
-    );
     // Software video encoding on a CI runner is much slower than the still-image paths.
     if (format !== 'webp') test.setTimeout(120_000);
     const crossOrigin: string[] = [];
