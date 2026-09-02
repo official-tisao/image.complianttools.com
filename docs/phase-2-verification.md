@@ -54,24 +54,55 @@ Required by P2-08, the Appendix B HEIC/HEIF row, the "every §5 row" Gate 2 item
   required path on Windows.
 - Do not mark the HEIC rows complete until this evidence is produced.
 
+**Test procedure** (repeat per environment; record each result):
+
+1. Open `/heic-converter`, load a known-good `.heic` **and** `.heif` (multi-image container where
+   available), and confirm a PNG downloads with the expected dimensions.
+2. Record in the evidence: browser + exact version, OS + version, `ImageDecoder` present (yes/no),
+   `ImageDecoder.isTypeSupported('image/heic')` and `('image/heif')` results, and the path taken
+   (`decodeHeic` WebCodecs vs `decodeWithNativeImagePipeline` createImageBitmap/image-element).
+3. Load a corrupt file (AVIF bytes renamed `.heic`) and confirm the typed
+   "not a valid HEIC or HEIF container" error, not a crash or a partial render.
+4. Confirm the fallback path when `ImageDecoder` is absent: open the same file in a browser without
+   `ImageDecoder` (e.g. Safari) and confirm the native pipeline still decodes.
+
+Record the results in `docs/phase-2-verification.md` (or a dated audit file) and then flip the
+Appendix B HEIC/HEIF row and P2-08 to done.
+
 ### 2.2 Pinned-runner benchmark baseline
 
 `packages/engine/bench/run.mjs` already enforces an absolute 40 ms metadata budget in CI. The
 regression baseline requires `BENCH_RUNNER_ID` set to a pinned runner image and a committed
 `history.json` entry for that runner. See `packages/engine/bench/README.md` for the record flow
-(`BENCH_RUNNER_ID` + `BENCH_RECORD=1`, then review and commit the history change).
+(`BENCH_RUNNER_ID` + `BENCH_RECORD=1`, then review and commit the history change). The
+`record-benchmark-baseline` GitHub Actions workflow automates the record step and opens the PR.
 
 ### 2.3 Production `crossOriginIsolated` / headers
 
-The `_headers` file (COOP/COEP/CORP/CSP/HSTS/cache) is committed and verified for asset integrity,
-but `crossOriginIsolated === true` and the full header set must be verified on the deployed
-Cloudflare Pages origin. This is P7-07 and remains open.
+The `_headers` file (COOP/COEP/CORP/CSP/HSTS/cache) is committed and verified by `pnpm verify:headers`
+for the required security header names and values, but `crossOriginIsolated === true` and the full
+header set must be verified on the deployed Cloudflare Pages origin. This is P7-07 and remains open.
 
 ### 2.4 Production Lighthouse and browser matrix
 
 Lighthouse thresholds (≥0.95 performance/accessibility, CLS ≤0.01, LCP ≤1.8 s) are enforced in CI
 over local `pnpm build` output. Final production-origin Lighthouse, the Safari/iOS/Android matrix,
 and en-XA/ar visual screenshots remain to be captured on real devices and are not claimed here.
+
+**Device/browser matrix to capture after deployment** (each row: load the tool, run a real
+conversion, capture a screenshot):
+
+| Environment | Browser          | Notes                      |
+| ----------- | ---------------- | -------------------------- |
+| macOS       | Safari (latest)  | native HEIC path           |
+| iOS         | Safari (latest)  | HEIC + `en-XA`/`ar` layout |
+| Android     | Chrome (latest)  | PWA install + offline      |
+| Windows     | Chrome (latest)  | WebCodecs path             |
+| Windows     | Edge (latest)    | reference CI engine        |
+| Linux       | Firefox (latest) | MP4/WebM export path       |
+
+Record the results (plus en-XA/ar screenshots at 320 px and 400% zoom) in a dated audit file under
+`docs/`.
 
 ## 3. Format/encoder truthfulness notes
 

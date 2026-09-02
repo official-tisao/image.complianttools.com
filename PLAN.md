@@ -94,7 +94,7 @@ Update these counts as you go. They are the honest status of the project at a gl
 | Artefact | Target | Done |
 | --- | :-: | :-: |
 | Tools (Appendix A) | 81 | 3 |
-| Formats (Appendix B) | 74 | 73 |
+| Formats (Appendix B) | 82 | 81 |
 | AI adapters (Appendix C) | 10 | 0 |
 | Clearance items (Appendix D) | 31 | 0 |
 | Prerendered pages | ~680 | 0 |
