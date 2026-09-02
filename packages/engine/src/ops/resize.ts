@@ -124,25 +124,33 @@ function contributions(
   const result: Contribution[] = [];
   for (let target = 0; target < targetSize; target += 1) {
     const center = ((target + 0.5) * sourceSize) / targetSize - 0.5;
-    const combined = new Map<number, number>();
-    for (
-      let source = Math.ceil(center - radius);
-      source <= Math.floor(center + radius);
-      source += 1
-    ) {
+    const left = Math.ceil(center - radius);
+    const right = Math.floor(center + radius);
+    // Collect (index, weight) pairs in ascending index order. The clamped index is
+    // monotonic non-decreasing in `source`, so equal indexes (edge clamping) are
+    // adjacent and can be merged in one pass -- no Map allocation or hashing.
+    const indexes: number[] = [];
+    const weights: number[] = [];
+    for (let source = left; source <= right; source += 1) {
       const index = Math.max(0, Math.min(sourceSize - 1, source));
       const weight = kernel.sample((center - source) * filterScale) * filterScale;
-      if (weight !== 0) combined.set(index, (combined.get(index) ?? 0) + weight);
+      if (weight === 0) continue;
+      const last = indexes.length - 1;
+      if (last >= 0 && indexes[last] === index) weights[last]! += weight;
+      else {
+        indexes.push(index);
+        weights.push(weight);
+      }
     }
-    const sum = [...combined.values()].reduce((total, weight) => total + weight, 0);
+    const sum = weights.reduce((total, weight) => total + weight, 0);
     if (Math.abs(sum) < 1e-12) {
       const index = Math.max(0, Math.min(sourceSize - 1, Math.round(center)));
       result.push({ indexes: Int32Array.of(index), weights: Float64Array.of(1) });
       continue;
     }
     result.push({
-      indexes: Int32Array.from(combined.keys()),
-      weights: Float64Array.from(combined.values(), (weight) => weight / sum),
+      indexes: Int32Array.from(indexes),
+      weights: Float64Array.from(weights, (weight) => weight / sum),
     });
   }
   return result;
