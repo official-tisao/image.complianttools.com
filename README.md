@@ -431,8 +431,8 @@ degrades to something honest rather than to nothing.
 | PNG | `.png` | D | E | — | jSquash/oxipng | 8/16-bit, palette, interlace, `oxipng` levels 0–6 |
 | APNG | `.apng .png` | D | E | A | our own muxer | Frame delay, loop, blend/dispose ops |
 | WebP | `.webp` | D | E | A | jSquash/libwebp | Lossy, lossless, near-lossless, alpha quality |
-| AVIF | `.avif .avifs` | D | E | A | jSquash/libavif | Speed 0–10, chroma 4:4:4 / 4:2:2 / 4:2:0, 8/10/12-bit |
-| JPEG XL | `.jxl` | D | E | A | jSquash/libjxl | Effort 1–9, distance, lossless JPEG transcode |
+| AVIF | `.avif .avifs` | D | E | — | jSquash/libavif | Speed 0–10, chroma 4:4:4 / 4:2:2 / 4:2:0, 8/10/12-bit. The pinned jSquash codec returns a single raster frame, so animation is not offered |
+| JPEG XL | `.jxl` | D | E | — | jSquash/libjxl | Effort 1–9, distance. The pinned jSquash codec returns a single raster frame, so animation and a reconstructible JPEG bitstream transcode are not offered |
 | GIF | `.gif` | D | E | A | gifuct-js + our own encoder | Palette, dither, loop, per-frame delay/dispose, optimize levels |
 | BMP | `.bmp .dib` | D | E | — | our own | 1/4/8/16/24/32-bit, RLE, top-down/bottom-up |
 | TIFF | `.tif .tiff` | D | E | A | UTIF.js (MIT) | LZW / Deflate / PackBits / JPEG / none, multipage, tiled, CMYK, 16-bit |
@@ -520,9 +520,9 @@ correction, and an **embedded-JPEG-preview fast path** exposed as an "instant pr
 | --- | --- | :-: | :-: | --- | --- |
 | SVG | `.svg .svgz` | D | E | resvg-wasm (in), custom tracer (out) | Decode = rasterize at chosen scale / DPI; encode = vectorize (T08) |
 | PDF | `.pdf` | D | E | pdf.js (in), pdf-lib (out) | Per-page raster in; multi-page assemble out |
-| EPS / PS | `.eps .ps` | D† | E | our own (§25.4) | †Embedded preview extraction plus a documented PS operator subset. Ghostscript is AGPL-3.0 and excluded. Files outside the subset are reported unsupported, never partially rendered without saying so |
+| EPS / PS | `.eps .ps` | D† | — | our own (§25.4) | †Embedded preview extraction plus a documented PS operator subset. Ghostscript is AGPL-3.0 and excluded. Files outside the subset are reported unsupported, never partially rendered without saying so |
 | AI | `.ai` | D | — | pdf.js | Modern `.ai` is PDF-compatible. Pre-PDF `.ai` is unsupported — report that specifically |
-| PSD / PSB | `.psd .psb` | D | E | ag-psd | Layer tree preserved on read; flattened or layered write |
+| PSD / PSB | `.psd .psb` | D | — | ag-psd | Layer tree preserved on read; flattened composite read. No PSD/PSB encode |
 | XCF | `.xcf` | D | — | our own (layer-composite subset) | GIMP. Spec is public; we read the flattened composite and named layers |
 | CDR | `.cdr` | — | — | — | **Not supported.** Proprietary and undocumented. Show an explicit "not supported, and here is why" page rather than a generic failure |
 | WMF / EMF | `.wmf .emf` | D | — | custom metafile parser | Best-effort record subset; warn on unsupported records |
