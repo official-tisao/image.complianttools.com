@@ -138,9 +138,12 @@ export function rewriteAvcSpsDimensions(
   const oldWidth = readUeAt();
   const oldHeight = readUeAt();
   const heightEnd = bit;
+  // frame_mbs_only_flag follows immediately and decides the height's macroblock divisor.
+  const frameMbsOnlyFlag = bits[heightEnd]!;
 
   const newWidthMinus1 = Math.max(0, Math.ceil(width / 16) - 1);
-  const newHeightMinus1 = Math.max(0, Math.ceil(height / 16) - 1);
+  const heightDivisor = frameMbsOnlyFlag === 1 ? 16 : 32;
+  const newHeightMinus1 = Math.max(0, Math.ceil(height / heightDivisor) - 1);
   if (oldWidth === newWidthMinus1 && oldHeight === newHeightMinus1) return sps;
 
   const out: number[] = [];
