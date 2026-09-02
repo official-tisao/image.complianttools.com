@@ -1,8 +1,14 @@
 import { decodeJpegToRaster } from '../codecs/jsquash.js';
 import { cropRaster, rotateRaster } from '../ops/geometry.js';
+import { applyAdjustments } from '../ops/adjust.js';
 import { applyPixelLocalOptions, boxBlur } from '../ops/raster.js';
 import { resizeRaster } from '../ops/resize.js';
-import { CropOptionsSchema, ResizeOptionsSchema, RotateOptionsSchema } from '../schemas/options.js';
+import {
+  AdjustOptionsSchema,
+  CropOptionsSchema,
+  ResizeOptionsSchema,
+  RotateOptionsSchema,
+} from '../schemas/options.js';
 import type {
   EngineError,
   InputMeta,
@@ -38,6 +44,16 @@ function cancelled(): EngineError {
   return { kind: 'cancelled', remedy: 'Retry the operation when you are ready.' };
 }
 
+/**
+ * The option keys that constitute an `adjust` step. Used to distinguish an adjustment record from a
+ * filter record inside a fused `pixel-local` operations array.
+ */
+const adjustOptionKeys = new Set<string>(Object.keys(AdjustOptionsSchema.shape));
+
+function isAdjustRecord(record: Readonly<Record<string, unknown>>): boolean {
+  return Object.keys(record).some((key) => adjustOptionKeys.has(key));
+}
+
 async function executeStep(
   image: RasterImage,
   op: string,
@@ -49,10 +65,14 @@ async function executeStep(
   if (op === 'resize') return resizeRaster(image, ResizeOptionsSchema.parse(options));
   if (op === 'crop') return cropRaster(image, CropOptionsSchema.parse(options));
   if (op === 'rotate') return rotateRaster(image, RotateOptionsSchema.parse(options));
+  if (op === 'adjust') return applyAdjustments(image, AdjustOptionsSchema.parse(options));
   if (op === 'pixel-local') {
     const operation = (input: RasterImage) =>
       (options.operations as ReadonlyArray<Readonly<Record<string, unknown>>>).reduce(
-        applyPixelLocalOptions,
+        (current, record) =>
+          isAdjustRecord(record)
+            ? applyAdjustments(current, AdjustOptionsSchema.parse(record))
+            : applyPixelLocalOptions(current, record),
         input,
       );
     return tiled ? executeTiled(image, operation, tileSize, 0) : operation(image);
