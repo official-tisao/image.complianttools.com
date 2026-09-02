@@ -60,6 +60,7 @@ export * from './color/icc.js';
 export * from './ops/geometry.js';
 export * from './ops/raster.js';
 export * from './ops/resize.js';
+export * from './ops/adjust.js';
 export * from './pipeline/compile.js';
 export * from './pipeline/execute.js';
 export * from './pipeline/proxy.js';
