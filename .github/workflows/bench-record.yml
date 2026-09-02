@@ -1,0 +1,54 @@
+name: record-benchmark-baseline
+
+on:
+  workflow_dispatch:
+    inputs:
+      runner_id:
+        description: 'Pinned runner identifier (the stable image/label used for regression comparison)'
+        required: true
+        default: 'ubuntu-latest'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.5
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @complianttools/image-engine build
+
+      - name: Record the metadata-read benchmark baseline
+        run: pnpm --filter @complianttools/image-engine bench
+        env:
+          BENCH_RUNNER_ID: ${{ github.event.inputs.runner_id }}
+          BENCH_RECORD: '1'
+
+      - name: Open a pull request with the recorded baseline
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: 'bench: record metadata baseline for ${{ github.event.inputs.runner_id }}'
+          title: 'bench: record metadata baseline for ${{ github.event.inputs.runner_id }}'
+          body: |
+            Records the metadata-read benchmark baseline for the pinned runner
+            `${{ github.event.inputs.runner_id }}` into `packages/engine/bench/history.json`.
+
+            Merge this to enable the 10% regression gate for that runner. Once a baseline exists,
+            set `BENCH_RUNNER_ID` on the main `bench` step in `.github/workflows/ci.yml` to the same
+            identifier so CI enforces the regression limit on every run.
+          branch: bench/record-baseline
+          delete-branch: true
