@@ -43,6 +43,18 @@ for (const locale of ['en', 'en-XA', 'ar'] as const) {
   }
 }
 
+test('format tool pages stay within SEO title and description length limits', async ({ page }) => {
+  for (const route of routes) {
+    await page.goto(`/${route}`);
+    await page.waitForLoadState('networkidle');
+    const title = await page.title();
+    expect(title.length, `${route} title "${title}"`).toBeLessThanOrEqual(60);
+    const description = await page.locator('meta[name="description"]').getAttribute('content');
+    expect(description, `${route} description`).toBeTruthy();
+    expect(description!.length, `${route} description`).toBeLessThanOrEqual(155);
+  }
+});
+
 test('format pages retain their static entry points with JavaScript disabled', async ({
   browser,
 }) => {
