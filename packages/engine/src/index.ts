@@ -34,6 +34,7 @@ export * from './codecs/platform/heic.js';
 export * from './codecs/platform/video.js';
 export * from './codecs/platform/animation-video.js';
 export * from './codecs/platform/mp4-track-dimensions.js';
+export * from './codecs/platform/mp4-sps.js';
 export * from './codecs/raw/preview.js';
 export * from './codecs/raw/support.js';
 export * from './codecs/raw/demosaic.js';
