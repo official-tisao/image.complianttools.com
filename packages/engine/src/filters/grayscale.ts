@@ -13,8 +13,9 @@ const GRAYSCALE_METHODS = {
 
 function grayscale(image: RasterImage, options: { method?: string } = {}): RasterImage {
   const method = options.method ?? 'luminance';
-  const methodFn = GRAYSCALE_METHODS[method as keyof typeof GRAYSCALE_METHODS] ?? GRAYSCALE_METHODS.luminance;
-  
+  const methodFn =
+    GRAYSCALE_METHODS[method as keyof typeof GRAYSCALE_METHODS] ?? GRAYSCALE_METHODS.luminance;
+
   const newFrames = image.frames.map((frame) => {
     const input = frame.data;
     const output = new Uint8ClampedArray(input.length);
@@ -31,8 +32,8 @@ function grayscale(image: RasterImage, options: { method?: string } = {}): Raste
     }
     return { ...frame, data: output };
   });
-  
-  return { ...image, frames: newFrames };
+
+  return { ...image, frames: newFrames as unknown as RasterImage['frames'] };
 }
 
 const grayscaleFilter = {
@@ -42,5 +43,7 @@ const grayscaleFilter = {
   },
   defaultOptions: { method: 'luminance' },
 };
+
+registerFilter(grayscaleFilter);
 
 export { grayscaleFilter };

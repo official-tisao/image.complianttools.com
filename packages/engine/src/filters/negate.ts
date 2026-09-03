@@ -2,7 +2,6 @@ import type { RasterImage } from '../types.js';
 import { registerFilter } from './framework.js';
 
 export function negate(image: RasterImage, options: { channels?: string } = {}): RasterImage {
-  const channels = options.channels ?? 'rgb';
   const newFrames = image.frames.map((frame) => {
     const input = frame.data;
     const output = new Uint8ClampedArray(input.length);
@@ -18,8 +17,8 @@ export function negate(image: RasterImage, options: { channels?: string } = {}):
     }
     return { ...frame, data: output };
   });
-  
-  return { ...image, frames: newFrames };
+
+  return { ...image, frames: newFrames as unknown as RasterImage['frames'] };
 }
 
 const negateFilter = {
@@ -29,5 +28,7 @@ const negateFilter = {
   },
   defaultOptions: { channels: 'rgb' },
 };
+
+registerFilter(negateFilter);
 
 export { negateFilter };

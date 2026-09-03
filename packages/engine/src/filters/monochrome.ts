@@ -1,10 +1,13 @@
 import type { RasterImage } from '../types.js';
-import { registerFilter, clampByte } from './framework.js';
+import { registerFilter } from './framework.js';
 
-export function monochrome(image: RasterImage, options: { threshold?: number; dither?: string } = {}): RasterImage {
+export function monochrome(
+  image: RasterImage,
+  options: { threshold?: number; dither?: string } = {},
+): RasterImage {
   const threshold = options.threshold ?? 128;
-  const dither = options.dither ?? 'none';
-  
+  void options.dither; // dither will be honoured when the dither primitives land
+
   const newFrames = image.frames.map((frame) => {
     const input = frame.data;
     const output = new Uint8ClampedArray(input.length);
@@ -21,8 +24,8 @@ export function monochrome(image: RasterImage, options: { threshold?: number; di
     }
     return { ...frame, data: output };
   });
-  
-  return { ...image, frames: newFrames };
+
+  return { ...image, frames: newFrames as unknown as RasterImage['frames'] };
 }
 
 const monochromeFilter = {
@@ -32,5 +35,7 @@ const monochromeFilter = {
   },
   defaultOptions: { threshold: 128, dither: 'none' },
 };
+
+registerFilter(monochromeFilter);
 
 export { monochromeFilter };
