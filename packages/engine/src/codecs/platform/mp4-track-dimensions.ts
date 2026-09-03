@@ -13,6 +13,8 @@
  * visual sample-entry width/height (16-bit) to those values. The SPS is left untouched because it
  * already encodes the true dimensions. This is a no-op for browsers that already report correctly.
  */
+import { patchAvcConfigurationDimensions } from './mp4-sps.js';
+
 const VIDEO_SAMPLE_ENTRY_TYPES = new Set(['avc1', 'avc3', 'hvc1', 'hev1']);
 
 const CONTAINER_TYPES = new Set([
@@ -100,6 +102,17 @@ export function patchMp4TrackDimensions(
         // Recurse into child boxes (avcC/hvcC/colr/pasp/...) which start after the fixed 78-byte
         // VisualSampleEntry payload.
         walk(position + 86, position + size);
+      } else if (type === 'avcC') {
+        // AVC Configuration Box: rewrite the SPS coded dimensions, which Firefox reads for
+        // videoWidth/videoHeight (the container boxes above are not enough). In-place and
+        // same-length; the helper bails rather than corrupt when the length would change.
+        const recordStart = position + 8;
+        const patchedRecord = patchAvcConfigurationDimensions(
+          output.subarray(recordStart, position + size),
+          width,
+          height,
+        );
+        output.set(patchedRecord, recordStart);
       } else if (CONTAINER_TYPES.has(type)) {
         walk(position + header, position + size);
       }
