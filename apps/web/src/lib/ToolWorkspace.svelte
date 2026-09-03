@@ -130,6 +130,7 @@
   });
   let currentFile: File | undefined;
   let decodedImage: ImageData | undefined;
+  let proxyCanvas: HTMLCanvasElement | null = null;
 
   function formatBytes(bytes: number) {
     return bytes >= 1_000_000
@@ -162,6 +163,44 @@
       const decoded = decodeBmp(await file.arrayBuffer());
       return new ImageData(decoded.frames[0].data.slice(), decoded.width, decoded.height);
     }
+  }
+  function proxyDimensions(image: ImageData) {
+    const longest = Math.max(image.width, image.height);
+    const scale = Math.min(1, 1024 / longest);
+    return {
+      width: Math.max(1, Math.round(image.width * scale)),
+      height: Math.max(1, Math.round(image.height * scale)),
+    };
+  }
+  async function getProxy(image: ImageData): Promise<HTMLCanvasElement> {
+    if (proxyCanvas) return proxyCanvas;
+    const { width, height } = proxyDimensions(image);
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext('2d')!;
+    if (currentFile) {
+      try {
+        const bitmap = await createImageBitmap(currentFile, {
+          resizeWidth: width,
+          resizeHeight: height,
+          resizeQuality: 'medium',
+        });
+        context.drawImage(bitmap, 0, 0, width, height);
+        bitmap.close();
+        proxyCanvas = canvas;
+        return canvas;
+      } catch {
+        // Fall through to the ImageData path when the native resampler is unavailable.
+      }
+    }
+    const source = document.createElement('canvas');
+    source.width = image.width;
+    source.height = image.height;
+    source.getContext('2d')!.putImageData(image, 0, 0);
+    context.drawImage(source, 0, 0, width, height);
+    proxyCanvas = canvas;
+    return canvas;
   }
   function workerProcess(image: ImageData, recipe: Recipe): Promise<ImageData> {
     return new Promise((resolve, reject) => {
@@ -205,16 +244,7 @@
   }
   async function predictSize(image: ImageData) {
     const started = performance.now();
-    const longest = Math.max(image.width, image.height);
-    const scale = Math.min(1, 1024 / longest);
-    const source = document.createElement('canvas');
-    source.width = image.width;
-    source.height = image.height;
-    source.getContext('2d')!.putImageData(image, 0, 0);
-    const proxy = document.createElement('canvas');
-    proxy.width = Math.max(1, Math.round(image.width * scale));
-    proxy.height = Math.max(1, Math.round(image.height * scale));
-    proxy.getContext('2d')!.drawImage(source, 0, 0, proxy.width, proxy.height);
+    const proxy = await getProxy(image);
     const format =
       values['export.format'] === 'same' ? currentFile!.type : `image/${values['export.format']}`;
     const encodeProxy = (quality: number, dimensionScale = 1) => {
@@ -269,6 +299,7 @@
     try {
       const image = decodedImage ?? (await decode(file));
       decodedImage = image;
+      void getProxy(image);
       const width = Number(values['resize.width']);
       const height = Number(values['resize.height']);
       const recipe: Recipe = {
@@ -304,6 +335,7 @@
     if (!file) return;
     currentFile = file;
     decodedImage = undefined;
+    proxyCanvas = null;
     filename = file.name;
     sourceBytes = file.size;
     if (sourceUrl) URL.revokeObjectURL(sourceUrl);

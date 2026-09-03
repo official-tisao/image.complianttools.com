@@ -91,6 +91,7 @@ export default tseslint.config(
         Event: 'readonly',
         File: 'readonly',
         FileList: 'readonly',
+        HTMLCanvasElement: 'readonly',
         HTMLInputElement: 'readonly',
         ImageData: 'readonly',
         performance: 'readonly',
