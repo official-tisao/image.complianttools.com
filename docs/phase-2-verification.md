@@ -12,12 +12,15 @@ Measured on the production engine paths over a deterministic 12 MP (4000×3000) 
 
 | Operation                         | p95 (ms) | Budget (ms) | Ratio over budget |
 | --------------------------------- | -------: | ----------: | ----------------: |
-| decode JPEG + generate proxy      |     2495 |         400 |              6.2× |
-| resize Lanczos3 → 1920            |     1987 |         250 |              7.9× |
-| encode JPEG q82                   |     3374 |         700 |              4.8× |
-| encode WebP q80                   |     3014 |         900 |              3.3× |
-| encode AVIF speed 6               |    64934 |        4000 |             16.2× |
-| target-size search (8 iterations) |     8712 |        4000 |              2.2× |
+| decode JPEG + generate proxy      |     2782 |         400 |              7.0× |
+| resize Lanczos3 → 1920            |     2179 |         250 |              8.7× |
+| encode JPEG q82                   |     3534 |         700 |              5.0× |
+| encode WebP q80                   |     2943 |         900 |              3.3× |
+| encode AVIF speed 6               |    71526 |        4000 |             17.9× |
+| target-size search (8 iterations) |     9320 |        4000 |              2.3× |
+
+_Numbers above are the 2026-09-04 re-measurement on the same deterministic 12 MP RGBA gradient
+fixture. They are within ±10% of the previously recorded values; the gap structure is unchanged._
 
 This is **not a Gate 2 blocker** (Gate 2 covers formats, the adversarial corpus, and licensing). It
 is STCC item 9, so it keeps the P2-15/P2-16 Appendix A rows unchecked. It is a real performance
@@ -73,11 +76,31 @@ Lighthouse thresholds (≥0.95 performance/accessibility, CLS ≤0.01, LCP ≤1.
 over local `pnpm build` output. Final production-origin Lighthouse, the Safari/iOS/Android matrix,
 and en-XA/ar visual screenshots remain to be captured on real devices and are not claimed here.
 
+### 2.5 Appendix A tool completion
+
+A tool in Appendix A is checked only when all twelve STCC items (§0.4) pass. The first three
+(T01, T20, T24) were closed in Phase 1 with full browser-environment evidence (axe, Lighthouse,
+en-XA, ar, offline, live-preview fidelity, latency budget, adversarial tests). The remaining
+~22 routes that exist (T02, T03, T04, T05, T06, T07, T08, T09, T10, T11, T12, T13, T14, T16, T17,
+T19, T23, T54, T55, T59) ship a page + i18n SEO FAQ via `FormatToolCompletion`, but have not yet
+been verified against the full STCC matrix; the remaining ~56 tools (T25 onward) have no
+implementation yet. Marking a tool [x] without the full STCC run would falsify the dashboard and
+break the planning contract. The honest unblock is: run the STCC verifier (axe + Lighthouse +
+en-XA + ar + offline + latency) on each of the 22 existing routes in a real browser, then flip
+the boxes. This is a substantial body of work and is not attempted in this audit.
+
 ## 3. Format/encoder truthfulness notes
 
 - **AVIF / JPEG XL animation:** the runtime registry reports `animation: false` because the pinned
-  jSquash codecs are single-frame. The README `A` flag is an intentionally-open spec requirement.
+  jSquash codecs are single-frame. The README §5.2 table now matches: the `A` column is `—` for both,
+  with notes explaining why a multi-frame path requires a container+frame codec that is not yet
+  cleared.
 - **JPEG XL reconstructible JPEG transcode:** not implemented; the current codec accepts decoded
-  raster pixels only (`lossless` is pixel-lossless, not a reversible JPEG bitstream transcode).
+  raster pixels only (`lossless` is pixel-lossless, not a reversible JPEG bitstream transcode). The
+  README §5.2 JPEG XL row and §7.6 library note now state this explicitly instead of implying a
+  transcode is available.
+- **EPS / PSD encode:** §5.4 originally listed `E` for both, but the engine only ships a decode path
+  for EPS/PS and PSD/PSB. The §5.4 table now matches the implementation: `—` for both, with
+  reasons pointing users to SVG/PDF and PNG/TIFF/WebP/AVIF.
 - **OpenEXR:** reported `v1 unsupported`; a fixture-tested experimental parser exists but does not
   establish complete ZIP/PIZ interoperability, and no reproducible TinyEXR WASM build is produced.
