@@ -242,3 +242,126 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm test:credential-leak
+
+  docker-validate:
+    name: docker-validate
+    # Build the production image from the Dockerfile, prove the container
+    # starts cleanly, that nginx serves the static site, and that
+    # `docker compose up` reaches a healthy state. This is the guard that
+    # catches a broken Dockerfile or a malformed nginx.conf before it
+    # ever leaves CI.
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.5
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build the static site
+        run: pnpm --filter @complianttools/web build
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build the image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          tags: ctimg-web:ci
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Show image size
+        run: docker images ctimg-web:ci --format "{{.Repository}}:{{.Tag}} {{.Size}}"
+
+      - name: Boot the container and probe it
+        id: boot
+        run: |
+          set -euo pipefail
+          # Start the container in the background, mapping 8080 -> 80.
+          docker run -d --name ctimg-web-ci -p 8080:80 ctimg-web:ci
+          # Wait for the healthcheck to report healthy, up to 30s.
+          for _ in $(seq 1 30); do
+            status="$(docker inspect --format='{{.State.Health.Status}}' ctimg-web-ci || true)"
+            if [ "$status" = "healthy" ]; then break; fi
+            sleep 1
+          done
+          echo "container_status=$(docker inspect --format='{{.State.Status}}' ctimg-web-ci)"
+          echo "health_status=$status"
+          # HTTP probe.
+          code="$(curl -sS -o /tmp/index.html -w '%{http_code}' http://127.0.0.1:8080/)"
+          echo "http_code=$code"
+          echo "body_bytes=$(wc -c < /tmp/index.html)"
+          # Must be a 200 and the served HTML must reference the SvelteKit shell.
+          if [ "$code" != "200" ]; then
+            echo "::error::Expected HTTP 200 from /, got $code"
+            docker logs ctimg-web-ci || true
+            exit 1
+          fi
+          if ! grep -q 'svelte' /tmp/index.html; then
+            echo "::error::Index HTML does not look like a SvelteKit page"
+            exit 1
+          fi
+          # COOP/COEP must be present — the engine's crossOriginIsolated
+          # probe depends on them.
+          coop="$(curl -sSI http://127.0.0.1:8080/ | grep -i '^cross-origin-opener-policy:' | tr -d '\r' || true)"
+          coep="$(curl -sSI http://127.0.0.1:8080/ | grep -i '^cross-origin-embedder-policy:' | tr -d '\r' || true)"
+          echo "COOP header: $coop"
+          echo "COEP header: $coep"
+          if [ -z "$coop" ] || [ -z "$coep" ]; then
+            echo "::error::Missing COOP/COEP headers required by the engine"
+            exit 1
+          fi
+          # Two concurrent requests must both succeed.
+          curl -sS -o /dev/null -w 'req1=%{http_code} time=%{time_total}\n' http://127.0.0.1:8080/ &
+          curl -sS -o /dev/null -w 'req2=%{http_code} time=%{time_total}\n' http://127.0.0.1:8080/ &
+          wait
+
+      - name: Dump logs on failure
+        if: failure()
+        run: |
+          docker logs ctimg-web-ci || true
+          docker inspect ctimg-web-ci || true
+
+      - name: Tear down the container
+        if: always()
+        run: |
+          docker rm -f ctimg-web-ci || true
+
+      - name: Validate docker-compose
+        env:
+          HOST_PORT: 18080
+        run: |
+          set -euo pipefail
+          cp .env.example .env
+          docker compose config -q
+          docker compose up -d
+          for _ in $(seq 1 30); do
+            status="$(docker inspect --format='{{.State.Health.Status}}' ctimg-web || true)"
+            if [ "$status" = "healthy" ]; then break; fi
+            sleep 1
+          done
+          code="$(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:18080/)"
+          echo "compose_http_code=$code"
+          if [ "$code" != "200" ]; then
+            echo "::error::compose: expected HTTP 200 from /, got $code"
+            docker compose logs --no-color || true
+            exit 1
+          fi
+
+      - name: Tear down compose
+        if: always()
+        run: |
+          docker compose down --remove-orphans || true

@@ -1,0 +1,60 @@
+# Keep the build context tiny. nginx:alpine + the static build is what
+# actually ships; nothing in here should reach the daemon.
+
+# Version control
+.git
+.gitattributes
+.github
+.gitignore
+
+# Dependencies and build outputs (we build inside the container)
+**/node_modules
+**/.svelte-kit
+**/dist
+**/coverage
+**/.turbo
+.cache
+
+# The web app's static build is what the container serves; allow it through.
+!apps/web/build
+!apps/web/build/**
+
+# Editor / OS noise
+**/.vscode
+**/.idea
+**/.DS_Store
+**/Thumbs.db
+**/*.swp
+**/*.tmp
+
+# Test / scratch / docs not needed at runtime
+**/test
+**/tests
+**/__tests__
+**/*.test.ts
+**/*.test.mjs
+**/*.spec.ts
+**/*.spec.mjs
+**/fixtures
+**/bench
+**/.generated
+**/docs
+
+# Local environment
+.env
+.env.*
+!.env.example
+docker-compose.override.yml
+
+# This file itself
+Dockerfile
+docker-compose.yml
+docker-compose.yaml
+.dockerignore
+
+# Logs
+**/*.log
+**/npm-debug.log*
+**/pnpm-debug.log*
+**/yarn-debug.log*
+**/yarn-error.log*
