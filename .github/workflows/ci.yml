@@ -267,6 +267,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # The web app's `build` script runs Vite directly (not through Turbo),
+      # so the `^build` dependency on @complianttools/image-engine never
+      # fires. Build the engine first so `dist/` exists for the SSR bundle
+      # to resolve.
+      - name: Build the engine package
+        run: pnpm --filter @complianttools/image-engine build
+
       - name: Build the static site
         run: pnpm --filter @complianttools/web build
 
