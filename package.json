@@ -31,6 +31,7 @@
     "verify:licenses:write": "tsx scripts/verify-licenses.ts --write",
     "verify:attributions": "tsx scripts/verify-attributions.ts",
     "verify:assets": "tsx scripts/verify-static-assets.ts",
+    "verify:headers": "tsx scripts/verify-headers.ts",
     "verify:trademarks": "tsx scripts/verify-trademarks.ts",
     "verify:wasm": "tsx scripts/fetch-wasm.ts --verify",
     "verify:plan-sync": "tsx scripts/check-plan-sync.ts",
@@ -40,6 +41,7 @@
     "lighthouse": "lhci autorun",
     "wasm:fetch": "tsx scripts/fetch-wasm.ts",
     "test:gates": "tsx scripts/test-static-assets.ts && tsx scripts/test-license-gate.ts && tsx scripts/test-attribution-gate.ts && tsx scripts/test-trademark-gate.ts && tsx scripts/test-wasm-gate.ts && tsx scripts/test-plan-sync.ts",
+    "progress": "node scripts/plan-progress.mjs",
     "prepare": "lefthook install"
   },
   "size-limit": [

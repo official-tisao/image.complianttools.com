@@ -45,6 +45,9 @@ jobs:
       - name: Verify static assets
         run: pnpm verify:assets
 
+      - name: Verify production security headers
+        run: pnpm verify:headers
+
       - name: Verify trademark substitutions
         run: pnpm verify:trademarks
 
