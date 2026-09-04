@@ -428,6 +428,26 @@ export type AvifConverterToolOptions = z.infer<typeof AvifConverterToolOptionsSc
 export type JxlConverterToolOptions = z.infer<typeof JxlConverterToolOptionsSchema>;
 export type EmbeddedToolOptions = z.infer<typeof EmbeddedToolOptionsSchema>;
 
+/**
+ * Phase 3 adjustment options (T37), ranges/defaults from README §6.7 and the P3-02.2 contract.
+ * `temperature` is a Kelvin value (2000–50000) or the `'detected'` sentinel (default), which is a
+ * placeholder until a source ICC/EXIF colour-temperature source is wired up.
+ */
+export const AdjustOptionsSchema = z.object({
+  brightness: z.number().min(-100).max(100).default(0),
+  contrast: z.number().min(-100).max(100).default(0),
+  saturation: z.number().min(-100).max(100).default(0),
+  exposure: z.number().min(-5).max(5).default(0),
+  gamma: z.number().min(0.1).max(5).default(1),
+  temperature: z
+    .union([z.number().min(2000).max(50000), z.literal('detected')])
+    .default('detected'),
+  tint: z.number().min(-150).max(150).default(0),
+  highlights: z.number().min(-100).max(100).default(0),
+  shadows: z.number().min(-100).max(100).default(0),
+});
+export type AdjustOptions = z.infer<typeof AdjustOptionsSchema>;
+
 export interface OptionDescription {
   label: string;
   help?: string;
