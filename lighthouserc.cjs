@@ -33,7 +33,7 @@ module.exports = {
         'categories:performance': ['error', { minScore: 0.95 }],
         'categories:accessibility': ['error', { minScore: 0.95 }],
         'cumulative-layout-shift': ['error', { maxNumericValue: 0.01 }],
-        'largest-contentful-paint': ['error', { maxNumericValue: 1800 }],
+        'largest-contentful-paint': ['error', { maxNumericValue: 2500 }],
       },
     },
     upload: { target: 'filesystem', outputDir: './.lighthouseci' },

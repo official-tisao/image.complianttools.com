@@ -40,7 +40,7 @@ function autoGains(mosaic: DngMosaic): readonly [number, number, number] {
   return [green / Math.max(1, averages[0]!), 1, green / Math.max(1, averages[2]!)] as const;
 }
 
-function temperatureGains(kelvin: number, tint: number): readonly [number, number, number] {
+export function temperatureGains(kelvin: number, tint: number): readonly [number, number, number] {
   if (!Number.isFinite(kelvin) || kelvin < 2_000 || kelvin > 50_000)
     throw new Error('RAW custom temperature must be from 2000 K through 50000 K.');
   if (!Number.isFinite(tint) || tint < -150 || tint > 150)

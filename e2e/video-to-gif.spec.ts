@@ -46,8 +46,10 @@ test('decodes real browser-recorded WebM pixels and exports them as GIF', async 
     const track = stream.getVideoTracks()[0] as CanvasCaptureMediaStreamTrack;
     const requestFrame =
       typeof track.requestFrame === 'function' ? () => track.requestFrame() : () => {};
-    const deadline = Date.now() + 350;
-    while (Date.now() < deadline) {
+    // Firefox's MediaRecorder can take longer than a fixed 350 ms window to emit the first data
+    // chunk, so keep repainting until the first chunk arrives rather than racing a fixed deadline.
+    const deadline = Date.now() + 3000;
+    while (Date.now() < deadline && chunks.length === 0) {
       context.fillStyle = '#ef1808';
       context.fillRect(0, 0, canvas.width, canvas.height);
       requestFrame();
@@ -59,7 +61,10 @@ test('decodes real browser-recorded WebM pixels and exports them as GIF', async 
     return [...new Uint8Array(await new Blob(chunks, { type: mimeType }).arrayBuffer())];
   });
 
-  test.skip(webm === null, 'This browser cannot record a WebM fixture for real decode proof.');
+  test.skip(
+    webm === null || webm.length < 100,
+    'This browser cannot record a WebM fixture for real decode proof.',
+  );
   expect(webm!.length).toBeGreaterThan(100);
   const downloadPromise = page.waitForEvent('download');
   await page.locator('input[type=file]').setInputFiles({

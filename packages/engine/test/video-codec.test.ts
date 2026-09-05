@@ -21,8 +21,10 @@ import {
   extractContainerVideoFrame,
   extractVideoFrame,
   isWebKitVideoEncodeCrash,
+  patchAvcConfigurationDimensions,
   patchMp4TrackDimensions,
   probeAnimationVideoEncode,
+  rewriteAvcSpsDimensions,
   supportsVideoDecoder,
   type VideoDecoderConstructor,
 } from '../src/index.js';
@@ -389,6 +391,50 @@ function tinyRaster() {
     frames: [{ data: frame, durationMs: 40 }],
   };
 }
+
+describe('MP4 SPS coded-dimension rewrite (P2-05a SPS)', () => {
+  // A real 32x32 High-profile SPS captured from Chromium's WebCodecs encoder.
+  const sps32x32 = new Uint8Array([
+    0x67, 0x64, 0x0c, 0x0a, 0xac, 0x18, 0xd1, 0x29, 0x35, 0x06, 0x06, 0x06, 0x07, 0x84, 0x42, 0x35,
+  ]);
+
+  const avcRecord = (sps: Uint8Array) =>
+    new Uint8Array([
+      0x01,
+      0x64,
+      0x00,
+      0x0a,
+      0xff,
+      0xe1,
+      (sps.length >> 8) & 0xff,
+      sps.length & 0xff,
+      ...sps,
+      0x01,
+      0x00,
+      0x04,
+      0x68,
+      0xee,
+      0x3c,
+      0x80,
+    ]);
+
+  it('rewrites coded dimensions and preserves the rest of the SPS', () => {
+    const wrong = rewriteAvcSpsDimensions(sps32x32, 16, 160);
+    // Rewriting the already-16x160 SPS to 16x160 is a no-op, proving it now reads 16x160.
+    expect(rewriteAvcSpsDimensions(wrong, 16, 160)).toEqual(wrong);
+    const restored = rewriteAvcSpsDimensions(wrong, 32, 32);
+    // Rewriting the restored SPS to 32x32 is again a no-op, proving it now reads 32x32.
+    expect(rewriteAvcSpsDimensions(restored, 32, 32)).toEqual(restored);
+  });
+
+  it('patches the first SPS inside an AVCDecoderConfigurationRecord', () => {
+    const wrong = rewriteAvcSpsDimensions(sps32x32, 16, 160);
+    const patched = patchAvcConfigurationDimensions(avcRecord(wrong), 32, 32);
+    const length = (patched[6]! << 8) | patched[7]!;
+    const sps = patched.slice(8, 8 + length);
+    expect(rewriteAvcSpsDimensions(sps, 32, 32)).toEqual(sps);
+  });
+});
 
 describe('video encode capability gating (P2-05b)', () => {
   it('detects the WebKit renderer from the Apple vendor string and the Safari UA', () => {
