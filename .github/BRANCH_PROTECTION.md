@@ -40,3 +40,20 @@ not required, mirroring the Gate 0 waiver tracked as **P7-15** in `PLAN.md`.
 
 After enabling the rules, confirm enforcement by attempting a direct push to `master`; it must be
 rejected with the branch-protection message, and a red PR must be unmergeable.
+
+## Manual follow-ups required after this branch merges
+
+The branch-protection doc above is accurate against the workflow names in `.github/workflows/ci.yml`
+as of 2026-09-07. Two follow-up steps are external to the repo and must be done by the team that
+controls the GitHub repository settings:
+
+1. **Activate the bench regression gate.** The `bench-record.yml` workflow records the metadata-read
+   baseline; once a baseline is committed to `packages/engine/bench/history.json`, add the
+   `BENCH_RUNNER_ID: ubuntu-latest` env var to the bench step in `.github/workflows/ci.yml` to
+   enable the 10% regression check. Without that env, the bench step only enforces the 40 ms
+   absolute budget. The exact YAML to add is in `docs/phase-2-verification.md` §4.
+2. **Record HEIC real-device evidence.** The P2-08 row in `PLAN.md` line 435 and the Gate 2
+   "every §5 row" item remain unchecked until a macOS Safari, iOS Safari, and Windows Chrome +
+   HEVC extension decode of a real `.heic`/`.heif` file is recorded. The capture template and the
+   exact fields are in `docs/phase-2-verification.md` §2.1.1. Until that evidence is dropped in,
+   P2-08 and the Appendix B HEIC/HEIF row stay `[ ]`.
