@@ -4,10 +4,48 @@ import { applyAdjustments, DEHAZE_RADIUS } from '../ops/adjust.js';
 import { applyPixelLocalOptions, boxBlur } from '../ops/raster.js';
 import { resizeRaster } from '../ops/resize.js';
 import {
+  applyAntialias,
+  applyBlur,
+  applyDenoise,
+  applyDespeckle,
+  applyEnhanceToggle,
+  applyNoMultilayer,
+  applyNormalize,
+  applySharpen,
+  applyThreshold,
+  SAUVOLA_HALO,
+  BLUR_HALO_FN,
+  DESPECKLE_HALO_FN,
+  SHARPEN_HALO_FN,
+} from '../ops/enhance/index.js';
+import {
+  convertColorSpace,
+  extractPalette,
+  exportPalette,
+  exportPaletteCss,
+  exportPaletteGpl,
+  exportPaletteJson,
+  type Palette,
+  type PaletteFormat,
+} from '../color/index.js';
+import { applyRecolour } from '../color/recolour.js';
+import {
   AdjustOptionsSchema,
+  ColorSpaceOptionsSchema,
   CropOptionsSchema,
+  EnhanceOptionsSchema,
+  NoMultilayerOptionsSchema,
+  PaletteOptionsSchema,
+  RecolourOptionsSchema,
   ResizeOptionsSchema,
   RotateOptionsSchema,
+  SharpenOptionsSchema,
+  DespeckleOptionsSchema,
+  AntialiasOptionsSchema,
+  NormalizeOptionsSchema,
+  BlurOptionsSchema,
+  DenoiseOptionsSchema,
+  BlackWhiteThresholdOptionsSchema,
 } from '../schemas/options.js';
 import type {
   EngineError,
@@ -96,10 +134,153 @@ async function executeStep(
     return tiled ? executeTiled(image, operation, tileSize, 0) : operation(image);
   }
   if (op === 'enhance' && typeof options.radius === 'number') {
+    // Legacy path: `'enhance'` with a `radius` option. The original
+    // OC `Enhance` checkbox was a mild radius-based blur. Preserved
+    // verbatim so legacy recipes still work.
     const operation = (input: RasterImage) => boxBlur(input, Math.ceil(options.radius as number));
     return tiled ? executeTiled(image, operation, tileSize, kernelRadius) : operation(image);
   }
+  if (op === 'enhance-toggle') {
+    // New richer enhance (P3-04): auto-levels + auto-contrast + local
+    // tone map. **Not tile-safe**: the auto-levels sub-step reads the
+    // per-frame histogram, which is a strict subset of the whole
+    // image's when tiled. We therefore always run enhance on the
+    // whole image, even when the rest of the plan is tiled. This is
+    // logged in PLAN.md §16 as a deliberate v1 design constraint.
+    const parsed = EnhanceOptionsSchema.parse(options);
+    if (parsed.amount > 0) {
+      return applyEnhanceToggle(image, parsed.amount);
+    }
+    return image;
+  }
+  if (op === 'sharpen') {
+    const parsed = SharpenOptionsSchema.parse(options);
+    if (parsed.enabled) {
+      const operation = (input: RasterImage) =>
+        applySharpen(input, parsed.amount, parsed.radius, parsed.threshold);
+      const halo = SHARPEN_HALO_FN(parsed.radius);
+      return tiled ? executeTiled(image, operation, tileSize, halo) : operation(image);
+    }
+    return image;
+  }
+  if (op === 'despeckle') {
+    const parsed = DespeckleOptionsSchema.parse(options);
+    if (parsed.enabled) {
+      const operation = (input: RasterImage) => applyDespeckle(input, parsed.radius);
+      const halo = DESPECKLE_HALO_FN(parsed.radius);
+      return tiled ? executeTiled(image, operation, tileSize, halo) : operation(image);
+    }
+    return image;
+  }
+  if (op === 'antialias') {
+    const parsed = AntialiasOptionsSchema.parse(options);
+    if (parsed.enabled) {
+      const operation = (input: RasterImage) => applyAntialias(input, parsed.amount);
+      return tiled ? executeTiled(image, operation, tileSize, 1) : operation(image);
+    }
+    return image;
+  }
+  if (op === 'normalize') {
+    const parsed = NormalizeOptionsSchema.parse(options);
+    if (parsed.enabled) {
+      return applyNormalize(image, parsed.lowPercentile, parsed.highPercentile);
+    }
+    return image;
+  }
+  if (op === 'blur') {
+    const parsed = BlurOptionsSchema.parse(options);
+    if (parsed.enabled) {
+      const operation = (input: RasterImage) =>
+        applyBlur(input, parsed.type, parsed.radius, parsed.angle);
+      const halo = BLUR_HALO_FN(parsed.type, parsed.radius);
+      return tiled ? executeTiled(image, operation, tileSize, halo) : operation(image);
+    }
+    return image;
+  }
+  if (op === 'denoise') {
+    const parsed = DenoiseOptionsSchema.parse(options);
+    if (parsed.enabled) {
+      const operation = (input: RasterImage) =>
+        applyDenoise(input, parsed.method, parsed.strength);
+      const halo = parsed.method === 'bilateral' ? 2 : 1;
+      return tiled ? executeTiled(image, operation, tileSize, halo) : operation(image);
+    }
+    return image;
+  }
+  if (op === 'no-multilayer') {
+    const parsed = NoMultilayerOptionsSchema.parse(options);
+    if (parsed.enabled) return applyNoMultilayer(image);
+    return image;
+  }
+  if (op === 'threshold') {
+    const parsed = BlackWhiteThresholdOptionsSchema.parse(options);
+    if (parsed.mode === 'off') return image;
+    if (parsed.mode === 'adaptive') {
+      const operation = (input: RasterImage) => applyThreshold(input, 'adaptive');
+      return tiled ? executeTiled(image, operation, tileSize, SAUVOLA_HALO) : operation(image);
+    }
+    return applyThreshold(image, parsed.mode);
+  }
+  if (op === 'color-space') {
+    const parsed = ColorSpaceOptionsSchema.parse(options);
+    if (!parsed.enabled) return image;
+    return convertColorSpace(image, parsed.target, parsed.bitDepth, parsed.embedIcc, parsed.stripIcc);
+  }
+  if (op === 'recolour') {
+    const parsed = RecolourOptionsSchema.parse(options);
+    if (!parsed.enabled) return image;
+    return applyRecolour(image, {
+      targetHue: parsed.targetHue,
+      tolerance: parsed.tolerance,
+      replacement: parsed.replacement,
+      feather: parsed.feather,
+    });
+  }
+  if (op === 'palette-extract') {
+    const parsed = PaletteOptionsSchema.parse(options);
+    if (!parsed.enabled) return image;
+    // The palette is returned via the side-channel: the `onProgress`
+    // callback in `run()` exposes it on the result. v1 stashes the
+    // palette on `image` via a non-enumerable symbol so downstream
+    // consumers can read it.
+    const palette = extractPalette(image, parsed.method, parsed.count, parsed.seed);
+    (image as RasterImage & { __palette?: Palette }).__palette = palette;
+    return image;
+  }
+  if (op === 'palette-export') {
+    // The palette is read from the most-recent `palette-extract` step
+    // via the same symbol side-channel. v1 returns the encoded string
+    // on a similar symbol on the image.
+    const palette = (image as RasterImage & { __palette?: Palette }).__palette;
+    if (!palette) {
+      throw {
+        kind: 'internal',
+        detail: 'palette-export must follow a palette-extract step in the same recipe.',
+        remedy: 'Add a palette-extract step before palette-export.',
+      } satisfies EngineError;
+    }
+    const format = (options.format as PaletteFormat) ?? 'css';
+    const encoded = formatPalette(palette, format);
+    (image as RasterImage & { __paletteExport?: string }).__paletteExport = encoded;
+    return image;
+  }
   return image;
+}
+
+/** Format a palette as a string in the requested format. */
+function formatPalette(palette: Palette, format: PaletteFormat): string {
+  switch (format) {
+    case 'css':
+      return exportPaletteCss(palette);
+    case 'json':
+      return exportPaletteJson(palette);
+    case 'gpl':
+      return exportPaletteGpl(palette);
+    case 'ase':
+      // Defer to the canonical exporter so the error message stays in
+      // one place.
+      return exportPalette(palette, 'ase');
+  }
 }
 
 export async function run(
