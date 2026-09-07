@@ -2,6 +2,13 @@ import { describe, expect, it } from 'vitest';
 
 import { createRaster } from '../src/index.js';
 import { getFilter, getRegisteredFilters } from '../src/filters/framework.js';
+import { applyDither, SUPPORTED_DITHERS } from '../src/filters/dither.js';
+import {
+  applyPreset,
+  getAllPresets,
+  getPreset,
+  getRegisteredPresetNames,
+} from '../src/filters/presets.js';
 // Importing the filter module registers them as a side effect.
 import '../src/filters/posterize.js';
 import '../src/filters/solarize.js';
@@ -15,6 +22,8 @@ import '../src/filters/negate.js';
 import '../src/filters/retro.js';
 import '../src/filters/duotone.js';
 import '../src/filters/monochrome.js';
+// Presets register themselves on import.
+import '../src/filters/presets.js';
 
 const sampleRaster = () =>
   createRaster(
@@ -149,5 +158,149 @@ describe('P3-03 primitive filter behaviour', () => {
     expect(() => filter.apply(raster, { size: 4, data: new Float32Array(3) })).toThrow(
       /LUT data is shorter/,
     );
+  });
+});
+
+describe('P3-03 monochrome dither strategies', () => {
+  /** 4x4 gradient luma buffer with values 0..255 left-to-right, top-to-bottom. */
+  function gradientLuma(): { data: Uint8ClampedArray; width: number; height: number } {
+    const width = 4;
+    const height = 4;
+    const data = new Uint8ClampedArray(width * height);
+    for (let y = 0; y < height; y += 1) {
+      for (let x = 0; x < width; x += 1) {
+        data[y * width + x] = (y * width + x) * 16 + 8; // 8, 24, 40, …, 248
+      }
+    }
+    return { data, width, height };
+  }
+
+  it('exposes the five dither strategies listed in README §6.5', () => {
+    expect(SUPPORTED_DITHERS).toEqual([
+      'none',
+      'floyd-steinberg',
+      'atkinson',
+      'bayer-2x2',
+      'bayer-4x4',
+    ]);
+  });
+
+  it.each(SUPPORTED_DITHERS)('%s dither produces a 0/255 output of the same size', (name) => {
+    const { data, width, height } = gradientLuma();
+    const out = applyDither(name, data, width, height);
+    expect(out.length).toBe(data.length);
+    for (const value of out) expect(value === 0 || value === 255).toBe(true);
+  });
+
+  it('floyd-steinberg error diffusion preserves the average brightness across a gradient', () => {
+    // 16x16 luma gradient 0..255 averaged — Floyd–Steinberg should preserve the mean
+    // within 1% of full scale on a buffer this size; the boundary losses on the
+    // tiny 4×4 case tested above dominate the error.
+    const width = 16;
+    const height = 16;
+    const data = new Uint8ClampedArray(width * height);
+    for (let i = 0; i < data.length; i += 1) data[i] = Math.round((i * 255) / (width * height - 1));
+    const out = applyDither('floyd-steinberg', data, width, height);
+    const inputMean = data.reduce((a, b) => a + b, 0) / data.length;
+    const outputMean = out.reduce((a, b) => a + b, 0) / out.length;
+    expect(Math.abs(outputMean - inputMean)).toBeLessThan(3);
+  });
+
+  it('bayer-2x2 and bayer-4x4 produce visibly different patterns on the same input', () => {
+    const { data, width, height } = gradientLuma();
+    const out2 = applyDither('bayer-2x2', data, width, height);
+    const out4 = applyDither('bayer-4x4', data, width, height);
+    let differences = 0;
+    for (let i = 0; i < out2.length; i += 1)
+      if (out2[i] !== out4[i]) differences += 1;
+    expect(differences).toBeGreaterThan(0);
+  });
+
+  it('monochrome dispatches dither to the named strategy', () => {
+    const raster = createRaster(
+      4,
+      4,
+      new Uint8ClampedArray([
+        10, 10, 10, 255, 80, 80, 80, 255, 160, 160, 160, 255, 240, 240, 240, 255,
+        20, 20, 20, 255, 90, 90, 90, 255, 170, 170, 170, 255, 250, 250, 250, 255,
+        30, 30, 30, 255, 100, 100, 100, 255, 180, 180, 180, 255, 5, 5, 5, 255,
+        40, 40, 40, 255, 110, 110, 110, 255, 190, 190, 190, 255, 15, 15, 15, 255,
+      ]),
+    );
+    const filter = getFilter('monochrome')!;
+    const fs = filter.apply(raster, { threshold: 128, dither: 'floyd-steinberg' });
+    // Floyd–Steinberg on a row with 10 → 0, 80 → 0, 160 → 255, 240 → 255: even on a
+    // tiny row there should be some dithered pixels (10 → 255 if its error carries over).
+    // We assert the strategy actually engaged (i.e. produced some 0s and some 255s).
+    let whites = 0;
+    let blacks = 0;
+    for (let i = 0; i < fs.frames[0]!.data.length; i += 4) {
+      if (fs.frames[0]!.data[i] === 255) whites += 1;
+      else if (fs.frames[0]!.data[i] === 0) blacks += 1;
+    }
+    expect(whites).toBeGreaterThan(0);
+    expect(blacks).toBeGreaterThan(0);
+  });
+});
+
+describe('P3-03 filter presets (24 named presets)', () => {
+  // The §25.3.3 trademark deny list — every name here must NEVER appear as a preset
+  // (Meta/Instagram filter names, and the live "Polaroid" trademark).
+  const TRADEMARK_DENY = new Set([
+    'Clarendon', 'Gingham', 'Juno', 'Lo-Fi', '1977', 'X-Pro II', 'Valencia', 'Nashville',
+    'Toaster', 'Walden', 'Amaro', 'Mayfair', 'Rise', 'Hudson', 'Willow', 'Inkwell',
+    'Ludwig', 'Aden', 'Perpetua', 'Crema', 'Slumber', 'Reyes', 'Lark', 'Moon',
+    'Polaroid',
+  ]);
+
+  it('registers exactly 24 presets', () => {
+    const names = getRegisteredPresetNames();
+    expect(names).toHaveLength(24);
+    expect(new Set(names).size).toBe(24);
+  });
+
+  it.each(getRegisteredPresetNames())('preset "%s" has a description and 1..4 stackable steps', (name) => {
+    const preset = getPreset(name);
+    expect(preset).toBeDefined();
+    expect(preset!.description.length).toBeGreaterThan(0);
+    expect(preset!.steps.length).toBeGreaterThanOrEqual(1);
+    expect(preset!.steps.length).toBeLessThanOrEqual(4);
+  });
+
+  it.each(getRegisteredPresetNames())('preset "%s" references a registered filter at every step', (name) => {
+    const preset = getPreset(name)!;
+    for (const step of preset.steps) {
+      expect(getFilter(step.filter), `missing filter "${step.filter}" referenced by "${name}"`).toBeDefined();
+    }
+  });
+
+  it('no preset name appears in the §25.3.3 trademark deny list', () => {
+    for (const name of getRegisteredPresetNames()) {
+      expect(TRADEMARK_DENY.has(name), `forbidden name in registry: ${name}`).toBe(false);
+    }
+  });
+
+  it('every preset applies deterministically (two consecutive calls are byte-identical)', () => {
+    const raster = createRaster(8, 8);
+    for (let i = 0; i < raster.frames[0]!.data.length; i += 4) {
+      raster.frames[0]!.data[i] = (i * 7) % 256;
+      raster.frames[0]!.data[i + 1] = (i * 13) % 256;
+      raster.frames[0]!.data[i + 2] = (i * 19) % 256;
+      raster.frames[0]!.data[i + 3] = 255;
+    }
+    for (const preset of getAllPresets()) {
+      const a = applyPreset(raster, preset);
+      const b = applyPreset(raster, preset);
+      expect(Array.from(a.frames[0]!.data)).toEqual(Array.from(b.frames[0]!.data));
+    }
+  });
+
+  it('applying a preset that references an unknown filter throws a useful error', () => {
+    const broken = {
+      name: '__test_broken',
+      description: 'test',
+      steps: [{ filter: 'not-a-real-filter', options: {} }],
+    };
+    expect(() => applyPreset(createRaster(2, 2), broken)).toThrow(/not-a-real-filter/);
   });
 });

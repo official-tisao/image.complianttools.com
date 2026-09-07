@@ -429,9 +429,23 @@ export type JxlConverterToolOptions = z.infer<typeof JxlConverterToolOptionsSche
 export type EmbeddedToolOptions = z.infer<typeof EmbeddedToolOptionsSchema>;
 
 /**
- * Phase 3 adjustment options (T37), ranges/defaults from README §6.7 and the P3-02.2 contract.
- * `temperature` is a Kelvin value (2000–50000) or the `'detected'` sentinel (default), which is a
- * placeholder until a source ICC/EXIF colour-temperature source is wired up.
+ * A curve is a list of control points `[input, output]` in 0..255 with `input` strictly
+ * increasing. An empty or single-point curve is the identity. The schema enforces a
+ * minimum/maximum range; the engine enforces monotonicity and clamps overshooting
+ * outputs to the input range (Fritsch–Carlson).
+ */
+const CurvePointsSchema = z
+  .array(z.tuple([z.number().min(0).max(255), z.number().min(0).max(255)]))
+  .max(64)
+  .default([]);
+
+/**
+ * Phase 3 adjustment options (T37), ranges/defaults from README §6.7. `temperature` is a Kelvin
+ * value (2000–50000) or the `'detected'` sentinel (default), which is a placeholder until a source
+ * ICC/EXIF colour-temperature source is wired up. All numeric defaults are no-ops so the
+ * all-defaults path is a true no-op. `clarity` and `dehaze` read a small neighbourhood and the
+ * engine routes them through `executeTiled` with a halo (P1-04); the values here are the
+ * `amount` only, not the kernel radius, which is fixed in code.
  */
 export const AdjustOptionsSchema = z.object({
   brightness: z.number().min(-100).max(100).default(0),
@@ -445,6 +459,25 @@ export const AdjustOptionsSchema = z.object({
   tint: z.number().min(-150).max(150).default(0),
   highlights: z.number().min(-100).max(100).default(0),
   shadows: z.number().min(-100).max(100).default(0),
+  // Additional scalar adjustments (P3-02.2+).
+  whites: z.number().min(-100).max(100).default(0),
+  blacks: z.number().min(-100).max(100).default(0),
+  vibrance: z.number().min(-100).max(100).default(0),
+  hue: z.number().min(-180).max(180).default(0),
+  clarity: z.number().min(-100).max(100).default(0),
+  dehaze: z.number().min(-100).max(100).default(0),
+  opacity: z.number().min(0).max(100).default(100),
+  // Curves (per-step). Per-channel overrides the RGB composite.
+  curvesRGB: CurvePointsSchema,
+  curvesR: CurvePointsSchema,
+  curvesG: CurvePointsSchema,
+  curvesB: CurvePointsSchema,
+  // Levels (input range remap + output range remap with mid-tone gamma).
+  levelsInBlack: z.number().min(0).max(255).default(0),
+  levelsGamma: z.number().min(0.1).max(10).default(1),
+  levelsInWhite: z.number().min(0).max(255).default(255),
+  levelsOutBlack: z.number().min(0).max(255).default(0),
+  levelsOutWhite: z.number().min(0).max(255).default(255),
 });
 export type AdjustOptions = z.infer<typeof AdjustOptionsSchema>;
 

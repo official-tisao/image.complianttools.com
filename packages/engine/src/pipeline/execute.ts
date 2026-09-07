@@ -1,6 +1,6 @@
 import { decodeJpegToRaster } from '../codecs/jsquash.js';
 import { cropRaster, rotateRaster } from '../ops/geometry.js';
-import { applyAdjustments } from '../ops/adjust.js';
+import { applyAdjustments, DEHAZE_RADIUS } from '../ops/adjust.js';
 import { applyPixelLocalOptions, boxBlur } from '../ops/raster.js';
 import { resizeRaster } from '../ops/resize.js';
 import {
@@ -65,7 +65,22 @@ async function executeStep(
   if (op === 'resize') return resizeRaster(image, ResizeOptionsSchema.parse(options));
   if (op === 'crop') return cropRaster(image, CropOptionsSchema.parse(options));
   if (op === 'rotate') return rotateRaster(image, RotateOptionsSchema.parse(options));
-  if (op === 'adjust') return applyAdjustments(image, AdjustOptionsSchema.parse(options));
+  if (op === 'adjust') {
+    const parsed = AdjustOptionsSchema.parse(options);
+    // Clarity reads a 3×3 neighbourhood (halo = 1); dehaze reads a 15×15 window (halo =
+    // DEHAZE_RADIUS = 7). When either is active the step must be tiled or the result
+    // is wrong on the image edges. The `pixel-local` fusion in compile.ts otherwise
+    // fuses adjust steps with kernelRadius: 0, which is correct for everything else.
+    const needsTile =
+      (typeof parsed.clarity === 'number' && parsed.clarity !== 0) ||
+      (typeof parsed.dehaze === 'number' && parsed.dehaze !== 0);
+    if (needsTile) {
+      const halo = parsed.dehaze !== 0 ? DEHAZE_RADIUS : 1;
+      const operation = (input: RasterImage) => applyAdjustments(input, parsed);
+      return executeTiled(image, operation, tileSize, halo);
+    }
+    return applyAdjustments(image, parsed);
+  }
   if (op === 'pixel-local') {
     const operation = (input: RasterImage) =>
       (options.operations as ReadonlyArray<Readonly<Record<string, unknown>>>).reduce(
