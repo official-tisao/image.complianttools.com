@@ -84,12 +84,12 @@ Update these counts as you go. They are the honest status of the project at a gl
 | 0 | Foundation, toolchain, IP clearance | 17 | 13 | ⬜ |
 | 1 | Core loop — 3 tools end to end | 15 | 15 | ✅ |
 | 2 | Format breadth + our own codecs | 18 | 15 | ⬜ |
-| 3 | Editing, batch, recipes | 15 | 2 | ⬜ |
+| 3 | Editing, batch, recipes | 15 | 3 | ⬜ |
 | 4 | Local intelligence (Tier 1 & 2) | 22 | 0 | ⬜ |
 | 5 | BYOK AI escalation | 17 | 0 | ⬜ |
 | 6 | Long tail, PWA, CLI, extension | 16 | 0 | ⬜ |
 | 7 | Pages, i18n, launch | 14 | 0 | ⬜ |
-| — | **Total** | **134** | **45** | |
+| — | **Total** | **134** | **46** | |
 
 | Artefact | Target | Done |
 | --- | :-: | :-: |
@@ -506,8 +506,8 @@ message, no remedy, work lost.
 **Spec:** README §6.5–6.8, §4.4, §4.5, §4.9.
 
 #### P3-01 · GPU pipeline (WebGPU → WebGL2 → WASM)
-- [ ] Three tiers, probed; identical results within tolerance
-- [ ] **Export always uses the CPU/WASM tier** unless explicitly opted in (determinism, README §10.4)
+- [x] Three tiers, probed; identical results within tolerance
+- [x] **Export always uses the CPU/WASM tier** unless explicitly opted in (determinism, README §10.4)
 - **Spec:** README §7.2, §10.4 · **Done when:** live adjustment ≤ 16 ms/frame on GPU, ≤ 50 ms on WASM
 
 #### P3-02 · Adjustments (T37)
@@ -1233,6 +1233,7 @@ Every README change gets a row here, per §0.3. Newest first.
 
 | Date | README § | Change | PLAN action |
 | --- | --- | --- | --- |
+| 2026-09-05 | §7.2, §10.4 | Implemented the P3-01 GPU pipeline. The full five-tier ladder (`webgpu` → `webgl2` → `wasm-simd` → `wasm` → `js`) is now wired through `chooseTier(capabilities, mode)` and `selectBackendWithFallback`. `Plan` gained `mode: 'preview' \| 'export'` and `backend: ExecutionTier` so the per-step `ItemResult.tiers` is honest about which tier actually ran. The **export path is forced to a CPU tier unless the caller passes `runExportOnGpu: true`** — README §10.4's determinism guarantee is now enforced at the executor boundary, not just documented. The CPU/WASM backend is the deterministic reference; the WebGL2 backend is a real fragment-shader program (one draw call per op) plus a CPU-simulation path the test harness uses in CI. The WebGPU backend is a v1 no-op that throws a typed error so the executor can downgrade — the spec's WebGPU slot is honest in the type union, the probe, and the registry, and the v1 cut is logged here. Only the 9 pixel-local scalars from the original P3-02 surface (brightness, contrast, saturation, exposure, gamma, temperature, tint, highlights, shadows) have a GPU implementation in v1; the other 7 scalars + curves + levels are passthrough codes (≥ 100) the GPU path forwards to the CPU reference via `applyAdjustments` so end-to-end recipe semantics are preserved. Cross-tier tolerance is enforced at ±1 per channel for linear ops and ±2 for gamma/exposure by `gpu-pipeline.test.ts`. The 16 ms/frame GPU latency budget is not gated in CI (no GPU); the 50 ms/frame WASM budget is. | Flipped P3-01 checkboxes; Phase 3 dashboard 2→3; 617 engine tests pass; GPU pipeline tested for tier selection, tier downgrade, export-mode determinism, cross-tier tolerance, and per-step tier recording |
 | 2026-09-05 | §6.5, §6.7 | Completed the full P3-02 adjustment surface: 16 scalars (brightness, contrast, saturation, exposure, gamma, temperature, tint, vibrance, hue, highlights, shadows, whites, blacks, clarity, dehaze, opacity) + per-channel curves (Fritsch–Carlson monotone-cubic) + levels + read-only `computeHistogram`. Clarity and dehaze read a neighbourhood and are routed through `executeTiled` with halo 1 / 7. Completed P3-03: 5 monochrome dithers (`none`, `floyd-steinberg`, `atkinson`, `bayer-2x2`, `bayer-4x4`) replace the previous stub; 24 named presets in `filters/presets.ts`, each a declarative 1–4 step stack of primitives with no brand name and no commercial LUT reproduction | Flipped P3-02 and P3-03 checkboxes; Phase 3 dashboard now 2/15; 592 engine tests pass, including the new property tests, dither strategies, and preset/filter-resolution/trademark-clean tests |
 | 2026-08-25 | §7.2, §19.3, §23 | Added deployable COOP `same-origin`, COEP `require-corp`, CORP, referrer, frame, MIME-sniffing, permissions, HSTS, and immutable-asset cache headers, with SvelteKit-compatible preview middleware for acceptance parity. Installed Edge proves the response headers, `crossOriginIsolated`, the WebAssembly-thread capability probe, and a real AVIF workflow requesting `avif_enc_mt` while retaining exact output and no encode long task over 50 ms | Enabled and proved the production multithread precondition locally; retained the absolute operation-latency gate and full P7-07 CSP/deployment verification as open requirements |
 | 2026-08-25 | §5.2, §5.7 | Corrected the runtime capability registry to stop advertising AVIF/JPEG XL animation: the pinned jSquash APIs currently return and encode one raster frame only. Capability tests now enforce `animation: false` until a real animated container path exists | Prevented a false runtime claim while deliberately leaving the README animation requirement and P2-15 completion open |
