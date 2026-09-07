@@ -1103,10 +1103,12 @@ Check a box **only when all twelve STCC items (§0.4) pass.**
 Check when: fixture round-trip test passes, adversarial test passes, capability probe is correct,
 and the format's `/docs/formats/` page exists. **Or** when honestly marked unavailable with a reason.
 
-**Standard raster** — [x] JPEG · [x] PNG · [x] APNG · [x] WebP · [x] AVIF · [x] JPEG XL · [x] GIF ·
-[x] BMP/DIB · [x] TIFF · [x] ICO · [x] CUR · [ ] HEIC/HEIF (decode only) · [x] TGA · [x] PCX ·
-[x] PPM/PGM/PBM/PNM · [x] PAM · [x] WBMP · [x] XBM/XPM · [x] DDS · [x] KTX/KTX2 · [x] Radiance HDR ·
-[x] OpenEXR · [x] PFM · [x] FITS · [x] JPEG 2000 · [x] SGI/RGB · [x] Sun Raster · [x] QOI
+**Standard raster** — [x] JPEG · [x] PNG · [x] APNG · [x] WebP · [x] AVIF *(no animation — single-frame
+codec, see `docs/phase-2-verification.md` §3)* · [x] JPEG XL *(no animation, no reversible JPEG
+transcode — see `docs/phase-2-verification.md` §3)* · [x] GIF · [x] BMP/DIB · [x] TIFF · [x] ICO · [x] CUR ·
+[ ] HEIC/HEIF (decode only) · [x] TGA · [x] PCX · [x] PPM/PGM/PBM/PNM · [x] PAM · [x] WBMP · [x] XBM/XPM ·
+[x] DDS · [x] KTX/KTX2 · [x] Radiance HDR · [x] OpenEXR · [x] PFM · [x] FITS · [x] JPEG 2000 ·
+[x] SGI/RGB · [x] Sun Raster · [x] QOI
 
 **Explicitly unsupported (page explaining why)** — [x] PICT · [x] MNG · [x] FLIF · [x] CDR ·
 [x] DWG · [x] DjVu · [x] HEIC encode
@@ -1236,6 +1238,7 @@ Every README change gets a row here, per §0.3. Newest first.
 
 | Date | README § | Change | PLAN action |
 | --- | --- | --- | --- |
+| 2026-09-07 | §10.2, §23.3 | Added a first-party `apps/web/static/favicon.ico` (32×32 PNG-in-ICO), referenced it from `apps/web/src/app.html`, and added an immutable `Cache-Control` header in `_headers`. The static-asset gate's `firstPartyControlFiles` allowlist now includes `favicon.ico` so the first-party ICO does not need an HTTPS source URL. `pnpm verify:assets` and `pnpm verify:headers` both pass. Added a `pnpm progress` step to the CI `verify` job and a clarifying comment to the `Enforce absolute metadata-read latency budget` step documenting the external `bench-record.yml` flow required to activate the 10 % regression gate. Documented the STCC verifier results re-run on 2026-09-07 in `docs/phase-2-verification.md` §2.5.1, and added an explicit animation/transcode qualifier to Appendix B's `[x]` AVIF and JPEG XL rows so the dashboard's closed format rows match the runtime registry's `animation: false` claim | Closed the favicon 404 regression and the `pnpm progress` CI gap without relaxing the §19.2 budgets or recording a false capability. STCC item 9 and P2-08 real-device evidence remain explicitly open |
 | 2026-09-04 | §5.2, §5.4, §7.6 | Reconciled the §5 format support matrix with the current implementation: AVIF and JPEG XL animation flags changed from `A` to `—` (the pinned jSquash codecs are single-frame); EPS/PS and PSD/PSB encode changed from `E` to `—` (decode-only); the §7.6 JPEG XL library note and the §5.2 JPEG XL row no longer advertise a reversible JPEG transcode that the pinned `@jsquash/jxl` codec cannot perform. The capability registry already reported this honestly; the README now matches it | Closed the §5 format-capability drift without weakening the §19.2 budget gate or recording a false capability |
 | 2026-08-25 | §7.2, §19.3, §23 | Added deployable COOP `same-origin`, COEP `require-corp`, CORP, referrer, frame, MIME-sniffing, permissions, HSTS, and immutable-asset cache headers, with SvelteKit-compatible preview middleware for acceptance parity. Installed Edge proves the response headers, `crossOriginIsolated`, the WebAssembly-thread capability probe, and a real AVIF workflow requesting `avif_enc_mt` while retaining exact output and no encode long task over 50 ms | Enabled and proved the production multithread precondition locally; retained the absolute operation-latency gate and full P7-07 CSP/deployment verification as open requirements |
 | 2026-08-25 | §5.2, §5.7 | Corrected the runtime capability registry to stop advertising AVIF/JPEG XL animation: the pinned jSquash APIs currently return and encode one raster frame only. Capability tests now enforce `animation: false` until a real animated container path exists | Prevented a false runtime claim while deliberately leaving the README animation requirement and P2-15 completion open |
