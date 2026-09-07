@@ -58,6 +58,12 @@ jobs:
         id: plan-sync
         run: pnpm verify:plan-sync
 
+      - name: Enforce PLAN dashboard against the actual Appendix A/B checkboxes
+        # scripts/plan-progress.mjs counts every [x]/[ ]/[~]/[/]/[!] in Appendix A/B/C and
+        # fails CI if the §1 dashboard in PLAN.md disagrees. The script is read-only: it
+        # never edits PLAN.md, so a failing run always means the dashboard is stale.
+        run: pnpm progress
+
       - name: Record plan-sync exemption on the pull request
         if: github.event_name == 'pull_request' && steps.plan-sync.outputs.plan_exempt_used == 'true'
         continue-on-error: true
@@ -84,6 +90,17 @@ jobs:
         run: pnpm build
 
       - name: Enforce absolute metadata-read latency budget
+        # Enforces the 40 ms absolute budget unconditionally. The 10% regression-limit
+        # branch in packages/engine/bench/run.mjs is dormant until a baseline is committed
+        # to packages/engine/bench/history.json. To turn that on:
+        #   1. Run the .github/workflows/bench-record.yml workflow once on the same runner
+        #      image the bench step uses (currently ubuntu-latest). The workflow opens a PR
+        #      containing the first history.json entry.
+        #   2. Merge that PR.
+        #   3. Add an `env: BENCH_RUNNER_ID: ubuntu-latest` block on this step (and on the
+        #      run.mjs --operation=metadata-read invocation that will go alongside the
+        #      future operations bench). Without that env var, run.mjs treats the bench as
+        #      absolute-only, which is the current behaviour and is intentional.
         run: pnpm --filter @complianttools/image-engine bench
 
       - name: Verify every shipped route budget
