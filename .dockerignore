@@ -38,7 +38,6 @@
 **/fixtures
 **/bench
 **/.generated
-**/docs
 
 # Local environment
 .env
