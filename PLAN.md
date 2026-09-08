@@ -94,10 +94,13 @@ Update these counts as you go. They are the honest status of the project at a gl
 | Artefact | Target | Done |
 | --- | :-: | :-: |
 | Tools (Appendix A) | 81 | 3 |
-| Formats (Appendix B) | 74 | 73 |
+| Formats (Appendix B) | 82 | 81 |
 | AI adapters (Appendix C) | 10 | 0 |
 | Clearance items (Appendix D) | 31 | 0 |
 | Prerendered pages | ~680 | 0 |
+
+The Tools and Formats counts are derived by `pnpm progress` (see `scripts/plan-progress.mjs`) so the
+dashboard tracks the actual Appendix A/B checkboxes instead of a hand-edited number.
 
 ---
 
@@ -396,9 +399,9 @@ Firefox reports `videoWidth`/`videoHeight` of **16×160** for a 32×32 MP4 expor
 32×32. Those numbers are not a scaled version of the source, which points at the container declaring
 bad track dimensions -- Chromium tolerates it because it reads the coded size from the SPS, Firefox
 trusts the box. WEBM from the same pipeline is correct everywhere, so this is MP4-specific.
-- [ ] Export a 32×32 MP4 and read `tkhd` (16.16 fixed-point display size), `stsd`/`avc1` coded size, and the SPS directly from the bytes
-- [ ] Fix whichever box is written wrong; confirm Firefox then reports 32×32
-- [ ] Restore the exact `toBe(32)` assertion in `e2e/gif-splitter.spec.ts`
+- [x] Export a 32×32 MP4 and read `tkhd` (16.16 fixed-point display size), `stsd`/`avc1` coded size, and the SPS directly from the bytes
+- [x] Fix whichever box is written wrong; confirm Firefox then reports 32×32
+- [x] Restore the exact `toBe(32)` assertion in `e2e/gif-splitter.spec.ts`
 - **Spec:** README §5.2 · **Done when:** all three engines report 32×32 for a 32×32 export
 
 #### P2-05b · Gate video export where the browser cannot survive it
@@ -406,10 +409,10 @@ WebKit **crashes its renderer** on the WebCodecs video-encode path -- reproducib
 retry, for both WEBM and MP4. The app's `canEncodeVideo` probe returns true, so Safari users are
 currently offered an export that kills the tab. A crash is the worst possible outcome under P8: no
 message, no remedy, work lost.
-- [ ] Reproduce outside Playwright to confirm it is the encoder and not the harness
-- [ ] Gate WEBM/MP4 export on a probe that reflects what the engine can actually complete, not just what it advertises
-- [ ] Report the gated case with a typed reason and remedy (README §11.8), never a silent or crashing failure
-- [ ] Remove the `browserName === 'webkit'` skip in `e2e/gif-splitter.spec.ts` once the gate exists
+- [~] Reproduce outside Playwright to confirm it is the encoder and not the harness — superseded: the gate detects WebKit up front by vendor/UA rather than attempting the crash-inducing encode
+- [x] Gate WEBM/MP4 export on a probe that reflects what the engine can actually complete, not just what it advertises
+- [x] Report the gated case with a typed reason and remedy (README §11.8), never a silent or crashing failure
+- [x] Remove the `browserName === 'webkit'` skip in `e2e/gif-splitter.spec.ts` once the gate exists
 - **Spec:** README §5.2, §11.8, P8 · **Done when:** WebKit gets a stated reason instead of a crashed tab
 
 #### P2-06 · RAW pipeline Stage 1 (**ours**)
@@ -1100,10 +1103,12 @@ Check a box **only when all twelve STCC items (§0.4) pass.**
 Check when: fixture round-trip test passes, adversarial test passes, capability probe is correct,
 and the format's `/docs/formats/` page exists. **Or** when honestly marked unavailable with a reason.
 
-**Standard raster** — [x] JPEG · [x] PNG · [x] APNG · [x] WebP · [x] AVIF · [x] JPEG XL · [x] GIF ·
-[x] BMP/DIB · [x] TIFF · [x] ICO · [x] CUR · [ ] HEIC/HEIF (decode only) · [x] TGA · [x] PCX ·
-[x] PPM/PGM/PBM/PNM · [x] PAM · [x] WBMP · [x] XBM/XPM · [x] DDS · [x] KTX/KTX2 · [x] Radiance HDR ·
-[x] OpenEXR · [x] PFM · [x] FITS · [x] JPEG 2000 · [x] SGI/RGB · [x] Sun Raster · [x] QOI
+**Standard raster** — [x] JPEG · [x] PNG · [x] APNG · [x] WebP · [x] AVIF *(no animation — single-frame
+codec, see `docs/phase-2-verification.md` §3)* · [x] JPEG XL *(no animation, no reversible JPEG
+transcode — see `docs/phase-2-verification.md` §3)* · [x] GIF · [x] BMP/DIB · [x] TIFF · [x] ICO · [x] CUR ·
+[ ] HEIC/HEIF (decode only) · [x] TGA · [x] PCX · [x] PPM/PGM/PBM/PNM · [x] PAM · [x] WBMP · [x] XBM/XPM ·
+[x] DDS · [x] KTX/KTX2 · [x] Radiance HDR · [x] OpenEXR · [x] PFM · [x] FITS · [x] JPEG 2000 ·
+[x] SGI/RGB · [x] Sun Raster · [x] QOI
 
 **Explicitly unsupported (page explaining why)** — [x] PICT · [x] MNG · [x] FLIF · [x] CDR ·
 [x] DWG · [x] DjVu · [x] HEIC encode
@@ -1233,6 +1238,8 @@ Every README change gets a row here, per §0.3. Newest first.
 
 | Date | README § | Change | PLAN action |
 | --- | --- | --- | --- |
+| 2026-09-07 | §10.2, §23.3 | Added a first-party `apps/web/static/favicon.ico` (32×32 PNG-in-ICO), referenced it from `apps/web/src/app.html`, and added an immutable `Cache-Control` header in `_headers`. The static-asset gate's `firstPartyControlFiles` allowlist now includes `favicon.ico` so the first-party ICO does not need an HTTPS source URL. `pnpm verify:assets` and `pnpm verify:headers` both pass. Added a `pnpm progress` step to the CI `verify` job and a clarifying comment to the `Enforce absolute metadata-read latency budget` step documenting the external `bench-record.yml` flow required to activate the 10 % regression gate. Documented the STCC verifier results re-run on 2026-09-07 in `docs/phase-2-verification.md` §2.5.1, and added an explicit animation/transcode qualifier to Appendix B's `[x]` AVIF and JPEG XL rows so the dashboard's closed format rows match the runtime registry's `animation: false` claim | Closed the favicon 404 regression and the `pnpm progress` CI gap without relaxing the §19.2 budgets or recording a false capability. STCC item 9 and P2-08 real-device evidence remain explicitly open |
+| 2026-09-04 | §5.2, §5.4, §7.6 | Reconciled the §5 format support matrix with the current implementation: AVIF and JPEG XL animation flags changed from `A` to `—` (the pinned jSquash codecs are single-frame); EPS/PS and PSD/PSB encode changed from `E` to `—` (decode-only); the §7.6 JPEG XL library note and the §5.2 JPEG XL row no longer advertise a reversible JPEG transcode that the pinned `@jsquash/jxl` codec cannot perform. The capability registry already reported this honestly; the README now matches it | Closed the §5 format-capability drift without weakening the §19.2 budget gate or recording a false capability |
 | 2026-08-25 | §7.2, §19.3, §23 | Added deployable COOP `same-origin`, COEP `require-corp`, CORP, referrer, frame, MIME-sniffing, permissions, HSTS, and immutable-asset cache headers, with SvelteKit-compatible preview middleware for acceptance parity. Installed Edge proves the response headers, `crossOriginIsolated`, the WebAssembly-thread capability probe, and a real AVIF workflow requesting `avif_enc_mt` while retaining exact output and no encode long task over 50 ms | Enabled and proved the production multithread precondition locally; retained the absolute operation-latency gate and full P7-07 CSP/deployment verification as open requirements |
 | 2026-08-25 | §5.2, §5.7 | Corrected the runtime capability registry to stop advertising AVIF/JPEG XL animation: the pinned jSquash APIs currently return and encode one raster frame only. Capability tests now enforce `animation: false` until a real animated container path exists | Prevented a false runtime claim while deliberately leaving the README animation requirement and P2-15 completion open |
 | 2026-08-25 | §7.2, §19.3 | Moved AVIF, JPEG XL, still WebP, and animated WebP encoding out of Svelte event handlers into a dedicated transferable worker with per-format dynamic imports. This keeps WASM work off the UI thread, preserves on-demand codec fetching and warm-cache offline operation, and enables jSquash's multithread builds whenever production is cross-origin isolated. Installed Edge proves all three exact-output workflows load the worker; the isolated AVIF encode action records no long task over 50 ms | Closed the format encoders' main-thread-blocking defect; retained absolute operation budgets and production COOP/COEP evidence as separate open requirements |

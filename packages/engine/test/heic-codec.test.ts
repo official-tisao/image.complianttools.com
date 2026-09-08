@@ -54,6 +54,29 @@ describe('HEIC platform codec', () => {
     await expect(supportsHeicDecode({})).resolves.toBe(false);
   });
 
+  it('treats the presence of an ImageDecoder constructor as proof of support when isTypeSupported is missing', async () => {
+    const decoder = class {
+      close(): void {}
+      async decode(): Promise<never> {
+        throw new Error('not reached');
+      }
+    } as unknown as ImageDecoderConstructor;
+    await expect(supportsHeicDecode({ ImageDecoder: decoder })).resolves.toBe(true);
+  });
+
+  it('reports both HEIC and HEIF as unsupported when isTypeSupported rejects both', async () => {
+    const decoder = class {
+      static async isTypeSupported(): Promise<boolean> {
+        return false;
+      }
+      close(): void {}
+      async decode(): Promise<never> {
+        throw new Error('not reached');
+      }
+    } as unknown as ImageDecoderConstructor;
+    await expect(supportsHeicDecode({ ImageDecoder: decoder })).resolves.toBe(false);
+  });
+
   it('copies decoded platform pixels into a raster and closes resources', async () => {
     let closed = 0;
     let type = '';
