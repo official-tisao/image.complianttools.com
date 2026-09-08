@@ -46,6 +46,9 @@ import {
   BlurOptionsSchema,
   DenoiseOptionsSchema,
   BlackWhiteThresholdOptionsSchema,
+  LayerOptionsSchema,
+  TextOptionsSchema,
+  WatermarkOptionsSchema,
 } from '../schemas/options.js';
 import type {
   EngineError,

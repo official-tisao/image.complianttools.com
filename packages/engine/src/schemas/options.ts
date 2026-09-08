@@ -2,6 +2,50 @@ import { z } from 'zod';
 
 const cssColor = z.string().regex(/^#[0-9a-f]{6}(?:[0-9a-f]{2})?$/i, 'Use a hex colour.');
 
+export const TextOptionsSchema = z.object({
+  enabled: z.boolean().default(false),
+  content: z.string().min(1).default('Text'),
+  fontFamily: z.string().default('InterVariable'),
+  fontSize: z.number().min(6).max(256).default(32),
+  color: z.string().default('#000000'),
+  stroke: z.boolean().default(false),
+  opacity: z.number().min(0).max(100).default(100),
+});
+export type TextOptions = z.infer<typeof TextOptionsSchema>;
+
+export const WatermarkOptionsSchema = z.object({
+  enabled: z.boolean().default(false),
+  kind: z.enum(['none', 'text', 'image']).default('none'),
+  textContent: z.string().default(''),
+  opacity: z.number().min(0).max(100).default(50),
+  scaleWithImage: z.boolean().default(true),
+  blendMode: z.enum(['normal', 'multiply', 'screen', 'overlay', 'soft-light', 'difference']).default('normal'),
+  position: z.enum([
+    'top-left', 'top', 'top-right',
+    'left', 'center', 'right',
+    'bottom-left', 'bottom', 'bottom-right',
+  ]).default('center'),
+  rotation: z.number().min(-180).max(180).default(0),
+  tiled: z.boolean().default(false),
+  diagonalTiled: z.boolean().default(false),
+});
+export type WatermarkOptions = z.infer<typeof WatermarkOptionsSchema>;
+
+export const LayerOptionsSchema = z.object({
+  enabled: z.boolean().default(false),
+  layers: z.array(
+    z.object({
+      id: z.string().min(1),
+      blendMode: z.enum(['normal', 'multiply', 'screen', 'overlay', 'soft-light', 'difference']).default('normal'),
+      opacity: z.number().min(0).max(1).default(1),
+      visible: z.boolean().default(true),
+      order: z.number().int().default(0),
+      groupId: z.string().optional(),
+    }),
+  ).default([]),
+});
+export type LayerOptions = z.infer<typeof LayerOptionsSchema>;
+
 export const ExportOptionsSchema = z.object({
   format: z
     .enum(['same', 'avif', 'bmp', 'exr', 'gif', 'jpeg', 'jxl', 'png', 'qoi', 'tga', 'tiff', 'webp'])
