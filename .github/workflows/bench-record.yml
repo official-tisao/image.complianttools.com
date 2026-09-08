@@ -1,0 +1,58 @@
+name: record-benchmark-baseline
+
+on:
+  workflow_dispatch: {}
+
+# `BENCH_RUNNER_ID` is the single source of truth for the pinned benchmark runner:
+# it must match the `runs-on` image below exactly, so the recorded baseline in
+# `packages/engine/bench/history.json` cannot silently drift from the runner that
+# produced it. README §19.5 and `packages/engine/bench/README.md` treat the runner
+# identifier as the regression-comparison key.
+env:
+  BENCH_RUNNER_ID: ubuntu-24.04
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  record:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.5
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @complianttools/image-engine build
+
+      - name: Record the metadata-read benchmark baseline
+        run: pnpm --filter @complianttools/image-engine bench
+        env:
+          BENCH_RECORD: '1'
+
+      - name: Open a pull request with the recorded baseline
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: 'bench: record metadata baseline for ${{ env.BENCH_RUNNER_ID }}'
+          title: 'bench: record metadata baseline for ${{ env.BENCH_RUNNER_ID }}'
+          body: |
+            Records the metadata-read benchmark baseline for the pinned runner
+            `${{ env.BENCH_RUNNER_ID }}` into `packages/engine/bench/history.json`.
+
+            The same `BENCH_RUNNER_ID` (`${{ env.BENCH_RUNNER_ID }}`) is now available as
+            the regression-comparison key in `packages/engine/bench/run.mjs`. Merge this to
+            enable the 10% regression gate for that runner. Once a baseline exists, set
+            `BENCH_RUNNER_ID: ${{ env.BENCH_RUNNER_ID }}` on the main `bench` step in
+            `.github/workflows/ci.yml` so CI enforces the regression limit on every run.
+          branch: bench/record-baseline
+          delete-branch: true

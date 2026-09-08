@@ -26,6 +26,16 @@ const tools = [
   'lossless-optimize',
 ] as const;
 
+// Routes intentionally excluded from localized entries:
+//   - `gif-maker`: every label and status string is hard-coded English. The component
+//     does not call `translate()` and adding a locale prefix would render English on
+//     every en-XA/ar page. The page is correct only because it is the default-locale
+//     route. Localizing it is its own task; the route list does not silently localize
+//     it now.
+//   - `video-to-gif`: same reason — the labels, descriptions, and accept-string are
+//     hard-coded English, and the WebCodecs accept list is currently a single string
+//     that is not locale-parameterised. The en-only route stays en-only.
+
 export const entries: EntryGenerator = () =>
   locales.flatMap((locale) => tools.map((tool) => ({ locale, tool })));
 
