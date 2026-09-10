@@ -57,16 +57,26 @@ services:
         max-file: '3'
 
   githubci:
-    image: ubuntu:22.04
-    container_name: ctimg-githubci
+    image: ctimg-githubci:local
+    pull_policy: never
+    build:
+      context: .
+      dockerfile: Dockerfile.githubci
+    init: true
+    stop_grace_period: 1m
     profiles: ['githubci']
     volumes:
-      - .:/workspace:rw
+      - .:/workspace:ro
+      - ./.cache/githubci:/reports:rw
       - /var/run/docker.sock:/var/run/docker.sock
     working_dir: /workspace
     environment:
-      ACTIONS_RUNNER_IMAGE: nektos/act-environments-ubuntu:18.04
-    entrypoint: ['/workspace/scripts/githubci-run.sh']
+      GITHUBCI_IMAGE: ctimg-githubci:local
+      GITHUBCI_PARALLEL: ${GITHUBCI_PARALLEL:-2}
+      GITHUBCI_MEMORY: ${GITHUBCI_MEMORY:-3g}
+      GITHUBCI_CPUS: ${GITHUBCI_CPUS:-2}
+      GITHUBCI_BASE: ${GITHUBCI_BASE:-HEAD^}
+    entrypoint: ['python3', '/opt/githubci/runner.py']
     command: ['test']
 
 networks:
