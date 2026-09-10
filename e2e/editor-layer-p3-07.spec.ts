@@ -5,7 +5,8 @@ test('/editor page loads layer UI and makes zero cross-origin requests', async (
   page.on('request', (request) => {
     const url = new URL(request.url());
     // Only count actual cross-origin network calls (not localhost resources)
-    if (url.origin !== 'http://127.0.0.1:4173' && !url.url().startsWith('blob:')) crossOriginRequests.push(request.url());
+    if (url.origin !== 'http://127.0.0.1:4173' && !url.url().startsWith('blob:'))
+      crossOriginRequests.push(request.url());
   });
 
   await page.goto('/editor');
