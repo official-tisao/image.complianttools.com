@@ -57,50 +57,50 @@ spec:
         app: postgres
     spec:
       containers:
-      - name: postgres
-        image: postgres:16-alpine
-        env:
-        - name: POSTGRES_DB
-          valueFrom:
-            secretKeyRef:
-              name: postgres-secret
-              key: POSTGRES_DB
-        - name: POSTGRES_USER
-          valueFrom:
-            secretKeyRef:
-              name: postgres-secret
-              key: POSTGRES_USER
-        - name: POSTGRES_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: postgres-secret
-              key: POSTGRES_PASSWORD
-        ports:
-        - containerPort: 5432
-        volumeMounts:
-        - name: postgres-storage
-          mountPath: /var/lib/postgresql/data
-        resources:
-          requests:
-            memory: "512Mi"
-            cpu: "250m"
-          limits:
-            memory: "1Gi"
-            cpu: "500m"
-        livenessProbe:
-          tcpSocket:
-            port: 5432
-          initialDelaySeconds: 30
-          periodSeconds: 10
-        readinessProbe:
-          tcpSocket:
-            port: 5432
-          initialDelaySeconds: 5
-          periodSeconds: 5
+        - name: postgres
+          image: postgres:16-alpine
+          env:
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_DB
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_PASSWORD
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: postgres-storage
+              mountPath: /var/lib/postgresql/data
+          resources:
+            requests:
+              memory: '512Mi'
+              cpu: '250m'
+            limits:
+              memory: '1Gi'
+              cpu: '500m'
+          livenessProbe:
+            tcpSocket:
+              port: 5432
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            tcpSocket:
+              port: 5432
+            initialDelaySeconds: 5
+            periodSeconds: 5
       volumes:
-      - name: postgres-storage
-        persistentVolumeClaim:
-          claimName: postgres-pvc
+        - name: postgres-storage
+          persistentVolumeClaim:
+            claimName: postgres-pvc
 ---
 # PostgreSQL Service
 apiVersion: v1
@@ -112,8 +112,8 @@ spec:
   selector:
     app: postgres
   ports:
-  - port: 5432
-    targetPort: 5432
+    - port: 5432
+      targetPort: 5432
 ---
 # Keycloak Deployment (production-style, NO start-dev)
 apiVersion: apps/v1
@@ -132,70 +132,70 @@ spec:
         app: keycloak
     spec:
       containers:
-      - name: keycloak
-        image: quay.io/keycloak/keycloak:26.7.3
-        # Production-style startup (NOT start-dev)
-        command: ["/opt/keycloak/bin/kc.sh"]
-        args: ["start", "--optimized"]
-        env:
-        - name: KEYCLOAK_ADMIN
-          valueFrom:
-            secretKeyRef:
-              name: keycloak-secret
-              key: KEYCLOAK_ADMIN
-        - name: KEYCLOAK_ADMIN_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: keycloak-secret
-              key: KEYCLOAK_ADMIN_PASSWORD
-        - name: KC_DB
-          value: "postgres"
-        - name: KC_DB_URL
-          value: "jdbc:postgresql://postgres:5432/keycloak"
-        - name: KC_DB_USERNAME
-          valueFrom:
-            secretKeyRef:
-              name: postgres-secret
-              key: POSTGRES_USER
-        - name: KC_DB_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: postgres-secret
-              key: POSTGRES_PASSWORD
-        - name: KC_HOSTNAME
-          value: "localhost"
-        - name: KC_HOSTNAME_STRICT
-          value: "false"
-        - name: KC_PROXY
-          value: "edge"
-        ports:
-        - containerPort: 8080
-          name: http
-        resources:
-          requests:
-            memory: "1Gi"
-            cpu: "500m"
-          limits:
-            memory: "3Gi"
-            cpu: "1500m"
-        livenessProbe:
-          httpGet:
-            path: /health/live
-            port: 8080
-          initialDelaySeconds: 60
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /health/ready
-            port: 8080
-          initialDelaySeconds: 30
-          periodSeconds: 10
-        startupProbe:
-          httpGet:
-            path: /health/ready
-            port: 8080
-          failureThreshold: 30
-          periodSeconds: 10
+        - name: keycloak
+          image: quay.io/keycloak/keycloak:26.7.3
+          # Production-style startup (NOT start-dev)
+          command: ['/opt/keycloak/bin/kc.sh']
+          args: ['start', '--optimized']
+          env:
+            - name: KEYCLOAK_ADMIN
+              valueFrom:
+                secretKeyRef:
+                  name: keycloak-secret
+                  key: KEYCLOAK_ADMIN
+            - name: KEYCLOAK_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: keycloak-secret
+                  key: KEYCLOAK_ADMIN_PASSWORD
+            - name: KC_DB
+              value: 'postgres'
+            - name: KC_DB_URL
+              value: 'jdbc:postgresql://postgres:5432/keycloak'
+            - name: KC_DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_USER
+            - name: KC_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_PASSWORD
+            - name: KC_HOSTNAME
+              value: 'localhost'
+            - name: KC_HOSTNAME_STRICT
+              value: 'false'
+            - name: KC_PROXY
+              value: 'edge'
+          ports:
+            - containerPort: 8080
+              name: http
+          resources:
+            requests:
+              memory: '1Gi'
+              cpu: '500m'
+            limits:
+              memory: '3Gi'
+              cpu: '1500m'
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          startupProbe:
+            httpGet:
+              path: /health/ready
+              port: 8080
+            failureThreshold: 30
+            periodSeconds: 10
 ---
 # Keycloak Service (port-forward for local test)
 apiVersion: v1
@@ -207,6 +207,6 @@ spec:
   selector:
     app: keycloak
   ports:
-  - port: 8080
-    targetPort: 8080
-    name: http
+    - port: 8080
+      targetPort: 8080
+      name: http
