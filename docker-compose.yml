@@ -14,7 +14,7 @@ services:
     restart: unless-stopped
     init: true
     ports:
-      - "${HOST_PORT:-8080}:80"
+      - '${HOST_PORT:-8080}:80'
     environment:
       # Read by anything in the container that wants to know the public URL.
       PUBLIC_URL: ${PUBLIC_URL:-http://localhost:8080}
@@ -26,10 +26,10 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "1.0"
+          cpus: '1.0'
           memory: 128M
         reservations:
-          cpus: "0.25"
+          cpus: '0.25'
           memory: 32M
     # Belt-and-braces: even on engines that ignore deploy.resources,
     # these sysctls keep the container lean.
@@ -45,7 +45,7 @@ services:
     tmpfs:
       - /tmp:size=32M
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/ >/dev/null 2>&1"]
+      test: ['CMD-SHELL', 'wget -qO- http://127.0.0.1/ >/dev/null 2>&1']
       interval: 30s
       timeout: 3s
       retries: 3
@@ -53,8 +53,21 @@ services:
     logging:
       driver: json-file
       options:
-        max-size: "5m"
-        max-file: "3"
+        max-size: '5m'
+        max-file: '3'
+
+  githubci:
+    image: ubuntu:22.04
+    container_name: ctimg-githubci
+    profiles: ['githubci']
+    volumes:
+      - .:/workspace:rw
+      - /var/run/docker.sock:/var/run/docker.sock
+    working_dir: /workspace
+    environment:
+      ACTIONS_RUNNER_IMAGE: nektos/act-environments-ubuntu:18.04
+    entrypoint: ['/workspace/scripts/githubci-run.sh']
+    command: ['test']
 
 networks:
   default:
