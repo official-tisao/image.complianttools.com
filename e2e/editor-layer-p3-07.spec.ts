@@ -13,7 +13,7 @@ test('/editor page loads layer UI and makes zero cross-origin requests', async (
   await page.waitForLoadState('networkidle');
 
   // Layer UI present
-  await expect(page.getByRole('heading', { name: /layer/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Layers', exact: true })).toBeVisible();
   await expect(page.locator('ul li')).toHaveCount(1); // at least initial layer
 
   // Controls visible
@@ -26,7 +26,7 @@ test('/editor page loads layer UI and makes zero cross-origin requests', async (
   await expect(page.locator('ul li')).toHaveCount(2);
 
   // Click visibility toggle
-  await page.locator('button', { hasText: 'Hide' }).click();
+  await page.locator('ul li').first().getByRole('button', { name: 'Hide', exact: true }).click();
   await expect(page.locator('ul li')).toHaveCount(2);
 
   expect(crossOriginRequests).toEqual([]);
