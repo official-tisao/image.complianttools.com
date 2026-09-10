@@ -19,3 +19,4 @@ export {
   type PaletteMethod,
 } from './palette.js';
 export { applyRecolour, type RecolourSettings } from './recolour.js';
+export { exportPaletteAse } from './palette.js';

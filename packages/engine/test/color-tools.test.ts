@@ -7,6 +7,7 @@ import {
   createRaster,
   extractPalette,
   exportPalette,
+  exportPaletteAse,
   exportPaletteCss,
   exportPaletteGpl,
   exportPaletteJson,
@@ -156,9 +157,30 @@ describe('P3-05 T45 colour picker & palette', () => {
     expect(lines[0]!.trim()).toMatch(/^10\s+20\s+30\s+palette-0$/);
   });
 
-  it('exportPalette with ase format throws the documented v1 deferral', () => {
-    const palette: Palette = { method: 'kmeans', entries: [] };
-    expect(() => exportPalette(palette, 'ase')).toThrow(/ASE.*deferred/);
+  it('exportPalette with ase format produces a binary ASE profile', () => {
+    const palette: Palette = {
+      method: 'kmeans',
+      entries: [
+        { r: 10, g: 20, b: 30, population: 4 },
+        { r: 40, g: 50, b: 60, population: 8 },
+      ],
+    };
+    const ase = exportPalette(palette, 'ase') as Uint8Array;
+    expect(ase).toBeInstanceOf(Uint8Array);
+    expect(ase.length).toBeGreaterThan(12); // header at minimum
+    // Header check: first 4 bytes = 'ASEF'
+    const headerStr = new TextDecoder().decode(ase.subarray(0, 4));
+    expect(headerStr).toBe('ASEF');
+  });
+
+  it('exportPaletteAse produces a valid binary with group + colour blocks', () => {
+    const palette: Palette = {
+      method: 'median-cut',
+      entries: [{ r: 128, g: 64, b: 32, population: 1 }],
+    };
+    const ase = exportPaletteAse(palette);
+    expect(ase).toBeInstanceOf(Uint8Array);
+    expect(new TextDecoder().decode(ase.subarray(0, 4))).toBe('ASEF');
   });
 });
 

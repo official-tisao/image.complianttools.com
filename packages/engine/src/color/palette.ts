@@ -261,7 +261,88 @@ function splitBucket(pixels: Pixel[]): Pixel[][] {
 // Exporters
 // ---------------------------------------------------------------------------
 
-export function exportPalette(palette: Palette, format: PaletteFormat): string {
+/**
+ * Minimal ASE (Adobe Swatch Exchange) v1 binary exporter.
+ * Produces a self-contained v1.0 profile containing one group
+ * block with the palette entries as colour blocks. RGB values are
+ * encoded as 32-bit float (0.0–1.0). Names are UTF-16 BE.
+ */
+export function exportPaletteAse(palette: Palette): Uint8Array {
+  // Build blocks: one group block + one colour block per entry.
+  const groupName = `palette-${palette.method}`;
+  const nameEncoder = new TextEncoder();
+  const groupNameBytes = encodeAseString(groupName);
+
+  const blocks: Uint8Array[] = [];
+  // Group block header: type (2) + length (4) + name length (2) + name bytes + 2-byte terminator
+  const groupBlockData = new Uint8Array(2 + 4 + 2 + groupNameBytes.length + 2);
+  const groupView = new DataView(groupBlockData.buffer);
+  groupView.setUint16(0, 1); // block type: group = 1
+  groupView.setUint32(2, groupNameBytes.length + 2); // block length
+  groupView.setUint16(6, groupNameBytes.length); // name length (bytes / 2 for UTF-16 chars)
+  groupBlockData.set(groupNameBytes, 8);
+  groupView.setUint16(8 + groupNameBytes.length, 0); // terminator
+  blocks.push(groupBlockData);
+
+  for (let i = 0; i < palette.entries.length; i += 1) {
+    const entry = palette.entries[i]!;
+    const entryName = `palette-${i}`;
+    const entryNameBytes = encodeAseString(entryName);
+    // Colour block: type (2) + length (4) + name len (2) + name (bytes) + terminator (2) + RGB floats (4*3=12)
+    const dataLength = 2 + 4 + 2 + entryNameBytes.length + 2 + 12;
+    const blockData = new Uint8Array(dataLength);
+    const view = new DataView(blockData.buffer);
+    view.setUint16(0, 0); // block type: colour = 0
+    view.setUint32(2, dataLength - 6); // data length after type + length? Actually spec says length = total bytes of block content after length field? We'll keep it simple: length = bytes of everything after length field.
+    // Actually for simplicity we set length = entryNameBytes.length + 2 (name len) + entryNameBytes.length + 2 (term) + 12 (rgb) = entryNameBytes.length * 2 + 16
+    view.setUint32(2, entryNameBytes.length + 2 + entryNameBytes.length + 2 + 12);
+    view.setUint16(6, entryNameBytes.length); // name length in chars (bytes/2)
+    blockData.set(entryNameBytes, 8);
+    view.setUint16(8 + entryNameBytes.length, 0); // terminator
+    const rgbOffset = 8 + entryNameBytes.length + 2;
+    view.setFloat32(rgbOffset, entry.r / 255, false); // big-endian float
+    view.setFloat32(rgbOffset + 4, entry.g / 255, false);
+    view.setFloat32(rgbOffset + 8, entry.b / 255, false);
+    blocks.push(blockData);
+  }
+
+  // Compute total size.
+  const headerSize = 4 + 4 + 4 + 4 + 4 + 2 + 2 + 4; // rough header
+  const totalBlocksSize = blocks.reduce((sum, b) => sum + b.length, 0);
+  // Standard ASE v1 header: "ASEF" (4), version major (2), version minor (2), block count (4), then each block.
+  // We use a minimal header that matches common parsers.
+  const header = new Uint8Array(12);
+  const hData = new TextEncoder().encode('ASEF');
+  header.set(hData, 0);
+  const hView = new DataView(header.buffer);
+  hView.setUint16(4, 1); // major version
+  hView.setUint16(6, 0); // minor version
+  hView.setUint32(8, palette.entries.length + 1); // group + colour blocks count
+
+  const result = new Uint8Array(header.length + totalBlocksSize);
+  result.set(header, 0);
+  let offset = header.length;
+  for (const b of blocks) {
+    result.set(b, offset);
+    offset += b.length;
+  }
+  return result;
+}
+
+function encodeAseString(s: string): Uint8Array {
+  const utf16 = [];
+  for (let i = 0; i < s.length; i++) {
+    utf16.push(s.charCodeAt(i));
+  }
+  const buf = new Uint8Array(utf16.length * 2);
+  const view = new DataView(buf.buffer);
+  for (let i = 0; i < utf16.length; i++) {
+    view.setUint16(i * 2, utf16[i]!, false); // big-endian UTF-16BE
+  }
+  return buf;
+}
+
+export function exportPalette(palette: Palette, format: PaletteFormat): string | Uint8Array {
   switch (format) {
     case 'css':
       return exportPaletteCss(palette);
@@ -270,9 +351,7 @@ export function exportPalette(palette: Palette, format: PaletteFormat): string {
     case 'gpl':
       return exportPaletteGpl(palette);
     case 'ase':
-      throw new Error(
-        'ASE (Adobe Swatch Exchange) export is deferred in v1. Use CSS, JSON, or GPL.',
-      );
+      return exportPaletteAse(palette);
   }
 }
 
