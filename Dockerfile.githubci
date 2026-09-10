@@ -1,0 +1,51 @@
+# syntax=docker/dockerfile:1.7
+FROM node:22-bookworm-slim AS node
+FROM docker:29.2.1-cli AS docker
+FROM ubuntu:24.04
+SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
+ENV DEBIAN_FRONTEND=noninteractive CI=true LEFTHOOK=0 \
+    PLAYWRIGHT_BROWSERS_PATH=/opt/playwright \
+    ARDUINO_DIRECTORIES_DATA=/opt/arduino/data \
+    ARDUINO_DIRECTORIES_USER=/opt/arduino/user
+COPY --from=node /usr/local/ /usr/local/
+COPY --from=docker /usr/local/bin/docker /usr/local/bin/docker
+COPY --from=docker /usr/local/libexec/docker/cli-plugins/ /usr/local/lib/docker/cli-plugins/
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates curl git build-essential python3 python3-yaml rsync unzip xz-utils \
+    && rm -rf /var/lib/apt/lists/* \
+    && npm install --global pnpm@9.15.5
+WORKDIR /work
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .nvmrc ./
+COPY apps/web/package.json apps/web/package.json
+COPY apps/relay/package.json apps/relay/package.json
+COPY packages/engine/package.json packages/engine/package.json
+COPY packages/cli/package.json packages/cli/package.json
+COPY packages/extension/package.json packages/extension/package.json
+COPY packages/ui/package.json packages/ui/package.json
+RUN pnpm install --frozen-lockfile --ignore-scripts \
+    && pnpm exec playwright install --with-deps chromium firefox webkit \
+    && ln -s "$(find /opt/playwright -path '*/chrome-linux64/chrome' -o -path '*/chrome-linux/chrome' | head -1)" /usr/local/bin/chromium
+ENV CHROME_PATH=/usr/local/bin/chromium
+ENV LHCI_COLLECT__SETTINGS__CHROME_FLAGS="--no-sandbox --disable-dev-shm-usage"
+ARG ARDUINO_CLI_VERSION=1.2.2
+ARG TARGETARCH
+RUN arch="${TARGETARCH/amd64/64bit}"; arch="${arch/arm64/ARM64}"; \
+    url="https://github.com/arduino/arduino-cli/releases/download/v${ARDUINO_CLI_VERSION}"; \
+    file="arduino-cli_${ARDUINO_CLI_VERSION}_Linux_${arch}.tar.gz"; \
+    curl -fSL --retry 3 "$url/$file" -o /tmp/arduino.tar.gz; \
+    curl -fSL --retry 3 "$url/${ARDUINO_CLI_VERSION}-checksums.txt" -o /tmp/checksums; \
+    hash="$(awk -v name="$file" '$2 == name {print $1}' /tmp/checksums)"; \
+    test -n "$hash"; echo "$hash  /tmp/arduino.tar.gz" | sha256sum -c -; \
+    tar xzf /tmp/arduino.tar.gz -C /usr/local/bin arduino-cli; \
+    rm /tmp/arduino.tar.gz /tmp/checksums
+COPY .github/workflows/ci.yml /opt/githubci/ci.yml
+COPY packages/engine/test/fixtures/raw-real-corpus.json /opt/githubci/raw-real-corpus.json
+COPY scripts/githubci/image_setup.py /opt/githubci/image_setup.py
+RUN --mount=type=cache,target=/opt/githubci-downloads \
+    ARDUINO_DIRECTORIES_DOWNLOADS=/opt/githubci-downloads/arduino \
+    python3 /opt/githubci/image_setup.py
+# Runner-only edits do not invalidate the heavyweight toolchain/fixture layer.
+COPY scripts/githubci/ /opt/githubci/
+RUN python3 -m unittest discover -s /opt/githubci -p 'test_*.py'
+ENTRYPOINT ["python3", "/opt/githubci/runner.py"]
+CMD ["test"]
