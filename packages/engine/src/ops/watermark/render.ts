@@ -1,4 +1,4 @@
-import type { WatermarkOptions } from '../schemas/options.js';
+import type { WatermarkOptions } from '../../schemas/options.js';
 
 export function renderWatermark(imageData: Uint8ClampedArray, options: WatermarkOptions): Uint8ClampedArray {
   const out = new Uint8ClampedArray(imageData.length);

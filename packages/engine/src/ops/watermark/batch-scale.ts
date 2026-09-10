@@ -1,4 +1,4 @@
-import type { WatermarkOptions } from '../schemas/options.js';
+import type { WatermarkOptions } from '../../schemas/options.js';
 
 export function batchScaleCheck(
   imageA: { width: number; height: number },

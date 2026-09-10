@@ -3,6 +3,7 @@ import { cropRaster, rotateRaster } from '../ops/geometry.js';
 import { applyAdjustments, DEHAZE_RADIUS } from '../ops/adjust.js';
 import { applyPixelLocalOptions, boxBlur } from '../ops/raster.js';
 import { resizeRaster } from '../ops/resize.js';
+import { applyWatermark } from '../ops/watermark.js';
 import { renderText } from '../typography/index.js';
 import { applyBorder } from '../transform/border.js';
 import { roundCorners } from '../transform/round-corners.js';
@@ -62,7 +63,6 @@ import {
   BlackWhiteThresholdOptionsSchema,
   EqualizeOptionsSchema,
   DeskewOptionsSchema,
-  LayerOptionsSchema,
   TextOptionsSchema,
   WatermarkOptionsSchema,
   CollageOptionsSchema,
@@ -303,6 +303,7 @@ async function executeStep(
     const parsed = CanvasResizeOptionsSchema.parse(options);
     if (!parsed.enabled) return image;
     return canvasResize(image, {
+      enabled: true,
       width: parsed.width,
       height: parsed.height,
       anchor: parsed.anchor,
@@ -317,12 +318,12 @@ async function executeStep(
   if (op === 'border') {
     const parsed = BorderOptionsSchema.parse(options);
     if (!parsed.enabled) return image;
-    return applyBorder(image, { width: parsed.width, color: parsed.color, inner: parsed.inner });
+    return applyBorder(image, { enabled: true, width: parsed.width, color: parsed.color, inner: parsed.inner });
   }
   if (op === 'round-corners') {
     const parsed = RoundCornersOptionsSchema.parse(options);
     if (!parsed.enabled) return image;
-    return roundCorners(image, { radius: parsed.radius, background: parsed.background });
+    return roundCorners(image, { enabled: true, radius: parsed.radius, background: parsed.background });
   }
   if (op === 'bulk-resize') {
     // T25 preset pack: applies the preset dimensions via resizeRaster with fit mode.
@@ -346,14 +347,30 @@ async function executeStep(
     const parsed = CollageOptionsSchema.parse(options);
     if (!parsed.enabled) return image;
     // For pipeline, images array would come from previous steps or batch; v1 uses single image repeated
-    return makeCollage(image, { mode: parsed.mode, columns: parsed.columns, rows: parsed.rows, gap: parsed.gap, background: parsed.background, alignment: parsed.alignment, images: [image] });
+    return makeCollage(image, { mode: parsed.mode, columns: parsed.columns ?? undefined, rows: parsed.rows ?? undefined, gap: parsed.gap, background: parsed.background, alignment: (parsed.alignment as 'center' | 'top-left' | 'bottom-right') ?? 'center', images: [image] });
   }
   if (op === 'split') {
     const parsed = SplitOptionsSchema.parse(options);
     if (!parsed.enabled) return image;
-    const tiles = splitImage(image, { rows: parsed.rows, cols: parsed.cols, output: parsed.output });
+    const tiles = splitImage(image, { enabled: true, rows: parsed.rows, cols: parsed.cols, output: parsed.output });
     // Pipeline returns array? v1 returns first tile or whole? We'll return first tile for single-output pipeline.
     return tiles[0] ?? image;
+  }
+  if (op === 'watermark') {
+    const parsed = WatermarkOptionsSchema.parse(options);
+    if (!parsed.enabled && parsed.kind === 'none') return image;
+    return applyWatermark(image, {
+      kind: (parsed.kind === 'none' ? 'text' : parsed.kind) as 'image' | 'text',
+      textContent: parsed.textContent,
+      opacity: parsed.opacity,
+      blendMode: parsed.blendMode,
+      position: parsed.position,
+      rotation: parsed.rotation,
+      tiled: parsed.tiled,
+      diagonalTiled: parsed.diagonalTiled,
+      scaleWithImage: parsed.scaleWithImage,
+      enabled: true,
+    });
   }
   if (op === 'text') {
     const parsed = TextOptionsSchema.parse(options);
@@ -373,7 +390,7 @@ async function executeStep(
 }
 
 /** Format a palette as a string in the requested format. */
-function formatPalette(palette: Palette, format: PaletteFormat): string | Uint8Array {
+function formatPalette(palette: Palette, format: PaletteFormat): string {
   switch (format) {
     case 'css':
       return exportPaletteCss(palette);
@@ -382,7 +399,7 @@ function formatPalette(palette: Palette, format: PaletteFormat): string | Uint8A
     case 'gpl':
       return exportPaletteGpl(palette);
     case 'ase':
-      return exportPalette(palette, 'ase') as Uint8Array;
+      return new TextDecoder().decode(exportPalette(palette, 'ase') as Uint8Array);
   }
 }
 

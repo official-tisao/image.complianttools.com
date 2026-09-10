@@ -9,12 +9,12 @@ export function blendPixels(
   const out = new Uint8ClampedArray(base.length);
   const a = Math.max(0, Math.min(1, opacity));
   for (let i = 0; i < base.length; i += 4) {
-    const rb = base[i];
-    const gb = base[i + 1];
-    const bb = base[i + 2];
-    const ro = overlay[i];
-    const go = overlay[i + 1];
-    const bo = overlay[i + 2];
+    const rb = base[i] ?? 0;
+    const gb = base[i + 1] ?? 0;
+    const bb = base[i + 2] ?? 0;
+    const ro = overlay[i] ?? 0;
+    const go = overlay[i + 1] ?? 0;
+    const bo = overlay[i + 2] ?? 0;
     let r = rb, g = gb, bVal = bb;
     switch (blend) {
       case 'multiply':
@@ -45,14 +45,13 @@ export function blendPixels(
         r = ro; g = go; bVal = bo;
         break;
     }
-    // Apply opacity blend (simple lerp for v1)
     const rf = Math.round(r * a + rb * (1 - a));
     const gf = Math.round(g * a + gb * (1 - a));
     const bf = Math.round(bVal * a + bb * (1 - a));
     out[i] = Math.min(255, Math.max(0, Math.round(rf)));
     out[i + 1] = Math.min(255, Math.max(0, Math.round(gf)));
     out[i + 2] = Math.min(255, Math.max(0, Math.round(bf)));
-    out[i + 3] = base[i + 3]; // preserve alpha for v1
+    out[i + 3] = base[i + 3] ?? 255;
   }
   return out;
 }

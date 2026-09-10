@@ -2,12 +2,9 @@
  * P3-06 T34 Round Corners.
  * Produces alpha-transparent rounded corners on the image.
  */
+import type { RoundCornersOptions } from '../schemas/options.js';
 import type { RasterImage } from '../types.js';
 
-export interface RoundCornersOptions {
-  readonly radius: number;
-  readonly background?: string; // If set, fills outside with colour; else transparent
-}
 
 function isInsideRoundedRect(x: number, y: number, w: number, h: number, r: number): boolean {
   // Distance from nearest corner to point; if within radius, it's outside
@@ -16,8 +13,8 @@ function isInsideRoundedRect(x: number, y: number, w: number, h: number, r: numb
   return (dx * dx + dy * dy) <= (r * r);
 }
 
-export function roundCorners(image: RasterImage, options: RoundCornersOptions): RasterImage {
-  const r = Math.max(0, Math.round(options.radius));
+export function roundCorners(image: RasterImage, options: Partial<RoundCornersOptions> = {}): RasterImage {
+  const r = Math.max(0, Math.round(options.radius ?? 20));
   const source = image.frames[0]!.data;
   const w = image.width;
   const h = image.height;
@@ -59,8 +56,11 @@ export function roundCorners(image: RasterImage, options: RoundCornersOptions): 
 
 function parseHexColor(hex: string): [number, number, number, number] {
   const h = hex.replace('#', '');
-  if (h.length === 3) return [parseInt(h[0] + h[0], 16), parseInt(h[1] + h[1], 16), parseInt(h[2] + h[2], 16), 255];
-  if (h.length === 6) return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16), 255];
-  if (h.length === 8) return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16), parseInt(h.slice(6, 8), 16)];
+  if (h.length === 3) {
+    const r = h[0] ?? '0';
+    return [parseInt(r + r, 16), parseInt((h[1] ?? '0') + (h[1] ?? '0'), 16), parseInt((h[2] ?? '0') + (h[2] ?? '0'), 16), 255];
+  }
+  if (h.length === 6) return [parseInt((h.slice(0, 2) || '00'), 16), parseInt((h.slice(2, 4) || '00'), 16), parseInt((h.slice(4, 6) || '00'), 16), 255];
+  if (h.length === 8) return [parseInt((h.slice(0, 2) || '00'), 16), parseInt((h.slice(2, 4) || '00'), 16), parseInt((h.slice(4, 6) || '00'), 16), parseInt((h.slice(6, 8) || '00'), 16)];
   return [255, 255, 255, 255];
 }

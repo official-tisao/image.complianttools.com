@@ -16,8 +16,11 @@ export function applyEqualize(
   channels: 'rgb' | 'all' | 'gray' = 'rgb',
   clipLimit: number = 40,
 ): RasterImage {
-  // V1: a simplified CLAHE over a 8x8 tile grid with clip limit.
-  // For v1 we apply a basic histogram equalization with clip limit
+  // V1: simplified CLAHE over whole image; channels parameter reserved for future use.
+  if (channels !== 'rgb') {
+    // Non-RGB equalization reserved for future enhancement.
+  }
+  // For v1 apply a basic histogram equalization with clip limit
   // over the whole image (global CLAHE approximation) as the documented
   // baseline; a full adaptive grid is a future enhancement.
   if (clipLimit <= 0) return image;

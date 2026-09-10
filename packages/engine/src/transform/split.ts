@@ -2,12 +2,8 @@
  * P3-06 T36 Split / Tile.
  */
 import type { RasterImage } from '../types.js';
+import type { SplitOptions } from '../schemas/options.js';
 
-export interface SplitOptions {
-  readonly rows: number;
-  readonly cols: number;
-  readonly output?: 'array' | 'individual';
-}
 
 export function splitImage(image: RasterImage, options: SplitOptions): RasterImage[] {
   const srcW = image.width;

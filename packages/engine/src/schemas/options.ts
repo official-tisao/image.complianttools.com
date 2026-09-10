@@ -816,6 +816,7 @@ export const SplitOptionsSchema = z.object({
 export type SplitOptions = z.infer<typeof SplitOptionsSchema>;
 
 export interface OptionDescription {
+  label: string;
   help?: string;
   unit?: string;
   control: 'slider' | 'number' | 'select' | 'color' | 'toggle' | 'segmented' | 'text';

@@ -2,19 +2,15 @@
  * P3-06 T33 Border / Frame.
  */
 import type { RasterImage } from '../types.js';
+import type { BorderOptions } from '../schemas/options.js';
 
-export interface BorderOptions {
-  readonly width: number;
-  readonly color?: string;
-  readonly inner?: boolean; // inner (inside image) vs outer (expands canvas)
-}
 
 function parseHexColor(hex: string): [number, number, number, number] {
   const h = hex.replace('#', '');
-  if (h.length === 3) return [parseInt(h[0] + h[0], 16), parseInt(h[1] + h[1], 16), parseInt(h[2] + h[2], 16), 255];
-  if (h.length === 4) return [parseInt(h[0] + h[0], 16), parseInt(h[1] + h[1], 16), parseInt(h[2] + h[2], 16), parseInt(h[3] + h[3], 16)];
-  if (h.length === 6) return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16), 255];
-  if (h.length === 8) return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16), parseInt(h.slice(6, 8), 16)];
+  if (h.length === 3) return [parseInt((h[0] || '0') + (h[0] || '0'), 16), parseInt((h[1] || '0') + (h[1] || '0'), 16), parseInt((h[2] || '0') + (h[2] || '0'), 16), 255];
+  if (h.length === 4) return [parseInt((h[0] || '0') + (h[0] || '0'), 16), parseInt((h[1] || '0') + (h[1] || '0'), 16), parseInt((h[2] || '0') + (h[2] || '0'), 16), parseInt((h[3] || '0') + (h[3] || '0'), 16)];
+  if (h.length === 6) return [parseInt((h.slice(0,2) || '00'), 16), parseInt((h.slice(2,4) || '00'), 16), parseInt((h.slice(4,6) || '00'), 16), 255];
+  if (h.length === 8) return [parseInt((h.slice(0,2) || '00'), 16), parseInt((h.slice(2,4) || '00'), 16), parseInt((h.slice(4,6) || '00'), 16), parseInt((h.slice(6,8) || '00'), 16)];
   return [0, 0, 0, 255];
 }
 

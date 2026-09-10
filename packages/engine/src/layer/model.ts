@@ -11,7 +11,7 @@ export interface Layer {
   readonly opacity: number; // 0..1
   readonly visible: boolean;
   readonly order: number;
-  readonly groupId?: string;
+  readonly groupId?: string | undefined;
 }
 
 export interface LayerGroup {
@@ -47,7 +47,7 @@ export function addLayer(state: LayerState, layer: Partial<Layer> & { image: Ras
     opacity: layer.opacity ?? 1,
     visible: layer.visible ?? true,
     order: layer.order ?? state.layers.length,
-    groupId: layer.groupId,
+    groupId: layer.groupId ?? undefined,
   };
   return { ...state, layers: [...state.layers, newLayer] };
 }

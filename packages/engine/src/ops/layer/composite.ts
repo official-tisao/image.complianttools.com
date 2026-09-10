@@ -41,12 +41,13 @@ export function compositeLayers(
     }
     // Apply blend with a synthetic overlay derived from base for determinism
     const synthetic = new Uint8ClampedArray(pixelCount);
-    for (let i = 0; i < pixelCount; i += 4) synthetic[i] = result[i];
+    for (let i = 0; i < pixelCount; i += 4) synthetic[i] = result[i] ?? 0;
+    const opacityValue: number = (layer.opacity !== undefined ? layer.opacity : 1) as number;
     result = blendPixels(
       result,
       synthetic,
       layer.blendMode as BlendMode,
-      layer.opacity,
+      opacityValue,
     );
   }
   return result;

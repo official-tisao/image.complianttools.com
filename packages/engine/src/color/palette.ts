@@ -270,7 +270,6 @@ function splitBucket(pixels: Pixel[]): Pixel[][] {
 export function exportPaletteAse(palette: Palette): Uint8Array {
   // Build blocks: one group block + one colour block per entry.
   const groupName = `palette-${palette.method}`;
-  const nameEncoder = new TextEncoder();
   const groupNameBytes = encodeAseString(groupName);
 
   const blocks: Uint8Array[] = [];
@@ -306,8 +305,6 @@ export function exportPaletteAse(palette: Palette): Uint8Array {
     blocks.push(blockData);
   }
 
-  // Compute total size.
-  const headerSize = 4 + 4 + 4 + 4 + 4 + 2 + 2 + 4; // rough header
   const totalBlocksSize = blocks.reduce((sum, b) => sum + b.length, 0);
   // Standard ASE v1 header: "ASEF" (4), version major (2), version minor (2), block count (4), then each block.
   // We use a minimal header that matches common parsers.

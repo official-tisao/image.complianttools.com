@@ -2,14 +2,9 @@
  * P3-06 T30 Canvas Resize.
  * Expands (or shrinks) the image canvas with a specified anchor and background fill.
  */
+import type { CanvasResizeOptions } from '../schemas/options.js';
 import type { RasterImage } from '../types.js';
 
-export interface CanvasResizeOptions {
-  readonly width: number;
-  readonly height: number;
-  readonly anchor?: 'top-left' | 'top' | 'top-right' | 'left' | 'center' | 'right' | 'bottom-left' | 'bottom' | 'bottom-right';
-  readonly fillColor?: string;
-}
 
 function parseHexColor(hex: string): [number, number, number, number] {
   const h = hex.replace('#', '');
@@ -28,9 +23,9 @@ function parseHexColor(hex: string): [number, number, number, number] {
   return [255, 255, 255, 255];
 }
 
-export function canvasResize(image: RasterImage, options: CanvasResizeOptions): RasterImage {
-  const targetW = Math.max(1, Math.round(options.width));
-  const targetH = Math.max(1, Math.round(options.height));
+export function canvasResize(image: RasterImage, options: Partial<CanvasResizeOptions> & { enabled?: boolean; width?: number; height?: number; anchor?: string; fillColor?: string }): RasterImage {
+  const targetW = Math.max(1, Math.round(options.width ?? 800));
+  const targetH = Math.max(1, Math.round(options.height ?? 600));
   const srcW = image.width;
   const srcH = image.height;
   if (targetW === srcW && targetH === srcH) return image;

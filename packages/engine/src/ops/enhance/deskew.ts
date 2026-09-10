@@ -1,5 +1,6 @@
 import type { RasterImage } from '../../types.js';
-import { rotateRaster, RotateOptionsSchema } from '../geometry.js';
+import { rotateRaster } from '../geometry.js';
+import { RotateOptionsSchema } from '../../schemas/options.js';
 
 /**
  * Deskew — detect and correct rotation using Hough transform approximation.
@@ -31,7 +32,9 @@ export function applyDeskew(
     applyExifOrientation: true,
     snap90: false,
   }));
-  (corrected as RasterImage & { [DESKEW_SYMBOL]?: number })[DESKEW_SYMBOL] = detectedAngle;
+  // Normalize -0 to +0 so equality checks (e.g. expect(...).toBe(0)) match correctly.
+  const normalizedAngle = detectedAngle === 0 ? 0 : detectedAngle;
+  (corrected as RasterImage & { [DESKEW_SYMBOL]?: number })[DESKEW_SYMBOL] = normalizedAngle;
   return corrected;
 }
 

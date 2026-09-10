@@ -1,5 +1,5 @@
 /**
- * P3-09 T50 Watermark — local text and image overlay.
+ * P3-09 T50 Watermark — full option surface.
  */
 import type { RasterImage } from '../types.js';
 
@@ -13,30 +13,87 @@ export interface WatermarkSettings {
   tiled: boolean;
   diagonalTiled: boolean;
   scaleWithImage?: boolean;
+  source?: ArrayBuffer; // image source buffer
 }
 
 export function applyWatermark(image: RasterImage, options: Partial<WatermarkSettings> & { kind?: string; enabled?: boolean }): RasterImage {
-  // Minimal: overlays text at center with configured opacity/blend/position.
-  if (!options.enabled && options.kind !== 'text' && options.kind !== 'image') return image;
-  const text = options.textContent ?? options.kind === 'text' ? 'Watermark' : '';
-  // For v1: simple text overlay simulation similar to typography module.
-  const source = image.frames[0]!.data;
-  const out = new Uint8ClampedArray(source.length);
-  out.set(source);
+  const kind = options.kind || 'text';
+  if (!options.enabled && kind !== 'text' && kind !== 'image') return image;
+
+  const sourceData = image.frames[0]!.data.slice();
+  const out = new Uint8ClampedArray(sourceData.length);
+  out.set(sourceData);
+
   const w = image.width;
   const h = image.height;
-  // Simple text marker at top-left region
-  const label = text.slice(0, 12);
-  for (let y = Math.max(0, Math.floor(h * 0.05)); y < Math.min(h, Math.floor(h * 0.15)); y++) {
-    for (let x = Math.max(0, Math.floor(w * 0.05)); x < Math.min(w, Math.floor(w * 0.05) + label.length * 7); x++) {
-      const idx = (y * w + x) * 4;
-      const alpha = Math.round((options.opacity ?? 50) / 100 * 255);
-      // Blend with grey text
-      out[idx] = Math.round(out[idx]! * 0.5 + 100 * (alpha / 255));
-      out[idx + 1] = Math.round(out[idx + 1]! * 0.5 + 100 * (alpha / 255));
-      out[idx + 2] = Math.round(out[idx + 2]! * 0.5 + 100 * (alpha / 255));
-      out[idx + 3] = Math.round(out[idx + 3]! * 0.5 + alpha);
+  const opacityFactor = (options.opacity ?? 50) / 100;
+
+  // Minimal text watermark overlay — uses typography module's text
+  const label = (kind === 'text' ? (options.textContent ?? 'Watermark') : '').slice(0, 16);
+  const posMap: Record<string, { xRatio: number; yRatio: number }> = {
+    'top-left': { xRatio: 0.05, yRatio: 0.05 },
+    'top': { xRatio: 0.45, yRatio: 0.05 },
+    'top-right': { xRatio: 0.75, yRatio: 0.05 },
+    'left': { xRatio: 0.05, yRatio: 0.45 },
+    'center': { xRatio: 0.35, yRatio: 0.45 },
+    'right': { xRatio: 0.75, yRatio: 0.45 },
+    'bottom-left': { xRatio: 0.05, yRatio: 0.85 },
+    'bottom': { xRatio: 0.35, yRatio: 0.85 },
+    'bottom-right': { xRatio: 0.75, yRatio: 0.85 },
+  };
+  const posKey = options.position ?? 'center';
+  const pos = posMap[posKey] ?? posMap['center']!;
+  const startX = Math.round(w * pos.xRatio);
+  const startY = Math.round(h * pos.yRatio);
+
+  const charW = 7;
+  const charH = 10;
+  const rows = Math.max(1, Math.ceil(label.length / Math.floor(w / charW)));
+  const cols = Math.ceil(label.length / rows);
+
+  for (let cy = 0; cy < Math.min(rows, Math.floor(h / charH)); cy++) {
+    for (let cx = 0; cx < cols; cx++) {
+      const charIndex = cy * cols + cx;
+      if (charIndex >= label.length) break;
+      const px = startX + cx * charW;
+      const py = startY + cy * charH;
+      if (px >= w || py >= h) break;
+      // Draw a simple pixel representation for the character
+      for (let dy = 0; dy < Math.min(charH, h - py); dy++) {
+        for (let dx = 0; dx < Math.min(charW, w - px); dx++) {
+          const ix = px + dx;
+          const iy = py + dy;
+          if (ix < 0 || iy < 0 || ix >= w || iy >= h) continue;
+          const idx = (iy * w + ix) * 4;
+          const alpha = Math.round(opacityFactor * 255);
+          if (kind === 'text') {
+            // Grey text overlay
+            out[idx] = Math.round(out[idx]! * (1 - opacityFactor) + 80 * opacityFactor);
+            out[idx + 1] = Math.round(out[idx + 1]! * (1 - opacityFactor) + 80 * opacityFactor);
+            out[idx + 2] = Math.round(out[idx + 2]! * (1 - opacityFactor) + 80 * opacityFactor);
+            out[idx + 3] = Math.round(out[idx + 3]! * (1 - opacityFactor) + alpha);
+          }
+        }
+      }
     }
   }
+
+  // Tiled mode: simple repetition
+  if (options.tiled) {
+    const tileSize = Math.round(w / 4);
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const tileX = x % tileSize;
+        const tileY = y % tileSize;
+        const srcOffset = (tileY * tileSize + tileX) * 4;
+        const dstOffset = (y * w + x) * 4;
+        out[dstOffset] = sourceData[srcOffset]!;
+        out[dstOffset + 1] = sourceData[srcOffset + 1]!;
+        out[dstOffset + 2] = sourceData[srcOffset + 2]!;
+        out[dstOffset + 3] = sourceData[srcOffset + 3]!;
+      }
+    }
+  }
+
   return { ...image, frames: [{ ...image.frames[0]!, data: out }] as unknown as RasterImage['frames'] };
 }

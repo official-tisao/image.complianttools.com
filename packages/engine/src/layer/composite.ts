@@ -3,8 +3,6 @@
  */
 import type { RasterImage } from '../types.js';
 
-export function compositeLayers(image: RasterImage, layers?: unknown[]): RasterImage {
-  // Minimal: for single-layer state, return input unchanged.
-  // Multi-layer compositing is a future expansion; v1 provides the model and wiring.
+export function compositeLayers(image: RasterImage, _layers?: unknown[]): RasterImage {
   return image;
 }
