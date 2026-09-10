@@ -12,3 +12,4 @@ export { connectedComponents } from './connected-components.js';
 export { integralImage } from './integral-images.js';
 export { dcci, nedi } from './dcci-nedi.js';
 export { pixelArtScale } from './pixel-art.js';
+export { saliencyRetarget } from './saliency-retarget.js';
