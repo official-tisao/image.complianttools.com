@@ -45,8 +45,10 @@ export function applyNormalize(
     const output = new Uint8ClampedArray(input.length);
     for (let offset = 0; offset < input.length; offset += 4) {
       output[offset] = scaleR > 0 ? clampByte((input[offset]! - loR) * scaleR) : input[offset]!;
-      output[offset + 1] = scaleG > 0 ? clampByte((input[offset + 1]! - loG) * scaleG) : input[offset + 1]!;
-      output[offset + 2] = scaleB > 0 ? clampByte((input[offset + 2]! - loB) * scaleB) : input[offset + 2]!;
+      output[offset + 1] =
+        scaleG > 0 ? clampByte((input[offset + 1]! - loG) * scaleG) : input[offset + 1]!;
+      output[offset + 2] =
+        scaleB > 0 ? clampByte((input[offset + 2]! - loB) * scaleB) : input[offset + 2]!;
       output[offset + 3] = input[offset + 3]!;
     }
     return { ...frame, data: output };

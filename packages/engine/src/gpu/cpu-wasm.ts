@@ -228,31 +228,19 @@ function applyTemperatureInline(image: RasterImage, value: number): RasterImage 
       rr = 1;
       gg = Math.max(
         0,
-        Math.min(
-          1,
-          (99.4708025861 * Math.log(Math.max(t, 1)) - 161.1195681661) / 255,
-        ),
+        Math.min(1, (99.4708025861 * Math.log(Math.max(t, 1)) - 161.1195681661) / 255),
       );
     } else {
       const t2 = t - 60;
-      rr = Math.max(
-        0,
-        Math.min(1, (329.698727446 * Math.pow(t2, -0.1332047592)) / 255),
-      );
-      gg = Math.max(
-        0,
-        Math.min(1, (288.1221695283 * Math.pow(t2, -0.0755148492)) / 255),
-      );
+      rr = Math.max(0, Math.min(1, (329.698727446 * Math.pow(t2, -0.1332047592)) / 255));
+      gg = Math.max(0, Math.min(1, (288.1221695283 * Math.pow(t2, -0.0755148492)) / 255));
     }
     if (t >= 66) bb = 1;
     else if (t <= 19) bb = 0;
     else
       bb = Math.max(
         0,
-        Math.min(
-          1,
-          (138.5177312231 * Math.log(Math.max(t - 10, 1)) - 305.0447927307) / 255,
-        ),
+        Math.min(1, (138.5177312231 * Math.log(Math.max(t - 10, 1)) - 305.0447927307) / 255),
       );
     return [r / Math.max(rr, 0.0001), g / Math.max(gg, 0.0001), b / Math.max(bb, 0.0001), a];
   });
@@ -301,7 +289,12 @@ function mapFrame(
     const input = frame.data;
     const output = new Uint8ClampedArray(input.length);
     for (let offset = 0; offset < input.length; offset += 4) {
-      const [r, g, b, a] = mapper(input[offset]!, input[offset + 1]!, input[offset + 2]!, input[offset + 3]!);
+      const [r, g, b, a] = mapper(
+        input[offset]!,
+        input[offset + 1]!,
+        input[offset + 2]!,
+        input[offset + 3]!,
+      );
       output[offset] = clampByte(r);
       output[offset + 1] = clampByte(g);
       output[offset + 2] = clampByte(b);

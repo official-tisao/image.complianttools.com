@@ -39,13 +39,7 @@ export function selectBackendWithFallback(
   requested: ExecutionTier,
   env: GpuEnvironment,
 ): { backend: GpuBackend; usedTier: ExecutionTier; downgraded: boolean } {
-  const ladder: ExecutionTier[] = [
-    'webgpu',
-    'webgl2',
-    'wasm-simd',
-    'wasm',
-    'js',
-  ];
+  const ladder: ExecutionTier[] = ['webgpu', 'webgl2', 'wasm-simd', 'wasm', 'js'];
   const startIndex = ladder.indexOf(requested);
   if (startIndex < 0) {
     return { backend: selectBackend('js', env), usedTier: 'js', downgraded: true };

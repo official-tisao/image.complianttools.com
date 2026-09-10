@@ -78,7 +78,10 @@ export function buildCurveLut(points: readonly CurvePoint[]): Uint8ClampedArray 
     const h11 = t3 - t2;
     const dx = x1 - x0;
     const value =
-      h00 * ys[segment]! + h10 * dx * m[segment]! + h01 * ys[segment + 1]! + h11 * dx * m[segment + 1]!;
+      h00 * ys[segment]! +
+      h10 * dx * m[segment]! +
+      h01 * ys[segment + 1]! +
+      h11 * dx * m[segment + 1]!;
     lut[x] = clampByte(value);
   }
   return lut;
@@ -95,7 +98,12 @@ export function buildCurveLut(points: readonly CurvePoint[]): Uint8ClampedArray 
  */
 export function applyCurves(
   image: RasterImage,
-  curves: { rgb?: readonly CurvePoint[]; r?: readonly CurvePoint[]; g?: readonly CurvePoint[]; b?: readonly CurvePoint[] },
+  curves: {
+    rgb?: readonly CurvePoint[];
+    r?: readonly CurvePoint[];
+    g?: readonly CurvePoint[];
+    b?: readonly CurvePoint[];
+  },
 ): RasterImage {
   const hasRgb = (curves.rgb?.length ?? 0) > 0;
   const hasR = (curves.r?.length ?? 0) > 0;

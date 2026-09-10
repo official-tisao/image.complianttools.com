@@ -408,7 +408,10 @@ export function applyClarity(image: RasterImage, value: number): RasterImage {
       output[target + 3] = source[target + 3]!;
     }
   }
-  return { ...image, frames: [{ ...image.frames[0]!, data: output }] as unknown as RasterImage['frames'] };
+  return {
+    ...image,
+    frames: [{ ...image.frames[0]!, data: output }] as unknown as RasterImage['frames'],
+  };
 }
 
 /** Radius used by `applyDehaze`. The pipeline uses this in the halo argument of `executeTiled`. */
@@ -464,7 +467,10 @@ export function applyDehaze(image: RasterImage, value: number): RasterImage {
       output[target + 3] = source[target + 3]!;
     }
   }
-  return { ...image, frames: [{ ...image.frames[0]!, data: output }] as unknown as RasterImage['frames'] };
+  return {
+    ...image,
+    frames: [{ ...image.frames[0]!, data: output }] as unknown as RasterImage['frames'],
+  };
 }
 
 /** Local byte clamp; duplicated from `filters/framework.ts` to avoid a one-line dependency. */

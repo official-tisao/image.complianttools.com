@@ -621,9 +621,7 @@ export type NormalizeOptions = z.infer<typeof NormalizeOptionsSchema>;
 export const BlurOptionsSchema = z
   .object({
     enabled: z.boolean().default(false),
-    type: z
-      .enum(['gaussian', 'box', 'motion', 'radial', 'lens', 'zoom'])
-      .default('gaussian'),
+    type: z.enum(['gaussian', 'box', 'motion', 'radial', 'lens', 'zoom']).default('gaussian'),
     radius: z.number().min(0.5).max(64).default(2),
     angle: z.number().min(-180).max(180).default(0),
   })
@@ -707,9 +705,7 @@ export type NoMultilayerOptions = z.infer<typeof NoMultilayerOptionsSchema>;
 export const ColorSpaceOptionsSchema = z
   .object({
     enabled: z.boolean().default(false),
-    target: z
-      .enum(['srgb', 'display-p3', 'adobe-rgb-compatible', 'gray'])
-      .default('srgb'),
+    target: z.enum(['srgb', 'display-p3', 'adobe-rgb-compatible', 'gray']).default('srgb'),
     bitDepth: z.union([z.literal(8), z.literal(16)]).default(8),
     embedIcc: z.boolean().default(false),
     stripIcc: z.boolean().default(false),
@@ -772,63 +768,95 @@ export const RecolourOptionsSchema = z
 export type RecolourOptions = z.infer<typeof RecolourOptionsSchema>;
 
 /** P3-06 T30 Canvas resize. */
-export const CanvasResizeOptionsSchema = z.object({
-  enabled: z.boolean().default(false),
-  width: z.number().int().positive().default(800),
-  height: z.number().int().positive().default(600),
-  anchor: z.enum([
-    'top-left', 'top', 'top-right', 'left', 'center', 'right', 'bottom-left', 'bottom', 'bottom-right',
-  ]).default('center'),
-  fillColor: z.string().default('#FFFFFF'),
-}).default({ enabled: false, width: 800, height: 600, anchor: 'center', fillColor: '#FFFFFF' });
+export const CanvasResizeOptionsSchema = z
+  .object({
+    enabled: z.boolean().default(false),
+    width: z.number().int().positive().default(800),
+    height: z.number().int().positive().default(600),
+    anchor: z
+      .enum([
+        'top-left',
+        'top',
+        'top-right',
+        'left',
+        'center',
+        'right',
+        'bottom-left',
+        'bottom',
+        'bottom-right',
+      ])
+      .default('center'),
+    fillColor: z.string().default('#FFFFFF'),
+  })
+  .default({ enabled: false, width: 800, height: 600, anchor: 'center', fillColor: '#FFFFFF' });
 export type CanvasResizeOptions = z.infer<typeof CanvasResizeOptionsSchema>;
 
 /** P3-06 T31 Enlarge. */
-export const EnlargeOptionsSchema = z.object({
-  enabled: z.boolean().default(false),
-  scale: z.number().min(1).max(10).default(2),
-  allowUpscale: z.boolean().default(true),
-}).default({ enabled: false, scale: 2, allowUpscale: true });
+export const EnlargeOptionsSchema = z
+  .object({
+    enabled: z.boolean().default(false),
+    scale: z.number().min(1).max(10).default(2),
+    allowUpscale: z.boolean().default(true),
+  })
+  .default({ enabled: false, scale: 2, allowUpscale: true });
 export type EnlargeOptions = z.infer<typeof EnlargeOptionsSchema>;
 
 /** P3-06 T33 Border / Frame. */
-export const BorderOptionsSchema = z.object({
-  enabled: z.boolean().default(false),
-  width: z.number().int().positive().default(10),
-  color: z.string().default('#000000'),
-  inner: z.boolean().default(false),
-}).default({ enabled: false, width: 10, color: '#000000', inner: false });
+export const BorderOptionsSchema = z
+  .object({
+    enabled: z.boolean().default(false),
+    width: z.number().int().positive().default(10),
+    color: z.string().default('#000000'),
+    inner: z.boolean().default(false),
+  })
+  .default({ enabled: false, width: 10, color: '#000000', inner: false });
 export type BorderOptions = z.infer<typeof BorderOptionsSchema>;
 
 /** P3-06 T34 Round Corners. */
-export const RoundCornersOptionsSchema = z.object({
-  enabled: z.boolean().default(false),
-  radius: z.number().int().min(0).max(255).default(20),
-  background: z.string().optional().default('transparent'),
-}).default({ enabled: false, radius: 20, background: 'transparent' });
+export const RoundCornersOptionsSchema = z
+  .object({
+    enabled: z.boolean().default(false),
+    radius: z.number().int().min(0).max(255).default(20),
+    background: z.string().optional().default('transparent'),
+  })
+  .default({ enabled: false, radius: 20, background: 'transparent' });
 export type RoundCornersOptions = z.infer<typeof RoundCornersOptionsSchema>;
 
 /** P3-06 T35 Collage / Merge. */
-export const CollageOptionsSchema = z.object({
-  enabled: z.boolean().default(false),
-  mode: z.enum(['grid', 'horizontal', 'vertical', 'mosaic']).default('grid'),
-  columns: z.number().int().positive().optional(),
-  rows: z.number().int().positive().optional(),
-  gap: z.number().int().min(0).default(0),
-  background: z.string().default('#FFFFFF'),
-  alignment: z.enum([
-    'top-left', 'top', 'top-right', 'left', 'center', 'right', 'bottom-left', 'bottom', 'bottom-right',
-  ]).default('center'),
-}).default({ enabled: false, mode: 'grid', gap: 0, background: '#FFFFFF', alignment: 'center' });
+export const CollageOptionsSchema = z
+  .object({
+    enabled: z.boolean().default(false),
+    mode: z.enum(['grid', 'horizontal', 'vertical', 'mosaic']).default('grid'),
+    columns: z.number().int().positive().optional(),
+    rows: z.number().int().positive().optional(),
+    gap: z.number().int().min(0).default(0),
+    background: z.string().default('#FFFFFF'),
+    alignment: z
+      .enum([
+        'top-left',
+        'top',
+        'top-right',
+        'left',
+        'center',
+        'right',
+        'bottom-left',
+        'bottom',
+        'bottom-right',
+      ])
+      .default('center'),
+  })
+  .default({ enabled: false, mode: 'grid', gap: 0, background: '#FFFFFF', alignment: 'center' });
 export type CollageOptions = z.infer<typeof CollageOptionsSchema>;
 
 /** P3-06 T36 Split / Tile. */
-export const SplitOptionsSchema = z.object({
-  enabled: z.boolean().default(false),
-  rows: z.number().int().positive().default(2),
-  cols: z.number().int().positive().default(2),
-  output: z.enum(['array', 'individual']).default('array'),
-}).default({ enabled: false, rows: 2, cols: 2, output: 'array' });
+export const SplitOptionsSchema = z
+  .object({
+    enabled: z.boolean().default(false),
+    rows: z.number().int().positive().default(2),
+    cols: z.number().int().positive().default(2),
+    output: z.enum(['array', 'individual']).default('array'),
+  })
+  .default({ enabled: false, rows: 2, cols: 2, output: 'array' });
 export type SplitOptions = z.infer<typeof SplitOptionsSchema>;
 
 export interface OptionDescription {

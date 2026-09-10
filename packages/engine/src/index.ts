@@ -59,7 +59,14 @@ export * from './metadata/exif.js';
 export * from './metadata/inspect.js';
 export * from './color/icc.js';
 export * from './color/convert.js';
-export { extractPalette, exportPalette, exportPaletteCss, exportPaletteJson, exportPaletteGpl, exportPaletteAse } from './color/palette.js';
+export {
+  extractPalette,
+  exportPalette,
+  exportPaletteCss,
+  exportPaletteJson,
+  exportPaletteGpl,
+  exportPaletteAse,
+} from './color/palette.js';
 export * from './color/recolour.js';
 export * from './ops/geometry.js';
 export * from './ops/raster.js';

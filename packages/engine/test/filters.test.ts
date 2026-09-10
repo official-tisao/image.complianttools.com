@@ -211,8 +211,7 @@ describe('P3-03 monochrome dither strategies', () => {
     const out2 = applyDither('bayer-2x2', data, width, height);
     const out4 = applyDither('bayer-4x4', data, width, height);
     let differences = 0;
-    for (let i = 0; i < out2.length; i += 1)
-      if (out2[i] !== out4[i]) differences += 1;
+    for (let i = 0; i < out2.length; i += 1) if (out2[i] !== out4[i]) differences += 1;
     expect(differences).toBeGreaterThan(0);
   });
 
@@ -221,10 +220,10 @@ describe('P3-03 monochrome dither strategies', () => {
       4,
       4,
       new Uint8ClampedArray([
-        10, 10, 10, 255, 80, 80, 80, 255, 160, 160, 160, 255, 240, 240, 240, 255,
-        20, 20, 20, 255, 90, 90, 90, 255, 170, 170, 170, 255, 250, 250, 250, 255,
-        30, 30, 30, 255, 100, 100, 100, 255, 180, 180, 180, 255, 5, 5, 5, 255,
-        40, 40, 40, 255, 110, 110, 110, 255, 190, 190, 190, 255, 15, 15, 15, 255,
+        10, 10, 10, 255, 80, 80, 80, 255, 160, 160, 160, 255, 240, 240, 240, 255, 20, 20, 20, 255,
+        90, 90, 90, 255, 170, 170, 170, 255, 250, 250, 250, 255, 30, 30, 30, 255, 100, 100, 100,
+        255, 180, 180, 180, 255, 5, 5, 5, 255, 40, 40, 40, 255, 110, 110, 110, 255, 190, 190, 190,
+        255, 15, 15, 15, 255,
       ]),
     );
     const filter = getFilter('monochrome')!;
@@ -254,20 +253,29 @@ describe('P3-03 filter presets (24 named presets)', () => {
     expect(new Set(names).size).toBe(24);
   });
 
-  it.each(getRegisteredPresetNames())('preset "%s" has a description and 1..4 stackable steps', (name) => {
-    const preset = getPreset(name);
-    expect(preset).toBeDefined();
-    expect(preset!.description.length).toBeGreaterThan(0);
-    expect(preset!.steps.length).toBeGreaterThanOrEqual(1);
-    expect(preset!.steps.length).toBeLessThanOrEqual(4);
-  });
+  it.each(getRegisteredPresetNames())(
+    'preset "%s" has a description and 1..4 stackable steps',
+    (name) => {
+      const preset = getPreset(name);
+      expect(preset).toBeDefined();
+      expect(preset!.description.length).toBeGreaterThan(0);
+      expect(preset!.steps.length).toBeGreaterThanOrEqual(1);
+      expect(preset!.steps.length).toBeLessThanOrEqual(4);
+    },
+  );
 
-  it.each(getRegisteredPresetNames())('preset "%s" references a registered filter at every step', (name) => {
-    const preset = getPreset(name)!;
-    for (const step of preset.steps) {
-      expect(getFilter(step.filter), `missing filter "${step.filter}" referenced by "${name}"`).toBeDefined();
-    }
-  });
+  it.each(getRegisteredPresetNames())(
+    'preset "%s" references a registered filter at every step',
+    (name) => {
+      const preset = getPreset(name)!;
+      for (const step of preset.steps) {
+        expect(
+          getFilter(step.filter),
+          `missing filter "${step.filter}" referenced by "${name}"`,
+        ).toBeDefined();
+      }
+    },
+  );
 
   it('no preset uses the §25.3.3 denied trademark names', () => {
     // Note: the build gate (`scripts/verify-trademarks.ts`) enforces

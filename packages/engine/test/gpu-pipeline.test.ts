@@ -59,15 +59,21 @@ describe('P3-01 chooseTier ladder', () => {
   });
 
   it('prefers webgpu when both webgpu and webgl2 are available', () => {
-    expect(chooseTier({ capabilities: { webGpu: true, webGl2: true, wasmSimd: true } })).toBe('webgpu');
+    expect(chooseTier({ capabilities: { webGpu: true, webGl2: true, wasmSimd: true } })).toBe(
+      'webgpu',
+    );
   });
 
   it('falls back to webgl2 when webgpu is not available', () => {
-    expect(chooseTier({ capabilities: { webGpu: false, webGl2: true, wasmSimd: true } })).toBe('webgl2');
+    expect(chooseTier({ capabilities: { webGpu: false, webGl2: true, wasmSimd: true } })).toBe(
+      'webgl2',
+    );
   });
 
   it('falls back to wasm-simd when neither GPU tier is available', () => {
-    expect(chooseTier({ capabilities: { webGpu: false, webGl2: false, wasmSimd: true } })).toBe('wasm-simd');
+    expect(chooseTier({ capabilities: { webGpu: false, webGl2: false, wasmSimd: true } })).toBe(
+      'wasm-simd',
+    );
   });
 
   it('falls back to wasm when wasmSimd is explicitly false', () => {
@@ -85,22 +91,30 @@ describe('P3-01 chooseTier ladder', () => {
 
 describe('P3-01 compile() reflects the mode and tier', () => {
   it('preview mode with webgpu capability picks webgpu', async () => {
-    const plan = await compile(recipe([{ op: 'adjust', options: { brightness: 10 } }]), {
-      width: 1,
-      height: 1,
-      format: 'png',
-    }, { capabilities: { webGpu: true, webGl2: true, wasmSimd: true } });
+    const plan = await compile(
+      recipe([{ op: 'adjust', options: { brightness: 10 } }]),
+      {
+        width: 1,
+        height: 1,
+        format: 'png',
+      },
+      { capabilities: { webGpu: true, webGl2: true, wasmSimd: true } },
+    );
     expect(plan.tier).toBe('webgpu');
     expect(plan.backend).toBe('webgpu');
     expect(plan.mode).toBe('preview');
   });
 
   it('export mode forces wasm-simd even with webgpu', async () => {
-    const plan = await compile(recipe([{ op: 'adjust', options: { brightness: 10 } }]), {
-      width: 1,
-      height: 1,
-      format: 'png',
-    }, { mode: 'export', capabilities: { webGpu: true } });
+    const plan = await compile(
+      recipe([{ op: 'adjust', options: { brightness: 10 } }]),
+      {
+        width: 1,
+        height: 1,
+        format: 'png',
+      },
+      { mode: 'export', capabilities: { webGpu: true } },
+    );
     expect(plan.tier).toBe('wasm-simd');
     expect(plan.mode).toBe('export');
   });
@@ -170,39 +184,57 @@ describe('P3-01 WebGl2Backend CPU-simulation matches the CpuWasmBackend within t
   }
 
   it('brightness is byte-identical', () => {
-    expect(maxDelta({ op: OP_CODES.BRIGHTNESS, value: 25 }, gradientRaster())).toBeLessThanOrEqual(TOLERANCE_LINEAR);
+    expect(maxDelta({ op: OP_CODES.BRIGHTNESS, value: 25 }, gradientRaster())).toBeLessThanOrEqual(
+      TOLERANCE_LINEAR,
+    );
   });
 
   it('contrast is within ±1 per channel', () => {
-    expect(maxDelta({ op: OP_CODES.CONTRAST, value: 30 }, gradientRaster())).toBeLessThanOrEqual(TOLERANCE_LINEAR);
+    expect(maxDelta({ op: OP_CODES.CONTRAST, value: 30 }, gradientRaster())).toBeLessThanOrEqual(
+      TOLERANCE_LINEAR,
+    );
   });
 
   it('saturation is within ±1 per channel', () => {
-    expect(maxDelta({ op: OP_CODES.SATURATION, value: -40 }, gradientRaster())).toBeLessThanOrEqual(TOLERANCE_LINEAR);
+    expect(maxDelta({ op: OP_CODES.SATURATION, value: -40 }, gradientRaster())).toBeLessThanOrEqual(
+      TOLERANCE_LINEAR,
+    );
   });
 
   it('exposure is within ±2 per channel (non-linear)', () => {
-    expect(maxDelta({ op: OP_CODES.EXPOSURE, value: 1.5 }, gradientRaster())).toBeLessThanOrEqual(TOLERANCE_NONLINEAR);
+    expect(maxDelta({ op: OP_CODES.EXPOSURE, value: 1.5 }, gradientRaster())).toBeLessThanOrEqual(
+      TOLERANCE_NONLINEAR,
+    );
   });
 
   it('gamma is within ±2 per channel (non-linear)', () => {
-    expect(maxDelta({ op: OP_CODES.GAMMA, value: 1.8 }, gradientRaster())).toBeLessThanOrEqual(TOLERANCE_NONLINEAR);
+    expect(maxDelta({ op: OP_CODES.GAMMA, value: 1.8 }, gradientRaster())).toBeLessThanOrEqual(
+      TOLERANCE_NONLINEAR,
+    );
   });
 
   it('temperature is within ±1 per channel (linear in gains)', () => {
-    expect(maxDelta({ op: OP_CODES.TEMPERATURE, value: 4200 }, gradientRaster())).toBeLessThanOrEqual(TOLERANCE_LINEAR);
+    expect(
+      maxDelta({ op: OP_CODES.TEMPERATURE, value: 4200 }, gradientRaster()),
+    ).toBeLessThanOrEqual(TOLERANCE_LINEAR);
   });
 
   it('tint is byte-identical', () => {
-    expect(maxDelta({ op: OP_CODES.TINT, value: 60 }, gradientRaster())).toBeLessThanOrEqual(TOLERANCE_LINEAR);
+    expect(maxDelta({ op: OP_CODES.TINT, value: 60 }, gradientRaster())).toBeLessThanOrEqual(
+      TOLERANCE_LINEAR,
+    );
   });
 
   it('highlights is within ±1 per channel', () => {
-    expect(maxDelta({ op: OP_CODES.HIGHLIGHTS, value: 40 }, gradientRaster())).toBeLessThanOrEqual(TOLERANCE_LINEAR);
+    expect(maxDelta({ op: OP_CODES.HIGHLIGHTS, value: 40 }, gradientRaster())).toBeLessThanOrEqual(
+      TOLERANCE_LINEAR,
+    );
   });
 
   it('shadows is within ±1 per channel', () => {
-    expect(maxDelta({ op: OP_CODES.SHADOWS, value: 40 }, gradientRaster())).toBeLessThanOrEqual(TOLERANCE_LINEAR);
+    expect(maxDelta({ op: OP_CODES.SHADOWS, value: 40 }, gradientRaster())).toBeLessThanOrEqual(
+      TOLERANCE_LINEAR,
+    );
   });
 });
 

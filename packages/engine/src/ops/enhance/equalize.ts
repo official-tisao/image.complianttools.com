@@ -76,5 +76,8 @@ export function applyEqualize(
     }
   }
 
-  return { ...image, frames: [{ ...image.frames[0]!, data: output }] as unknown as RasterImage['frames'] };
+  return {
+    ...image,
+    frames: [{ ...image.frames[0]!, data: output }] as unknown as RasterImage['frames'],
+  };
 }

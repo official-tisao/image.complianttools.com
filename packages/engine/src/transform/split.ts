@@ -4,7 +4,6 @@
 import type { RasterImage } from '../types.js';
 import type { SplitOptions } from '../schemas/options.js';
 
-
 export function splitImage(image: RasterImage, options: SplitOptions): RasterImage[] {
   const srcW = image.width;
   const srcH = image.height;
@@ -17,8 +16,8 @@ export function splitImage(image: RasterImage, options: SplitOptions): RasterIma
 
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
-      const outW = (c === cols - 1) ? srcW - c * tileW : tileW;
-      const outH = (r === rows - 1) ? srcH - r * tileH : tileH;
+      const outW = c === cols - 1 ? srcW - c * tileW : tileW;
+      const outH = r === rows - 1 ? srcH - r * tileH : tileH;
       const output = new Uint8ClampedArray(outW * outH * 4);
       for (let y = 0; y < outH; y++) {
         for (let x = 0; x < outW; x++) {
@@ -36,7 +35,9 @@ export function splitImage(image: RasterImage, options: SplitOptions): RasterIma
         ...image,
         width: outW,
         height: outH,
-        frames: [{ ...image.frames[0]!, data: output, width: outW, height: outH }] as unknown as RasterImage['frames'],
+        frames: [
+          { ...image.frames[0]!, data: output, width: outW, height: outH },
+        ] as unknown as RasterImage['frames'],
       });
     }
   }

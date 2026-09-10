@@ -70,7 +70,12 @@ export function convertColorSpace(
 
 /** 3×3 matrix that maps sRGB primaries to the target's primaries,
  *  derived from the CIE xy coordinates and converted to RGB→RGB. */
-const MATRICES: Readonly<Record<ColorSpaceTarget, readonly [number, number, number, number, number, number, number, number, number] | null>> = {
+const MATRICES: Readonly<
+  Record<
+    ColorSpaceTarget,
+    readonly [number, number, number, number, number, number, number, number, number] | null
+  >
+> = {
   srgb: [1, 0, 0, 0, 1, 0, 0, 0, 1],
   // Display P3 (DCI-P3) → sRGB conversion matrix (gamma-encoded
   // approximation; the full conversion requires a gamma decode +
@@ -109,7 +114,9 @@ function toGray(image: RasterImage): RasterImage {
     const input = frame.data;
     const output = new Uint8ClampedArray(input.length);
     for (let offset = 0; offset < input.length; offset += 4) {
-      const luma = Math.round(0.2126 * input[offset]! + 0.7152 * input[offset + 1]! + 0.0722 * input[offset + 2]!);
+      const luma = Math.round(
+        0.2126 * input[offset]! + 0.7152 * input[offset + 1]! + 0.0722 * input[offset + 2]!,
+      );
       output[offset] = luma;
       output[offset + 1] = luma;
       output[offset + 2] = luma;

@@ -5,15 +5,17 @@
 import type { RoundCornersOptions } from '../schemas/options.js';
 import type { RasterImage } from '../types.js';
 
-
 function isInsideRoundedRect(x: number, y: number, w: number, h: number, r: number): boolean {
   // Distance from nearest corner to point; if within radius, it's outside
   const dx = Math.max(0, Math.abs(x - w / 2) - (w / 2 - r));
   const dy = Math.max(0, Math.abs(y - h / 2) - (h / 2 - r));
-  return (dx * dx + dy * dy) <= (r * r);
+  return dx * dx + dy * dy <= r * r;
 }
 
-export function roundCorners(image: RasterImage, options: Partial<RoundCornersOptions> = {}): RasterImage {
+export function roundCorners(
+  image: RasterImage,
+  options: Partial<RoundCornersOptions> = {},
+): RasterImage {
   const r = Math.max(0, Math.round(options.radius ?? 20));
   const source = image.frames[0]!.data;
   const w = image.width;
@@ -58,9 +60,26 @@ function parseHexColor(hex: string): [number, number, number, number] {
   const h = hex.replace('#', '');
   if (h.length === 3) {
     const r = h[0] ?? '0';
-    return [parseInt(r + r, 16), parseInt((h[1] ?? '0') + (h[1] ?? '0'), 16), parseInt((h[2] ?? '0') + (h[2] ?? '0'), 16), 255];
+    return [
+      parseInt(r + r, 16),
+      parseInt((h[1] ?? '0') + (h[1] ?? '0'), 16),
+      parseInt((h[2] ?? '0') + (h[2] ?? '0'), 16),
+      255,
+    ];
   }
-  if (h.length === 6) return [parseInt((h.slice(0, 2) || '00'), 16), parseInt((h.slice(2, 4) || '00'), 16), parseInt((h.slice(4, 6) || '00'), 16), 255];
-  if (h.length === 8) return [parseInt((h.slice(0, 2) || '00'), 16), parseInt((h.slice(2, 4) || '00'), 16), parseInt((h.slice(4, 6) || '00'), 16), parseInt((h.slice(6, 8) || '00'), 16)];
+  if (h.length === 6)
+    return [
+      parseInt(h.slice(0, 2) || '00', 16),
+      parseInt(h.slice(2, 4) || '00', 16),
+      parseInt(h.slice(4, 6) || '00', 16),
+      255,
+    ];
+  if (h.length === 8)
+    return [
+      parseInt(h.slice(0, 2) || '00', 16),
+      parseInt(h.slice(2, 4) || '00', 16),
+      parseInt(h.slice(4, 6) || '00', 16),
+      parseInt(h.slice(6, 8) || '00', 16),
+    ];
   return [255, 255, 255, 255];
 }

@@ -52,7 +52,14 @@ describe('P3-06 T34 Round Corners', () => {
 describe('P3-06 T35 Collage', () => {
   it('creates grid collage from images', () => {
     const img = createRaster(4, 4, new Uint8ClampedArray(4 * 4 * 4).fill(200));
-    const out = makeCollage(img, { mode: 'grid', columns: 2, rows: 2, gap: 0, background: '#FFFFFF', images: [img, img] });
+    const out = makeCollage(img, {
+      mode: 'grid',
+      columns: 2,
+      rows: 2,
+      gap: 0,
+      background: '#FFFFFF',
+      images: [img, img],
+    });
     expect(out.width).toBeGreaterThan(4);
     expect(out.height).toBeGreaterThan(4);
   });

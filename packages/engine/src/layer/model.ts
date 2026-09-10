@@ -27,19 +27,24 @@ export interface LayerState {
 
 export function createLayerState(image: RasterImage): LayerState {
   return {
-    layers: [{
-      id: 'layer-0',
-      image,
-      blendMode: 'normal',
-      opacity: 1,
-      visible: true,
-      order: 0,
-    }],
+    layers: [
+      {
+        id: 'layer-0',
+        image,
+        blendMode: 'normal',
+        opacity: 1,
+        visible: true,
+        order: 0,
+      },
+    ],
     groups: [],
   };
 }
 
-export function addLayer(state: LayerState, layer: Partial<Layer> & { image: RasterImage; id: string }): LayerState {
+export function addLayer(
+  state: LayerState,
+  layer: Partial<Layer> & { image: RasterImage; id: string },
+): LayerState {
   const newLayer: Layer = {
     id: layer.id,
     image: layer.image,
@@ -59,7 +64,11 @@ export function setLayerOpacity(state: LayerState, id: string, opacity: number):
   };
 }
 
-export function setLayerBlendMode(state: LayerState, id: string, blendMode: Layer['blendMode']): LayerState {
+export function setLayerBlendMode(
+  state: LayerState,
+  id: string,
+  blendMode: Layer['blendMode'],
+): LayerState {
   return {
     ...state,
     layers: state.layers.map((l) => (l.id === id ? { ...l, blendMode } : l)),
@@ -67,7 +76,9 @@ export function setLayerBlendMode(state: LayerState, id: string, blendMode: Laye
 }
 
 export function reorderLayers(state: LayerState, layerIds: string[]): LayerState {
-  const ordered = layerIds.map((id) => state.layers.find((l) => l.id === id)).filter((l): l is Layer => !!l);
+  const ordered = layerIds
+    .map((id) => state.layers.find((l) => l.id === id))
+    .filter((l): l is Layer => !!l);
   return { ...state, layers: ordered.map((l, i) => ({ ...l, order: i })) };
 }
 

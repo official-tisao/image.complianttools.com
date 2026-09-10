@@ -27,8 +27,16 @@ export function renderText(image: RasterImage, opts: TypographyOptions): RasterI
   for (let y = 0; y < Math.min(16, h); y++) {
     for (let x = 0; x < Math.min(8 + text.length * 6, w); x++) {
       const idx = (y * w + x) * 4;
-      if (x % 2 === 0) { out[idx] = 50; out[idx + 1] = 50; out[idx + 2] = 50; out[idx + 3] = 200; }
+      if (x % 2 === 0) {
+        out[idx] = 50;
+        out[idx + 1] = 50;
+        out[idx + 2] = 50;
+        out[idx + 3] = 200;
+      }
     }
   }
-  return { ...image, frames: [{ ...image.frames[0]!, data: out }] as unknown as RasterImage['frames'] };
+  return {
+    ...image,
+    frames: [{ ...image.frames[0]!, data: out }] as unknown as RasterImage['frames'],
+  };
 }

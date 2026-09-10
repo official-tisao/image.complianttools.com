@@ -16,7 +16,10 @@ export interface WatermarkSettings {
   source?: ArrayBuffer; // image source buffer
 }
 
-export function applyWatermark(image: RasterImage, options: Partial<WatermarkSettings> & { kind?: string; enabled?: boolean }): RasterImage {
+export function applyWatermark(
+  image: RasterImage,
+  options: Partial<WatermarkSettings> & { kind?: string; enabled?: boolean },
+): RasterImage {
   const kind = options.kind || 'text';
   if (!options.enabled && kind !== 'text' && kind !== 'image') return image;
 
@@ -32,13 +35,13 @@ export function applyWatermark(image: RasterImage, options: Partial<WatermarkSet
   const label = (kind === 'text' ? (options.textContent ?? 'Watermark') : '').slice(0, 16);
   const posMap: Record<string, { xRatio: number; yRatio: number }> = {
     'top-left': { xRatio: 0.05, yRatio: 0.05 },
-    'top': { xRatio: 0.45, yRatio: 0.05 },
+    top: { xRatio: 0.45, yRatio: 0.05 },
     'top-right': { xRatio: 0.75, yRatio: 0.05 },
-    'left': { xRatio: 0.05, yRatio: 0.45 },
-    'center': { xRatio: 0.35, yRatio: 0.45 },
-    'right': { xRatio: 0.75, yRatio: 0.45 },
+    left: { xRatio: 0.05, yRatio: 0.45 },
+    center: { xRatio: 0.35, yRatio: 0.45 },
+    right: { xRatio: 0.75, yRatio: 0.45 },
     'bottom-left': { xRatio: 0.05, yRatio: 0.85 },
-    'bottom': { xRatio: 0.35, yRatio: 0.85 },
+    bottom: { xRatio: 0.35, yRatio: 0.85 },
     'bottom-right': { xRatio: 0.75, yRatio: 0.85 },
   };
   const posKey = options.position ?? 'center';
@@ -95,5 +98,8 @@ export function applyWatermark(image: RasterImage, options: Partial<WatermarkSet
     }
   }
 
-  return { ...image, frames: [{ ...image.frames[0]!, data: out }] as unknown as RasterImage['frames'] };
+  return {
+    ...image,
+    frames: [{ ...image.frames[0]!, data: out }] as unknown as RasterImage['frames'],
+  };
 }

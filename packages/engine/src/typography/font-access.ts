@@ -10,7 +10,7 @@ export interface FontLoadResult {
 
 /** Probes if the browser supports the Local Font Access API. */
 export function hasLocalFontAccess(): boolean {
-  return typeof (globalThis as unknown).queryLocalFonts === 'function';
+  return typeof (globalThis as Record<string, unknown>).queryLocalFonts === 'function';
 }
 
 /** Guards against CSS `local()` lookups that could embed licensed fonts. */

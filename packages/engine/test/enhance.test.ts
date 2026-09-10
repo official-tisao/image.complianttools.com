@@ -189,8 +189,7 @@ describe('P3-04 enhancement ops: semantics', () => {
     // half white. After sharpen, the bright side gets brighter and the
     // dark side gets darker.
     const data = new Uint8ClampedArray([
-      0, 0, 0, 255, 255, 255, 255, 255,
-      0, 0, 0, 255, 255, 255, 255, 255,
+      0, 0, 0, 255, 255, 255, 255, 255, 0, 0, 0, 255, 255, 255, 255, 255,
     ]);
     const r = createRaster(2, 2, data);
     const out = applySharpen(r, 100, 1, 0);

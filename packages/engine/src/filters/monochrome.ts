@@ -16,9 +16,9 @@ export function monochrome(
   options: { threshold?: number; dither?: string } = {},
 ): RasterImage {
   const thresholdValue = options.threshold ?? 128;
-  const ditherName: DitherName = (
-    SUPPORTED_DITHERS as readonly string[]
-  ).includes(options.dither ?? '')
+  const ditherName: DitherName = (SUPPORTED_DITHERS as readonly string[]).includes(
+    options.dither ?? '',
+  )
     ? (options.dither as DitherName)
     : 'none';
 

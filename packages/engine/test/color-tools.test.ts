@@ -24,9 +24,8 @@ function smallImage(): RasterImage {
   // test palette extractors must find all four (or a representative
   // subset).
   const data = new Uint8ClampedArray([
-    255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255,
-    0, 255, 0, 255, 0, 255, 0, 255, 0, 255, 0, 255, 0, 255, 0, 255,
-    0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 255,
+    255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 0, 255, 0, 255, 0, 255, 0, 255,
+    0, 255, 0, 255, 0, 255, 0, 255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 255,
     255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
   ]);
   return createRaster(4, 4, data);
@@ -135,7 +134,10 @@ describe('P3-05 T45 colour picker & palette', () => {
       entries: [{ r: 1, g: 2, b: 3, population: 16 }],
     };
     const json = exportPaletteJson(palette);
-    const parsed = JSON.parse(json) as { method: string; entries: Array<{ r: number; g: number; b: number; population: number }> };
+    const parsed = JSON.parse(json) as {
+      method: string;
+      entries: Array<{ r: number; g: number; b: number; population: number }>;
+    };
     expect(parsed.method).toBe('median-cut');
     expect(parsed.entries[0]).toEqual({ r: 1, g: 2, b: 3, population: 16 });
   });

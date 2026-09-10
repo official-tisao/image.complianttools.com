@@ -2,11 +2,7 @@
 // colour space & depth, T41 threshold reused from ops/enhance/, T45
 // palette, T46 recolour) so the schema and pipeline can import them
 // from one place.
-export {
-  convertColorSpace,
-  to16Bit,
-  type ColorSpaceTarget,
-} from './convert.js';
+export { convertColorSpace, to16Bit, type ColorSpaceTarget } from './convert.js';
 export {
   extractPalette,
   exportPalette,

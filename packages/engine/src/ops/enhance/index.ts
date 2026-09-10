@@ -2,7 +2,12 @@
 // schema and pipeline can import the op surface from one place.
 export { applyAntialias, ANTIALIAS_HALO } from './antialias.js';
 export { applyBlur, BLUR_HALO_FN, type BlurType } from './blur.js';
-export { applyDenoise, DENOISE_BILATERAL_HALO, DENOISE_MEDIAN_HALO, type DenoiseMethod } from './denoise.js';
+export {
+  applyDenoise,
+  DENOISE_BILATERAL_HALO,
+  DENOISE_MEDIAN_HALO,
+  type DenoiseMethod,
+} from './denoise.js';
 export { applyDespeckle, DESPECKLE_HALO_FN } from './despeckle.js';
 export { applyEnhanceToggle, ENHANCE_HALO } from './enhance.js';
 export { applyNoMultilayer } from './noMultilayer.js';

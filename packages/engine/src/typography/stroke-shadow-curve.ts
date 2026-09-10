@@ -2,8 +2,14 @@
  * P3-08 T49 Typography — stroke, shadow, curve, arc helpers.
  */
 
-export function applyStroke(options: { width: number; color: string } | undefined): { enabled: boolean; width: number; color: string } {
-  return options ? { enabled: true, width: options.width || 1, color: options.color || '#000000' } : { enabled: false, width: 0, color: '#000000' };
+export function applyStroke(options: { width: number; color: string } | undefined): {
+  enabled: boolean;
+  width: number;
+  color: string;
+} {
+  return options
+    ? { enabled: true, width: options.width || 1, color: options.color || '#000000' }
+    : { enabled: false, width: 0, color: '#000000' };
 }
 
 export interface ShadowOptions {
@@ -14,11 +20,17 @@ export interface ShadowOptions {
 }
 
 export function buildShadow(options: ShadowOptions | undefined) {
-  return options ? { enabled: true, ...options } : { enabled: false, x: 0, y: 0, blur: 0, color: '#000000' };
+  return options
+    ? { enabled: true, ...options }
+    : { enabled: false, x: 0, y: 0, blur: 0, color: '#000000' };
 }
 
 /** Curve helper: returns a simple quadratic curve point array for demonstration. */
-export function curvePoints(start: [number, number], end: [number, number], steps = 8): [number, number][] {
+export function curvePoints(
+  start: [number, number],
+  end: [number, number],
+  steps = 8,
+): [number, number][] {
   const pts: [number, number][] = [];
   for (let i = 0; i <= steps; i++) {
     const t = i / steps;
@@ -30,7 +42,14 @@ export function curvePoints(start: [number, number], end: [number, number], step
 }
 
 /** Arc helper: returns points approximating an arc segment. */
-export function arcPoints(cx: number, cy: number, r: number, startAngle: number, endAngle: number, steps = 12): [number, number][] {
+export function arcPoints(
+  cx: number,
+  cy: number,
+  r: number,
+  startAngle: number,
+  endAngle: number,
+  steps = 12,
+): [number, number][] {
   const pts: [number, number][] = [];
   for (let i = 0; i <= steps; i++) {
     const t = startAngle + ((endAngle - startAngle) * i) / steps;

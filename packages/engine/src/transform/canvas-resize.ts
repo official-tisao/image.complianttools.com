@@ -5,25 +5,53 @@
 import type { CanvasResizeOptions } from '../schemas/options.js';
 import type { RasterImage } from '../types.js';
 
-
 function parseHexColor(hex: string): [number, number, number, number] {
   const h = hex.replace('#', '');
   if (h.length === 3) {
-    return [parseInt(h[0]! + h[0]!, 16), parseInt(h[1]! + h[1]!, 16), parseInt(h[2]! + h[2]!, 16), 255];
+    return [
+      parseInt(h[0]! + h[0]!, 16),
+      parseInt(h[1]! + h[1]!, 16),
+      parseInt(h[2]! + h[2]!, 16),
+      255,
+    ];
   }
   if (h.length === 4) {
-    return [parseInt(h[0]! + h[0]!, 16), parseInt(h[1]! + h[1]!, 16), parseInt(h[2]! + h[2]!, 16), parseInt(h[3]! + h[3]!, 16)];
+    return [
+      parseInt(h[0]! + h[0]!, 16),
+      parseInt(h[1]! + h[1]!, 16),
+      parseInt(h[2]! + h[2]!, 16),
+      parseInt(h[3]! + h[3]!, 16),
+    ];
   }
   if (h.length === 6) {
-    return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16), 255];
+    return [
+      parseInt(h.slice(0, 2), 16),
+      parseInt(h.slice(2, 4), 16),
+      parseInt(h.slice(4, 6), 16),
+      255,
+    ];
   }
   if (h.length === 8) {
-    return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16), parseInt(h.slice(6, 8), 16)];
+    return [
+      parseInt(h.slice(0, 2), 16),
+      parseInt(h.slice(2, 4), 16),
+      parseInt(h.slice(4, 6), 16),
+      parseInt(h.slice(6, 8), 16),
+    ];
   }
   return [255, 255, 255, 255];
 }
 
-export function canvasResize(image: RasterImage, options: Partial<CanvasResizeOptions> & { enabled?: boolean; width?: number; height?: number; anchor?: string; fillColor?: string }): RasterImage {
+export function canvasResize(
+  image: RasterImage,
+  options: Partial<CanvasResizeOptions> & {
+    enabled?: boolean;
+    width?: number;
+    height?: number;
+    anchor?: string;
+    fillColor?: string;
+  },
+): RasterImage {
   const targetW = Math.max(1, Math.round(options.width ?? 800));
   const targetH = Math.max(1, Math.round(options.height ?? 600));
   const srcW = image.width;
@@ -54,7 +82,8 @@ export function canvasResize(image: RasterImage, options: Partial<CanvasResizeOp
   else offsetX = Math.round((targetW - srcW) / 2);
 
   if (anchor === 'top-left' || anchor === 'top' || anchor === 'top-right') offsetY = 0;
-  else if (anchor === 'bottom-left' || anchor === 'bottom' || anchor === 'bottom-right') offsetY = targetH - srcH;
+  else if (anchor === 'bottom-left' || anchor === 'bottom' || anchor === 'bottom-right')
+    offsetY = targetH - srcH;
   else offsetY = Math.round((targetH - srcH) / 2);
 
   offsetX = Math.max(0, Math.min(targetW - srcW, offsetX));
@@ -74,5 +103,10 @@ export function canvasResize(image: RasterImage, options: Partial<CanvasResizeOp
     }
   }
 
-  return { ...image, width: targetW, height: targetH, frames: [{ ...image.frames[0]!, data: output }] as unknown as RasterImage['frames'] };
+  return {
+    ...image,
+    width: targetW,
+    height: targetH,
+    frames: [{ ...image.frames[0]!, data: output }] as unknown as RasterImage['frames'],
+  };
 }

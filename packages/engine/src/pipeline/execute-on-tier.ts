@@ -89,7 +89,8 @@ function tierForCpu(_requested: ExecutionTier): ExecutionTier {
 }
 
 function toGpuSteps(step: PlanStep): readonly GpuPixelLocalStep[] {
-  const records = (step.options.operations as ReadonlyArray<Readonly<Record<string, unknown>>>) ?? [];
+  const records =
+    (step.options.operations as ReadonlyArray<Readonly<Record<string, unknown>>>) ?? [];
   return records.map((record) => recordToGpuStep(record));
 }
 
@@ -152,37 +153,58 @@ function pickOpValue(record: Readonly<Record<string, unknown>>, opCode: number):
 
 function gpuOpToFieldName(op: number): string | null {
   switch (op) {
-    case OP_CODES.BRIGHTNESS: return 'brightness';
-    case OP_CODES.CONTRAST: return 'contrast';
-    case OP_CODES.SATURATION: return 'saturation';
-    case OP_CODES.EXPOSURE: return 'exposure';
-    case OP_CODES.GAMMA: return 'gamma';
-    case OP_CODES.TEMPERATURE: return 'temperature';
-    case OP_CODES.TINT: return 'tint';
-    case OP_CODES.HIGHLIGHTS: return 'highlights';
-    case OP_CODES.SHADOWS: return 'shadows';
-    default: return null;
+    case OP_CODES.BRIGHTNESS:
+      return 'brightness';
+    case OP_CODES.CONTRAST:
+      return 'contrast';
+    case OP_CODES.SATURATION:
+      return 'saturation';
+    case OP_CODES.EXPOSURE:
+      return 'exposure';
+    case OP_CODES.GAMMA:
+      return 'gamma';
+    case OP_CODES.TEMPERATURE:
+      return 'temperature';
+    case OP_CODES.TINT:
+      return 'tint';
+    case OP_CODES.HIGHLIGHTS:
+      return 'highlights';
+    case OP_CODES.SHADOWS:
+      return 'shadows';
+    default:
+      return null;
   }
 }
 
 function passthroughOpToFieldName(op: number): string | null {
   switch (op - OP_CODES.PASSTHROUGH_THRESHOLD) {
-    case 0: return 'blacks';
-    case 1: return 'clarity';
-    case 2: return 'dehaze';
-    case 3: return 'hue';
-    case 4: return 'opacity';
-    case 5: return 'vibrance';
-    case 6: return 'whites';
-    default: return null;
+    case 0:
+      return 'blacks';
+    case 1:
+      return 'clarity';
+    case 2:
+      return 'dehaze';
+    case 3:
+      return 'hue';
+    case 4:
+      return 'opacity';
+    case 5:
+      return 'vibrance';
+    case 6:
+      return 'whites';
+    default:
+      return null;
   }
 }
 
 function gpuOpDefault(op: number): number {
   switch (op) {
-    case OP_CODES.GAMMA: return 1;
-    case OP_CODES.TEMPERATURE: return 6500;
-    default: return 0;
+    case OP_CODES.GAMMA:
+      return 1;
+    case OP_CODES.TEMPERATURE:
+      return 6500;
+    default:
+      return 0;
   }
 }
 
@@ -206,7 +228,8 @@ function runOnCpu(step: PlanStep, image: RasterImage): RasterImage {
 }
 
 function runFusedOnCpu(step: PlanStep, image: RasterImage): RasterImage {
-  const records = (step.options.operations as ReadonlyArray<Readonly<Record<string, unknown>>>) ?? [];
+  const records =
+    (step.options.operations as ReadonlyArray<Readonly<Record<string, unknown>>>) ?? [];
   let current = image;
   for (const record of records) {
     const parsed = AdjustOptionsSchema.parse(record);

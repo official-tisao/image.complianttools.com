@@ -109,7 +109,10 @@ function applyRadialBlur(image: RasterImage, r: number): RasterImage {
       output[target + 3] = source[target + 3]!;
     }
   }
-  return { ...image, frames: [{ ...image.frames[0]!, data: output }] as unknown as RasterImage['frames'] };
+  return {
+    ...image,
+    frames: [{ ...image.frames[0]!, data: output }] as unknown as RasterImage['frames'],
+  };
 }
 
 /** Lens blur: a small disc of pixels averaged together. */
@@ -151,16 +154,14 @@ function applyZoomBlur(image: RasterImage, r: number): RasterImage {
       output[target + 3] = source[target + 3]!;
     }
   }
-  return { ...image, frames: [{ ...image.frames[0]!, data: output }] as unknown as RasterImage['frames'] };
+  return {
+    ...image,
+    frames: [{ ...image.frames[0]!, data: output }] as unknown as RasterImage['frames'],
+  };
 }
 
 /** Directional 1-D box blur. */
-function directionalBlur(
-  image: RasterImage,
-  r: number,
-  dx: number,
-  dy: number,
-): RasterImage {
+function directionalBlur(image: RasterImage, r: number, dx: number, dy: number): RasterImage {
   const width = image.width;
   const height = image.height;
   const source = image.frames[0]!.data;
@@ -187,7 +188,10 @@ function directionalBlur(
       output[target + 3] = source[target + 3]!;
     }
   }
-  return { ...image, frames: [{ ...image.frames[0]!, data: output }] as unknown as RasterImage['frames'] };
+  return {
+    ...image,
+    frames: [{ ...image.frames[0]!, data: output }] as unknown as RasterImage['frames'],
+  };
 }
 
 function clampByte(value: number): number {

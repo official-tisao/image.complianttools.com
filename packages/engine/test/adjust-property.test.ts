@@ -340,10 +340,7 @@ describe('P3-02 P3-03 extra adjustments (whites, blacks, vibrance, hue, clarity,
         dehaze: 0,
         opacity: 100,
       };
-      const out = await preview(
-        recipe([{ op: 'adjust', options: { [key]: defaults[key] } }]),
-        src,
-      );
+      const out = await preview(recipe([{ op: 'adjust', options: { [key]: defaults[key] } }]), src);
       expect(bytes(out)).toEqual(bytes(src));
     },
   );
@@ -366,8 +363,8 @@ describe('P3-02 P3-03 extra adjustments (whites, blacks, vibrance, hue, clarity,
     const after = applyVibrance(before, 100);
     expect(after.frames[0].data[0]).toBe(255);
     // Green and blue stay very close to 0 (they may gain a tiny amount from the luma term).
-    expect((after.frames[0].data[1] ?? 0)).toBeLessThan(60);
-    expect((after.frames[0].data[2] ?? 0)).toBeLessThan(60);
+    expect(after.frames[0].data[1] ?? 0).toBeLessThan(60);
+    expect(after.frames[0].data[2] ?? 0).toBeLessThan(60);
   });
 
   it('clarity and dehaze are equivalent under tiled vs whole-image execution at the edges', async () => {
@@ -383,7 +380,9 @@ describe('P3-02 P3-03 extra adjustments (whites, blacks, vibrance, hue, clarity,
     const directDehaze = applyDehaze(image, 30);
     const tiledClarity = executeTiled(image, (tile) => applyClarity(tile, 30), 2, 1);
     const tiledDehaze = executeTiled(image, (tile) => applyDehaze(tile, 30), 2, 7);
-    expect(Array.from(tiledClarity.frames[0].data)).toEqual(Array.from(directClarity.frames[0].data));
+    expect(Array.from(tiledClarity.frames[0].data)).toEqual(
+      Array.from(directClarity.frames[0].data),
+    );
     expect(Array.from(tiledDehaze.frames[0].data)).toEqual(Array.from(directDehaze.frames[0].data));
   });
 });
@@ -396,7 +395,11 @@ describe('P3-02 curves and levels', () => {
   });
 
   it('per-channel curve maps each channel through its own LUT', () => {
-    const lut = buildCurveLut([[0, 0], [128, 0], [255, 255]]);
+    const lut = buildCurveLut([
+      [0, 0],
+      [128, 0],
+      [255, 255],
+    ]);
     expect(lut[0]).toBe(0);
     expect(lut[128]).toBe(0);
     expect(lut[255]).toBe(255);
@@ -405,7 +408,12 @@ describe('P3-02 curves and levels', () => {
   it('applyCurves with a single channel override produces the documented mapping', () => {
     const src = createRaster(1, 1, new Uint8ClampedArray([100, 150, 200, 255]));
     // Invert the green channel only.
-    const out = applyCurves(src, { g: [[0, 255], [255, 0]] });
+    const out = applyCurves(src, {
+      g: [
+        [0, 255],
+        [255, 0],
+      ],
+    });
     expect(out.frames[0]!.data[0]).toBe(100);
     // Green 150 → roughly 105 (the linear ramp of an S-curve invert).
     expect(out.frames[0]!.data[1]!).toBeLessThan(150);
@@ -425,8 +433,12 @@ describe('P3-02 curves and levels', () => {
   });
 
   it('isIdentityLevels is true only at the documented defaults', () => {
-    expect(isIdentityLevels({ inBlack: 0, inWhite: 255, outBlack: 0, outWhite: 255, gamma: 1 })).toBe(true);
-    expect(isIdentityLevels({ inBlack: 1, inWhite: 255, outBlack: 0, outWhite: 255, gamma: 1 })).toBe(false);
+    expect(
+      isIdentityLevels({ inBlack: 0, inWhite: 255, outBlack: 0, outWhite: 255, gamma: 1 }),
+    ).toBe(true);
+    expect(
+      isIdentityLevels({ inBlack: 1, inWhite: 255, outBlack: 0, outWhite: 255, gamma: 1 }),
+    ).toBe(false);
   });
 
   it('applyLevels with gamma 2 brightens midtones and leaves the endpoints', () => {
@@ -479,7 +491,10 @@ describe('P3-02 curves and levels', () => {
             clarity: 5,
             dehaze: 5,
             opacity: 100,
-            curvesRGB: [[0, 0], [255, 255]],
+            curvesRGB: [
+              [0, 0],
+              [255, 255],
+            ],
             levelsInBlack: 0,
             levelsGamma: 1,
             levelsInWhite: 255,

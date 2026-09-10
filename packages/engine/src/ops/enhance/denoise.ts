@@ -62,7 +62,10 @@ function medianFilter(image: RasterImage): RasterImage {
       output[target + 3] = source[target + 3]!;
     }
   }
-  return { ...image, frames: [{ ...image.frames[0]!, data: output }] as unknown as RasterImage['frames'] };
+  return {
+    ...image,
+    frames: [{ ...image.frames[0]!, data: output }] as unknown as RasterImage['frames'],
+  };
 }
 
 /** 5×5 bilateral filter with sigma_r = 30, sigma_d = 2. */
@@ -113,7 +116,10 @@ function bilateralFilter(image: RasterImage, strength: number): RasterImage {
       output[target + 3] = ca;
     }
   }
-  return { ...image, frames: [{ ...image.frames[0]!, data: output }] as unknown as RasterImage['frames'] };
+  return {
+    ...image,
+    frames: [{ ...image.frames[0]!, data: output }] as unknown as RasterImage['frames'],
+  };
 }
 
 function clampByte(value: number): number {

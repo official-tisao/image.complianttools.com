@@ -38,7 +38,8 @@ export function applyThreshold(image: RasterImage, mode: ThresholdMode = 'off'):
     const input = frame.data;
     const output = new Uint8ClampedArray(input.length);
     for (let offset = 0; offset < input.length; offset += 4) {
-      const luma = 0.2126 * input[offset]! + 0.7152 * input[offset + 1]! + 0.0722 * input[offset + 2]!;
+      const luma =
+        0.2126 * input[offset]! + 0.7152 * input[offset + 1]! + 0.0722 * input[offset + 2]!;
       const local = perPixel !== null ? perPixel[offset >> 2]! : t;
       const value = luma >= local ? 255 : 0;
       output[offset] = value;
@@ -97,11 +98,7 @@ export function otsuThreshold(image: RasterImage): number {
  * where `k = 0.2` and `R = 64` are the documented defaults, and
  * `mean` and `sd` are taken over a `(2W + 1)²` window with `W = 7`.
  */
-export function sauvolaThresholdMap(
-  image: RasterImage,
-  k = 0.2,
-  r = 64,
-): Uint8ClampedArray | null {
+export function sauvolaThresholdMap(image: RasterImage, k = 0.2, r = 64): Uint8ClampedArray | null {
   const width = image.width;
   const height = image.height;
   const source = image.frames[0]!.data;
@@ -127,8 +124,8 @@ export function sauvolaThresholdMap(
       rowSum += v;
       rowSumSq += v * v;
       const offRow = y * (width + 1);
-      integral[(offRow + x + 1)] = integral[offRow + x]! + rowSum;
-      integralSq[(offRow + x + 1)] = integralSq[offRow + x]! + rowSumSq;
+      integral[offRow + x + 1] = integral[offRow + x]! + rowSum;
+      integralSq[offRow + x + 1] = integralSq[offRow + x]! + rowSumSq;
     }
   }
   const out = new Uint8ClampedArray(width * height);

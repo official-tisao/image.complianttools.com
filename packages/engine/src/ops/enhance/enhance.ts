@@ -112,7 +112,10 @@ function localToneMap(image: RasterImage, amount: number): RasterImage {
       output[target + 3] = a;
     }
   }
-  return { ...image, frames: [{ ...image.frames[0]!, data: output }] as unknown as RasterImage['frames'] };
+  return {
+    ...image,
+    frames: [{ ...image.frames[0]!, data: output }] as unknown as RasterImage['frames'],
+  };
 }
 
 function percentileFromHistogram(histogram: Uint32Array, percentile: number): number {
@@ -137,7 +140,12 @@ function mapFrame(
     const input = frame.data;
     const output = new Uint8ClampedArray(input.length);
     for (let offset = 0; offset < input.length; offset += 4) {
-      const [r, g, b, a] = mapper(input[offset]!, input[offset + 1]!, input[offset + 2]!, input[offset + 3]!);
+      const [r, g, b, a] = mapper(
+        input[offset]!,
+        input[offset + 1]!,
+        input[offset + 2]!,
+        input[offset + 3]!,
+      );
       output[offset] = r;
       output[offset + 1] = g;
       output[offset + 2] = b;

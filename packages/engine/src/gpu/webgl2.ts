@@ -115,7 +115,14 @@ interface WebGL2Like {
   bindBuffer(target: number, buffer: unknown): void;
   bufferData(target: number, data: ArrayBufferView, usage: number): void;
   enableVertexAttribArray(location: number): void;
-  vertexAttribPointer(location: number, size: number, type: number, normalized: boolean, stride: number, offset: number): void;
+  vertexAttribPointer(
+    location: number,
+    size: number,
+    type: number,
+    normalized: boolean,
+    stride: number,
+    offset: number,
+  ): void;
   createTexture(): unknown;
   bindTexture(target: number, texture: unknown): void;
   texImage2D(
@@ -136,7 +143,15 @@ interface WebGL2Like {
   drawArrays(mode: number, first: number, count: number): void;
   pixelStorei(pname: number, value: number): void;
   viewport(x: number, y: number, width: number, height: number): void;
-  readPixels(x: number, y: number, width: number, height: number, format: number, type: number, pixels: ArrayBufferView): void;
+  readPixels(
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    format: number,
+    type: number,
+    pixels: ArrayBufferView,
+  ): void;
 }
 
 function hasWebGl2Methods(gl: unknown): gl is WebGL2Like {
@@ -286,17 +301,7 @@ function runGpuProgram(
   gl.activeTexture(gl.TEXTURE0);
   gl.bindTexture(gl.TEXTURE_2D, texture);
   gl.pixelStorei(0x0cf2 /* UNPACK_ALIGNMENT */, 1);
-  gl.texImage2D(
-    gl.TEXTURE_2D,
-    0,
-    gl.RGBA,
-    width,
-    height,
-    0,
-    gl.RGBA,
-    gl.UNSIGNED_BYTE,
-    source,
-  );
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, source);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
@@ -355,7 +360,9 @@ function simulateShaderOnCpu(image: RasterImage, steps: readonly GpuPixelLocalSt
         if (step.op === OP_CODES.IDENTITY) continue;
         const v = step.value;
         if (step.op === OP_CODES.BRIGHTNESS) {
-          r += v / 255; g += v / 255; b += v / 255;
+          r += v / 255;
+          g += v / 255;
+          b += v / 255;
         } else if (step.op === OP_CODES.CONTRAST) {
           const f = (259 * (v + 255)) / (255 * (259 - v));
           r = clamp01(f * (r - 0.5) + 0.5);
@@ -369,7 +376,9 @@ function simulateShaderOnCpu(image: RasterImage, steps: readonly GpuPixelLocalSt
           b = y + (b - y) * s;
         } else if (step.op === OP_CODES.EXPOSURE) {
           const m = Math.pow(2, v);
-          r *= m; g *= m; b *= m;
+          r *= m;
+          g *= m;
+          b *= m;
         } else if (step.op === OP_CODES.GAMMA) {
           const inv = 1 / v;
           r = Math.pow(Math.max(r, 0), inv);
@@ -383,19 +392,26 @@ function simulateShaderOnCpu(image: RasterImage, steps: readonly GpuPixelLocalSt
           const luma = 0.2126 * r + 0.7152 * g + 0.0722 * b;
           const mask = smoothstepf(0.55, 0.95, luma);
           const gain = 1 + amount * mask;
-          r *= gain; g *= gain; b *= gain;
+          r *= gain;
+          g *= gain;
+          b *= gain;
         } else if (step.op === OP_CODES.SHADOWS) {
           const amount = v / 100;
           const luma = 0.2126 * r + 0.7152 * g + 0.0722 * b;
           const mask = 1 - smoothstepf(0.05, 0.45, luma);
           const gain = 1 + amount * mask;
-          r *= gain; g *= gain; b *= gain;
+          r *= gain;
+          g *= gain;
+          b *= gain;
         } else if (step.op === OP_CODES.TEMPERATURE) {
           const t = v / 100;
           let rr: number, gg: number, bb: number;
           if (t <= 66) {
             rr = 1;
-            gg = Math.max(0, Math.min(1, (99.4708025861 * Math.log(Math.max(t, 1)) - 161.1195681661) / 255));
+            gg = Math.max(
+              0,
+              Math.min(1, (99.4708025861 * Math.log(Math.max(t, 1)) - 161.1195681661) / 255),
+            );
           } else {
             const t2 = t - 60;
             rr = Math.max(0, Math.min(1, (329.698727446 * Math.pow(t2, -0.1332047592)) / 255));
@@ -403,7 +419,11 @@ function simulateShaderOnCpu(image: RasterImage, steps: readonly GpuPixelLocalSt
           }
           if (t >= 66) bb = 1;
           else if (t <= 19) bb = 0;
-          else bb = Math.max(0, Math.min(1, (138.5177312231 * Math.log(Math.max(t - 10, 1)) - 305.0447927307) / 255));
+          else
+            bb = Math.max(
+              0,
+              Math.min(1, (138.5177312231 * Math.log(Math.max(t - 10, 1)) - 305.0447927307) / 255),
+            );
           r = r / Math.max(rr, 0.0001);
           g = g / Math.max(gg, 0.0001);
           b = b / Math.max(bb, 0.0001);
@@ -437,17 +457,34 @@ function smoothstepf(edge0: number, edge1: number, x: number): number {
 // `CpuWasmBackend.assignPassthrough`.
 // ---------------------------------------------------------------------------
 
-function applyPassthroughOnCpu(image: RasterImage, steps: readonly GpuPixelLocalStep[]): RasterImage {
+function applyPassthroughOnCpu(
+  image: RasterImage,
+  steps: readonly GpuPixelLocalStep[],
+): RasterImage {
   const options: Record<string, number> = {};
   for (const step of steps) {
     switch (step.op - OP_CODES.PASSTHROUGH_THRESHOLD) {
-      case 0: options.blacks = step.value; break;
-      case 1: options.clarity = step.value; break;
-      case 2: options.dehaze = step.value; break;
-      case 3: options.hue = step.value; break;
-      case 4: options.opacity = step.value; break;
-      case 5: options.vibrance = step.value; break;
-      case 6: options.whites = step.value; break;
+      case 0:
+        options.blacks = step.value;
+        break;
+      case 1:
+        options.clarity = step.value;
+        break;
+      case 2:
+        options.dehaze = step.value;
+        break;
+      case 3:
+        options.hue = step.value;
+        break;
+      case 4:
+        options.opacity = step.value;
+        break;
+      case 5:
+        options.vibrance = step.value;
+        break;
+      case 6:
+        options.whites = step.value;
+        break;
     }
   }
   if (Object.keys(options).length === 0) return image;

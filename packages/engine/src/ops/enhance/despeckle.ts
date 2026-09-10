@@ -42,5 +42,8 @@ export function applyDespeckle(image: RasterImage, radius = 1): RasterImage {
       output[target + 3] = source[target + 3]!;
     }
   }
-  return { ...image, frames: [{ ...image.frames[0]!, data: output }] as unknown as RasterImage['frames'] };
+  return {
+    ...image,
+    frames: [{ ...image.frames[0]!, data: output }] as unknown as RasterImage['frames'],
+  };
 }

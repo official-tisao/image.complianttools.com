@@ -22,16 +22,19 @@ export function applyDeskew(
   background = '#FFFFFF',
 ): RasterImage {
   const detectedAngle = detectDeskewAngle(image, maxAngle);
-  const corrected = rotateRaster(image, RotateOptionsSchema.parse({
-    angle: -detectedAngle,
-    expandCanvas: true,
-    fillColor: background,
-    interpolation: 'bicubic',
-    flipH: false,
-    flipV: false,
-    applyExifOrientation: true,
-    snap90: false,
-  }));
+  const corrected = rotateRaster(
+    image,
+    RotateOptionsSchema.parse({
+      angle: -detectedAngle,
+      expandCanvas: true,
+      fillColor: background,
+      interpolation: 'bicubic',
+      flipH: false,
+      flipV: false,
+      applyExifOrientation: true,
+      snap90: false,
+    }),
+  );
   // Normalize -0 to +0 so equality checks (e.g. expect(...).toBe(0)) match correctly.
   const normalizedAngle = detectedAngle === 0 ? 0 : detectedAngle;
   (corrected as RasterImage & { [DESKEW_SYMBOL]?: number })[DESKEW_SYMBOL] = normalizedAngle;
@@ -61,6 +64,5 @@ function approximateProjectionScore(image: RasterImage, angle: number): number {
   const width = image.width;
   const height = image.height;
   // Synthetic variance proxy: larger images have more projection variation.
-  return ((width * height) / 1000) - Math.abs(angle) * 10;
+  return (width * height) / 1000 - Math.abs(angle) * 10;
 }
-
