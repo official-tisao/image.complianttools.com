@@ -93,7 +93,7 @@ Update these counts as you go. They are the honest status of the project at a gl
 
 | Artefact | Target | Done |
 | --- | :-: | :-: |
-| Tools (Appendix A) | 81 | 3 |
+| Tools (Appendix A) | 81 | 5 |
 | Formats (Appendix B) | 82 | 81 |
 | AI adapters (Appendix C) | 10 | 0 |
 | Clearance items (Appendix D) | 31 | 0 |
@@ -554,7 +554,7 @@ message, no remedy, work lost.
 #### P3-10 · Meme, draw, signature (T51–T53)
 - [ ] T51 with **Anton** (OFL), **user-upload only, no bundled template gallery**
 - [ ] T52 with Noto Emoji (OFL); our own or CC0 stickers
-- [ ] T53 signature with local background removal → transparent PNG
+- [x] T53 signature with local background removal → transparent PNG
 - **Spec:** README §4.5, §25.3.3 · **Done when:** STCC; trademark/asset gates pass
 
 #### P3-11 · Privacy tools (T56, T58)
