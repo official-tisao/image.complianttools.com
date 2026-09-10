@@ -22,9 +22,9 @@ docker compose --profile githubci run --build --rm githubci test
 The runner reads `.github/workflows/ci.yml`, including all four Lighthouse matrix
 rows, RAW corpus verification and embedded compilation. It runs workflow shell
 commands with Bash fail-fast/pipefail inside separate Ubuntu 24.04 containers.
-The workflow's `needs` dependencies are validated and honored; `browser-e2e`
-runs after the other CI jobs so its Playwright web server gets the available
-memory on a small Docker host.
+The workflow's `needs` dependencies are validated. The browser-e2e job is
+submitted first so its long Playwright run can use one runner while the next
+independent job uses the second runner. Lighthouse matrix rows remain serial.
 The image supplies Node 22, pnpm 9.15.5, Docker CLI/Compose/Buildx, all three
 Playwright browsers, pinned LVGL checkouts, Arduino targets/libraries and the
 SHA-256-verified RAW corpus. Frozen dependency installation is repeated offline

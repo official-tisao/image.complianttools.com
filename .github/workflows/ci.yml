@@ -14,6 +14,26 @@ permissions:
   pull-requests: write
 
 jobs:
+  browser-e2e:
+    name: browser-e2e
+    runs-on: self-hosted
+    # This is the longest and most memory-intensive job. Keep it independent so
+    # it can claim one runner immediately while a second job uses the other.
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.5
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium firefox webkit
+      - run: pnpm test:e2e
+
   verify:
     name: lint, typecheck, test, build
     runs-on: self-hosted
@@ -126,34 +146,6 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium firefox webkit
       - run: pnpm test:no-network
-
-  browser-e2e:
-    name: browser-e2e
-    runs-on: self-hosted
-    # Playwright's web server and three browser projects use the most memory,
-    # wait until all other jobs have released their runner containers.
-    needs:
-      - verify
-      - no-network
-      - lighthouse
-      - embedded-compile
-      - raw-corpus
-      - credential-leak
-      - docker-validate
-    timeout-minutes: 75
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 9.15.5
-          run_install: false
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm exec playwright install --with-deps chromium firefox webkit
-      - run: pnpm test:e2e
 
   lighthouse:
     name: lighthouse (${{ matrix.group }})

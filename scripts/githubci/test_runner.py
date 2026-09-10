@@ -35,9 +35,9 @@ class WorkflowTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'unknown job dependency'):
             runner.expand(self.workflow)
 
-    def test_browser_e2e_waits_for_other_jobs(self):
-        needs = self.workflow['jobs']['browser-e2e']['needs']
-        self.assertEqual(set(needs), set(self.workflow['jobs']) - {'browser-e2e'})
+    def test_browser_e2e_starts_without_dependencies(self):
+        self.assertEqual(self.workflow['jobs']['browser-e2e'].get('needs', []), [])
+        self.assertEqual(runner.expand(self.workflow)[0][0], 'browser-e2e')
 
     def test_empty_matrix_cannot_silently_skip_checks(self):
         self.workflow['jobs']['lighthouse']['strategy']['matrix']['include'] = []
