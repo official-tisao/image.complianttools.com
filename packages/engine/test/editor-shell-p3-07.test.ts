@@ -8,7 +8,14 @@ describe('P3-07 T48 Editor integration', () => {
   });
 
   it('layer model is exported', () => {
-    const state = createLayerState({ width: 10, height: 10, colorSpace: 'srgb', bitDepth: 8, premultipliedAlpha: false, frames: [{ data: new Uint8ClampedArray(400).fill(128), durationMs: 0 }] } as any);
+    const state = createLayerState({
+      width: 10,
+      height: 10,
+      colorSpace: 'srgb',
+      bitDepth: 8,
+      premultipliedAlpha: false,
+      frames: [{ data: new Uint8ClampedArray(400).fill(128), durationMs: 0 }],
+    } as unknown);
     expect(state.layers.length).toBeGreaterThanOrEqual(1);
   });
 });

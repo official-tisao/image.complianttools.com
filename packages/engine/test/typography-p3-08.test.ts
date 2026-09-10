@@ -1,12 +1,21 @@
 import { describe, expect, it } from 'vitest';
 import { createRaster } from '../src/index.js';
-import { hasLocalCssLookup, loadFontFamily, hasLocalFontAccess } from '../src/typography/font-access.js';
-import { applyStroke, buildShadow, curvePoints, arcPoints } from '../src/typography/stroke-shadow-curve.js';
+import {
+  hasLocalCssLookup,
+  loadFontFamily,
+  hasLocalFontAccess,
+} from '../src/typography/font-access.js';
+import {
+  applyStroke,
+  buildShadow,
+  curvePoints,
+  arcPoints,
+} from '../src/typography/stroke-shadow-curve.js';
 import { renderText } from '../src/typography/text-render.js';
 
 describe('P3-08 T49 Typography — font access', () => {
   it('detects local CSS lookup guard', () => {
-    expect(hasLocalCssLookup('InterVariable, local(\"Inter\")')).toBe(true);
+    expect(hasLocalCssLookup('InterVariable, local(Inter)')).toBe(true);
     expect(hasLocalCssLookup('InterVariable')).toBe(false);
   });
   it('probes Local Font Access API', () => {
@@ -55,6 +64,6 @@ describe('P3-08 T49 Typography — text render integration', () => {
   });
   it('no local() font lookup in engine', () => {
     expect(hasLocalCssLookup('SomeFont')).toBe(false);
-    expect(hasLocalCssLookup('SomeFont, local(\"Licensed\")')).toBe(true);
+    expect(hasLocalCssLookup('SomeFont, local(Licensed)')).toBe(true);
   });
 });

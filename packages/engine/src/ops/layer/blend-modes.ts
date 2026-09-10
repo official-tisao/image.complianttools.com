@@ -9,12 +9,12 @@ export function blendPixels(
   const out = new Uint8ClampedArray(base.length);
   const a = Math.max(0, Math.min(1, opacity));
   for (let i = 0; i < base.length; i += 4) {
-    const rb = base[i];
-    const gb = base[i + 1];
-    const bb = base[i + 2];
-    const ro = overlay[i];
-    const go = overlay[i + 1];
-    const bo = overlay[i + 2];
+    const rb = base[i] ?? 0;
+    const gb = base[i + 1] ?? 0;
+    const bb = base[i + 2] ?? 0;
+    const ro = overlay[i] ?? 0;
+    const go = overlay[i + 1] ?? 0;
+    const bo = overlay[i + 2] ?? 0;
     let r = rb,
       g = gb,
       bVal = bb;

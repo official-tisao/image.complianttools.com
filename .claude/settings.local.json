@@ -1,11 +1,19 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git add *)",
+      "Bash(git *)",
       "Bash(sed -i '4a import type { CanvasResizeOptions } from '\\\\''../schemas/options.js'\\\\'';' packages/engine/src/transform/canvas-resize.ts)",
       "Bash(sed -i '4a import type { EnlargeOptions } from '\\\\''../schemas/options.js'\\\\'';' packages/engine/src/transform/enlarge.ts)",
       "Bash(sed -i '4a import type { RoundCornersOptions } from '\\\\''../schemas/options.js'\\\\'';' packages/engine/src/transform/round-corners.ts)",
-      "Bash(sed -i '4a import type { SplitOptions } from '\\\\''../schemas/options.js'\\\\'';' packages/engine/src/transform/split.ts)"
+      "Bash(sed -i '4a import type { SplitOptions } from '\\\\''../schemas/options.js'\\\\'';' packages/engine/src/transform/split.ts)",
+      "Bash(docker *)",
+      "Bash(python3 *)",
+      "Bash(grep -n -A5 -B5 \"Expected 1 arguments\" /tmp/build_output 2>/dev/null || echo \"Check text-render error line 19\"; sed -n '15,25p' packages/engine/src/ops/text/text-render.ts)",
+      "Read(//tmp/**)",
+      "Read(//tmp/build_output)",
+      "Bash(sed *)",
+      "Bash(sed -i \"s/from '.\\\\/types.ts'/from '.\\\\/types.js'/g\" packages/engine/src/ops/layer/index.ts)",
+      "Bash(sed -i 's/isSupportedFontType ? isSupportedFontType\\(options\\) : false/isSupportedFontType ? isSupportedFontType\\(options.fontFamily\\) : false/' packages/engine/src/ops/text/text-render.ts)"
     ]
   }
 }

@@ -41,32 +41,6 @@ import {
 } from '../color/index.js';
 import { applyRecolour } from '../color/recolour.js';
 import {
-  applyAntialias,
-  applyBlur,
-  applyDenoise,
-  applyDespeckle,
-  applyEnhanceToggle,
-  applyNoMultilayer,
-  applyNormalize,
-  applySharpen,
-  applyThreshold,
-  SAUVOLA_HALO,
-  BLUR_HALO_FN,
-  DESPECKLE_HALO_FN,
-  SHARPEN_HALO_FN,
-} from '../ops/enhance/index.js';
-import {
-  convertColorSpace,
-  extractPalette,
-  exportPalette,
-  exportPaletteCss,
-  exportPaletteGpl,
-  exportPaletteJson,
-  type Palette,
-  type PaletteFormat,
-} from '../color/index.js';
-import { applyRecolour } from '../color/recolour.js';
-import {
   AdjustOptionsSchema,
   ColorSpaceOptionsSchema,
   CanvasResizeOptionsSchema,
@@ -247,8 +221,7 @@ async function executeStep(
   if (op === 'denoise') {
     const parsed = DenoiseOptionsSchema.parse(options);
     if (parsed.enabled) {
-      const operation = (input: RasterImage) =>
-        applyDenoise(input, parsed.method, parsed.strength);
+      const operation = (input: RasterImage) => applyDenoise(input, parsed.method, parsed.strength);
       const halo = parsed.method === 'bilateral' ? 2 : 1;
       return tiled ? executeTiled(image, operation, tileSize, halo) : operation(image);
     }
@@ -285,7 +258,13 @@ async function executeStep(
   if (op === 'color-space') {
     const parsed = ColorSpaceOptionsSchema.parse(options);
     if (!parsed.enabled) return image;
-    return convertColorSpace(image, parsed.target, parsed.bitDepth, parsed.embedIcc, parsed.stripIcc);
+    return convertColorSpace(
+      image,
+      parsed.target,
+      parsed.bitDepth,
+      parsed.embedIcc,
+      parsed.stripIcc,
+    );
   }
   if (op === 'recolour') {
     const parsed = RecolourOptionsSchema.parse(options);
@@ -344,41 +323,66 @@ async function executeStep(
   if (op === 'border') {
     const parsed = BorderOptionsSchema.parse(options);
     if (!parsed.enabled) return image;
-    return applyBorder(image, { enabled: true, width: parsed.width, color: parsed.color, inner: parsed.inner });
+    return applyBorder(image, {
+      enabled: true,
+      width: parsed.width,
+      color: parsed.color,
+      inner: parsed.inner,
+    });
   }
   if (op === 'round-corners') {
     const parsed = RoundCornersOptionsSchema.parse(options);
     if (!parsed.enabled) return image;
-    return roundCorners(image, { enabled: true, radius: parsed.radius, background: parsed.background });
+    return roundCorners(image, {
+      enabled: true,
+      radius: parsed.radius,
+      background: parsed.background,
+    });
   }
   if (op === 'bulk-resize') {
     // T25 preset pack: applies the preset dimensions via resizeRaster with fit mode.
-    const presetName = (options.preset as string) ?? options.format as string;
+    const presetName = (options.preset as string) ?? (options.format as string);
     const preset = RESIZE_PRESETS.find((p) => p.label === presetName);
     if (!preset) {
       // Fallback to direct resize options
       return resizeRaster(image, ResizeOptionsSchema.parse(options));
     }
-    return resizeRaster(image, ResizeOptionsSchema.parse({
-      mode: 'fit',
-      width: preset.width,
-      height: preset.height,
-      fitMode: preset.fitMode ?? 'contain',
-      algorithm: 'lanczos3',
-      allowUpscale: true,
-      lockAspect: true,
-    }));
+    return resizeRaster(
+      image,
+      ResizeOptionsSchema.parse({
+        mode: 'fit',
+        width: preset.width,
+        height: preset.height,
+        fitMode: preset.fitMode ?? 'contain',
+        algorithm: 'lanczos3',
+        allowUpscale: true,
+        lockAspect: true,
+      }),
+    );
   }
   if (op === 'collage') {
     const parsed = CollageOptionsSchema.parse(options);
     if (!parsed.enabled) return image;
     // For pipeline, images array would come from previous steps or batch; v1 uses single image repeated
-    return makeCollage(image, { mode: parsed.mode, columns: parsed.columns ?? undefined, rows: parsed.rows ?? undefined, gap: parsed.gap, background: parsed.background, alignment: (parsed.alignment as 'center' | 'top-left' | 'bottom-right') ?? 'center', images: [image] });
+    return makeCollage(image, {
+      mode: parsed.mode,
+      columns: parsed.columns ?? undefined,
+      rows: parsed.rows ?? undefined,
+      gap: parsed.gap,
+      background: parsed.background,
+      alignment: (parsed.alignment as 'center' | 'top-left' | 'bottom-right') ?? 'center',
+      images: [image],
+    });
   }
   if (op === 'split') {
     const parsed = SplitOptionsSchema.parse(options);
     if (!parsed.enabled) return image;
-    const tiles = splitImage(image, { enabled: true, rows: parsed.rows, cols: parsed.cols, output: parsed.output });
+    const tiles = splitImage(image, {
+      enabled: true,
+      rows: parsed.rows,
+      cols: parsed.cols,
+      output: parsed.output,
+    });
     // Pipeline returns array? v1 returns first tile or whole? We'll return first tile for single-output pipeline.
     return tiles[0] ?? image;
   }
@@ -552,9 +556,7 @@ export async function run(
     const result: ItemResult = {
       itemIndex,
       image,
-      tiers: perStepTiers.length > 0
-        ? perStepTiers
-        : plan.steps.map(() => plan.tier),
+      tiers: perStepTiers.length > 0 ? perStepTiers : plan.steps.map(() => plan.tier),
     };
     items.push(result);
     opts.onItemDone?.(result);

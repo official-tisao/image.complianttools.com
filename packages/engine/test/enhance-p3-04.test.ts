@@ -27,7 +27,7 @@ function blackWhiteRaster(): RasterImage {
   for (let y = 0; y < 8; y += 1) {
     for (let x = 0; x < 8; x += 1) {
       const offset = (y * 8 + x) * 4;
-      const v = (x < 4) ? 30 : 220;
+      const v = x < 4 ? 30 : 220;
       data[offset] = v;
       data[offset + 1] = v;
       data[offset + 2] = v;
@@ -77,14 +77,14 @@ describe('P3-04 deskew', () => {
   it('deskew reports the detected angle via DESKEW_SYMBOL', () => {
     const r = gradientRaster();
     const out = applyDeskew(r, 20, '#FFFFFF');
-    expect((out as any)[DESKEW_SYMBOL]).toBeDefined();
-    expect(typeof (out as any)[DESKEW_SYMBOL]).toBe('number');
+    expect((out as unknown)[DESKEW_SYMBOL]).toBeDefined();
+    expect(typeof (out as unknown)[DESKEW_SYMBOL]).toBe('number');
   });
 
   it('deskew with maxAngle=0 reports angle 0', () => {
     const r = gradientRaster();
     const out = applyDeskew(r, 0, '#FFFFFF');
-    expect((out as any)[DESKEW_SYMBOL]).toBe(0);
+    expect((out as unknown)[DESKEW_SYMBOL]).toBe(0);
   });
 
   it('deskew produces a valid RasterImage', () => {
@@ -98,7 +98,7 @@ describe('P3-04 deskew', () => {
   it('deskew respects maxAngle search range', () => {
     const r = gradientRaster();
     const out = applyDeskew(r, 5, '#FFFFFF');
-    const angle = (out as any)[DESKEW_SYMBOL];
+    const angle = (out as unknown)[DESKEW_SYMBOL];
     expect(Math.abs(angle)).toBeLessThanOrEqual(5);
   });
 });
