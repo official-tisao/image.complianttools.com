@@ -6,6 +6,8 @@ Generate and deploy the repository's persistent GitHub Actions runner over SSH.
 pwsh -File scripts/setup-hetzner-runner.ps1
 .EXAMPLE
 pwsh -File scripts/setup-hetzner-runner.ps1 -EnvironmentSource Local
+.EXAMPLE
+./scripts/setup-hetzner-runner.ps1 -RunnerNames runner-compliant-tools-2,runner-compliant-tools-3
 #>
 [CmdletBinding()]
 param(
@@ -16,6 +18,9 @@ param(
     [string]$OutputDirectory = (Join-Path $PSScriptRoot '../.cache/hetzner-github-runner'),
     [ValidateSet('Auto', 'Local', 'Remote')]
     [string]$EnvironmentSource = 'Auto',
+    [ValidateNotNullOrEmpty()]
+    [ValidatePattern('^[a-zA-Z0-9][a-zA-Z0-9_.-]*$')]
+    [string[]]$RunnerNames = @('runner-compliant-tools'),
     [switch]$GenerateOnly
 )
 
@@ -23,6 +28,9 @@ $ErrorActionPreference = 'Stop'
 $PSNativeCommandUseErrorActionPreference = $true
 if ($RemoteDirectory.Split('/') -contains '..') {
     throw 'RemoteDirectory must stay within the SSH user home directory.'
+}
+if (@($RunnerNames | Sort-Object -Unique).Count -ne $RunnerNames.Count) {
+    throw 'Each runner must have a unique name.'
 }
 
 # Single-quoted here-strings preserve Bash $variables and Docker syntax verbatim.
@@ -75,20 +83,24 @@ if [[ ! -x ./config.sh ]]; then
 fi
 
 repo_url="${IMAGE_COMPLIANTTOOLS_COM_REPO_URL:?Repository URL is required}"
+runner_name="${RUNNER_NAME:-runner-compliant-tools}"
 if [[ ! -f .runner ]]; then
     : "${IMAGE_COMPLIANTTOOLS_COM_REPO_RUNNER_TOKEN:?A fresh registration token is required}"
     # The runner accepts configuration through environment variables; no token in argv.
     export ACTIONS_RUNNER_INPUT_TOKEN="$IMAGE_COMPLIANTTOOLS_COM_REPO_RUNNER_TOKEN"
     ./config.sh --unattended --url "$repo_url" \
-        --name runner-compliant-tools --labels hetzner,compliant-tools --work _work
+        --name "$runner_name" --labels hetzner,compliant-tools --work _work
     unset ACTIONS_RUNNER_INPUT_TOKEN
 else
-    python3 - "$repo_url" <<'PY'
+    python3 - "$repo_url" "$runner_name" <<'PY'
 import json, sys
 from pathlib import Path
-registered = json.loads(Path('.runner').read_text(encoding='utf-8-sig'))['gitHubUrl'].rstrip('/')
+settings = json.loads(Path('.runner').read_text(encoding='utf-8-sig'))
+registered = settings['gitHubUrl'].rstrip('/')
 if registered.lower() != sys.argv[1].rstrip('/').lower():
     raise SystemExit('Existing runner belongs to a different repository; refusing to reuse it.')
+if settings['agentName'] != sys.argv[2]:
+    raise SystemExit('Existing registration has a different runner name; use a separate volume.')
 PY
 fi
 
@@ -109,6 +121,16 @@ docker info >/dev/null
 # Prevent two deployments from replacing the same container at the same time.
 exec 9>.deploy.lock
 flock -n 9 || { echo 'Another runner deployment is in progress.' >&2; exit 1; }
+runner_names=("$@")
+if (( ${#runner_names[@]} == 0 )); then
+    runner_names=(runner-compliant-tools)
+fi
+declare -A selected=()
+for runner_name in "${runner_names[@]}"; do
+    [[ "$runner_name" =~ ^[a-zA-Z0-9][a-zA-Z0-9_.-]*$ ]] || { echo 'Invalid runner name.' >&2; exit 1; }
+    [[ ! "${selected[$runner_name]+set}" ]] || { echo 'Duplicate runner name.' >&2; exit 1; }
+    selected[$runner_name]=1
+done
 
 # Trim the VPS variables (including a pasted trailing space in REPO_URL).
 export IMAGE_COMPLIANTTOOLS_COM_REPO_URL
@@ -155,49 +177,64 @@ docker run --rm --entrypoint bash hetzner-github-runner -euc '
     cc --version >/dev/null
     sudo -n true
 '
-if docker container inspect runner-compliant-tools >/dev/null 2>&1; then
-    managed="$(docker inspect --format '{{index .Config.Labels "com.complianttools.runner"}}' runner-compliant-tools)"
-    [[ "$managed" == true ]] || { echo 'Refusing to replace a container not managed by this script.' >&2; exit 1; }
-    # Avoid interrupting a running workflow during a redeployment.
-    if [[ "$(docker inspect --format '{{.State.Status}}' runner-compliant-tools)" == running ]]; then
-        processes="$(docker top runner-compliant-tools -eo pid,args)"
-        if grep -q '[R]unner.Worker' <<< "$processes"; then
-            echo 'Runner is executing a job. Redeploy when it is idle.' >&2
-            exit 1
+check_replaceable() {
+    local name="$1" managed processes
+    if docker container inspect "$name" >/dev/null 2>&1; then
+        managed="$(docker inspect --format '{{index .Config.Labels "com.complianttools.runner"}}' "$name")"
+        [[ "$managed" == true ]] || { echo "Refusing to replace unmanaged container $name." >&2; exit 1; }
+        if [[ "$(docker inspect --format '{{.State.Status}}' "$name")" == running ]]; then
+            processes="$(docker top "$name" -eo pid,args)"
+            if grep -q '[R]unner.Worker' <<< "$processes"; then
+                echo "$name is executing a job. Redeploy when it is idle." >&2
+                exit 1
+            fi
         fi
     fi
-    docker stop --time 60 runner-compliant-tools >/dev/null
-    docker rm runner-compliant-tools >/dev/null
-fi
+}
 
-docker volume create runner-compliant-tools-data >/dev/null
-docker run -d --name runner-compliant-tools --restart unless-stopped --init \
-    --label com.complianttools.runner=true \
-    --stop-timeout 60 --shm-size 1g \
-    --log-opt max-size=10m --log-opt max-file=3 \
-    --group-add "$(stat -c %g /var/run/docker.sock)" \
-    --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock \
-    --mount type=volume,source=runner-compliant-tools-data,target=/runner \
-    --env IMAGE_COMPLIANTTOOLS_COM_REPO_URL \
-    --env IMAGE_COMPLIANTTOOLS_COM_REPO_RUNNER_TOKEN \
-    hetzner-github-runner
+deploy_runner() {
+    local name="$1" attempt
+    check_replaceable "$name"
+    if docker container inspect "$name" >/dev/null 2>&1; then
+        docker stop --timeout 60 "$name" >/dev/null
+        docker rm "$name" >/dev/null
+    fi
 
-for ((attempt=0; attempt<90; attempt++)); do
-    if docker logs runner-compliant-tools 2>&1 | grep -q 'Listening for Jobs'; then
-        docker ps --filter name='^/runner-compliant-tools$' --format '{{.Names}}: {{.Status}}'
-        echo 'Runner connected to GitHub and is listening for jobs.'
-        exit 0
-    fi
-    if [[ "$(docker inspect --format '{{.RestartCount}}' runner-compliant-tools)" != 0 ]]; then
-        break
-    fi
-    sleep 2
-done
-docker logs --tail 60 runner-compliant-tools >&2
-# Keep a bad registration from looping indefinitely with an expired token.
-docker stop --time 60 runner-compliant-tools >/dev/null
-echo 'Runner did not become ready. Check the log above and refresh the registration token if needed.' >&2
-exit 1
+    # Each runner needs its own registration, credentials and work directory.
+    docker volume create "${name}-data" >/dev/null
+    docker run -d --name "$name" --restart unless-stopped --init \
+        --label com.complianttools.runner=true \
+        --stop-timeout 60 --shm-size 1g \
+        --log-opt max-size=10m --log-opt max-file=3 \
+        --group-add "$(stat -c %g /var/run/docker.sock)" \
+        --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock \
+        --mount "type=volume,source=${name}-data,target=/runner" \
+        --env "RUNNER_NAME=$name" \
+        --env IMAGE_COMPLIANTTOOLS_COM_REPO_URL \
+        --env IMAGE_COMPLIANTTOOLS_COM_REPO_RUNNER_TOKEN \
+        hetzner-github-runner
+
+    for ((attempt=0; attempt<90; attempt++)); do
+        if docker logs "$name" 2>&1 | grep -q 'Listening for Jobs'; then
+            docker ps --filter "name=^/${name}$" --format '{{.Names}}: {{.Status}}'
+            echo "$name connected to GitHub and is listening for jobs."
+            return 0
+        fi
+        if [[ "$(docker inspect --format '{{.RestartCount}}' "$name")" != 0 ]]; then
+            break
+        fi
+        sleep 2
+    done
+    docker logs --tail 60 "$name" >&2
+    # Keep a bad registration from looping indefinitely with an expired token.
+    docker stop --timeout 60 "$name" >/dev/null
+    echo "$name did not become ready. Check the log above and refresh the registration token if needed." >&2
+    return 1
+}
+
+# Check all selected containers before replacing any; unselected runners keep running.
+for runner_name in "${runner_names[@]}"; do check_replaceable "$runner_name"; done
+for runner_name in "${runner_names[@]}"; do deploy_runner "$runner_name"; done
 '@
 
 $null = New-Item -ItemType Directory -Force -Path $OutputDirectory
@@ -241,7 +278,8 @@ if ($LASTEXITCODE -ne 0) { throw 'Unable to upload runner files.' }
 
 # JSON travels only over encrypted SSH stdin, never in command arguments or files.
 # An empty object retains the environment already exported by the VPS SSH session.
-$bootstrap = 'import json,os,sys; os.environ.update(json.load(sys.stdin)); os.execv("/bin/bash", ["bash", "./deploy.sh"])'
-$remoteCommand = "cd '$RemoteDirectory' && chmod 700 deploy.sh entrypoint.sh && python3 -c '$bootstrap'"
+$bootstrap = 'import json,os,sys; os.environ.update(json.load(sys.stdin)); os.execv("/bin/bash", ["bash", "./deploy.sh", *sys.argv[1:]])'
+$runnerArguments = ($RunnerNames | ForEach-Object { "'$_'" }) -join ' '
+$remoteCommand = "cd '$RemoteDirectory' && chmod 700 deploy.sh entrypoint.sh && python3 -c '$bootstrap' $runnerArguments"
 $localEnvironment | ConvertTo-Json -Compress | & ssh -o BatchMode=yes $SshHost $remoteCommand
 if ($LASTEXITCODE -ne 0) { throw 'Runner deployment failed; see the remote output above.' }

@@ -22,13 +22,16 @@ docker compose --profile githubci run --build --rm githubci test
 The runner reads `.github/workflows/ci.yml`, including all four Lighthouse matrix
 rows, RAW corpus verification and embedded compilation. It runs workflow shell
 commands with Bash fail-fast/pipefail inside separate Ubuntu 24.04 containers.
+The workflow's `needs` dependencies are validated and honored; `browser-e2e`
+runs after the other CI jobs so its Playwright web server gets the available
+memory on a small Docker host.
 The image supplies Node 22, pnpm 9.15.5, Docker CLI/Compose/Buildx, all three
 Playwright browsers, pinned LVGL checkouts, Arduino targets/libraries and the
 SHA-256-verified RAW corpus. Frozen dependency installation is repeated offline
 to validate the lockfile and run lifecycle hooks. No act/action downloads occur.
 
 This is an intentionally limited workflow executor, **not a full GitHub Actions
-emulator**. Unknown actions, expressions, platforms, job dependencies and
+emulator**. Unknown actions, expressions, platforms, dependency references and
 conditions cause an error, not a silent skip. Setup actions are reported as
 `PREBAKED`; the informational PR comment is `HOSTED-ONLY`. GitHub API permissions,
 branch protection, action implementation bugs, cache service integration and

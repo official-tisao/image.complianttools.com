@@ -39,6 +39,19 @@ The setup script checks that GitHub reports `Listening for Jobs`, and refuses to
 replace a container while a runner job is executing. Re-run the same command to
 rebuild and redeploy when idle.
 
+To add four more runners while keeping the original container running:
+
+```powershell
+./scripts/setup-hetzner-runner.ps1 -EnvironmentSource Remote -RunnerNames runner-compliant-tools-2,runner-compliant-tools-3,runner-compliant-tools-4,runner-compliant-tools-5
+```
+
+`-RunnerNames` selects exactly which containers to create or redeploy. Omitting
+it selects only `runner-compliant-tools`. Each name is also its GitHub registration
+name, and each uses a separate `<name>-data` volume. Never share or clone a runner's
+registration volume between containers. All runners use the same image and labels;
+GitHub can assign one job to each available runner. CPU, RAM and disk capacity on
+the VPS are shared by all containers.
+
 [GitHub registration tokens expire after one hour](https://docs.github.com/en/actions/how-tos/manage-runners/self-hosted-runners/add-runners).
 A saved registration does not need a fresh token on each restart. If the volume
 is removed or the runner is removed in GitHub, obtain a new registration token
@@ -49,8 +62,8 @@ ssh hetzner_vps_1 'docker logs --tail 50 runner-compliant-tools'
 ssh hetzner_vps_1 'docker ps --filter name=runner-compliant-tools'
 ```
 
-Both CI and benchmark-recording workflows use `runs-on: self-hosted`. One container
-executes one GitHub job at a time; GitHub queues the others. The benchmark workflow
+Both CI and benchmark-recording workflows use `runs-on: self-hosted`. Each container
+executes one GitHub job at a time; GitHub queues jobs when all runners are busy. The benchmark workflow
 records results with `BENCH_RUNNER_ID: self-hosted`. The local Docker Compose CI tester
 continues to work and accepts the new `self-hosted` workflow value. Workflow
 changes take effect on GitHub after they are pushed.

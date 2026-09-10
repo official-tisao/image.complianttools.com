@@ -130,6 +130,16 @@ jobs:
   browser-e2e:
     name: browser-e2e
     runs-on: self-hosted
+    # Playwright's web server and three browser projects use the most memory;
+    # wait until all other jobs have released their runner containers.
+    needs:
+      - verify
+      - no-network
+      - lighthouse
+      - embedded-compile
+      - raw-corpus
+      - credential-leak
+      - docker-validate
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4

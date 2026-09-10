@@ -226,12 +226,18 @@ def orchestrate(source=Path('/workspace'), reports=Path('/reports')):
                 return result
 
             # Keep timing-sensitive Lighthouse and benchmarks free of competing CI jobs.
-            parallel_jobs = [j for j in jobs if j[0] != 'verify' and not j[0].startswith('lighthouse-')]
+            # browser-e2e declares needs on every other CI job, so run it after all
+            # preceding jobs have finished and their containers have been removed.
+            parallel_jobs = [j for j in jobs if j[0] != 'verify' and
+                             not j[0].startswith('lighthouse-') and j[0] != 'browser-e2e']
+            deferred_jobs = [j for j in jobs if j[0] == 'browser-e2e']
+            serial_jobs = [j for j in jobs if j not in parallel_jobs and j not in deferred_jobs]
             with concurrent.futures.ThreadPoolExecutor(max_workers=parallel) as pool:
                 results.extend(pool.map(execute, parallel_jobs))
-            for job in jobs:
-                if job not in parallel_jobs:
-                    results.append(execute(job))
+            for job in serial_jobs:
+                results.append(execute(job))
+            for job in deferred_jobs:
+                results.append(execute(job))
     except Exception as exc:
         results.append(dict(job='preflight', status='FAIL', error=str(exc)))
     finally:

@@ -49,10 +49,21 @@ def expand(wf):
         raise ValueError('Unsupported workflow keys; update the local runner')
     result = []
     for key, job in wf['jobs'].items():
-        if set(job) - {'name', 'runs-on', 'timeout-minutes', 'steps', 'strategy'}:
+        if set(job) - {'name', 'runs-on', 'needs', 'timeout-minutes', 'steps', 'strategy'}:
             raise ValueError(f'{key}: unsupported job keys')
         if job['runs-on'] not in ('ubuntu-latest', 'ubuntu-24.04', 'self-hosted'):
             raise ValueError(f'{key}: unsupported OS {job["runs-on"]}')
+        needs = job.get('needs', [])
+        if isinstance(needs, str):
+            needs = [needs]
+        if (not isinstance(needs, list) or
+                any(not isinstance(dependency, str) for dependency in needs)):
+            raise ValueError(f'{key}: needs must be a job id or list of job ids')
+        unknown = set(needs) - set(wf['jobs'])
+        if unknown:
+            raise ValueError(f'{key}: unknown job dependency {sorted(unknown)}')
+        if key in needs:
+            raise ValueError(f'{key}: job cannot depend on itself')
         strategy = job.get('strategy', {})
         if set(strategy) - {'fail-fast', 'matrix'}:
             raise ValueError(f'{key}: unsupported strategy')
