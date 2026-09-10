@@ -7,14 +7,14 @@
 
 ## Verified locally
 
-| Probe | Result |
-| --- | --- |
-| `/`, `/convert`, `/compress`, `/heic-converter`, `/convert/png-to-webp` | 200 |
-| Missing path | 404 |
-| Gzip precompressed HTML | 13 KB → 4 KB (68% reduction) |
-| Two concurrent requests | 200 in ~4 ms each |
-| Container memory | 2.4 MiB / 128 MiB (1.9%) |
-| COOP / COEP / CORP / Referrer-Policy / HSTS / X-Frame-Options / Permissions-Policy | all present |
+| Probe                                                                              | Result                       |
+| ---------------------------------------------------------------------------------- | ---------------------------- |
+| `/`, `/convert`, `/compress`, `/heic-converter`, `/convert/png-to-webp`            | 200                          |
+| Missing path                                                                       | 404                          |
+| Gzip precompressed HTML                                                            | 13 KB → 4 KB (68% reduction) |
+| Two concurrent requests                                                            | 200 in ~4 ms each            |
+| Container memory                                                                   | 2.4 MiB / 128 MiB (1.9%)     |
+| COOP / COEP / CORP / Referrer-Policy / HSTS / X-Frame-Options / Permissions-Policy | all present                  |
 
 ## Notes
 
