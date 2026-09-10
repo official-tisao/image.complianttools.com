@@ -640,6 +640,30 @@ export const BlackWhiteThresholdOptionsSchema = z
 export type BlackWhiteThresholdOptions = z.infer<typeof BlackWhiteThresholdOptionsSchema>;
 
 /**
+ * P3-04 equalize. CLAHE histogram equalization.
+ */
+export const EqualizeOptionsSchema = z
+  .object({
+    enabled: z.boolean().default(false),
+    channels: z.enum(['rgb', 'all', 'gray']).default('rgb'),
+    clipLimit: z.number().min(0).max(100).default(40),
+  })
+  .default({ enabled: false, channels: 'rgb', clipLimit: 40 });
+export type EqualizeOptions = z.infer<typeof EqualizeOptionsSchema>;
+
+/**
+ * P3-04 deskew. Detect rotation angle and report it.
+ */
+export const DeskewOptionsSchema = z
+  .object({
+    enabled: z.boolean().default(false),
+    maxAngle: z.number().min(-90).max(90).default(20),
+    background: z.string().default('#FFFFFF'),
+  })
+  .default({ enabled: false, maxAngle: 20, background: '#FFFFFF' });
+export type DeskewOptions = z.infer<typeof DeskewOptionsSchema>;
+
+/**
  * P3-04 noMultilayer. The engine has no multi-layer concept; the
  * step returns the source raster unchanged. The schema exists so
  * the option can be present in recipes without throwing at parse time.

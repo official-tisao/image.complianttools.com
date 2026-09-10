@@ -15,3 +15,5 @@ export {
   SAUVOLA_HALO,
   type ThresholdMode,
 } from './threshold.js';
+export { applyEqualize } from './equalize.js';
+export { applyDeskew, DESKEW_SYMBOL } from './deskew.js';

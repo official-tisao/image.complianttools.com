@@ -13,6 +13,8 @@ import {
   applyNormalize,
   applySharpen,
   applyThreshold,
+  applyEqualize,
+  applyDeskew,
   SAUVOLA_HALO,
   BLUR_HALO_FN,
   DESPECKLE_HALO_FN,
@@ -46,6 +48,8 @@ import {
   BlurOptionsSchema,
   DenoiseOptionsSchema,
   BlackWhiteThresholdOptionsSchema,
+  EqualizeOptionsSchema,
+  DeskewOptionsSchema,
   LayerOptionsSchema,
   TextOptionsSchema,
   WatermarkOptionsSchema,
@@ -223,6 +227,20 @@ async function executeStep(
       return tiled ? executeTiled(image, operation, tileSize, SAUVOLA_HALO) : operation(image);
     }
     return applyThreshold(image, parsed.mode);
+  }
+  if (op === 'equalize') {
+    const parsed = EqualizeOptionsSchema.parse(options);
+    if (parsed.enabled) {
+      return applyEqualize(image, parsed.channels, parsed.clipLimit);
+    }
+    return image;
+  }
+  if (op === 'deskew') {
+    const parsed = DeskewOptionsSchema.parse(options);
+    if (parsed.enabled) {
+      return applyDeskew(image, parsed.maxAngle, parsed.background);
+    }
+    return image;
   }
   if (op === 'color-space') {
     const parsed = ColorSpaceOptionsSchema.parse(options);
