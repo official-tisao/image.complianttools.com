@@ -131,7 +131,7 @@ jobs:
     name: browser-e2e
     runs-on: self-hosted
     # Playwright's web server and three browser projects use the most memory;
-    # wait until all other jobs have released their runner containers.
+    # wait until some other jobs have released their runner containers.
     needs:
       - lighthouse
       - embedded-compile
