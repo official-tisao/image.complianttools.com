@@ -4,12 +4,12 @@ on:
   workflow_dispatch: {}
 
 # `BENCH_RUNNER_ID` is the single source of truth for the pinned benchmark runner:
-# it must match the `runs-on` image below exactly, so the recorded baseline in
+# it must match the `runs-on` label below exactly, so the recorded baseline in
 # `packages/engine/bench/history.json` cannot silently drift from the runner that
 # produced it. README §19.5 and `packages/engine/bench/README.md` treat the runner
 # identifier as the regression-comparison key.
 env:
-  BENCH_RUNNER_ID: ubuntu-24.04
+  BENCH_RUNNER_ID: self-hosted
 
 permissions:
   contents: write
@@ -17,7 +17,7 @@ permissions:
 
 jobs:
   record:
-    runs-on: ubuntu-24.04
+    runs-on: self-hosted
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4

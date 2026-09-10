@@ -16,7 +16,7 @@ permissions:
 jobs:
   verify:
     name: lint, typecheck, test, build
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     timeout-minutes: 20
     steps:
       - name: Check out repository
@@ -94,10 +94,10 @@ jobs:
         # branch in packages/engine/bench/run.mjs is dormant until a baseline is committed
         # to packages/engine/bench/history.json. To turn that on:
         #   1. Run the .github/workflows/bench-record.yml workflow once on the same runner
-        #      image the bench step uses (currently ubuntu-latest). The workflow opens a PR
+        #      environment the bench step uses (currently self-hosted). The workflow opens a PR
         #      containing the first history.json entry.
         #   2. Merge that PR.
-        #   3. Add an `env: BENCH_RUNNER_ID: ubuntu-latest` block on this step (and on the
+        #   3. Add an `env: BENCH_RUNNER_ID: self-hosted` block on this step (and on the
         #      run.mjs --operation=metadata-read invocation that will go alongside the
         #      future operations bench). Without that env var, run.mjs treats the bench as
         #      absolute-only, which is the current behaviour and is intentional.
@@ -111,7 +111,7 @@ jobs:
 
   no-network:
     name: no-network
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
@@ -129,7 +129,7 @@ jobs:
 
   browser-e2e:
     name: browser-e2e
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
@@ -147,7 +147,7 @@ jobs:
 
   lighthouse:
     name: lighthouse (${{ matrix.group }})
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     timeout-minutes: 30
     strategy:
       fail-fast: false
@@ -180,7 +180,7 @@ jobs:
 
   embedded-compile:
     name: embedded-compile
-    runs-on: ubuntu-24.04
+    runs-on: self-hosted
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
@@ -229,7 +229,7 @@ jobs:
 
   raw-corpus:
     name: raw-corpus
-    runs-on: ubuntu-24.04
+    runs-on: self-hosted
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
@@ -251,7 +251,7 @@ jobs:
 
   credential-leak:
     name: credential-leak
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
@@ -273,7 +273,7 @@ jobs:
     # `docker compose up` reaches a healthy state. This is the guard that
     # catches a broken Dockerfile or a malformed nginx.conf before it
     # ever leaves CI.
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4

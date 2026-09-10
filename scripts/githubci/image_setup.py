@@ -51,7 +51,7 @@ def expand(wf):
     for key, job in wf['jobs'].items():
         if set(job) - {'name', 'runs-on', 'timeout-minutes', 'steps', 'strategy'}:
             raise ValueError(f'{key}: unsupported job keys')
-        if job['runs-on'] not in ('ubuntu-latest', 'ubuntu-24.04'):
+        if job['runs-on'] not in ('ubuntu-latest', 'ubuntu-24.04', 'self-hosted'):
             raise ValueError(f'{key}: unsupported OS {job["runs-on"]}')
         strategy = job.get('strategy', {})
         if set(strategy) - {'fail-fast', 'matrix'}:
