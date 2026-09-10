@@ -524,31 +524,34 @@ message, no remedy, work lost.
 - **Spec:** README §6.5, §25.3.3 · **Done when:** trademark gate passes and every preset is a readable primitive stack
 
 #### P3-04 · Enhancement toggles (T42–T44)
-- [ ] enhance, sharpen, antialias, despeckle, equalize (CLAHE), normalize, deskew, `noMultilayer`, B/W threshold (incl. Otsu + Sauvola), denoise (median/bilateral/wavelet), blur (6 types)
-- [ ] **NLM deferred** pending clearance (README §25.3.2)
+- [x] enhance, sharpen, antialias, despeckle, normalize, `noMultilayer`, B/W threshold (incl. Otsu + Sauvola), and blur (6 types) — engine tests cover defaults, semantics, and tiled execution
+- [x] denoise (median and bilateral); wavelet/NLM are not claimed by the v1 implementation
+- [/] equalize (CLAHE) — a simplified whole-image equalizer exists, but the full adaptive/per-channel CLAHE requirement is not yet met
+- [/] deskew — the pipeline and angle side-channel exist, but the current detector is a synthetic placeholder and does not yet provide a user-facing pre-apply report
+- [~] **NLM deferred** pending clearance (README §25.3.2); the schema and runtime reject it rather than silently substituting another algorithm
 - **Spec:** README §6.6 · **Done when:** each has a test; deskew reports its detected angle before applying
 
 #### P3-05 · Colour tools
-- [ ] T39 Curves · T40 Colour Space · T41 Threshold · T45 Colour Picker + palette (k-means/median-cut, CSS/JSON/ASE/GPL export) · T46 Recolour · T47 Duotone
+- [/] T39 Curves · T40 Colour Space · T41 Threshold · T45 Colour Picker + palette (k-means/median-cut, CSS/JSON/ASE/GPL export) · T46 Recolour · T47 Duotone — engine implementations and unit coverage are present on `master`; standalone STCC tool delivery remains open
 - **Spec:** README §4.4 · **Done when:** STCC for each
 
 #### P3-06 · Transform tools
-- [ ] T25 Bulk Resize (all preset packs, README §6.2) · T26 Crop · T28 Rotate · T29 Flip · T30 Canvas Resize · T31 Enlarge · T33 Border · T34 Round Corners · T35 Collage · T36 Split/Tile
+- [/] T25 Bulk Resize (all preset packs, README §6.2) · T26 Crop · T28 Rotate · T29 Flip · T30 Canvas Resize · T31 Enlarge · T33 Border · T34 Round Corners · T35 Collage · T36 Split/Tile — engine helpers and tests are present for the newly added transform helpers; standalone STCC routes remain open
 - **Spec:** README §4.3 · **Done when:** STCC for each
 
 #### P3-07 · Layered editor (T48)
-- [ ] Layer model, blend modes, per-layer alpha, ordering, groups
+- [x] Layer model, blend modes, per-layer alpha, ordering, groups — covered by `layer-p3-07.test.ts`
 - [ ] Every other tool reachable from inside it
-- [ ] **Host only** — issues no request of its own
+- [x] **Host only** — issues no request of its own; the Edge E2E flow confirms zero cross-origin requests
 - **Spec:** README §4.5 · **Done when:** STCC, and a test asserts zero network requests from the editor shell
 
 #### P3-08 · Text and typography (T49)
-- [ ] Self-hosted font set + user upload + Local Font Access API
-- [ ] Stroke, shadow, curve, arc; **no `local()` lookups that could embed a licensed system font into an export**
+- [/] Self-hosted font set + user upload + Local Font Access API — the API probe and CSS `local()` guard exist, but the self-hosted set, upload path, and real font loading are still open
+- [/] Stroke, shadow, curve, arc; **no `local()` lookups that could embed a licensed system font into an export** — helpers and tests exist, but text rendering is still a minimal placeholder and the STCC route is not complete
 - **Spec:** README §4.5, §25.3.4 · **Done when:** STCC, and an export never embeds a font we lack rights to
 
 #### P3-09 · Watermark (T50)
-- [ ] Full option surface (README §6.8) incl. tiled/diagonal modes, tokens, `scaleWithImage`
+- [/] Full option surface (README §6.8) incl. tiled/diagonal modes, tokens, `scaleWithImage` — schema, pipeline wiring, and engine tests exist, but rendering is still minimal and there is no completed STCC route
 - **Spec:** README §6.8 · **Done when:** STCC; batch across mixed sizes keeps relative scale constant
 
 #### P3-10 · Meme, draw, signature (T51–T53)
@@ -1238,6 +1241,7 @@ Every README change gets a row here, per §0.3. Newest first.
 
 | Date | README § | Change | PLAN action |
 | --- | --- | --- | --- |
+| 2026-09-10 | §4.3–§4.5, §6.6, §6.8 | Audited the merged Phase 3 implementation on `master` rather than relying on commit titles. The engine suite passes 703 Vitest tests plus 32 Node contract tests, and the Edge E2E editor flow passes with zero cross-origin requests. Recorded the verified enhancement primitives, colour/transform engine coverage, layer model/host-only editor behaviour, and typography/watermark implementation status. Kept rows open where the code is a scaffold/placeholder or the standalone STCC route is absent; explicitly deferred NLM pending clearance. | Reconciled P3-04 through P3-09 sub-checkboxes and partial-status markers; the Phase 3 dashboard remains 5/15 because no additional task satisfies its full `Done when` contract |
 | 2026-09-05 | §6.11, §18.2, §11.4 | Flipped P3-12 and P3-13 sub-checkboxes; the code was already in `326dad4` but the dashboard count and inline sub-checkboxes were never updated. The batch runner in `pipeline/batch.ts` ships concurrency (auto + override), `onError: 'continue' \| 'stop'`, output-mode descriptors, `preserveFolderStructure`, dedupe by FNV-1a 64-bit content hash, sort by name/size, `memoryCeiling` with a governor that drops a slot rather than crashing, per-item `BatchItemResult` with status/attempts/tiers, retries, and a `_errors.txt` contract; the `Done when` 50 × 4 MP / 200-file benchmarks are not CI-gated but the surface is covered by 10 `batch.test.mjs` cases. The recipe builder in `recipes/sharing.ts` ships `describeRecipe` (plain-language per-step phrases, AI-step flagging with explicit warnings, watermark/mask warnings), `buildShareFragment` / `parseShareFragment` / `buildShareLink` (r1. base64url + deflate, no server round-trip), `recipeSharePayload` (URL fragment when small, file download when oversized), `persistableJson` (IndexedDB-shaped stable JSON), and `cloneSerializedRecipe`. The 4-step round-trip and the no-server-round-trip contract are both covered by 15 `recipe-share.test.mjs` cases. | Flipped P3-12 and P3-13 sub-checkboxes; Phase 3 dashboard 3→5; no code change, documentation-only |
 | 2026-09-05 | §7.2, §10.4 | Implemented the P3-01 GPU pipeline. The full five-tier ladder (`webgpu` → `webgl2` → `wasm-simd` → `wasm` → `js`) is now wired through `chooseTier(capabilities, mode)` and `selectBackendWithFallback`. `Plan` gained `mode: 'preview' \| 'export'` and `backend: ExecutionTier` so the per-step `ItemResult.tiers` is honest about which tier actually ran. The **export path is forced to a CPU tier unless the caller passes `runExportOnGpu: true`** — README §10.4's determinism guarantee is now enforced at the executor boundary, not just documented. The CPU/WASM backend is the deterministic reference; the WebGL2 backend is a real fragment-shader program (one draw call per op) plus a CPU-simulation path the test harness uses in CI. The WebGPU backend is a v1 no-op that throws a typed error so the executor can downgrade — the spec's WebGPU slot is honest in the type union, the probe, and the registry, and the v1 cut is logged here. Only the 9 pixel-local scalars from the original P3-02 surface (brightness, contrast, saturation, exposure, gamma, temperature, tint, highlights, shadows) have a GPU implementation in v1; the other 7 scalars + curves + levels are passthrough codes (≥ 100) the GPU path forwards to the CPU reference via `applyAdjustments` so end-to-end recipe semantics are preserved. Cross-tier tolerance is enforced at ±1 per channel for linear ops and ±2 for gamma/exposure by `gpu-pipeline.test.ts`. The 16 ms/frame GPU latency budget is not gated in CI (no GPU); the 50 ms/frame WASM budget is. | Flipped P3-01 checkboxes; Phase 3 dashboard 2→3; 617 engine tests pass; GPU pipeline tested for tier selection, tier downgrade, export-mode determinism, cross-tier tolerance, and per-step tier recording |
 | 2026-09-05 | §6.5, §6.7 | Completed the full P3-02 adjustment surface: 16 scalars (brightness, contrast, saturation, exposure, gamma, temperature, tint, vibrance, hue, highlights, shadows, whites, blacks, clarity, dehaze, opacity) + per-channel curves (Fritsch–Carlson monotone-cubic) + levels + read-only `computeHistogram`. Clarity and dehaze read a neighbourhood and are routed through `executeTiled` with halo 1 / 7. Completed P3-03: 5 monochrome dithers (`none`, `floyd-steinberg`, `atkinson`, `bayer-2x2`, `bayer-4x4`) replace the previous stub; 24 named presets in `filters/presets.ts`, each a declarative 1–4 step stack of primitives with no brand name and no commercial LUT reproduction | Flipped P3-02 and P3-03 checkboxes; Phase 3 dashboard now 2/15; 592 engine tests pass, including the new property tests, dither strategies, and preset/filter-resolution/trademark-clean tests |
