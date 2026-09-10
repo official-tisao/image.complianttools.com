@@ -41,6 +41,32 @@ import {
 } from '../color/index.js';
 import { applyRecolour } from '../color/recolour.js';
 import {
+  applyAntialias,
+  applyBlur,
+  applyDenoise,
+  applyDespeckle,
+  applyEnhanceToggle,
+  applyNoMultilayer,
+  applyNormalize,
+  applySharpen,
+  applyThreshold,
+  SAUVOLA_HALO,
+  BLUR_HALO_FN,
+  DESPECKLE_HALO_FN,
+  SHARPEN_HALO_FN,
+} from '../ops/enhance/index.js';
+import {
+  convertColorSpace,
+  extractPalette,
+  exportPalette,
+  exportPaletteCss,
+  exportPaletteGpl,
+  exportPaletteJson,
+  type Palette,
+  type PaletteFormat,
+} from '../color/index.js';
+import { applyRecolour } from '../color/recolour.js';
+import {
   AdjustOptionsSchema,
   ColorSpaceOptionsSchema,
   CanvasResizeOptionsSchema,

@@ -27,12 +27,22 @@ export const WatermarkOptionsSchema = z.object({
   textContent: z.string().default(''),
   opacity: z.number().min(0).max(100).default(50),
   scaleWithImage: z.boolean().default(true),
-  blendMode: z.enum(['normal', 'multiply', 'screen', 'overlay', 'soft-light', 'difference']).default('normal'),
-  position: z.enum([
-    'top-left', 'top', 'top-right',
-    'left', 'center', 'right',
-    'bottom-left', 'bottom', 'bottom-right',
-  ]).default('center'),
+  blendMode: z
+    .enum(['normal', 'multiply', 'screen', 'overlay', 'soft-light', 'difference'])
+    .default('normal'),
+  position: z
+    .enum([
+      'top-left',
+      'top',
+      'top-right',
+      'left',
+      'center',
+      'right',
+      'bottom-left',
+      'bottom',
+      'bottom-right',
+    ])
+    .default('center'),
   rotation: z.number().min(-180).max(180).default(0),
   tiled: z.boolean().default(false),
   diagonalTiled: z.boolean().default(false),
@@ -41,16 +51,20 @@ export type WatermarkOptions = z.infer<typeof WatermarkOptionsSchema>;
 
 export const LayerOptionsSchema = z.object({
   enabled: z.boolean().default(false),
-  layers: z.array(
-    z.object({
-      id: z.string().min(1),
-      blendMode: z.enum(['normal', 'multiply', 'screen', 'overlay', 'soft-light', 'difference']).default('normal'),
-      opacity: z.number().min(0).max(1).default(1),
-      visible: z.boolean().default(true),
-      order: z.number().int().default(0),
-      groupId: z.string().optional(),
-    }),
-  ).default([]),
+  layers: z
+    .array(
+      z.object({
+        id: z.string().min(1),
+        blendMode: z
+          .enum(['normal', 'multiply', 'screen', 'overlay', 'soft-light', 'difference'])
+          .default('normal'),
+        opacity: z.number().min(0).max(1).default(1),
+        visible: z.boolean().default(true),
+        order: z.number().int().default(0),
+        groupId: z.string().optional(),
+      }),
+    )
+    .default([]),
 });
 export type LayerOptions = z.infer<typeof LayerOptionsSchema>;
 
@@ -637,12 +651,14 @@ export type DenoiseOptions = z.infer<typeof DenoiseOptionsSchema>;
  */
 export const BlackWhiteThresholdOptionsSchema = z
   .object({
-    mode: z.union([
-      z.literal('off'),
-      z.literal('otsu'),
-      z.literal('adaptive'),
-      z.number().min(0).max(255),
-    ]).default('off'),
+    mode: z
+      .union([
+        z.literal('off'),
+        z.literal('otsu'),
+        z.literal('adaptive'),
+        z.number().min(0).max(255),
+      ])
+      .default('off'),
   })
   .default({ mode: 'off' });
 export type BlackWhiteThresholdOptions = z.infer<typeof BlackWhiteThresholdOptionsSchema>;
