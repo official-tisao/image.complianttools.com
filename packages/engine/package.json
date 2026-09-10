@@ -83,6 +83,10 @@
     "./*": {
       "types": "./dist/*.d.ts",
       "default": "./dist/*.js"
+    },
+    "./layer": {
+      "types": "./dist/layer/model.d.ts",
+      "default": "./dist/layer/model.js"
     }
   },
   "types": "./dist/index.d.ts",

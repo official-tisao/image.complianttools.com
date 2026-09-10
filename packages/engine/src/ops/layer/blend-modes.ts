@@ -67,7 +67,7 @@ export function blendPixels(
     out[i] = Math.min(255, Math.max(0, Math.round(rf)));
     out[i + 1] = Math.min(255, Math.max(0, Math.round(gf)));
     out[i + 2] = Math.min(255, Math.max(0, Math.round(bf)));
-    out[i + 3] = base[i + 3]; // preserve alpha for v1
+    out[i + 3] = base[i + 3] ?? 255;
   }
   return out;
 }

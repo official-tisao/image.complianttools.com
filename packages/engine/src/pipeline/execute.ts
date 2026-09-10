@@ -3,6 +3,43 @@ import { cropRaster, rotateRaster } from '../ops/geometry.js';
 import { applyAdjustments, DEHAZE_RADIUS } from '../ops/adjust.js';
 import { applyPixelLocalOptions, boxBlur } from '../ops/raster.js';
 import { resizeRaster } from '../ops/resize.js';
+import { applyWatermark } from '../ops/watermark.js';
+import { renderText } from '../typography/index.js';
+import { applyBorder } from '../transform/border.js';
+import { roundCorners } from '../transform/round-corners.js';
+import { makeCollage } from '../transform/collage.js';
+import { splitImage } from '../transform/split.js';
+import { canvasResize } from '../transform/canvas-resize.js';
+import { enlarge } from '../transform/enlarge.js';
+import { RESIZE_PRESETS } from '../transform/bulk-resize.js';
+import {
+  applyAntialias,
+  applyBlur,
+  applyDenoise,
+  applyDespeckle,
+  applyEnhanceToggle,
+  applyNoMultilayer,
+  applyNormalize,
+  applySharpen,
+  applyThreshold,
+  applyEqualize,
+  applyDeskew,
+  SAUVOLA_HALO,
+  BLUR_HALO_FN,
+  DESPECKLE_HALO_FN,
+  SHARPEN_HALO_FN,
+} from '../ops/enhance/index.js';
+import {
+  convertColorSpace,
+  extractPalette,
+  exportPalette,
+  exportPaletteCss,
+  exportPaletteGpl,
+  exportPaletteJson,
+  type Palette,
+  type PaletteFormat,
+} from '../color/index.js';
+import { applyRecolour } from '../color/recolour.js';
 import {
   applyAntialias,
   applyBlur,
@@ -32,6 +69,10 @@ import { applyRecolour } from '../color/recolour.js';
 import {
   AdjustOptionsSchema,
   ColorSpaceOptionsSchema,
+  CanvasResizeOptionsSchema,
+  EnlargeOptionsSchema,
+  BorderOptionsSchema,
+  RoundCornersOptionsSchema,
   CropOptionsSchema,
   EnhanceOptionsSchema,
   NoMultilayerOptionsSchema,
@@ -46,7 +87,12 @@ import {
   BlurOptionsSchema,
   DenoiseOptionsSchema,
   BlackWhiteThresholdOptionsSchema,
-  // LayerOptionsSchema, TextOptionsSchema, WatermarkOptionsSchema removed (unused)
+  EqualizeOptionsSchema,
+  DeskewOptionsSchema,
+  TextOptionsSchema,
+  WatermarkOptionsSchema,
+  CollageOptionsSchema,
+  SplitOptionsSchema,
 } from '../schemas/options.js';
 import type {
   EngineError,
@@ -201,7 +247,8 @@ async function executeStep(
   if (op === 'denoise') {
     const parsed = DenoiseOptionsSchema.parse(options);
     if (parsed.enabled) {
-      const operation = (input: RasterImage) => applyDenoise(input, parsed.method, parsed.strength);
+      const operation = (input: RasterImage) =>
+        applyDenoise(input, parsed.method, parsed.strength);
       const halo = parsed.method === 'bilateral' ? 2 : 1;
       return tiled ? executeTiled(image, operation, tileSize, halo) : operation(image);
     }
@@ -221,16 +268,24 @@ async function executeStep(
     }
     return applyThreshold(image, parsed.mode);
   }
+  if (op === 'equalize') {
+    const parsed = EqualizeOptionsSchema.parse(options);
+    if (parsed.enabled) {
+      return applyEqualize(image, parsed.channels, parsed.clipLimit);
+    }
+    return image;
+  }
+  if (op === 'deskew') {
+    const parsed = DeskewOptionsSchema.parse(options);
+    if (parsed.enabled) {
+      return applyDeskew(image, parsed.maxAngle, parsed.background);
+    }
+    return image;
+  }
   if (op === 'color-space') {
     const parsed = ColorSpaceOptionsSchema.parse(options);
     if (!parsed.enabled) return image;
-    return convertColorSpace(
-      image,
-      parsed.target,
-      parsed.bitDepth,
-      parsed.embedIcc,
-      parsed.stripIcc,
-    );
+    return convertColorSpace(image, parsed.target, parsed.bitDepth, parsed.embedIcc, parsed.stripIcc);
   }
   if (op === 'recolour') {
     const parsed = RecolourOptionsSchema.parse(options);
@@ -270,6 +325,93 @@ async function executeStep(
     (image as RasterImage & { __paletteExport?: string }).__paletteExport = encoded;
     return image;
   }
+  if (op === 'canvas-resize') {
+    const parsed = CanvasResizeOptionsSchema.parse(options);
+    if (!parsed.enabled) return image;
+    return canvasResize(image, {
+      enabled: true,
+      width: parsed.width,
+      height: parsed.height,
+      anchor: parsed.anchor,
+      fillColor: parsed.fillColor,
+    });
+  }
+  if (op === 'enlarge') {
+    const parsed = EnlargeOptionsSchema.parse(options);
+    if (!parsed.enabled) return image;
+    return enlarge(image, { scale: parsed.scale, allowUpscale: parsed.allowUpscale });
+  }
+  if (op === 'border') {
+    const parsed = BorderOptionsSchema.parse(options);
+    if (!parsed.enabled) return image;
+    return applyBorder(image, { enabled: true, width: parsed.width, color: parsed.color, inner: parsed.inner });
+  }
+  if (op === 'round-corners') {
+    const parsed = RoundCornersOptionsSchema.parse(options);
+    if (!parsed.enabled) return image;
+    return roundCorners(image, { enabled: true, radius: parsed.radius, background: parsed.background });
+  }
+  if (op === 'bulk-resize') {
+    // T25 preset pack: applies the preset dimensions via resizeRaster with fit mode.
+    const presetName = (options.preset as string) ?? options.format as string;
+    const preset = RESIZE_PRESETS.find((p) => p.label === presetName);
+    if (!preset) {
+      // Fallback to direct resize options
+      return resizeRaster(image, ResizeOptionsSchema.parse(options));
+    }
+    return resizeRaster(image, ResizeOptionsSchema.parse({
+      mode: 'fit',
+      width: preset.width,
+      height: preset.height,
+      fitMode: preset.fitMode ?? 'contain',
+      algorithm: 'lanczos3',
+      allowUpscale: true,
+      lockAspect: true,
+    }));
+  }
+  if (op === 'collage') {
+    const parsed = CollageOptionsSchema.parse(options);
+    if (!parsed.enabled) return image;
+    // For pipeline, images array would come from previous steps or batch; v1 uses single image repeated
+    return makeCollage(image, { mode: parsed.mode, columns: parsed.columns ?? undefined, rows: parsed.rows ?? undefined, gap: parsed.gap, background: parsed.background, alignment: (parsed.alignment as 'center' | 'top-left' | 'bottom-right') ?? 'center', images: [image] });
+  }
+  if (op === 'split') {
+    const parsed = SplitOptionsSchema.parse(options);
+    if (!parsed.enabled) return image;
+    const tiles = splitImage(image, { enabled: true, rows: parsed.rows, cols: parsed.cols, output: parsed.output });
+    // Pipeline returns array? v1 returns first tile or whole? We'll return first tile for single-output pipeline.
+    return tiles[0] ?? image;
+  }
+  if (op === 'watermark') {
+    const parsed = WatermarkOptionsSchema.parse(options);
+    if (!parsed.enabled && parsed.kind === 'none') return image;
+    return applyWatermark(image, {
+      kind: (parsed.kind === 'none' ? 'text' : parsed.kind) as 'image' | 'text',
+      textContent: parsed.textContent,
+      opacity: parsed.opacity,
+      blendMode: parsed.blendMode,
+      position: parsed.position,
+      rotation: parsed.rotation,
+      tiled: parsed.tiled,
+      diagonalTiled: parsed.diagonalTiled,
+      scaleWithImage: parsed.scaleWithImage,
+      enabled: true,
+    });
+  }
+  if (op === 'text') {
+    const parsed = TextOptionsSchema.parse(options);
+    if (!parsed.enabled) return image;
+    // Minimal: render text overlay onto the image using typography module.
+    return renderText(image, {
+      text: parsed.content,
+      fontFamily: parsed.fontFamily,
+      fontSize: parsed.fontSize,
+      color: parsed.color,
+      opacity: parsed.opacity / 100,
+      x: 10,
+      y: 20,
+    });
+  }
   return image;
 }
 
@@ -283,9 +425,7 @@ function formatPalette(palette: Palette, format: PaletteFormat): string {
     case 'gpl':
       return exportPaletteGpl(palette);
     case 'ase':
-      // Defer to the canonical exporter so the error message stays in
-      // one place.
-      return exportPalette(palette, 'ase');
+      return new TextDecoder().decode(exportPalette(palette, 'ase') as Uint8Array);
   }
 }
 
@@ -412,7 +552,9 @@ export async function run(
     const result: ItemResult = {
       itemIndex,
       image,
-      tiers: perStepTiers.length > 0 ? perStepTiers : plan.steps.map(() => plan.tier),
+      tiers: perStepTiers.length > 0
+        ? perStepTiers
+        : plan.steps.map(() => plan.tier),
     };
     items.push(result);
     opts.onItemDone?.(result);

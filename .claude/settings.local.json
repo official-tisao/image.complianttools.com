@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add *)",
+      "Bash(sed -i '4a import type { CanvasResizeOptions } from '\\\\''../schemas/options.js'\\\\'';' packages/engine/src/transform/canvas-resize.ts)",
+      "Bash(sed -i '4a import type { EnlargeOptions } from '\\\\''../schemas/options.js'\\\\'';' packages/engine/src/transform/enlarge.ts)",
+      "Bash(sed -i '4a import type { RoundCornersOptions } from '\\\\''../schemas/options.js'\\\\'';' packages/engine/src/transform/round-corners.ts)",
+      "Bash(sed -i '4a import type { SplitOptions } from '\\\\''../schemas/options.js'\\\\'';' packages/engine/src/transform/split.ts)"
+    ]
+  }
+}

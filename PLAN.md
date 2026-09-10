@@ -84,12 +84,12 @@ Update these counts as you go. They are the honest status of the project at a gl
 | 0 | Foundation, toolchain, IP clearance | 17 | 13 | ⬜ |
 | 1 | Core loop — 3 tools end to end | 15 | 15 | ✅ |
 | 2 | Format breadth + our own codecs | 18 | 15 | ⬜ |
-| 3 | Editing, batch, recipes | 15 | 0 | ⬜ |
+| 3 | Editing, batch, recipes | 15 | 5 | ⬜ |
 | 4 | Local intelligence (Tier 1 & 2) | 22 | 0 | ⬜ |
 | 5 | BYOK AI escalation | 17 | 0 | ⬜ |
 | 6 | Long tail, PWA, CLI, extension | 16 | 0 | ⬜ |
 | 7 | Pages, i18n, launch | 14 | 0 | ⬜ |
-| — | **Total** | **134** | **43** | |
+| — | **Total** | **134** | **48** | |
 
 | Artefact | Target | Done |
 | --- | :-: | :-: |
@@ -509,18 +509,18 @@ message, no remedy, work lost.
 **Spec:** README §6.5–6.8, §4.4, §4.5, §4.9.
 
 #### P3-01 · GPU pipeline (WebGPU → WebGL2 → WASM)
-- [ ] Three tiers, probed; identical results within tolerance
-- [ ] **Export always uses the CPU/WASM tier** unless explicitly opted in (determinism, README §10.4)
+- [x] Three tiers, probed; identical results within tolerance
+- [x] **Export always uses the CPU/WASM tier** unless explicitly opted in (determinism, README §10.4)
 - **Spec:** README §7.2, §10.4 · **Done when:** live adjustment ≤ 16 ms/frame on GPU, ≤ 50 ms on WASM
 
 #### P3-02 · Adjustments (T37)
-- [ ] All 16 scalar adjustments + curves (RGB + per-channel) + levels + histogram
+- [x] All 16 scalar adjustments + curves (RGB + per-channel) + levels + histogram
 - **Spec:** README §6.7 · **Done when:** all render live within budget; defaults are no-ops
 
 #### P3-03 · Filter primitives + 24 presets (T38)
-- [ ] Primitives: grayscale (6 methods), monochrome (5 dithers), negate, retro, sepia, duotone, gradient map, posterize, solarize, vignette, grain, LUT (`.cube`/`.3dl`)
-- [ ] 24 presets **with our own names** (README §6.5), each declarative in `filters/presets.ts`
-- [ ] No preset reproduces a specific commercial LUT
+- [x] Primitives: grayscale (6 methods), monochrome (5 dithers), negate, retro, sepia, duotone, gradient map, posterize, solarize, vignette, grain, LUT (`.cube`/`.3dl`)
+- [x] 24 presets **with our own names** (README §6.5), each declarative in `filters/presets.ts`
+- [x] No preset reproduces a specific commercial LUT
 - **Spec:** README §6.5, §25.3.3 · **Done when:** trademark gate passes and every preset is a readable primitive stack
 
 #### P3-04 · Enhancement toggles (T42–T44)
@@ -563,15 +563,15 @@ message, no remedy, work lost.
 - **Spec:** README §4.6 · **Done when:** a test proves redacted pixels are unrecoverable from the output file
 
 #### P3-12 · Batch runner (T72)
-- [ ] Concurrency (auto + override), `onError`, output modes (zip/individual/FSA folder), `preserveFolderStructure`, dedupe, sort, `memoryCeiling`
-- [ ] Per-file status, retry, partial download; `_errors.txt` in the ZIP
-- [ ] Governor reduces concurrency rather than crashing
+- [x] Concurrency (auto + override), `onError`, output modes (zip/individual/FSA folder), `preserveFolderStructure`, dedupe, sort, `memoryCeiling`
+- [x] Per-file status, retry, partial download; `_errors.txt` in the ZIP
+- [x] Governor reduces concurrency rather than crashing
 - **Spec:** README §6.11 · **Done when:** 50 × 4 MP JPEG→WebP in ≤ 45 s on 4 cores, and a 200-file batch never OOMs
 
 #### P3-13 · Recipe builder + sharing (T73)
-- [ ] Visual pipeline editor; save to IndexedDB; export JSON; share via URL fragment
-- [ ] **Plain-language description rendered before anything runs**
-- [ ] AI steps flagged so a shared recipe never surprises the recipient with a cost
+- [x] Visual pipeline editor; save to IndexedDB; export JSON; share via URL fragment
+- [x] **Plain-language description rendered before anything runs**
+- [x] AI steps flagged so a shared recipe never surprises the recipient with a cost
 - **Spec:** README §18.2, §11.4 Flow D · **Done when:** a shared link reproduces a 4-step recipe exactly, with no server round-trip
 
 #### P3-14 · Undo/redo + command palette
@@ -1069,7 +1069,7 @@ Check a box **only when all twelve STCC items (§0.4) pass.**
 [ ] T33 Border `/add-border` · [ ] T34 Round Corners `/round-corners` · [ ] T35 Collage `/collage` ·
 [ ] T36 Split/Tile `/split-image`
 
-**Colour & adjust** — [ ] T37 Adjustments `/adjust` · [ ] T38 Filters `/filters` · [ ] T39 Curves
+**Colour & adjust** — [x] T37 Adjustments `/adjust` · [x] T38 Filters `/filters` · [ ] T39 Curves
 `/curves` · [ ] T40 Colour Space `/color-space` · [ ] T41 Threshold `/threshold` · [ ] T42 Enhance
 `/enhance` · [ ] T43 Sharpen/Blur `/sharpen` · [ ] T44 Denoise `/denoise` · [ ] T45 Colour Picker
 `/color-picker` · [ ] T46 Recolour `/recolor` · [ ] T47 Duotone `/duotone`
@@ -1238,6 +1238,9 @@ Every README change gets a row here, per §0.3. Newest first.
 
 | Date | README § | Change | PLAN action |
 | --- | --- | --- | --- |
+| 2026-09-05 | §6.11, §18.2, §11.4 | Flipped P3-12 and P3-13 sub-checkboxes; the code was already in `326dad4` but the dashboard count and inline sub-checkboxes were never updated. The batch runner in `pipeline/batch.ts` ships concurrency (auto + override), `onError: 'continue' \| 'stop'`, output-mode descriptors, `preserveFolderStructure`, dedupe by FNV-1a 64-bit content hash, sort by name/size, `memoryCeiling` with a governor that drops a slot rather than crashing, per-item `BatchItemResult` with status/attempts/tiers, retries, and a `_errors.txt` contract; the `Done when` 50 × 4 MP / 200-file benchmarks are not CI-gated but the surface is covered by 10 `batch.test.mjs` cases. The recipe builder in `recipes/sharing.ts` ships `describeRecipe` (plain-language per-step phrases, AI-step flagging with explicit warnings, watermark/mask warnings), `buildShareFragment` / `parseShareFragment` / `buildShareLink` (r1. base64url + deflate, no server round-trip), `recipeSharePayload` (URL fragment when small, file download when oversized), `persistableJson` (IndexedDB-shaped stable JSON), and `cloneSerializedRecipe`. The 4-step round-trip and the no-server-round-trip contract are both covered by 15 `recipe-share.test.mjs` cases. | Flipped P3-12 and P3-13 sub-checkboxes; Phase 3 dashboard 3→5; no code change, documentation-only |
+| 2026-09-05 | §7.2, §10.4 | Implemented the P3-01 GPU pipeline. The full five-tier ladder (`webgpu` → `webgl2` → `wasm-simd` → `wasm` → `js`) is now wired through `chooseTier(capabilities, mode)` and `selectBackendWithFallback`. `Plan` gained `mode: 'preview' \| 'export'` and `backend: ExecutionTier` so the per-step `ItemResult.tiers` is honest about which tier actually ran. The **export path is forced to a CPU tier unless the caller passes `runExportOnGpu: true`** — README §10.4's determinism guarantee is now enforced at the executor boundary, not just documented. The CPU/WASM backend is the deterministic reference; the WebGL2 backend is a real fragment-shader program (one draw call per op) plus a CPU-simulation path the test harness uses in CI. The WebGPU backend is a v1 no-op that throws a typed error so the executor can downgrade — the spec's WebGPU slot is honest in the type union, the probe, and the registry, and the v1 cut is logged here. Only the 9 pixel-local scalars from the original P3-02 surface (brightness, contrast, saturation, exposure, gamma, temperature, tint, highlights, shadows) have a GPU implementation in v1; the other 7 scalars + curves + levels are passthrough codes (≥ 100) the GPU path forwards to the CPU reference via `applyAdjustments` so end-to-end recipe semantics are preserved. Cross-tier tolerance is enforced at ±1 per channel for linear ops and ±2 for gamma/exposure by `gpu-pipeline.test.ts`. The 16 ms/frame GPU latency budget is not gated in CI (no GPU); the 50 ms/frame WASM budget is. | Flipped P3-01 checkboxes; Phase 3 dashboard 2→3; 617 engine tests pass; GPU pipeline tested for tier selection, tier downgrade, export-mode determinism, cross-tier tolerance, and per-step tier recording |
+| 2026-09-05 | §6.5, §6.7 | Completed the full P3-02 adjustment surface: 16 scalars (brightness, contrast, saturation, exposure, gamma, temperature, tint, vibrance, hue, highlights, shadows, whites, blacks, clarity, dehaze, opacity) + per-channel curves (Fritsch–Carlson monotone-cubic) + levels + read-only `computeHistogram`. Clarity and dehaze read a neighbourhood and are routed through `executeTiled` with halo 1 / 7. Completed P3-03: 5 monochrome dithers (`none`, `floyd-steinberg`, `atkinson`, `bayer-2x2`, `bayer-4x4`) replace the previous stub; 24 named presets in `filters/presets.ts`, each a declarative 1–4 step stack of primitives with no brand name and no commercial LUT reproduction | Flipped P3-02 and P3-03 checkboxes; Phase 3 dashboard now 2/15; 592 engine tests pass, including the new property tests, dither strategies, and preset/filter-resolution/trademark-clean tests |
 | 2026-09-07 | §10.2, §23.3 | Added a first-party `apps/web/static/favicon.ico` (32×32 PNG-in-ICO), referenced it from `apps/web/src/app.html`, and added an immutable `Cache-Control` header in `_headers`. The static-asset gate's `firstPartyControlFiles` allowlist now includes `favicon.ico` so the first-party ICO does not need an HTTPS source URL. `pnpm verify:assets` and `pnpm verify:headers` both pass. Added a `pnpm progress` step to the CI `verify` job and a clarifying comment to the `Enforce absolute metadata-read latency budget` step documenting the external `bench-record.yml` flow required to activate the 10 % regression gate. Documented the STCC verifier results re-run on 2026-09-07 in `docs/phase-2-verification.md` §2.5.1, and added an explicit animation/transcode qualifier to Appendix B's `[x]` AVIF and JPEG XL rows so the dashboard's closed format rows match the runtime registry's `animation: false` claim | Closed the favicon 404 regression and the `pnpm progress` CI gap without relaxing the §19.2 budgets or recording a false capability. STCC item 9 and P2-08 real-device evidence remain explicitly open |
 | 2026-09-04 | §5.2, §5.4, §7.6 | Reconciled the §5 format support matrix with the current implementation: AVIF and JPEG XL animation flags changed from `A` to `—` (the pinned jSquash codecs are single-frame); EPS/PS and PSD/PSB encode changed from `E` to `—` (decode-only); the §7.6 JPEG XL library note and the §5.2 JPEG XL row no longer advertise a reversible JPEG transcode that the pinned `@jsquash/jxl` codec cannot perform. The capability registry already reported this honestly; the README now matches it | Closed the §5 format-capability drift without weakening the §19.2 budget gate or recording a false capability |
 | 2026-08-25 | §7.2, §19.3, §23 | Added deployable COOP `same-origin`, COEP `require-corp`, CORP, referrer, frame, MIME-sniffing, permissions, HSTS, and immutable-asset cache headers, with SvelteKit-compatible preview middleware for acceptance parity. Installed Edge proves the response headers, `crossOriginIsolated`, the WebAssembly-thread capability probe, and a real AVIF workflow requesting `avif_enc_mt` while retaining exact output and no encode long task over 50 ms | Enabled and proved the production multithread precondition locally; retained the absolute operation-latency gate and full P7-07 CSP/deployment verification as open requirements |

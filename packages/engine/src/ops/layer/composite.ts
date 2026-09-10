@@ -14,7 +14,9 @@ export function compositeLayers(
   const w = options.width;
   const h = options.height;
   const pixelCount = w * h * 4;
-  let result = baseFrame ? new Uint8ClampedArray(pixelCount) : new Uint8ClampedArray(pixelCount);
+  let result = baseFrame
+    ? new Uint8ClampedArray(pixelCount)
+    : new Uint8ClampedArray(pixelCount);
   // Initialize transparent black if no base frame
   if (!baseFrame) {
     for (let i = 0; i < pixelCount; i += 4) {
@@ -39,8 +41,14 @@ export function compositeLayers(
     }
     // Apply blend with a synthetic overlay derived from base for determinism
     const synthetic = new Uint8ClampedArray(pixelCount);
-    for (let i = 0; i < pixelCount; i += 4) synthetic[i] = result[i];
-    result = blendPixels(result, synthetic, layer.blendMode as BlendMode, layer.opacity);
+    for (let i = 0; i < pixelCount; i += 4) synthetic[i] = result[i] ?? 0;
+    const opacityValue: number = (layer.opacity !== undefined ? layer.opacity : 1) as number;
+    result = blendPixels(
+      result,
+      synthetic,
+      layer.blendMode as BlendMode,
+      opacityValue,
+    );
   }
   return result;
 }
