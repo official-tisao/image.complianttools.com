@@ -17,3 +17,4 @@ test-results/
 Thumbs.db
 
 debug.log
+__pycache__/

@@ -34,6 +34,22 @@ describe('AdjustOptionsSchema (P3-02 foundation)', () => {
       tint: 0,
       highlights: 0,
       shadows: 0,
+      whites: 0,
+      blacks: 0,
+      vibrance: 0,
+      hue: 0,
+      clarity: 0,
+      dehaze: 0,
+      opacity: 100,
+      curvesRGB: [],
+      curvesR: [],
+      curvesG: [],
+      curvesB: [],
+      levelsInBlack: 0,
+      levelsGamma: 1,
+      levelsInWhite: 255,
+      levelsOutBlack: 0,
+      levelsOutWhite: 255,
     });
   });
 

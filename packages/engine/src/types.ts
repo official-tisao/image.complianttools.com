@@ -127,7 +127,27 @@ export interface PlanStep {
 
 export interface Plan {
   readonly steps: readonly PlanStep[];
+  /**
+   * The tier requested for this plan. May be a GPU tier for preview, or always
+   * a CPU tier for export. The actual tier used per step is recorded on
+   * `PlanStep.usedTier` so the UI can show "requested webgpu, used webgl2"
+   * when a downgrade happened at runtime.
+   */
   readonly tier: ExecutionTier;
+  /**
+   * The plan's mode. `'preview'` is the live, latency-sensitive path that
+   * may use any tier. `'export'` is the final encoding path and is forced
+   * to a CPU tier unless the user explicitly opts in (see `RunOptions`).
+   * This is the P3-01 determinism guarantee (README §10.4) made explicit.
+   */
+  readonly mode: 'preview' | 'export';
+  /**
+   * The tier actually used at runtime for the first step (and, when the
+   * backend is uniform across steps, for the whole plan). Mirrors what
+   * `ItemResult.tiers` reports per step. When `tier !== backend` the
+   * higher tier fell back and a warning should be surfaced.
+   */
+  readonly backend: ExecutionTier;
   readonly estimatedPeakBytes: number;
   readonly lazyDownloads: readonly {
     readonly id: string;

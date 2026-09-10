@@ -210,9 +210,12 @@ jobs:
           cc -std=c11 -Wall -Wextra -Werror -DLV_CONF_SKIP -I .lvgl/v8 -c .generated/lvgl/lvgl-v8.c -o .generated/lvgl/lvgl-v8.o
           cc -std=c11 -Wall -Wextra -Werror -DLV_CONF_SKIP -I .lvgl/v9 -c .generated/lvgl/lvgl-v9.c -o .generated/lvgl/lvgl-v9.o
       - uses: arduino/setup-arduino-cli@v2
+        with:
+          version: '1.2.2'
       - name: Install pinned Arduino targets and libraries
         run: |
           arduino-cli config init
+          arduino-cli config set network.connection_timeout 3600s
           arduino-cli config add board_manager.additional_urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
           arduino-cli core update-index
           arduino-cli core install arduino:avr@1.8.6
@@ -262,3 +265,40 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm test:credential-leak
+
+  docker-validate:
+    name: docker-validate
+    # Build the production image from the Dockerfile, prove the container
+    # starts cleanly, that nginx serves the static site, and that
+    # `docker compose up` reaches a healthy state. This is the guard that
+    # catches a broken Dockerfile or a malformed nginx.conf before it
+    # ever leaves CI.
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.5
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # The web app's `build` script runs Vite directly (not through Turbo),
+      # so the `^build` dependency on @complianttools/image-engine never
+      # fires. Build the engine first so `dist/` exists for the SSR bundle
+      # to resolve.
+      - name: Build the engine package
+        run: pnpm --filter @complianttools/image-engine build
+
+      - name: Build the static site
+        run: pnpm --filter @complianttools/web build
+
+      - name: Build and validate production Docker image and Compose
+        run: bash scripts/githubci/docker-validate.sh

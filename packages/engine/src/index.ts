@@ -58,13 +58,46 @@ export * from './metadata/container.js';
 export * from './metadata/exif.js';
 export * from './metadata/inspect.js';
 export * from './color/icc.js';
+export * from './color/convert.js';
+export {
+  extractPalette,
+  exportPalette,
+  exportPaletteCss,
+  exportPaletteJson,
+  exportPaletteGpl,
+  exportPaletteAse,
+} from './color/palette.js';
+export * from './color/recolour.js';
 export * from './ops/geometry.js';
 export * from './ops/raster.js';
 export * from './ops/resize.js';
 export * from './ops/adjust.js';
+export * from './ops/curves.js';
+export * from './ops/levels.js';
+export * from './ops/histogram.js';
+export * from './transform/bulk-resize.js';
+export * from './transform/canvas-resize.js';
+export * from './transform/enlarge.js';
+export * from './transform/border.js';
+export * from './transform/collage.js';
+export * from './transform/split.js';
+export * from './layer/model.js';
+export * from './layer/editor-shell.js';
+export * from './layer/composite.js';
+export * from './typography/index.js';
+export * from './transform/round-corners.js';
+export * from './ops/watermark.js';
+export * from './ops/enhance/index.js';
+export * from './gpu/types.js';
+export * from './gpu/op-codes.js';
+export * from './gpu/registry.js';
+export * from './gpu/cpu-wasm.js';
+export * from './gpu/webgl2.js';
+export * from './gpu/webgpu.js';
 export * from './pipeline/batch.js';
 export * from './pipeline/compile.js';
 export * from './pipeline/execute.js';
+export * from './pipeline/execute-on-tier.js';
 export * from './pipeline/proxy.js';
 export * from './pipeline/target-size.js';
 export * from './pipeline/tiling.js';
