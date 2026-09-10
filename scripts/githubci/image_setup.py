@@ -65,13 +65,17 @@ def expand(wf):
         if key in needs:
             raise ValueError(f'{key}: job cannot depend on itself')
         strategy = job.get('strategy', {})
-        if set(strategy) - {'fail-fast', 'matrix'}:
+        if set(strategy) - {'fail-fast', 'max-parallel', 'matrix'}:
             raise ValueError(f'{key}: unsupported strategy')
         matrix = strategy.get('matrix', {'include': [{}]})
         if set(matrix) != {'include'}:
             raise ValueError(f'{key}: only explicit include matrices are supported')
         if not matrix['include']:
             raise ValueError(f'{key}: empty matrix would skip a required job')
+        max_parallel = strategy.get('max-parallel', len(matrix['include']))
+        if (isinstance(max_parallel, bool) or not isinstance(max_parallel, int) or
+                max_parallel < 1):
+            raise ValueError(f'{key}: max-parallel must be a positive integer')
         for row in matrix['include']:
             name = key + ('-' + row['group'] if row else '')
             for step in job['steps']:

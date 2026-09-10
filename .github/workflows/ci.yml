@@ -131,10 +131,14 @@ jobs:
     name: browser-e2e
     runs-on: self-hosted
     # Playwright's web server and three browser projects use the most memory,
-    # wait until some other jobs have released their runner containers.
+    # wait until all other jobs have released their runner containers.
     needs:
+      - verify
+      - no-network
       - lighthouse
       - embedded-compile
+      - raw-corpus
+      - credential-leak
       - docker-validate
     timeout-minutes: 75
     steps:
@@ -157,6 +161,9 @@ jobs:
     timeout-minutes: 30
     strategy:
       fail-fast: false
+      # Each Lighthouse build starts the full web bundle. Running matrix rows
+      # concurrently can exhaust the 4 GiB VPS even when two runners are online.
+      max-parallel: 1
       matrix:
         include:
           - group: core
@@ -220,7 +227,7 @@ jobs:
           version: '1.2.2'
       - name: Install pinned Arduino targets and libraries
         run: |
-          arduino-cli config init
+          arduino-cli config init --overwrite
           arduino-cli config set network.connection_timeout 3600s
           arduino-cli config add board_manager.additional_urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
           arduino-cli core update-index
