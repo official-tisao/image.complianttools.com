@@ -2,6 +2,64 @@ import { z } from 'zod';
 
 const cssColor = z.string().regex(/^#[0-9a-f]{6}(?:[0-9a-f]{2})?$/i, 'Use a hex colour.');
 
+export const TextOptionsSchema = z.object({
+  enabled: z.boolean().default(false),
+  content: z.string().min(1).default('Text'),
+  fontFamily: z.string().default('InterVariable'),
+  fontSize: z.number().min(6).max(256).default(32),
+  color: z.string().default('#000000'),
+  stroke: z.boolean().default(false),
+  opacity: z.number().min(0).max(100).default(100),
+});
+export type TextOptions = z.infer<typeof TextOptionsSchema>;
+
+export const WatermarkOptionsSchema = z.object({
+  enabled: z.boolean().default(false),
+  kind: z.enum(['none', 'text', 'image']).default('none'),
+  textContent: z.string().default(''),
+  opacity: z.number().min(0).max(100).default(50),
+  scaleWithImage: z.boolean().default(true),
+  blendMode: z
+    .enum(['normal', 'multiply', 'screen', 'overlay', 'soft-light', 'difference'])
+    .default('normal'),
+  position: z
+    .enum([
+      'top-left',
+      'top',
+      'top-right',
+      'left',
+      'center',
+      'right',
+      'bottom-left',
+      'bottom',
+      'bottom-right',
+    ])
+    .default('center'),
+  rotation: z.number().min(-180).max(180).default(0),
+  tiled: z.boolean().default(false),
+  diagonalTiled: z.boolean().default(false),
+});
+export type WatermarkOptions = z.infer<typeof WatermarkOptionsSchema>;
+
+export const LayerOptionsSchema = z.object({
+  enabled: z.boolean().default(false),
+  layers: z
+    .array(
+      z.object({
+        id: z.string().min(1),
+        blendMode: z
+          .enum(['normal', 'multiply', 'screen', 'overlay', 'soft-light', 'difference'])
+          .default('normal'),
+        opacity: z.number().min(0).max(1).default(1),
+        visible: z.boolean().default(true),
+        order: z.number().int().default(0),
+        groupId: z.string().optional(),
+      }),
+    )
+    .default([]),
+});
+export type LayerOptions = z.infer<typeof LayerOptionsSchema>;
+
 export const ExportOptionsSchema = z.object({
   format: z
     .enum(['same', 'avif', 'bmp', 'exr', 'gif', 'jpeg', 'jxl', 'png', 'qoi', 'tga', 'tiff', 'webp'])
@@ -429,9 +487,23 @@ export type JxlConverterToolOptions = z.infer<typeof JxlConverterToolOptionsSche
 export type EmbeddedToolOptions = z.infer<typeof EmbeddedToolOptionsSchema>;
 
 /**
- * Phase 3 adjustment options (T37), ranges/defaults from README §6.7 and the P3-02.2 contract.
- * `temperature` is a Kelvin value (2000–50000) or the `'detected'` sentinel (default), which is a
- * placeholder until a source ICC/EXIF colour-temperature source is wired up.
+ * A curve is a list of control points `[input, output]` in 0..255 with `input` strictly
+ * increasing. An empty or single-point curve is the identity. The schema enforces a
+ * minimum/maximum range; the engine enforces monotonicity and clamps overshooting
+ * outputs to the input range (Fritsch–Carlson).
+ */
+const CurvePointsSchema = z
+  .array(z.tuple([z.number().min(0).max(255), z.number().min(0).max(255)]))
+  .max(64)
+  .default([]);
+
+/**
+ * Phase 3 adjustment options (T37), ranges/defaults from README §6.7. `temperature` is a Kelvin
+ * value (2000–50000) or the `'detected'` sentinel (default), which is a placeholder until a source
+ * ICC/EXIF colour-temperature source is wired up. All numeric defaults are no-ops so the
+ * all-defaults path is a true no-op. `clarity` and `dehaze` read a small neighbourhood and the
+ * engine routes them through `executeTiled` with a halo (P1-04); the values here are the
+ * `amount` only, not the kernel radius, which is fixed in code.
  */
 export const AdjustOptionsSchema = z.object({
   brightness: z.number().min(-100).max(100).default(0),
@@ -445,8 +517,223 @@ export const AdjustOptionsSchema = z.object({
   tint: z.number().min(-150).max(150).default(0),
   highlights: z.number().min(-100).max(100).default(0),
   shadows: z.number().min(-100).max(100).default(0),
+  // Additional scalar adjustments (P3-02.2+).
+  whites: z.number().min(-100).max(100).default(0),
+  blacks: z.number().min(-100).max(100).default(0),
+  vibrance: z.number().min(-100).max(100).default(0),
+  hue: z.number().min(-180).max(180).default(0),
+  clarity: z.number().min(-100).max(100).default(0),
+  dehaze: z.number().min(-100).max(100).default(0),
+  opacity: z.number().min(0).max(100).default(100),
+  // Curves (per-step). Per-channel overrides the RGB composite.
+  curvesRGB: CurvePointsSchema,
+  curvesR: CurvePointsSchema,
+  curvesG: CurvePointsSchema,
+  curvesB: CurvePointsSchema,
+  // Levels (input range remap + output range remap with mid-tone gamma).
+  levelsInBlack: z.number().min(0).max(255).default(0),
+  levelsGamma: z.number().min(0.1).max(10).default(1),
+  levelsInWhite: z.number().min(0).max(255).default(255),
+  levelsOutBlack: z.number().min(0).max(255).default(0),
+  levelsOutWhite: z.number().min(0).max(255).default(255),
 });
 export type AdjustOptions = z.infer<typeof AdjustOptionsSchema>;
+
+/**
+ * P3-04 enhancement toggles. The schema is a superset of the legacy
+ * `'enhance'` step's `radius: number` option (still accepted for backward
+ * compatibility) and the new richer option surface from README §6.6.
+ * Every field has a documented default so an all-defaults options object
+ * is a true no-op.
+ */
+export const EnhanceOptionsSchema = z
+  .object({
+    /** Auto-enhance amount 0–100. The new richer path. */
+    amount: z.number().min(0).max(100).default(0),
+    /** Legacy field: when set, the engine runs `boxBlur` with this radius. */
+    radius: z.number().min(0).max(64).default(0),
+  })
+  .default({ amount: 0, radius: 0 });
+export type EnhanceOptions = z.infer<typeof EnhanceOptionsSchema>;
+
+/**
+ * P3-04 sharpen. Unsharp mask; `amount` 0–500, `radius` 0.5–64 px,
+ * `threshold` 0–255 (only edges above this luma difference get sharpened).
+ */
+export const SharpenOptionsSchema = z
+  .object({
+    enabled: z.boolean().default(false),
+    amount: z.number().min(0).max(500).default(100),
+    radius: z.number().min(0.5).max(64).default(1),
+    threshold: z.number().min(0).max(255).default(0),
+  })
+  .default({ enabled: false, amount: 100, radius: 1, threshold: 0 });
+export type SharpenOptions = z.infer<typeof SharpenOptionsSchema>;
+
+/**
+ * P3-04 despeckle. Median filter over a `(2r+1)²` window; `radius` 1–8 px.
+ */
+export const DespeckleOptionsSchema = z
+  .object({
+    enabled: z.boolean().default(false),
+    radius: z.number().min(1).max(8).default(1),
+  })
+  .default({ enabled: false, radius: 1 });
+export type DespeckleOptions = z.infer<typeof DespeckleOptionsSchema>;
+
+/**
+ * P3-04 antialias. Edge-aware Gaussian smoothing; `amount` 0–100.
+ * Uses a 3×3 Gaussian kernel; halo is 1 px.
+ */
+export const AntialiasOptionsSchema = z
+  .object({
+    enabled: z.boolean().default(false),
+    amount: z.number().min(0).max(100).default(50),
+  })
+  .default({ enabled: false, amount: 50 });
+export type AntialiasOptions = z.infer<typeof AntialiasOptionsSchema>;
+
+/**
+ * P3-04 normalize. Histogram percentile stretch from
+ * `lowPercentile` to `highPercentile` (0..100).
+ */
+export const NormalizeOptionsSchema = z
+  .object({
+    enabled: z.boolean().default(false),
+    lowPercentile: z.number().min(0).max(100).default(0),
+    highPercentile: z.number().min(0).max(100).default(100),
+  })
+  .default({ enabled: false, lowPercentile: 0, highPercentile: 100 });
+export type NormalizeOptions = z.infer<typeof NormalizeOptionsSchema>;
+
+/**
+ * P3-04 blur. Six kernel variants from README §6.6. The `angle` field
+ * is used by `motion` and `zoom`; `radius` is in pixels.
+ */
+export const BlurOptionsSchema = z
+  .object({
+    enabled: z.boolean().default(false),
+    type: z.enum(['gaussian', 'box', 'motion', 'radial', 'lens', 'zoom']).default('gaussian'),
+    radius: z.number().min(0.5).max(64).default(2),
+    angle: z.number().min(-180).max(180).default(0),
+  })
+  .default({ enabled: false, type: 'gaussian', radius: 2, angle: 0 });
+export type BlurOptions = z.infer<typeof BlurOptionsSchema>;
+
+/**
+ * P3-04 denoise. `median` and `bilateral` are implemented; `nlm` is
+ * deferred per the spec (NLM is uncleared in README §25.3.2). Calling
+ * with `method: 'nlm'` throws the documented error.
+ */
+export const DenoiseOptionsSchema = z
+  .object({
+    enabled: z.boolean().default(false),
+    method: z.enum(['median', 'bilateral']).default('median'),
+    strength: z.number().min(0).max(100).default(50),
+  })
+  .default({ enabled: false, method: 'median', strength: 50 });
+export type DenoiseOptions = z.infer<typeof DenoiseOptionsSchema>;
+
+/**
+ * P3-04 black-and-white threshold. `'off'` means the op is a no-op;
+ * `'otsu'` and `'adaptive'` (Sauvola) are auto-threshold algorithms;
+ * a numeric value is the literal 0–255 threshold.
+ */
+export const BlackWhiteThresholdOptionsSchema = z
+  .object({
+    mode: z
+      .union([
+        z.literal('off'),
+        z.literal('otsu'),
+        z.literal('adaptive'),
+        z.number().min(0).max(255),
+      ])
+      .default('off'),
+  })
+  .default({ mode: 'off' });
+export type BlackWhiteThresholdOptions = z.infer<typeof BlackWhiteThresholdOptionsSchema>;
+
+/**
+ * P3-04 noMultilayer. The engine has no multi-layer concept; the
+ * step returns the source raster unchanged. The schema exists so
+ * the option can be present in recipes without throwing at parse time.
+ */
+export const NoMultilayerOptionsSchema = z
+  .object({
+    enabled: z.boolean().default(false),
+  })
+  .default({ enabled: false });
+export type NoMultilayerOptions = z.infer<typeof NoMultilayerOptionsSchema>;
+
+/**
+ * P3-05 T40 colour space & depth conversion. `target` is one of the
+ * four synthesized ICC profile kinds; `bitDepth` is the per-channel
+ * target depth. ICC embed/strip uses `color/icc.ts`.
+ */
+export const ColorSpaceOptionsSchema = z
+  .object({
+    enabled: z.boolean().default(false),
+    target: z.enum(['srgb', 'display-p3', 'adobe-rgb-compatible', 'gray']).default('srgb'),
+    bitDepth: z.union([z.literal(8), z.literal(16)]).default(8),
+    embedIcc: z.boolean().default(false),
+    stripIcc: z.boolean().default(false),
+  })
+  .default({
+    enabled: false,
+    target: 'srgb',
+    bitDepth: 8,
+    embedIcc: false,
+    stripIcc: false,
+  });
+export type ColorSpaceOptions = z.infer<typeof ColorSpaceOptionsSchema>;
+
+/**
+ * P3-05 T45 colour picker & palette extraction. `count` is the desired
+ * number of palette entries; `method` is the algorithm; `seed` is a
+ * deterministic start for k-means.
+ */
+export const PaletteOptionsSchema = z
+  .object({
+    enabled: z.boolean().default(false),
+    method: z.enum(['kmeans', 'median-cut']).default('kmeans'),
+    count: z.number().min(2).max(64).default(8),
+    seed: z.number().int().min(0).max(0xffffffff).default(0x5eed0000),
+  })
+  .default({
+    enabled: false,
+    method: 'kmeans',
+    count: 8,
+    seed: 0x5eed0000,
+  });
+export type PaletteOptions = z.infer<typeof PaletteOptionsSchema>;
+
+/**
+ * P3-05 T46 recolour / hue replace. `targetHue` is the hue to match
+ * (0–360°); `tolerance` is the hue distance (0–180°); `replacement`
+ * is the new colour; `feather` is the soft transition width (0–180°).
+ */
+export const RecolourOptionsSchema = z
+  .object({
+    enabled: z.boolean().default(false),
+    targetHue: z.number().min(0).max(360).default(0),
+    tolerance: z.number().min(0).max(180).default(15),
+    replacement: z
+      .object({
+        r: z.number().min(0).max(255).default(0),
+        g: z.number().min(0).max(255).default(0),
+        b: z.number().min(0).max(255).default(0),
+      })
+      .default({ r: 0, g: 0, b: 0 }),
+    feather: z.number().min(0).max(180).default(0),
+  })
+  .default({
+    enabled: false,
+    targetHue: 0,
+    tolerance: 15,
+    replacement: { r: 0, g: 0, b: 0 },
+    feather: 0,
+  });
+export type RecolourOptions = z.infer<typeof RecolourOptionsSchema>;
 
 export interface OptionDescription {
   label: string;
