@@ -13,7 +13,7 @@ export default defineConfig({
   reporter: process.env.CI ? [['line'], ['html', { open: 'never' }]] : 'line',
   webServer: {
     command:
-      'pnpm --filter @complianttools/web build && pnpm --filter @complianttools/web preview --host 127.0.0.1 --port 4173 --strictPort',
+      'pnpm --filter @complianttools/image-engine build && pnpm --filter @complianttools/web build && pnpm --filter @complianttools/web preview --host 127.0.0.1 --port 4173 --strictPort',
     url: 'http://127.0.0.1:4173/convert',
     reuseExistingServer: !process.env.CI,
     // A cold engine tsc + Vite build of the full prerendered site measures ~195 s locally, so the

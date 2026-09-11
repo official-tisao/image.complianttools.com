@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { page } from '$app/state';
   import {
     createRaster,
     encodeGif,
@@ -14,18 +15,17 @@
   import GeneratedControls from '$lib/GeneratedControls.svelte';
   import { localizeOptions, translate, type Locale } from '$lib/i18n';
 
-  import { page } from '$app/state';
+  const locale = $derived(
+    (page.url.pathname.split('/')[1] === 'ar'
+      ? 'ar'
+      : page.url.pathname.split('/')[1] === 'en-XA'
+        ? 'en-XA'
+        : 'en') as Locale,
+  );
 
-  function getLocale(pathname: string): Locale {
-    const segment = pathname.split('/')[1];
-    if (segment === 'ar') return 'ar';
-    if (segment === 'en-XA') return 'en-XA';
-    return 'en';
-  }
-
-  const locale = $derived(getLocale(page.url.pathname));
   const t = (key: string, fallback: string, value?: string | number) =>
     translate(locale, key, fallback, value);
+
   const localizedPath = $derived(locale === 'en' ? '/gif-maker' : `/${locale}/gif-maker`);
 
   let status = $state('');
@@ -52,6 +52,7 @@
 
   function setControl(path: string, value: unknown) {
     const key = path.replace('gifMaker.', '') as keyof typeof options;
+
     try {
       options = GifMakerToolOptionsSchema.parse({ ...options, [key]: value });
       error = '';
@@ -71,10 +72,12 @@
   async function createGif() {
     status = '';
     error = '';
+
     if (files.length === 0) {
       error = t('gifMaker.chooseFirst', 'Choose at least one image first.');
       return;
     }
+
     try {
       await withTypedEngineErrorsAsync(
         t('gifMaker.failure', 'GIF creation failed'),
@@ -85,20 +88,27 @@
         async () => {
           const canvas = document.createElement('canvas');
           const context = canvas.getContext('2d', { willReadFrequently: true });
-          if (!context)
+
+          if (!context) {
             throw new Error(
               t('gifMaker.canvasError', 'Your browser cannot create a local canvas.'),
             );
+          }
+
           const frames: { data: Uint8ClampedArray; durationMs: number }[] = [];
+
           for (const [index, file] of files.entries()) {
             const bitmap = await createImageBitmap(file);
+
             if (index === 0) {
               canvas.width = bitmap.width;
               canvas.height = bitmap.height;
             }
+
             context.clearRect(0, 0, canvas.width, canvas.height);
             context.drawImage(bitmap, 0, 0);
             bitmap.close();
+
             frames.push({
               data: new Uint8ClampedArray(
                 context.getImageData(0, 0, canvas.width, canvas.height).data,
@@ -106,12 +116,15 @@
               durationMs: options.delayMs,
             });
           }
+
           const base = createRaster(canvas.width, canvas.height, frames[0]!.data);
+
           const image = generateGifFrames(
             { ...base, frames: frames as unknown as typeof base.frames },
             options.frameGenerator,
             options.crossfadeFrames,
           );
+
           const bytes = encodeGif(image, options.loopCount, {
             optimizeLevel: options.optimizeLevel,
             lossy: options.lossy,
@@ -124,32 +137,37 @@
             disposal: options.disposal,
             interlace: options.interlace,
           });
+
           const url = URL.createObjectURL(new Blob([bytes], { type: 'image/gif' }));
           const download = document.createElement('a');
+
           download.href = url;
           download.download = `${files[0]!.name.replace(/\.[^.]+$/u, '')}.gif`;
           download.click();
+
           URL.revokeObjectURL(url);
-          status = t(
+
+          status = translate(
+            locale,
             'gifMaker.created',
             'Created a {width}×{height} GIF with {frames} frame(s) locally ({bytes} bytes; loop {loop}, {generator}, {quantizer}, {paletteMode} palette up to {size} entries, transparency index {transparency}, {dither} dithering at {ditherAmount}%, {disposal} disposal, {interlace}, optimization {opt}, palette reduction {lossy}).',
-            canvas.width,
-            canvas.height,
-            image.frames.length,
-            bytes.byteLength,
-            options.loopCount,
-            options.frameGenerator,
-            options.quantizer,
-            options.paletteMode,
-            options.paletteSize,
-            options.transparencyIndex,
-            options.dither,
-            options.ditherAmount,
-            options.disposal,
-            options.interlace ? 'interlaced' : 'sequential',
-            options.optimizeLevel,
-            options.lossy,
-          );
+          )
+            .replace('{width}', String(canvas.width))
+            .replace('{height}', String(canvas.height))
+            .replace('{frames}', String(image.frames.length))
+            .replace('{bytes}', String(bytes.byteLength))
+            .replace('{loop}', String(options.loopCount))
+            .replace('{generator}', options.frameGenerator)
+            .replace('{quantizer}', options.quantizer)
+            .replace('{paletteMode}', options.paletteMode)
+            .replace('{size}', String(options.paletteSize))
+            .replace('{transparency}', String(options.transparencyIndex))
+            .replace('{dither}', options.dither)
+            .replace('{ditherAmount}', String(options.ditherAmount))
+            .replace('{disposal}', options.disposal)
+            .replace('{interlace}', options.interlace ? 'interlaced' : 'sequential')
+            .replace('{opt}', String(options.optimizeLevel))
+            .replace('{lossy}', String(options.lossy));
         },
       );
     } catch (reason) {
@@ -164,6 +182,7 @@
 
 <svelte:head>
   <title>{t('gifMaker.title', 'GIF Maker')} — Image Compliant Tools</title>
+
   <meta
     name="description"
     content={t(
@@ -171,16 +190,21 @@
       'Create animated GIFs locally with quantization, dithering, palette, and optimization controls.',
     )}
   />
+
   <link rel="canonical" href={`https://image.complianttools.com${localizedPath}`} />
   <link rel="alternate" hreflang="en" href="https://image.complianttools.com/gif-maker" />
   <link rel="alternate" hreflang="ar" href="https://image.complianttools.com/ar/gif-maker" />
+
   <meta property="og:title" content={t('gifMaker.title', 'GIF Maker')} />
+
   <meta
     property="og:description"
     content={t('gifMaker.metaDescription', 'Build local GIFs with full control.')}
   />
+
   <meta property="og:type" content="website" />
   <meta property="twitter:card" content="summary" />
+
   <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -194,9 +218,12 @@
 </svelte:head>
 
 <main lang={locale === 'en-XA' ? 'en-XA' : locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}>
-  <a href={locale === 'en' ? '/convert' : `/${locale}/convert`}>{t('gifMaker.back', '← Convert')}</a
-  >
+  <a href={locale === 'en' ? '/convert' : `/${locale}/convert`}>
+    {t('gifMaker.back', '← Convert')}
+  </a>
+
   <h1>{t('gifMaker.title', 'GIF Maker')}</h1>
+
   <p>
     {t(
       'gifMaker.description',
@@ -205,22 +232,28 @@
   </p>
 
   <h2>{t('gifMaker.faqTitle', 'Frequently asked')}</h2>
+
   <div>
     <h3>{t('gifMaker.faqTitle1', 'Does the preview match the download?')}</h3>
+
     <p>
       {t(
         'gifMaker.faqAnswer1',
         'Yes. The same encoded GIF bytes are offered by the download link.',
       )}
     </p>
+
     <h3>{t('gifMaker.faqTitle2', 'Can I adjust quantization and dithering?')}</h3>
+
     <p>
       {t(
         'gifMaker.faqAnswer2',
         'Yes. Select quantizer (median-cut, octree, Wu, neural, or fixed 3:3:2), dither method, palette mode, transparency index, and optimization level.',
       )}
     </p>
+
     <h3>{t('gifMaker.faqTitle3', 'Is anything uploaded?')}</h3>
+
     <p>{t('gifMaker.faqAnswer3', 'No. All encoding is local using our own GIF encoder.')}</p>
   </div>
 
@@ -228,11 +261,11 @@
     descriptions={localizeOptions(locale, gifMakerToolOptionDescriptions)}
     values={{ ...controlValues }}
     onChange={setControl}
-    {locale}
   />
 
   <label>
     {t('gifMaker.chooseImages', 'Choose images')}
+
     <input
       type="file"
       accept="image/*"
@@ -241,11 +274,18 @@
       onchange={(event) => selectFiles([...(event.currentTarget.files ?? [])])}
     />
   </label>
-  <button type="button" onclick={() => void createGif()} disabled={files.length === 0}
-    >{t('gifMaker.create', 'Create GIF')}</button
-  >
-  {#if status}<p role="status">{status}</p>{/if}
-  {#if error}<p role="alert">{error}</p>{/if}
+
+  <button type="button" onclick={() => void createGif()} disabled={files.length === 0}>
+    {t('gifMaker.create', 'Create GIF')}
+  </button>
+
+  {#if status}
+    <p role="status">{status}</p>
+  {/if}
+
+  {#if error}
+    <p role="alert">{error}</p>
+  {/if}
 </main>
 
 <style>
@@ -253,6 +293,7 @@
     display: block;
     margin-top: 1rem;
   }
+
   input[type='file'] {
     display: block;
     margin-top: 0.25rem;

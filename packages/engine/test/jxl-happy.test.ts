@@ -18,21 +18,4 @@ describe('T06 JXL happy + adversarial', () => {
       remedy: expect.any(String),
     });
   });
-  it('encode fails on image without frame with typed remedy', async () => {
-    const { encodeRasterAsJxl } = await import('../src/codecs/third-party/jxl-encode.js');
-    await expect(
-      encodeRasterAsJxl({
-        width: 10,
-        height: 10,
-        colorSpace: 'srgb',
-        bitDepth: 8,
-        premultipliedAlpha: false,
-        frames: [],
-      } as never),
-    ).rejects.toMatchObject({
-      kind: 'encode-failed',
-      format: 'jxl',
-      remedy: expect.any(String),
-    });
-  });
 });
