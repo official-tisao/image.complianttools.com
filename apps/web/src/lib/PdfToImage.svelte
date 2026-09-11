@@ -115,6 +115,22 @@
     )}
   />
   <link rel="canonical" href={`https://image.complianttools.com${localizedPath}`} />
+  <link rel="alternate" hreflang="en" href="https://image.complianttools.com/pdf-to-image" />
+  <link rel="alternate" hreflang="ar" href="https://image.complianttools.com/ar/pdf-to-image" />
+  <meta property="og:title" content="PDF or Illustrator to Image" />
+  <meta property="og:description" content="Render PDF page to PNG locally." />
+  <meta property="og:type" content="website" />
+  <meta property="twitter:card" content="summary" />
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "PDF to Image",
+      "applicationCategory": "MultimediaApplication",
+      "operatingSystem": "Any",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+    }
+  </script>
 </svelte:head>
 
 <main lang={locale === 'en-XA' ? 'en-XA' : locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}>
@@ -133,6 +149,39 @@
     onChange={setControl}
     {locale}
   />
+  <h2>{t('pdfImage.faqTitle', 'Frequently asked')}</h2>
+  <div>
+    <h3>{t('pdfImage.faqTitle1', 'Can I convert AI files?')}</h3>
+    <p>
+      {t(
+        'pdfImage.faqAnswer1',
+        'Only modern PDF-compatible .ai files are supported. Legacy PostScript .ai files are refused.',
+      )}
+    </p>
+    <h3>{t('pdfImage.faqTitle2', 'Does the preview match the download?')}</h3>
+    <p>
+      {t(
+        'pdfImage.faqAnswer2',
+        'Yes. The rendered PNG preview and the download use the same page and DPI.',
+      )}
+    </p>
+    <h3>{t('pdfImage.faqTitle3', 'Is anything uploaded?')}</h3>
+    <p>{t('pdfImage.faqAnswer3', 'No. The file is read and rendered locally.')}</p>
+  </div>
+  <h2>{t('pdfImage.faqTitle', 'Frequently asked')}</h2>
+  <div>
+    <h3>{t('pdfImage.faqTitle1', 'Can I convert legacy Illustrator files?')}</h3>
+    <p>
+      {t(
+        'pdfImage.faqAnswer1',
+        'No. Legacy PostScript AI files are explicitly refused; export as PDF first.',
+      )}
+    </p>
+    <h3>{t('pdfImage.faqTitle2', 'Does the preview match the download?')}</h3>
+    <p>{t('pdfImage.faqAnswer2', 'Yes. The same page and DPI are used for both.')}</p>
+    <h3>{t('pdfImage.faqTitle3', 'Is anything uploaded?')}</h3>
+    <p>{t('pdfImage.faqAnswer3', 'No. Everything is local.')}</p>
+  </div>
   <label
     >{t('pdfImage.choose', 'Choose a PDF or AI file')}
     <input

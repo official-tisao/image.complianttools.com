@@ -136,6 +136,22 @@
     )}
   />
   <link rel="canonical" href={`https://image.complianttools.com${localizedPath}`} />
+  <link rel="alternate" hreflang="en" href="https://image.complianttools.com/webp-converter" />
+  <link rel="alternate" hreflang="ar" href="https://image.complianttools.com/ar/webp-converter" />
+  <meta property="og:title" content="WebP Converter" />
+  <meta property="og:description" content="Create lossy, lossless, or animated WebP locally." />
+  <meta property="og:type" content="website" />
+  <meta property="twitter:card" content="summary" />
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "WebP Converter",
+      "applicationCategory": "MultimediaApplication",
+      "operatingSystem": "Any",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+    }
+  </script>
 </svelte:head>
 
 <main lang={locale === 'en-XA' ? 'en-XA' : locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}>
@@ -147,6 +163,26 @@
       'Create lossy, lossless, or animated WebP files on your device. Nothing is uploaded.',
     )}
   </p>
+  <p class="encoding-notice">
+    {t(
+      'webp.notice1',
+      'WebP encoding searches more compression options, so it is slower than JPEG. Higher speed finishes sooner.',
+    )}
+  </p>
+  <h2>{t('webp.faqTitle', 'Common questions')}</h2>
+  <div>
+    <h3>{t('webp.faqTitle1', 'Can I create animations?')}</h3>
+    <p>
+      {t(
+        'webp.faqAnswer1',
+        'Enable the animation option and choose multiple files; delays and loops are preserved.',
+      )}
+    </p>
+    <h3>{t('webp.faqTitle2', 'Does the preview match the download?')}</h3>
+    <p>{t('webp.faqAnswer2', 'Yes. The preview is encoded with the same settings.')}</p>
+    <h3>{t('webp.faqTitle3', 'Is anything uploaded?')}</h3>
+    <p>{t('webp.faqAnswer3', 'No. Everything runs locally.')}</p>
+  </div>
   <GeneratedControls
     descriptions={localizeOptions(locale, webpConverterToolOptionDescriptions)}
     values={Object.fromEntries(

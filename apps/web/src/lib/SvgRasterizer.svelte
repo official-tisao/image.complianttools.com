@@ -100,6 +100,22 @@
     )}
   />
   <link rel="canonical" href={`https://image.complianttools.com${localizedPath}`} />
+  <link rel="alternate" hreflang="en" href="https://image.complianttools.com/svg-to-png" />
+  <link rel="alternate" hreflang="ar" href="https://image.complianttools.com/ar/svg-to-png" />
+  <meta property="og:title" content="SVG to PNG" />
+  <meta property="og:description" content="Rasterize SVG locally." />
+  <meta property="og:type" content="website" />
+  <meta property="twitter:card" content="summary" />
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "SVG to PNG",
+      "applicationCategory": "MultimediaApplication",
+      "operatingSystem": "Any",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+    }
+  </script>
 </svelte:head>
 
 <main lang={locale === 'en-XA' ? 'en-XA' : locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}>

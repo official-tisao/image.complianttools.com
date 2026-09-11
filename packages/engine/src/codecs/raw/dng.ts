@@ -29,14 +29,32 @@ const typeBytes: Readonly<Record<number, number>> = { 1: 1, 3: 2, 4: 4, 5: 8, 10
 /** Reads the baseline uncompressed, single-plane CFA subset needed for local DNG development. */
 export function parseDngMosaic(input: ArrayBuffer | Uint8Array): DngMosaic {
   const bytes = input instanceof Uint8Array ? input : new Uint8Array(input);
-  if (bytes.length < 8) throw new Error('DNG file is too short to contain a TIFF header.');
+  if (bytes.length < 8)
+    throw {
+      kind: 'decode-failed',
+      format: 'raw',
+      detail: 'DNG file is too short (needs at least 8 bytes).',
+      remedy: 'Choose a complete DNG file from a supported camera.',
+    };
   const littleEndian = bytes[0] === 0x49 && bytes[1] === 0x49;
   if (!littleEndian && !(bytes[0] === 0x4d && bytes[1] === 0x4d))
-    throw new Error('DNG has an invalid TIFF byte order.');
+    throw {
+      kind: 'decode-failed',
+      format: 'raw',
+      detail: 'DNG has an invalid TIFF byte order (expected little or big endian).',
+      remedy:
+        'Convert the file to DNG using Adobe DNG Converter or export it from your camera software.',
+    };
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   const u16 = (offset: number) => view.getUint16(offset, littleEndian);
   const u32 = (offset: number) => view.getUint32(offset, littleEndian);
-  if (u16(2) !== 42) throw new Error('DNG has an invalid TIFF magic value.');
+  if (u16(2) !== 42)
+    throw {
+      kind: 'decode-failed',
+      format: 'raw',
+      detail: 'DNG TIFF magic value is invalid (expected 42).',
+      remedy: 'Use a valid DNG produced by Adobe DNG Converter or your camera software.',
+    };
   const ifd = u32(4);
   if (ifd > bytes.length - 2) throw new Error('DNG IFD offset is outside the file.');
   const count = u16(ifd);

@@ -279,3 +279,42 @@ describe('Phase 2 adversarial codec corpus', () => {
     });
   });
 });
+
+it('rejects non-HEIC/HEIF containers with typed remedy (bad brand, truncated)', async () => {
+  // Bad brand: not heic/heif — just a generic ftyp with unknown brand
+  const badBrand = new Uint8Array(16);
+  badBrand.set([0, 0, 0, 16]); // size = 16
+  badBrand.set([0x66, 0x74, 0x79, 0x70], 4); // 'ftyp'
+  badBrand.set([0x61, 0x76, 0x69, 0x31], 8); // 'avi1' — not HEIC
+  await expect(
+    within(decodeWithTypedErrors('heic', () => decodeHeic(badBrand.buffer))),
+  ).rejects.toMatchObject({
+    kind: 'decode-failed',
+    format: 'heic',
+    remedy: expect.any(String),
+  });
+
+  // Truncated container: too short to read brands
+  const truncated = new Uint8Array([0, 0, 0, 8, 0x66, 0x74, 0x79, 0x70]);
+  await expect(
+    within(decodeWithTypedErrors('heic', () => decodeHeic(truncated.buffer))),
+  ).rejects.toMatchObject({
+    kind: 'decode-failed',
+    format: 'heic',
+    remedy: expect.any(String),
+  });
+});
+
+it('rejects RAW preview with too-short input and missing preview with typed remedies', async () => {
+  // Too short (less than 4 bytes)
+  const shortRaw = new Uint8Array(2);
+  await expect(
+    within(decodeWithTypedErrors('raw', () => extractRawCameraPreview(shortRaw.buffer))),
+  ).rejects.toMatchObject({ kind: 'decode-failed', format: 'raw', remedy: expect.any(String) });
+
+  // No embedded preview (random bytes that don't form JPEG/BMP preview)
+  const noPreview = new Uint8Array(100).fill(0x55);
+  await expect(
+    within(decodeWithTypedErrors('raw', () => extractRawCameraPreview(noPreview.buffer))),
+  ).rejects.toMatchObject({ kind: 'decode-failed', format: 'raw', remedy: expect.any(String) });
+});

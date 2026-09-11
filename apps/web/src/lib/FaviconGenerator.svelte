@@ -127,6 +127,26 @@
     )}
   />
   <link rel="canonical" href={`https://image.complianttools.com${localizedPath}`} />
+  <link rel="alternate" hreflang="en" href="https://image.complianttools.com/favicon-generator" />
+  <link
+    rel="alternate"
+    hreflang="ar"
+    href="https://image.complianttools.com/ar/favicon-generator"
+  />
+  <meta property="og:title" content="Favicon Generator" />
+  <meta property="og:description" content="Generate favicon package locally." />
+  <meta property="og:type" content="website" />
+  <meta property="twitter:card" content="summary" />
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Favicon Generator",
+      "applicationCategory": "MultimediaApplication",
+      "operatingSystem": "Any",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+    }
+  </script>
 </svelte:head>
 
 <main lang={locale === 'en-XA' ? 'en-XA' : locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}>
@@ -144,6 +164,20 @@
     onChange={setControl}
     {locale}
   />
+  <h2>{t('favicon.faqTitle', 'Frequently asked')}</h2>
+  <div>
+    <h3>{t('favicon.faqTitle1', 'What sizes are included?')}</h3>
+    <p>{t('favicon.faqAnswer1', '16, 32, 48, 180, 192, and 512 pixels in PNG plus an ICO.')}</p>
+    <h3>{t('favicon.faqTitle2', 'Does the preview match the download?')}</h3>
+    <p>
+      {t(
+        'favicon.faqAnswer2',
+        'Yes. The 32×32 preview shows the same icon included in the package.',
+      )}
+    </p>
+    <h3>{t('favicon.faqTitle3', 'Is anything uploaded?')}</h3>
+    <p>{t('favicon.faqAnswer3', 'No. Everything is generated locally.')}</p>
+  </div>
   <label>
     {t('favicon.choose', 'Choose an image')}
     <input

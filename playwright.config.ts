@@ -13,8 +13,8 @@ export default defineConfig({
   reporter: process.env.CI ? [['line'], ['html', { open: 'never' }]] : 'line',
   webServer: {
     command:
-      'node node_modules/typescript/bin/tsc -p packages/engine/tsconfig.json && cd apps/web && node node_modules/@sveltejs/kit/svelte-kit.js sync && node node_modules/vite/bin/vite.js build && node node_modules/vite/bin/vite.js preview --host 127.0.0.1 --port 4173',
-    url: 'http://127.0.0.1:4173/debug/capabilities',
+      'pnpm --filter @complianttools/web build && pnpm --filter @complianttools/web preview --host 127.0.0.1 --port 4173 --strictPort',
+    url: 'http://127.0.0.1:4173/convert',
     reuseExistingServer: !process.env.CI,
     // A cold engine tsc + Vite build of the full prerendered site measures ~195 s locally, so the
     // previous 180 s budget was under the actual build time -- CI always builds cold, so it could
