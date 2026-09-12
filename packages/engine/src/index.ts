@@ -68,6 +68,7 @@ export {
   exportPaletteAse,
 } from './color/palette.js';
 export * from './color/recolour.js';
+export * from './color/transfer.js';
 export * from './ops/geometry.js';
 export * from './ops/raster.js';
 export * from './ops/resize.js';
@@ -109,3 +110,4 @@ export * from './security/redaction.js';
 export * from './scheduler/worker-pool.js';
 export * from './types.js';
 export * from './wasm/integrity.js';
+export * from './cv/index.js';

@@ -17,3 +17,29 @@ export { alphaMatting } from './alpha-matting.js';
 export { crossBilateralRefine, alphaBandTrim, defringe, refineMatte } from './matte-refine.js';
 export type { RectangleHint } from './segmentation.js';
 export { segmentTier1, segmentRectangle, iterativeColourRefinement } from './segmentation.js';
+export { spectralResidualSaliency, fineGrainedSaliency } from './saliency.js';
+export type { SpectralResidualOptions, FineGrainedOptions } from './saliency.js';
+export {
+  linearGradient,
+  radialGradient,
+  noiseTexture,
+  placeholderFrame,
+  identicon,
+} from './procedural-synthesis.js';
+export type { ProceduralSynthesisOptions } from './procedural-synthesis.js';
+export {
+  perceptualHash,
+  differenceHash,
+  approximateSSIM,
+  approximatePSNR,
+  nearestHash,
+  similarityVerdict,
+} from './analysis-primitives.js';
+export {
+  inpaint,
+  efrosLeungInpaint,
+  quiltingInpaint,
+  confidencePriorityInpaint,
+  teleaInpaint,
+  navierStokesInpaint,
+} from './inpainting.js';

@@ -26,6 +26,9 @@ function copyImage(image: RasterImage, outData: Uint8ClampedArray): RasterImage 
   };
 }
 export function efrosLeungInpaint(image: RasterImage, opts: InpaintOptions): RasterImage {
+  if (opts.mask.length !== image.width * image.height) {
+    throw new Error('Invalid mask dimensions');
+  }
   const w = getW(image);
   const h = getH(image);
   const src = getData(image);
@@ -349,6 +352,9 @@ export function navierStokesInpaint(image: RasterImage, opts: InpaintOptions): R
 /* 6. Dispatcher                                                       */
 /* ------------------------------------------------------------------ */
 export function inpaint(image: RasterImage, opts: InpaintOptions): RasterImage {
+  if (!opts.mask || opts.mask.length !== image.width * image.height) {
+    throw new Error('Invalid mask: length must match image dimensions');
+  }
   switch (opts.algorithm) {
     case 'efros-leung':
       return efrosLeungInpaint(image, opts);

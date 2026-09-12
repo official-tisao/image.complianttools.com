@@ -54,20 +54,22 @@ function gradientMagnitude(
       const maskIdx = y * width + x;
       const isProtected = protectMask !== undefined && protectMask[maskIdx] === 255;
       if (isProtected) {
+        // Protected pixels: zero out gradient at this pixel, but the neighborhood
+        // still includes unprotected pixels so the profile reflects actual edges.
         mag[y * width + x] = 0;
-        continue;
-      }
-      let sx = 0,
-        sy = 0;
-      for (let ky = -1; ky <= 1; ky++) {
-        for (let kx = -1; kx <= 1; kx++) {
-          const v = gray[(y + ky) * width + (x + kx)];
-          const idx = (ky + 1) * 3 + (kx + 1);
-          sx += (v ?? 0) * gx[idx]!;
-          sy += (v ?? 0) * gy[idx]!;
+      } else {
+        let sx = 0,
+          sy = 0;
+        for (let ky = -1; ky <= 1; ky++) {
+          for (let kx = -1; kx <= 1; kx++) {
+            const v = gray[(y + ky) * width + (x + kx)];
+            const idx = (ky + 1) * 3 + (kx + 1);
+            sx += (v ?? 0) * gx[idx]!;
+            sy += (v ?? 0) * gy[idx]!;
+          }
         }
+        mag[y * width + x] = Math.sqrt(sx * sx + sy * sy);
       }
-      mag[y * width + x] = Math.sqrt(sx * sx + sy * sy);
     }
   }
   return mag;

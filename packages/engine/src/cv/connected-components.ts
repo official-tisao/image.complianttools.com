@@ -1,19 +1,38 @@
 export function connectedComponents(
-  binaryMask: Uint8ClampedArray,
-  width: number,
-  height: number,
+  binaryMaskOrImage:
+    | Uint8ClampedArray
+    | { width: number; height: number; frames: Array<{ data: Uint8ClampedArray }> },
+  width?: number,
+  height?: number,
 ): Array<{ label: number; area: number; bbox: { x: number; y: number; w: number; h: number } }> {
-  const labels = new Int32Array(width * height).fill(-1);
+  let mask: Uint8ClampedArray;
+  let w: number;
+  let h: number;
+  if (binaryMaskOrImage instanceof Uint8ClampedArray) {
+    mask = binaryMaskOrImage;
+    w = width!;
+    h = height!;
+  } else {
+    const img = binaryMaskOrImage as {
+      width: number;
+      height: number;
+      frames: Array<{ data: Uint8ClampedArray }>;
+    };
+    w = img.width;
+    h = img.height;
+    mask = img.frames[0]!.data;
+  }
+  const labels = new Int32Array(w * h).fill(-1);
   let nextLabel = 1;
   const components: Array<{
     label: number;
     area: number;
     bbox: { x: number; y: number; w: number; h: number };
   }> = [];
-  for (let y = 0; y < height; y += 1) {
-    for (let x = 0; x < width; x += 1) {
-      const idx = y * width + x;
-      if (binaryMask[idx] === 255 && labels[idx] === -1) {
+  for (let y = 0; y < h; y += 1) {
+    for (let x = 0; x < w; x += 1) {
+      const idx = y * w + x;
+      if (mask[idx] === 255 && labels[idx] === -1) {
         const stack = [{ x, y }];
         let area = 0;
         let minX = x,
@@ -37,9 +56,9 @@ export function connectedComponents(
             { x: cx, y: cy + 1 },
           ];
           for (const n of neighbors) {
-            if (n.x >= 0 && n.x < width && n.y >= 0 && n.y < height) {
-              const nIdx = n.y * width + n.x;
-              if (binaryMask[nIdx] === 255 && labels[nIdx] === -1) {
+            if (n.x >= 0 && n.x < w && n.y >= 0 && n.y < h) {
+              const nIdx = n.y * w + n.x;
+              if (mask[nIdx] === 255 && labels[nIdx] === -1) {
                 labels[nIdx] = nextLabel;
                 stack.push({ x: n.x, y: n.y });
               }

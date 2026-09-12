@@ -90,8 +90,9 @@ describe('P4-06 saliency-weighted retargeting', () => {
     // A simple 4×4 image with all left pixels protected and right pixels bright/dark.
     // The mask should zero out gradient at protected positions.
     const src = new Uint8ClampedArray([
-      255, 255, 255, 255, 0, 0, 0, 255, 255, 255, 255, 255, 0, 0, 0, 255, 255, 255, 255, 255, 255,
-      255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+      255, 255, 255, 255, 0, 0, 0, 255, 255, 255, 255, 255, 0, 0, 0, 255, 255, 255, 255, 255, 0, 0,
+      0, 255, 255, 255, 255, 255, 0, 0, 0, 255, 255, 255, 255, 255, 0, 0, 0, 255, 255, 255, 255,
+      255, 0, 0, 0, 255, 255, 255, 255, 255, 0, 0, 0, 255, 255, 255, 255, 255, 0, 0, 0, 255,
     ]);
     const image = createRaster(4, 4, src);
     const mask = new Uint8ClampedArray([

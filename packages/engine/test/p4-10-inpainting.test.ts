@@ -140,7 +140,13 @@ describe('P4-10 — Telea', () => {
     expect(r.frames[0]!.data[4 * 4 + 2]).not.toBe(before);
   });
   it('preserves unmasked pixels', () => {
-    const img = makeImage(2, 2, new Uint8ClampedArray([10, 20, 30, 255, 40, 50, 60, 255]));
+    const img = makeImage(
+      2,
+      2,
+      new Uint8ClampedArray([
+        10, 20, 30, 255, 40, 50, 60, 255, 70, 80, 90, 255, 100, 110, 120, 255,
+      ]),
+    );
     const mask = new Uint8ClampedArray(4);
     mask[3] = 255;
     const r = teleaInpaint(img, { algorithm: 'telea', mask });
@@ -175,6 +181,7 @@ describe('P4-10 — Navier-Stokes', () => {
   it('preserves unmasked pixels', () => {
     const data = new Uint8ClampedArray([
       1, 2, 3, 255, 4, 5, 6, 255, 7, 8, 9, 255, 10, 11, 12, 255, 13, 14, 15, 255, 16, 17, 18, 255,
+      19, 20, 21, 255, 22, 23, 24, 255, 25, 26, 27, 255,
     ]);
     const img = makeImage(3, 3, data);
     const mask = new Uint8ClampedArray(9);

@@ -33,8 +33,8 @@ export function hough(image: RasterImage): { lines: Array<{ r: number; theta: nu
   const lines: Array<{ r: number; theta: number }> = [];
   // Simplified Hough: sample some points from edge mask and estimate line parameters.
   const angles = [0, 30, 45, 60, 90, 120, 135, 150, 180];
-  for (let y = 0; y < h; y += 4) {
-    for (let x = 0; x < w; x += 4) {
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
       const idx = y * w + x;
       if (edgeMask[idx] === 255) {
         for (const thetaDeg of angles) {
