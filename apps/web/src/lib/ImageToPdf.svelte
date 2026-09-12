@@ -143,8 +143,6 @@
   <title>{t('imagePdf.title', 'Image to PDF')} — Image Compliant Tools</title>
   <meta name="description" content="Create an ordered, page-sized PDF from local images." />
   <link rel="canonical" href={`https://image.complianttools.com${localizedPath}`} />
-  <link rel="alternate" hreflang="en" href="https://image.complianttools.com/image-to-pdf" />
-  <link rel="alternate" hreflang="ar" href="https://image.complianttools.com/ar/image-to-pdf" />
   <meta property="og:title" content="Image to PDF" />
   <meta property="og:description" content="Create ordered PDF locally." />
   <meta property="og:type" content="website" />

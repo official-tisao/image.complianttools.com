@@ -1388,7 +1388,7 @@ export const gifMakerToolOptionDescriptions: Readonly<Record<string, OptionDescr
     defaultValue: 'median-cut',
   },
   'gifMaker.paletteSize': {
-    label: 'Palette size',
+    label: 'Palette size (2–256)',
     control: 'number',
     group: 'GIF encoding',
     advanced: false,
@@ -1405,7 +1405,7 @@ export const gifMakerToolOptionDescriptions: Readonly<Record<string, OptionDescr
     defaultValue: 'adaptive',
   },
   'gifMaker.transparencyIndex': {
-    label: 'Transparency index',
+    label: 'Transparency index (0–255)',
     help: 'Palette index used for transparent pixels.',
     control: 'number',
     group: 'GIF encoding',
@@ -1423,7 +1423,7 @@ export const gifMakerToolOptionDescriptions: Readonly<Record<string, OptionDescr
     defaultValue: 'floyd-steinberg',
   },
   'gifMaker.ditherAmount': {
-    label: 'Dither amount',
+    label: 'Dither amount (0–100)',
     control: 'slider',
     group: 'GIF encoding',
     advanced: false,

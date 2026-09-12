@@ -136,8 +136,6 @@
     )}
   />
   <link rel="canonical" href={`https://image.complianttools.com${localizedPath}`} />
-  <link rel="alternate" hreflang="en" href="https://image.complianttools.com/webp-converter" />
-  <link rel="alternate" hreflang="ar" href="https://image.complianttools.com/ar/webp-converter" />
   <meta property="og:title" content="WebP Converter" />
   <meta property="og:description" content="Create lossy, lossless, or animated WebP locally." />
   <meta property="og:type" content="website" />

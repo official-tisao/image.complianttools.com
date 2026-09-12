@@ -115,8 +115,6 @@
     )}
   />
   <link rel="canonical" href={`https://image.complianttools.com${localizedPath}`} />
-  <link rel="alternate" hreflang="en" href="https://image.complianttools.com/pdf-to-image" />
-  <link rel="alternate" hreflang="ar" href="https://image.complianttools.com/ar/pdf-to-image" />
   <meta property="og:title" content="PDF or Illustrator to Image" />
   <meta property="og:description" content="Render PDF page to PNG locally." />
   <meta property="og:type" content="website" />

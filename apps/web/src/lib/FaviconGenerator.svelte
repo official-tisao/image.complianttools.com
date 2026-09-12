@@ -127,7 +127,6 @@
     )}
   />
   <link rel="canonical" href={`https://image.complianttools.com${localizedPath}`} />
-  <link rel="alternate" hreflang="en" href="https://image.complianttools.com/favicon-generator" />
   <link
     rel="alternate"
     hreflang="ar"

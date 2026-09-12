@@ -124,8 +124,6 @@
   <title>{t('jxl.title', 'JPEG XL Converter')} — Image Compliant Tools</title>
   <meta name="description" content="Encode images as JPEG XL or decode JPEG XL to PNG locally." />
   <link rel="canonical" href={`https://image.complianttools.com${localizedPath}`} />
-  <link rel="alternate" hreflang="en" href="https://image.complianttools.com/jxl-converter" />
-  <link rel="alternate" hreflang="ar" href="https://image.complianttools.com/ar/jxl-converter" />
   <meta property="og:title" content="JPEG XL Converter" />
   <meta property="og:description" content="Encode JPEG XL or decode to PNG locally." />
   <meta property="og:type" content="website" />

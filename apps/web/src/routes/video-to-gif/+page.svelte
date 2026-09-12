@@ -119,10 +119,6 @@
 
   <link rel="canonical" href={`https://image.complianttools.com${localizedPath}`} />
 
-  <link rel="alternate" hreflang="en" href="https://image.complianttools.com/video-to-gif" />
-
-  <link rel="alternate" hreflang="ar" href="https://image.complianttools.com/ar/video-to-gif" />
-
   <meta property="og:title" content={t('videoGif.title', 'Video Frame to GIF')} />
 
   <meta

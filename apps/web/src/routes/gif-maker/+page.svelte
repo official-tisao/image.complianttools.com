@@ -192,8 +192,6 @@
   />
 
   <link rel="canonical" href={`https://image.complianttools.com${localizedPath}`} />
-  <link rel="alternate" hreflang="en" href="https://image.complianttools.com/gif-maker" />
-  <link rel="alternate" hreflang="ar" href="https://image.complianttools.com/ar/gif-maker" />
 
   <meta property="og:title" content={t('gifMaker.title', 'GIF Maker')} />
 

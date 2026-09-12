@@ -172,8 +172,6 @@
     )}
   />
   <link rel="canonical" href={`https://image.complianttools.com${localizedPath}`} />
-  <link rel="alternate" hreflang="en" href="https://image.complianttools.com/cbz-converter" />
-  <link rel="alternate" hreflang="ar" href="https://image.complianttools.com/ar/cbz-converter" />
   <meta property="og:title" content="CBZ Comic Converter" />
   <meta property="og:description" content="Create or extract CBZ comics locally." />
   <meta property="og:type" content="website" />

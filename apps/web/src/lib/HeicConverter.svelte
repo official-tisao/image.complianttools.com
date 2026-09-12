@@ -134,8 +134,6 @@
     )}
   />
   <link rel="canonical" href={`https://image.complianttools.com${localizedPath}`} />
-  <link rel="alternate" hreflang="en" href="https://image.complianttools.com/heic-converter" />
-  <link rel="alternate" hreflang="ar" href="https://image.complianttools.com/ar/heic-converter" />
   <meta property="og:title" content="HEIC / HEIF Converter" />
   <meta property="og:description" content="Convert HEIC and HEIF to PNG locally." />
   <meta property="og:type" content="website" />
