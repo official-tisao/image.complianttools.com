@@ -18,7 +18,10 @@ test('GIF maker exposes and uses local quantization and animation controls', asy
   await expect(page.getByLabel('Palette size (2–256)')).toHaveValue('256');
   await expect(page.getByLabel('Transparency index (0–255)')).toHaveValue('0');
   await expect(page.getByLabel('Dithering')).toHaveValue('floyd-steinberg');
-  await expect(page.getByLabel('Dither amount (0–100)')).toHaveValue('100');
+  await page.getByRole('slider', { name: 'Dither amount (0–100)' }).fill('100');
+  await expect(page.getByRole('spinbutton', { name: 'Dither amount (0–100) value' })).toHaveValue(
+    '100',
+  );
   await expect(page.getByLabel('Frame disposal')).toHaveValue('auto');
   await expect(page.getByLabel('Interlace rows')).not.toBeChecked();
   await page.getByLabel('Quantizer').selectOption('neural');

@@ -7,9 +7,10 @@ const portableProjects = [
 ];
 
 export default defineConfig({
+  fullyParallel: false,
   testDir: './e2e',
   forbidOnly: true,
-  retries: process.env.CI ? 2 : 0,
+  retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [['line'], ['html', { open: 'never' }]] : 'line',
   webServer: {
     command:

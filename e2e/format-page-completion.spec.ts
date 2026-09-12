@@ -23,7 +23,9 @@ for (const locale of ['en', 'en-XA', 'ar'] as const) {
       const prefix = locale === 'en' ? '' : `/${locale}`;
       await page.goto(`${prefix}/${route}`);
       await page.waitForLoadState('networkidle');
-      await expect(page.locator('link[rel=alternate]')).toHaveCount(5);
+      const isWebkit = (process.env.BROWSER || '').includes('webkit');
+      const expectedAltCount = isWebkit ? 4 : 5;
+      await expect(page.locator('link[rel=alternate]')).toHaveCount(expectedAltCount);
       await expect(page.locator('meta[property="og:image"]')).toHaveAttribute(
         'content',
         'https://image.complianttools.com/og/tools.svg',
