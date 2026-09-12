@@ -1,7 +1,7 @@
 export { floodFill } from './flood-fill.js';
 export { colourRange } from './colour-range.js';
 export { chromaKey } from './chroma-key.js';
-export { otsuThreshold } from './otsu.js';
+export { otsuMask } from './otsu.js';
 export { sauvolaThreshold } from './sauvola.js';
 export { canny } from './canny.js';
 export { sobel } from './sobel.js';

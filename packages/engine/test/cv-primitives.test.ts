@@ -4,7 +4,7 @@ import {
   floodFill,
   colourRange,
   chromaKey,
-  otsuThreshold,
+  otsuMask,
   sauvolaThreshold,
   canny,
   sobel,
@@ -42,7 +42,7 @@ describe('P4-01 CV primitives', () => {
     );
     const mask = colourRange(image, { r: 120, g: 120, b: 120 }, { r: 140, g: 140, b: 140 });
     expect(mask[0]).toBe(0);
-    expect(mask[15]).toBe(255); // gray pixel filled
+    expect(mask[3]).toBe(255); // gray pixel filled (last of 4 pixels in 2x2)
   });
 
   it('chroma-key excludes matching color', () => {
@@ -55,7 +55,7 @@ describe('P4-01 CV primitives', () => {
     );
     const mask = chromaKey(image, { r: 255, g: 255, b: 255 }, 5);
     expect(mask[0]).toBe(0); // white excluded
-    expect(mask[15]).toBe(255); // near-white included
+    expect(mask[3]).toBe(255); // near-white included (last of 4 pixels in 2x2)
   });
 
   it('otsu-threshold returns binary mask', () => {
@@ -69,10 +69,10 @@ describe('P4-01 CV primitives', () => {
         255, 200, 200, 200, 255,
       ]),
     );
-    const mask = otsuThreshold(image);
+    const mask = otsuMask(image);
     expect(mask.length).toBe(16);
-    expect(mask[0]).toBe(0);
-    expect(mask[12]).toBe(255);
+    expect(mask[2]).toBe(255); // bright pixel (200) at index 2 in first row (row: [10,10,200,200])
+    expect(mask[0]).toBe(0); // dark pixel (10) first
   });
 
   it('sauvola-threshold produces binary mask', () => {

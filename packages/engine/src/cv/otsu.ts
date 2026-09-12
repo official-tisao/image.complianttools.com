@@ -1,11 +1,11 @@
 import type { RasterImage } from '../types.js';
 
-export function otsuThreshold(image: RasterImage): Uint8ClampedArray {
+export function otsuMask(image: RasterImage): Uint8ClampedArray {
   const w = image.width;
   const h = image.height;
   const data = image.frames[0].data;
   const hist = new Uint32Array(256);
-  for (let i = 0; i < w * h; i += 4) {
+  for (let i = 0; i < w * h * 4; i += 4) {
     const gray = Math.round((data[i]! + data[i + 1]! + data[i + 2]!) / 3);
     hist[Math.min(255, Math.max(0, gray))]!++;
   }
@@ -25,7 +25,7 @@ export function otsuThreshold(image: RasterImage): Uint8ClampedArray {
     const meanB = sumB / wB;
     const meanF = (sum - sumB) / wF;
     const varB = wB * wF * (meanB - meanF) * (meanB - meanF);
-    if (varB > maxVar) {
+    if (varB >= maxVar) {
       maxVar = varB;
       threshold = t;
     }
