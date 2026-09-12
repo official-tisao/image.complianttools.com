@@ -23,8 +23,7 @@ for (const locale of ['en', 'en-XA', 'ar'] as const) {
       const prefix = locale === 'en' ? '' : `/${locale}`;
       await page.goto(`${prefix}/${route}`);
       await page.waitForLoadState('networkidle');
-      const isWebkit = (process.env.BROWSER || '').includes('webkit');
-      const expectedAltCount = isWebkit ? 4 : 5;
+      const expectedAltCount = 4;
       await expect(page.locator('link[rel=alternate]')).toHaveCount(expectedAltCount);
       await expect(page.locator('meta[property="og:image"]')).toHaveAttribute(
         'content',
