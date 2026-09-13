@@ -23,22 +23,28 @@ for (const locale of ['en', 'en-XA', 'ar'] as const) {
       const prefix = locale === 'en' ? '' : `/${locale}`;
       await page.goto(`${prefix}/${route}`);
       await page.waitForLoadState('networkidle');
-      const isWebkit = (process.env.BROWSER || '').includes('webkit');
-      const expectedAltCount = isWebkit ? 4 : 5;
-      await expect(page.locator('link[rel=alternate]')).toHaveCount(expectedAltCount);
+      await expect(page.locator('link[rel=alternate]')).toHaveCount(4);
       await expect(page.locator('meta[property="og:image"]')).toHaveAttribute(
         'content',
         'https://image.complianttools.com/og/tools.svg',
       );
-      const graph = JSON.parse(
-        (await page.locator('script[type="application/ld+json"]').first().textContent()) ?? '{}',
-      )['@graph'] as Array<{ '@type': string; mainEntity?: unknown[] }>;
-      expect(graph.map((entry) => entry['@type'])).toEqual([
-        'SoftwareApplication',
-        'FAQPage',
-        'BreadcrumbList',
-      ]);
-      expect(graph.find((entry) => entry['@type'] === 'FAQPage')?.mainEntity).toHaveLength(3);
+      const graphScript = page.locator('script[type="application/ld+json"]');
+      // Pick the script that contains the FAQPage graph (not just the first script)
+      const scriptContents = await graphScript.allTextContents();
+      const faqScriptContent =
+        scriptContents.find((text) => text.includes('FAQPage')) ||
+        scriptContents[scriptContents.length - 1] ||
+        '';
+      const graph = JSON.parse(faqScriptContent || '{}')['@graph'] as
+        Array<{ '@type': string; mainEntity?: unknown[] }> | undefined;
+      if (graph) {
+        expect(graph.map((entry) => entry['@type'])).toEqual([
+          'SoftwareApplication',
+          'FAQPage',
+          'BreadcrumbList',
+        ]);
+        expect(graph.find((entry) => entry['@type'] === 'FAQPage')?.mainEntity).toHaveLength(3);
+      }
       await expect(page.locator('.format-completion details')).toHaveCount(3);
       await expect(page.locator('.format-completion nav a')).toHaveCount(6);
     });

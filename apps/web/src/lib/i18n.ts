@@ -780,7 +780,7 @@ function pseudo(value: string): string {
 export function translate(locale: Locale, key: string, fallback: string, value?: string | number) {
   const message =
     locale === 'ar' ? (arabic[key] ?? fallback) : locale === 'en-XA' ? pseudo(fallback) : fallback;
-  return message.replace('{value}', String(value ?? ''));
+  return message.replace('{value}', value !== undefined ? String(value) : '');
 }
 
 export function localizeOptions(
