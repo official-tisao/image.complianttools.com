@@ -17,9 +17,6 @@
   let { locale = 'en' }: { locale?: Locale } = $props();
   const t = (key: string, fallback: string, value?: string | number) =>
     translate(locale, key, fallback, value);
-  const localizedPath = $derived(
-    locale === 'en' ? '/favicon-generator' : `/${locale}/favicon-generator`,
-  );
 
   let options = $state<FaviconToolOptions>(FaviconToolOptionsSchema.parse({}));
   let sourceFile = $state<File>();
@@ -116,37 +113,6 @@
     setTimeout(() => URL.revokeObjectURL(url), 0);
   }
 </script>
-
-<svelte:head>
-  <title>{t('favicon.title', 'Favicon Generator')} — Image Compliant Tools</title>
-  <meta
-    name="description"
-    content={t(
-      'favicon.metaDescription',
-      'Create a multi-resolution favicon package with PNG icons, manifest, and HTML locally.',
-    )}
-  />
-  <link rel="canonical" href={`https://image.complianttools.com${localizedPath}`} />
-  <link
-    rel="alternate"
-    hreflang="ar"
-    href="https://image.complianttools.com/ar/favicon-generator"
-  />
-  <meta property="og:title" content="Favicon Generator" />
-  <meta property="og:description" content="Generate favicon package locally." />
-  <meta property="og:type" content="website" />
-  <meta property="twitter:card" content="summary" />
-  <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "SoftwareApplication",
-      "name": "Favicon Generator",
-      "applicationCategory": "MultimediaApplication",
-      "operatingSystem": "Any",
-      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
-    }
-  </script>
-</svelte:head>
 
 <main lang={locale === 'en-XA' ? 'en-XA' : locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}>
   <a href={locale === 'en' ? '/convert' : `/${locale}/convert`}>{t('favicon.back', '← Convert')}</a>

@@ -138,6 +138,7 @@
     <input
       type="file"
       accept="image/svg+xml,.svg"
+      tabindex="0"
       onchange={(event) => void convert(event.currentTarget.files?.[0])}
     /></label
   >
