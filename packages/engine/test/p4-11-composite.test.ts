@@ -264,9 +264,9 @@ describe('P4-11 Overlay alpha and hard-edge', () => {
     ]);
     // Pixel 1 (red opaque): should be red-ish
     expect(result.frames[0]!.data[0]!).toBeGreaterThanOrEqual(200);
-    // Pixel 2 (alpha 0, transparent): should preserve base blue
-    expect(result.frames[0]!.data[8]!).toBe(0);
-    expect(result.frames[0]!.data[10]!).toBe(255);
+    // Pixel 2 (alpha 0, transparent) is index 4-7; base is [0,0,255,255]
+    expect(result.frames[0]!.data[4]!).toBe(0);
+    expect(result.frames[0]!.data[6]!).toBe(255);
   });
 
   it('deterministic with overlay alpha', () => {
