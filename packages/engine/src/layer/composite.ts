@@ -53,7 +53,38 @@ export function compositeLayers(
     const blendMode = (layer.blendMode as BlendMode | undefined) ?? 'normal';
     const opacity = Math.max(0, Math.min(1, layer.opacity ?? 1));
 
-    result = blendPixels(result, overlay, blendMode, opacity);
+    // Hard-edge re-composite: preserve base pixels where overlay alpha is 0 (mask boundary)
+    // and blend exactly at the boundary using overlay alpha as mask weight
+    const wPixels = w * h * 4;
+    const hardResult = new Uint8ClampedArray(wPixels);
+    for (let i = 0; i < wPixels; i += 4) {
+      const ao = overlay[i + 3] ?? 255;
+      const maskWeight = ao / 255;
+      const rb = result[i] ?? 0;
+      const gb = result[i + 1] ?? 0;
+      const bb = result[i + 2] ?? 0;
+      const ro = overlay[i];
+      const go = overlay[i + 1];
+      const bo = overlay[i + 2];
+      // For hard-edge: when maskWeight is near 0, keep base; near 1, take blended result
+      // Blend using normal blend for simplicity at boundary (already handled by blendPixels)
+      // Then apply hard mask: final = blended * mask + base * (1 - mask) at exact boundary
+      const blendedResult = blendPixels(
+        new Uint8ClampedArray([rb ?? 0, gb ?? 0, bb ?? 0, 255]),
+        new Uint8ClampedArray([ro ?? 0, go ?? 0, bo ?? 0, ao]),
+        blendMode,
+        opacity,
+      );
+      const br0 = blendedResult[0] ?? 0;
+      const br1 = blendedResult[1] ?? 0;
+      const br2 = blendedResult[2] ?? 0;
+      const br3 = blendedResult[3] ?? 255;
+      hardResult[i] = Math.round(br0 * maskWeight + rb * (1 - maskWeight));
+      hardResult[i + 1] = Math.round(br1 * maskWeight + gb * (1 - maskWeight));
+      hardResult[i + 2] = Math.round(br2 * maskWeight + bb * (1 - maskWeight));
+      hardResult[i + 3] = Math.round(br3 * maskWeight + (base[i + 3] ?? 255) * (1 - maskWeight));
+    }
+    result = hardResult;
   }
 
   return {
