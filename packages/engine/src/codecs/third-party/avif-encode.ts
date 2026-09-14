@@ -17,7 +17,13 @@ function toImageData(
 ): { data: Uint16Array; width: number; height: number };
 function toImageData(image: RasterImage, bitDepth: 8 | 10 | 12) {
   const frame = image.frames[0];
-  if (!frame) throw new Error('The image has no frame to encode.');
+  if (!frame)
+    throw {
+      kind: 'encode-failed',
+      format: 'avif',
+      detail: 'The image has no frame to encode.',
+      remedy: 'Choose a valid image file with at least one frame and try again.',
+    };
   const maxSample = (1 << bitDepth) - 1;
   const data =
     bitDepth === 8

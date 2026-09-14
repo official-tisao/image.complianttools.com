@@ -3,7 +3,6 @@ import { describe, expect, it } from 'vitest';
 import {
   decodeHeic,
   detectHeicMimeType,
-  HEIC_UNSUPPORTED_MESSAGE,
   isHeicContainer,
   supportsHeicDecode,
   type ImageDecoderConstructor,
@@ -112,9 +111,11 @@ describe('HEIC platform codec', () => {
   });
 
   it('names the platform limitation when ImageDecoder is unavailable', async () => {
-    await expect(decodeHeic(new Uint8Array([1]), undefined)).rejects.toThrow(
-      HEIC_UNSUPPORTED_MESSAGE,
-    );
+    await expect(decodeHeic(new Uint8Array([1]), undefined)).rejects.toMatchObject({
+      kind: 'codec-unavailable',
+      format: 'heic',
+      remedy: expect.any(String),
+    });
   });
 
   it('rejects a non-HEIF container before constructing the platform decoder', async () => {
@@ -128,9 +129,11 @@ describe('HEIC platform codec', () => {
         throw new Error('not reached');
       }
     } as unknown as ImageDecoderConstructor;
-    await expect(decodeHeic(new Uint8Array([1, 2, 3]), decoder)).rejects.toThrow(
-      'not a valid HEIC or HEIF container',
-    );
+    await expect(decodeHeic(new Uint8Array([1, 2, 3]), decoder)).rejects.toMatchObject({
+      kind: 'decode-failed',
+      format: 'heic',
+      remedy: expect.any(String),
+    });
     expect(constructed).toBe(false);
   });
 });
