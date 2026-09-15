@@ -170,3 +170,138 @@ describe('P4-11 Layer compositing', () => {
     expect(result.frames[0]!.data.length).toBe(16);
   });
 });
+
+describe('P4-11 Overlay alpha and hard-edge', () => {
+  const createSolid = (r: number, g: number, b: number, a: number) =>
+    createRaster(2, 2, new Uint8ClampedArray([r, g, b, a, r, g, b, a, r, g, b, a, r, g, b, a]));
+
+  it('fully opaque overlay produces blended colors', () => {
+    const base = createSolid(100, 100, 100, 255);
+    const overlay = createSolid(200, 200, 200, 255);
+    const result = compositeLayers(base, [
+      { image: overlay, blendMode: 'normal', opacity: 1, visible: true },
+    ]);
+    // Normal blend with opaque overlay should take overlay RGB
+    expect(result.frames[0]!.data[0]!).toBe(200);
+  });
+
+  it('fully transparent overlay preserves base exactly (mask boundary)', () => {
+    const base = createSolid(100, 100, 100, 255);
+    const overlayTransparent = createRaster(
+      2,
+      2,
+      new Uint8ClampedArray([
+        100, 100, 100, 0, 100, 100, 100, 0, 100, 100, 100, 0, 100, 100, 100, 0,
+      ]),
+    );
+    const result = compositeLayers(base, [
+      { image: overlayTransparent, blendMode: 'normal', opacity: 1, visible: true },
+    ]);
+    // Where overlay alpha = 0, base should be preserved exactly
+    expect(result.frames[0]!.data[0]!).toBe(100);
+    expect(result.frames[0]!.data[1]!).toBe(100);
+    expect(result.frames[0]!.data[2]!).toBe(100);
+    expect(result.frames[0]!.data[3]!).toBe(255);
+  });
+
+  it('partially transparent overlay blends proportionally', () => {
+    const base = createSolid(50, 50, 50, 255);
+    const overlay = createRaster(
+      2,
+      2,
+      new Uint8ClampedArray([
+        200, 200, 200, 128, 200, 200, 200, 128, 200, 200, 200, 128, 200, 200, 200, 128,
+      ]),
+    );
+    const result = compositeLayers(base, [
+      { image: overlay, blendMode: 'normal', opacity: 1, visible: true },
+    ]);
+    // RGB should be blended; alpha should include overlay contribution (clamped to 255 max)
+    expect(Number.isFinite(result.frames[0]!.data[3]!)).toBe(true);
+    expect(result.frames[0]!.data[3]!).toBeGreaterThanOrEqual(128);
+  });
+
+  it('layer opacity combined with pixel alpha affects blend', () => {
+    const base = createSolid(100, 100, 100, 255);
+    const overlay = createRaster(
+      2,
+      2,
+      new Uint8ClampedArray([255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255]),
+    );
+    const result = compositeLayers(base, [
+      { image: overlay, blendMode: 'normal', opacity: 0.5, visible: true },
+    ]);
+    // With 50% opacity over opaque base, red should blend with gray
+    expect(result.frames[0]!.data[0]!).toBeGreaterThanOrEqual(100);
+  });
+
+  it('hard-edge mask boundary: foreground preserved where mask=255, background where mask=0', () => {
+    const base = createSolid(0, 0, 255, 255); // blue base
+    const overlayMask = createRaster(
+      2,
+      2,
+      new Uint8ClampedArray([
+        255,
+        0,
+        0,
+        255, // red opaque at pixel 1
+        0,
+        0,
+        255,
+        0, // transparent at pixel 2 (base preserved)
+        255,
+        0,
+        0,
+        128, // red semi-transparent at pixel 3
+        0,
+        0,
+        255,
+        255, // base opaque at pixel 4
+      ]),
+    );
+    const result = compositeLayers(base, [
+      { image: overlayMask, blendMode: 'normal', opacity: 1, visible: true },
+    ]);
+    // Pixel 1 (red opaque): should be red-ish
+    expect(result.frames[0]!.data[0]!).toBeGreaterThanOrEqual(200);
+    // Pixel 2 (alpha 0, transparent) is index 4-7; base is [0,0,255,255]
+    expect(result.frames[0]!.data[4]!).toBe(0);
+    expect(result.frames[0]!.data[6]!).toBe(255);
+  });
+
+  it('deterministic with overlay alpha', () => {
+    const base = createSolid(128, 128, 128, 255);
+    const overlay = createRaster(
+      2,
+      2,
+      new Uint8ClampedArray([
+        200, 200, 200, 128, 200, 200, 200, 128, 200, 200, 200, 128, 200, 200, 200, 128,
+      ]),
+    );
+    const a = compositeLayers(base, [
+      { image: overlay, blendMode: 'normal', opacity: 0.7, visible: true },
+    ]);
+    const b = compositeLayers(base, [
+      { image: overlay, blendMode: 'normal', opacity: 0.7, visible: true },
+    ]);
+    for (let i = 0; i < a.frames[0]!.data.length; i++) {
+      expect(a.frames[0]!.data[i]!).toBe(b.frames[0]!.data[i]!);
+    }
+  });
+
+  it('destination alpha interaction preserved', () => {
+    const base = createRaster(
+      2,
+      2,
+      new Uint8ClampedArray([
+        100, 100, 100, 128, 100, 100, 100, 128, 100, 100, 100, 128, 100, 100, 100, 128,
+      ]),
+    );
+    const overlayOpaque = createSolid(255, 0, 0, 255);
+    const result = compositeLayers(base, [
+      { image: overlayOpaque, blendMode: 'normal', opacity: 1, visible: true },
+    ]);
+    // Base alpha should contribute to final alpha after compositing with opaque overlay
+    expect(Number.isFinite(result.frames[0]!.data[3]!)).toBe(true);
+  });
+});

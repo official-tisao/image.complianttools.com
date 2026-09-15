@@ -85,6 +85,8 @@ export * from './transform/split.js';
 export * from './layer/model.js';
 export * from './layer/editor-shell.js';
 export * from './layer/composite.js';
+export * from './layer/pyramid.js';
+export * from './layer/shadow-synthesis.js';
 export * from './typography/index.js';
 export * from './transform/round-corners.js';
 export * from './ops/watermark.js';
