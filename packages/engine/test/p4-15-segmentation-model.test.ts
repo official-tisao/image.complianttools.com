@@ -3,6 +3,8 @@
  */
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import { createRaster } from '../src/index.js';
 import {
   segmentTier1,
@@ -11,9 +13,16 @@ import {
 } from '../src/cv/segmentation.js';
 import type { RectangleHint } from '../src/cv/segmentation.js';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const resolveRepoPath = (p: string) => join(__dirname, '..', '..', '..', p);
+
 describe('P4-15 Segmentation model', () => {
   it('no RMBG-1.4 reference in engine source', () => {
-    const segSource = readFileSync('packages/engine/src/cv/segmentation.ts', 'utf8');
+    const segSource = readFileSync(
+      resolveRepoPath('packages/engine/src/cv/segmentation.ts'),
+      'utf8',
+    );
     expect(segSource).toContain('GrabCut');
     expect(segSource).not.toContain('@imgly');
     expect(segSource).not.toContain('RMBG');
@@ -44,7 +53,7 @@ describe('P4-15 Segmentation model', () => {
   });
 
   it('asset register contains no unverified segmentation weights', () => {
-    const assetsRaw = readFileSync('docs/static-assets.json', 'utf8');
+    const assetsRaw = readFileSync(resolveRepoPath('docs/static-assets.json'), 'utf8');
     const assets: { name?: string }[] = JSON.parse(assetsRaw);
     expect(Array.isArray(assets)).toBe(true);
     const unverified = assets.filter(
@@ -60,7 +69,7 @@ describe('P4-15 Segmentation model', () => {
   });
 
   it('positive-register audit remains blocked', () => {
-    const audit = readFileSync('docs/ADR/positive-register-audit.md', 'utf8');
+    const audit = readFileSync(resolveRepoPath('docs/ADR/positive-register-audit.md'), 'utf8');
     expect(audit).toContain('Blocked');
   });
 
