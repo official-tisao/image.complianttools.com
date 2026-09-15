@@ -25,15 +25,27 @@ export {
   noiseTexture,
   placeholderFrame,
   identicon,
+  openSimplex2_2D,
+  openSimplex2_2D_ImproveXY,
+  valueNoise,
+  valueNoiseTexture,
+  valueNoiseImage,
+  worleyNoise,
+  domainWarp,
+  fbm,
 } from './procedural-synthesis.js';
 export type { ProceduralSynthesisOptions } from './procedural-synthesis.js';
 export {
   perceptualHash,
+  pHash,
   differenceHash,
   approximateSSIM,
+  approximateMS_SSIM,
   approximatePSNR,
   nearestHash,
+  approximateButteraugli,
   similarityVerdict,
+  butteraugliVerdict,
 } from './analysis-primitives.js';
 export {
   inpaint,
@@ -43,3 +55,11 @@ export {
   teleaInpaint,
   navierStokesInpaint,
 } from './inpainting.js';
+export {
+  computeTiles,
+  hasOnnxAcceleration,
+  modelDownloadInfo,
+  initOnnxRuntime,
+  runTiledInference,
+  verifyTier1Fallback,
+} from '../onnx-runtime.js';
