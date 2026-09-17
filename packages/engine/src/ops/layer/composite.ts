@@ -7,6 +7,25 @@ export interface CompositeOptions {
   readonly height: number;
 }
 
+function resolveLayerBuffer(
+  layer: Layer,
+  _width: number,
+  _height: number,
+): Uint8ClampedArray | null {
+  // For P4-11, layer.image is a reference; we resolve it to the expected
+  // RGBA buffer size. In a full pipeline this would read from a source image.
+  if (!layer || layer.visible === false) return null;
+  if (typeof layer.image === 'string') {
+    // Reference not resolved — skip without corrupting output (honest per P8)
+    return null;
+  }
+  // If it is a Uint8ClampedArray (already resolved), return it directly
+  if (layer.image instanceof Uint8ClampedArray) {
+    return layer.image;
+  }
+  return null;
+}
+
 export function compositeLayers(
   options: CompositeOptions,
   baseFrame?: Uint8ClampedArray,
@@ -15,7 +34,6 @@ export function compositeLayers(
   const h = options.height;
   const pixelCount = w * h * 4;
   let result = baseFrame ? new Uint8ClampedArray(pixelCount) : new Uint8ClampedArray(pixelCount);
-  // Initialize transparent black if no base frame
   if (!baseFrame) {
     for (let i = 0; i < pixelCount; i += 4) {
       result[i] = 0;
@@ -28,20 +46,22 @@ export function compositeLayers(
   }
 
   for (const layer of options.layers) {
-    if (!layer.visible || layer.opacity <= 0) continue;
-    // For v1 we treat layer.image as a reference; in a real pipeline it would
-    // be resolved to a Uint8ClampedArray buffer. Here we simulate a no-op
-    // composite that keeps the base intact unless blend mode is not normal.
-    if (layer.blendMode === 'normal' && layer.opacity >= 1) {
-      // In a real implementation this would overlay the layer pixels.
-      // For the STCC test we only need deterministic behavior.
+    if (!layer.visible || (layer.opacity !== undefined && layer.opacity <= 0)) continue;
+
+    const overlay = resolveLayerBuffer(layer, w, h);
+    if (!overlay) {
+      // Dimension/reference mismatch: skip layer rather than corrupting (P8 honest reporting)
       continue;
     }
-    // Apply blend with a synthetic overlay derived from base for determinism
-    const synthetic = new Uint8ClampedArray(pixelCount);
-    for (let i = 0; i < pixelCount; i += 4) synthetic[i] = result[i] ?? 0;
-    const opacityValue: number = (layer.opacity !== undefined ? layer.opacity : 1) as number;
-    result = blendPixels(result, synthetic, layer.blendMode as BlendMode, opacityValue);
+    if (overlay.length !== pixelCount) {
+      // Dimension mismatch (e.g., different width/height) — skip to preserve output integrity
+      continue;
+    }
+
+    const blendMode = (layer.blendMode as BlendMode) ?? 'normal';
+    const opacityValue: number = layer.opacity !== undefined ? layer.opacity : 1;
+    result = blendPixels(result, overlay, blendMode, opacityValue);
   }
+
   return result;
 }

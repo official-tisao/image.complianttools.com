@@ -15,6 +15,7 @@ export function blendPixels(
     const ro = overlay[i] ?? 0;
     const go = overlay[i + 1] ?? 0;
     const bo = overlay[i + 2] ?? 0;
+    const ao = overlay[i + 3] ?? 255;
     let r = rb,
       g = gb,
       bVal = bb;
@@ -64,10 +65,19 @@ export function blendPixels(
     const rf = Math.round(r * a + rb * (1 - a));
     const gf = Math.round(g * a + gb * (1 - a));
     const bf = Math.round(bVal * a + bb * (1 - a));
-    out[i] = Math.min(255, Math.max(0, Math.round(rf)));
-    out[i + 1] = Math.min(255, Math.max(0, Math.round(gf)));
-    out[i + 2] = Math.min(255, Math.max(0, Math.round(bf)));
-    out[i + 3] = base[i + 3] ?? 255;
+    // Apply opacity blend combined with per-pixel overlay alpha and base alpha
+    const alphaFactor = (ao / 255) * a;
+    const baseAlphaNorm = (base[i + 3] ?? 255) / 255;
+    const compositeAlpha = Math.min(1, alphaFactor + baseAlphaNorm * (1 - alphaFactor));
+    const blendedR = Math.round(rf);
+    const blendedG = Math.round(gf);
+    const blendedB = Math.round(bf);
+    const blendedA = Math.round(compositeAlpha * 255);
+
+    out[i] = Math.min(255, Math.max(0, blendedR));
+    out[i + 1] = Math.min(255, Math.max(0, blendedG));
+    out[i + 2] = Math.min(255, Math.max(0, blendedB));
+    out[i + 3] = Math.min(255, Math.max(0, blendedA));
   }
   return out;
 }

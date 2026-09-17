@@ -68,6 +68,7 @@ export {
   exportPaletteAse,
 } from './color/palette.js';
 export * from './color/recolour.js';
+export * from './color/transfer.js';
 export * from './ops/geometry.js';
 export * from './ops/raster.js';
 export * from './ops/resize.js';
@@ -84,6 +85,8 @@ export * from './transform/split.js';
 export * from './layer/model.js';
 export * from './layer/editor-shell.js';
 export * from './layer/composite.js';
+export * from './layer/pyramid.js';
+export * from './layer/shadow-synthesis.js';
 export * from './typography/index.js';
 export * from './transform/round-corners.js';
 export * from './ops/watermark.js';
@@ -109,3 +112,5 @@ export * from './security/redaction.js';
 export * from './scheduler/worker-pool.js';
 export * from './types.js';
 export * from './wasm/integrity.js';
+export * from './cv/index.js';
+export * from './onnx-runtime.js';

@@ -16,3 +16,5 @@ export {
 } from './palette.js';
 export { applyRecolour, type RecolourSettings } from './recolour.js';
 export { exportPaletteAse } from './palette.js';
+export { reinhardTransfer, histogramMatch } from './transfer.js';
+export type { ColourTransferOptions, HistogramMatchOptions } from './transfer.js';
