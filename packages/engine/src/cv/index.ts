@@ -77,3 +77,10 @@ export {
   type ScanWindow,
   type OverlappingDetection,
 } from './sliding-window.js';
+  computeTiles,
+  hasOnnxAcceleration,
+  modelDownloadInfo,
+  initOnnxRuntime,
+  runTiledInference,
+  verifyTier1Fallback,
+} from '../onnx-runtime.js';
