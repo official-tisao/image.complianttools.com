@@ -12,10 +12,8 @@
  * - leafValues applies at tree leaves (not per internal node for stumps)
  */
 
-import { readFileSync } from 'fs';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
-const __dirname = dirname(fileURLToPath(import.meta.url));
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
 export interface HaarFeatureRect {
   readonly x: number;
@@ -173,7 +171,7 @@ function parseTrees(stageText: string): CascadeTree[] {
 }
 
 export function loadVerifiedCascade(): ParsedVerifiedCascade {
-  const xmlPath = __dirname + '/../../../../../verified_cascade.xml';
+  const xmlPath = fileURLToPath(new URL('../../../../../verified_cascade.xml', import.meta.url));
   const xmlText = readFileSync(xmlPath, 'utf-8');
   const descriptors = parseDescriptorBlock(xmlText);
   const stageRegex = /<_>[\s\S]*?<maxWeakCount>[\s\S]*?<\/_(?=\s*(?=<_|$))?/g;
