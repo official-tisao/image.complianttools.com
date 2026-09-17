@@ -55,3 +55,11 @@ export {
   teleaInpaint,
   navierStokesInpaint,
 } from './inpainting.js';
+export {
+  computeTiles,
+  hasOnnxAcceleration,
+  modelDownloadInfo,
+  initOnnxRuntime,
+  runTiledInference,
+  verifyTier1Fallback,
+} from '../onnx-runtime.js';
