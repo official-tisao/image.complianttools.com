@@ -12,11 +12,6 @@
  * - leafValues applies at tree leaves (not per internal node for stumps)
  */
 
-import { readFileSync } from 'fs';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
-const __dirname = dirname(fileURLToPath(import.meta.url));
-
 export interface HaarFeatureRect {
   readonly x: number;
   readonly y: number;
@@ -173,8 +168,15 @@ function parseTrees(stageText: string): CascadeTree[] {
 }
 
 export function loadVerifiedCascade(): ParsedVerifiedCascade {
-  const xmlPath = __dirname + '/../../../../../verified_cascade.xml';
-  const xmlText = readFileSync(xmlPath, 'utf-8');
+  type NodeFs = { readFileSync(path: URL, encoding: 'utf8'): string };
+  type RuntimeProcess = { getBuiltinModule?: (name: string) => unknown };
+  const runtimeProcess = (globalThis as { process?: RuntimeProcess }).process;
+  const fs = runtimeProcess?.getBuiltinModule?.('fs') as NodeFs | undefined;
+  if (!fs) {
+    throw new Error('The verified cascade is available only in the Node.js engine test/runtime.');
+  }
+  const xmlPath = new URL('../../../../../apps/web/static/verified_cascade.xml', import.meta.url);
+  const xmlText = fs.readFileSync(xmlPath, 'utf8');
   const descriptors = parseDescriptorBlock(xmlText);
   const stageRegex = /<_>[\s\S]*?<maxWeakCount>[\s\S]*?<\/_(?=\s*(?=<_|$))?/g;
   const rawStages = xmlText.match(stageRegex) || [];

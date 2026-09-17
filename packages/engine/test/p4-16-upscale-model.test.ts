@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { recordUpscaleComparison, dcci, nedi } from '../src/cv/index.js';
 import type { RasterImage } from '../src/types.js';
@@ -54,9 +55,11 @@ describe('P4-16 Upscale model', () => {
     // That comparison must not contain fabricated fixtures or fabricated numbers.
     // This assertion verifies the comparison file states the correct unverified status.
     // Verify the actual P4-16 escalation artifact exists and records unverified weights.
-    const fs = await import('fs');
-    const content = fs.readFileSync('packages/engine/bench/escalation/p4-16-upscale.md', 'utf-8');
+    const content = readFileSync(
+      new URL('../bench/escalation/p4-16-upscale.md', import.meta.url),
+      'utf-8',
+    );
     expect(content).toContain('p4_16_upscale_measurement');
-    expect(content).toContain('unverified_weights');
+    expect(content).toContain('weightLicenceVerified: false');
   });
 });

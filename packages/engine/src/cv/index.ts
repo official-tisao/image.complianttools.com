@@ -77,6 +77,7 @@ export {
   type ScanWindow,
   type OverlappingDetection,
 } from './sliding-window.js';
+export {
   computeTiles,
   hasOnnxAcceleration,
   modelDownloadInfo,
