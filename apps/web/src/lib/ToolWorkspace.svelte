@@ -359,19 +359,14 @@
   ><title>{title} — ctimg</title><meta name="description" content={description} /><link
     rel="canonical"
     href={canonical}
-  /><link rel="alternate" hreflang="en" href={canonical} /><link
-    rel="alternate"
-    hreflang="en-XA"
-    href={`https://image.complianttools.com/en-XA/${kind}`}
-  /><link rel="alternate" hreflang="ar" href={`https://image.complianttools.com/ar/${kind}`} /><meta
-    property="og:title"
-    content={title}
-  /><meta property="og:description" content={description} /><meta
-    property="og:image"
-    content="https://image.complianttools.com/og/tools.svg"
-  /><meta name="twitter:card" content="summary_large_image" /><svelte:element
-    this={"script"}
-    type="application/ld+json">{JSON.stringify(jsonLd)}</svelte:element
+  /><meta property="og:title" content={title} /><meta
+    property="og:description"
+    content={description}
+  /><meta property="og:image" content="https://image.complianttools.com/og/tools.svg" /><meta
+    name="twitter:card"
+    content="summary_large_image"
+  /><svelte:element this={"script"} type="application/ld+json"
+    >{JSON.stringify(jsonLd)}</svelte:element
   ></svelte:head
 >
 <header class="tool-header">

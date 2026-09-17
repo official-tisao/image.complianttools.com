@@ -141,11 +141,22 @@
 
 <svelte:head>
   <title>{t('imagePdf.title', 'Image to PDF')} — Image Compliant Tools</title>
-  <meta
-    name="description"
-    content={t('imagePdf.metaDescription', 'Create an ordered, page-sized PDF from local images.')}
-  />
+  <meta name="description" content="Create an ordered, page-sized PDF from local images." />
   <link rel="canonical" href={`https://image.complianttools.com${localizedPath}`} />
+  <meta property="og:title" content="Image to PDF" />
+  <meta property="og:description" content="Create ordered PDF locally." />
+  <meta property="og:type" content="website" />
+  <meta property="twitter:card" content="summary" />
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Image to PDF",
+      "applicationCategory": "MultimediaApplication",
+      "operatingSystem": "Any",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+    }
+  </script>
 </svelte:head>
 
 <main lang={locale === 'en-XA' ? 'en-XA' : locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}>
@@ -165,6 +176,20 @@
     onChange={setControl}
     {locale}
   />
+  <h2>{t('imagePdf.faqTitle', 'Frequently asked')}</h2>
+  <div>
+    <h3>{t('imagePdf.faqTitle1', 'Can I make multi-page PDFs?')}</h3>
+    <p>
+      {t(
+        'imagePdf.faqAnswer1',
+        'Yes. Select images in order; ordering and orientation can be set before creating the PDF.',
+      )}
+    </p>
+    <h3>{t('imagePdf.faqTitle2', 'Does the preview match the download?')}</h3>
+    <p>{t('imagePdf.faqAnswer2', 'Yes. The embedded viewer shows the exact PDF bytes.')}</p>
+    <h3>{t('imagePdf.faqTitle3', 'Is anything uploaded?')}</h3>
+    <p>{t('imagePdf.faqAnswer3', 'No. Everything is local.')}</p>
+  </div>
   <label>
     {t('imagePdf.choose', 'Choose images in page order')}
     <input

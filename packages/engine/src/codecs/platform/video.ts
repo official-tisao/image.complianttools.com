@@ -1,4 +1,4 @@
-import type { RasterImage } from '../../types.js';
+import type { RasterImage, EngineError } from '../../types.js';
 
 export const VIDEO_UNSUPPORTED_MESSAGE =
   'This browser cannot decode this video codec. Try MP4 or WebM in a browser with WebCodecs support.';
@@ -51,12 +51,36 @@ async function loadContainerVideoFrameReader(): Promise<ContainerVideoFrameReade
       const media = new Input({ formats: ALL_FORMATS, source: new BlobSource(input) });
       try {
         const track = await media.getPrimaryVideoTrack();
-        if (!track) throw new Error('The video contains no video track.');
-        if (!(await track.canDecode())) throw new Error(VIDEO_UNSUPPORTED_MESSAGE);
+        if (!track)
+          throw {
+            kind: 'decode-failed',
+            format: 'mp4',
+            detail: 'The video contains no video track.',
+            remedy: 'Choose a video file with a video stream or try a different container.',
+          } satisfies EngineError;
+        if (!(await track.canDecode()))
+          throw {
+            kind: 'codec-unavailable',
+            format: 'mp4',
+            reason: VIDEO_UNSUPPORTED_MESSAGE,
+            remedy: 'Try MP4 or WebM in a browser with WebCodecs support.',
+          } satisfies EngineError;
         const wrapped = await new CanvasSink(track).getCanvas(timestampSeconds);
-        if (!wrapped) throw new Error('The requested timestamp has no video frame.');
+        if (!wrapped)
+          throw {
+            kind: 'decode-failed',
+            format: 'mp4',
+            detail: 'The requested timestamp has no video frame.',
+            remedy:
+              'Choose a non-negative timestamp within the video duration or select a different video file.',
+          } satisfies EngineError;
         const context = wrapped.canvas.getContext('2d');
-        if (!context) throw new Error('Your browser cannot read the decoded video canvas.');
+        if (!context)
+          throw {
+            kind: 'internal',
+            detail: 'Your browser cannot read the decoded video canvas.',
+            remedy: 'Try a different browser or check that WebCodecs is enabled.',
+          } satisfies EngineError;
         const width = wrapped.canvas.width;
         const height = wrapped.canvas.height;
         return { width, height, pixels: context.getImageData(0, 0, width, height).data };
@@ -77,10 +101,19 @@ export async function extractContainerVideoFrame(
   readerLoader: () => Promise<ContainerVideoFrameReader> = loadContainerVideoFrameReader,
 ): Promise<RasterImage> {
   if (!Number.isFinite(timestampSeconds) || timestampSeconds < 0)
-    throw new Error('Video timestamp must be a non-negative finite number.');
+    throw {
+      kind: 'internal',
+      detail: 'Video timestamp must be a non-negative finite number.',
+      remedy: 'Provide a non-negative finite number representing the timestamp in seconds.',
+    } satisfies EngineError;
   const frame = await (await readerLoader()).readFirstFrame(input, timestampSeconds);
   if (frame.width < 1 || frame.height < 1 || frame.pixels.length !== frame.width * frame.height * 4)
-    throw new Error('The video decoder returned an invalid RGBA frame.');
+    throw {
+      kind: 'decode-failed',
+      format: 'mp4',
+      detail: 'The video decoder returned an invalid RGBA frame.',
+      remedy: 'Choose a valid bounded video file with a decodable video track.',
+    } satisfies EngineError;
   return {
     width: frame.width,
     height: frame.height,
@@ -111,11 +144,30 @@ export async function demuxContainerFirstVideoPacket(
   const media = new Input({ formats: ALL_FORMATS, source: new BufferSource(bytes) });
   try {
     const track = await media.getPrimaryVideoTrack();
-    if (!track) throw new Error('The media container contains no video track.');
+    if (!track)
+      throw {
+        kind: 'decode-failed',
+        format: 'mp4',
+        detail: 'The media container contains no video track.',
+        remedy: 'Choose a container with a video stream or try a different file.',
+      } satisfies EngineError;
     const config = await track.getDecoderConfig();
-    if (!config) throw new Error('The video track does not declare a decoder configuration.');
+    if (!config)
+      throw {
+        kind: 'decode-failed',
+        format: 'mp4',
+        detail: 'The video track does not declare a decoder configuration.',
+        remedy:
+          'Choose a video file with a valid codec configuration or try a different container.',
+      } satisfies EngineError;
     const packet = await new EncodedPacketSink(track).getFirstPacket();
-    if (!packet) throw new Error('The video track contains no encoded packets.');
+    if (!packet)
+      throw {
+        kind: 'decode-failed',
+        format: 'mp4',
+        detail: 'The video track contains no encoded packets.',
+        remedy: 'Choose a video file with encoded video data or try a different container.',
+      } satisfies EngineError;
     const description = config.description;
     const descriptionBytes = description
       ? description instanceof ArrayBuffer
@@ -264,7 +316,13 @@ export async function extractVideoFrame(
   options: { readonly timestamp?: number; readonly key?: boolean } = {},
   decoderConstructor: VideoDecoderConstructor | undefined = platform.VideoDecoder,
 ): Promise<RasterImage> {
-  if (!decoderConstructor) throw new Error(VIDEO_UNSUPPORTED_MESSAGE);
+  if (!decoderConstructor)
+    throw {
+      kind: 'codec-unavailable',
+      format: 'mp4',
+      reason: VIDEO_UNSUPPORTED_MESSAGE,
+      remedy: 'Try MP4 or WebM in a browser with WebCodecs support.',
+    } satisfies EngineError;
   return new Promise<RasterImage>((resolve, reject) => {
     let finished = false;
     const decoder = new decoderConstructor({

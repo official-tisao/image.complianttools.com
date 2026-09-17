@@ -117,7 +117,7 @@
 <svelte:head
   ><title>{t('raw.seoTitle', 'RAW & DNG')} — Image Compliant Tools</title><meta
     name="description"
-    content={t('raw.metaDescription', 'Extract RAW camera previews and develop DNG files locally.')}
+    content="Extract RAW camera previews and develop DNG files locally."
   /><link rel="canonical" href={`https://image.complianttools.com${localizedPath}`} /></svelte:head
 >
 <main lang={locale === 'en-XA' ? 'en-XA' : locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}>

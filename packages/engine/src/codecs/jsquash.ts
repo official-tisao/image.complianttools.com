@@ -66,16 +66,25 @@ export async function decodePngToRaster(bytes: ArrayBuffer): Promise<RasterImage
 }
 
 export async function decodeWebpToRaster(bytes: ArrayBuffer): Promise<RasterImage> {
-  const decoded = await decodeWebp(bytes);
-  return {
-    width: decoded.width,
-    height: decoded.height,
-    colorSpace: decoded.colorSpace === 'display-p3' ? 'display-p3' : 'srgb',
-    bitDepth: 8,
-    premultipliedAlpha: false,
-    frames: [{ data: decoded.data, durationMs: 0 }],
-    ...retainedMetadata(bytes),
-  };
+  try {
+    const decoded = await decodeWebp(bytes);
+    return {
+      width: decoded.width,
+      height: decoded.height,
+      colorSpace: decoded.colorSpace === 'display-p3' ? 'display-p3' : 'srgb',
+      bitDepth: 8,
+      premultipliedAlpha: false,
+      frames: [{ data: decoded.data, durationMs: 0 }],
+      ...retainedMetadata(bytes),
+    };
+  } catch (e: unknown) {
+    throw {
+      kind: 'decode-failed',
+      format: 'webp',
+      detail: e instanceof Error ? e.message : 'Unknown decode error',
+      remedy: 'Convert the file to PNG or JPEG using a trusted application, then try again.',
+    } satisfies import('../types.js').EngineError;
+  }
 }
 
 export function encodeRasterAsJpeg(

@@ -42,7 +42,10 @@ describe('platform video frame extraction', () => {
       }),
     );
     expect(frame.frames[0]?.data).toEqual(new Uint8ClampedArray([1, 2, 3, 255]));
-    await expect(extractContainerVideoFrame(new Blob(), -1)).rejects.toThrow('non-negative');
+    await expect(extractContainerVideoFrame(new Blob(), -1)).rejects.toMatchObject({
+      kind: 'internal',
+      detail: expect.stringContaining('non-negative'),
+    });
   });
 
   it('demuxes the first local MP4 video sample without bundling a decoder', async () => {

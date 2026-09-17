@@ -134,6 +134,40 @@
     )}
   />
   <link rel="canonical" href={`https://image.complianttools.com${localizedPath}`} />
+  <meta property="og:title" content="HEIC / HEIF Converter" />
+  <meta property="og:description" content="Convert HEIC and HEIF to PNG locally." />
+  <meta property="og:type" content="website" />
+  <meta property="twitter:card" content="summary" />
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "HEIC / HEIF Converter",
+      "applicationCategory": "MultimediaApplication",
+      "operatingSystem": "Any",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+    }
+  </script>
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Image Tools",
+          "item": "https://image.complianttools.com/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "HEIC / HEIF Converter",
+          "item": "https://image.complianttools.com/heic-converter"
+        }
+      ]
+    }
+  </script>
 </svelte:head>
 
 <main lang={locale === 'en-XA' ? 'en-XA' : locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}>
@@ -145,7 +179,27 @@
       'Convert a HEIC or HEIF image to PNG locally when your browser provides a platform decoder. HEIC encoding is deliberately unavailable.',
     )}
   </p>
-  <label>
+  <p>
+    {t(
+      'heic.faq1',
+      'HEIC and HEIF decode through your browser’s platform decoder when available; PNG is always produced locally. HEIC encoding is deliberately unavailable.',
+    )}
+  </p>
+  <h2>{t('heic.faqTitle', 'Frequently asked')}</h2>
+  <div>
+    <h3>{t('heic.faqTitle1', 'Does HEIC encode work?')}</h3>
+    <p>
+      {t(
+        'heic.faqAnswer1',
+        'No. HEIC encoding requires HEVC patents and a GPL/commercial encoder, so only decode is offered.',
+      )}
+    </p>
+    <h3>{t('heic.faqTitle2', 'What formats can I convert from?')}</h3>
+    <p>{t('heic.faqAnswer2', 'HEIC and HEIF input files (.heic, .heif) are supported.')}</p>
+    <h3>{t('heic.faqTitle3', 'Is my file uploaded?')}</h3>
+    <p>{t('heic.faqAnswer3', 'No. The file is read locally; nothing is uploaded.')}</p>
+  </div>
+  <label aria-label="HEIC file input for conversion to PNG" data-testid="heic-file-label">
     {t('heic.choose', 'Choose a HEIC or HEIF image')}
     <input
       type="file"

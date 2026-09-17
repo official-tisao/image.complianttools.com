@@ -221,7 +221,13 @@ function embeddedTiffOffsets(bytes: Uint8Array): number[] {
  */
 export function extractRawCameraPreview(input: ArrayBuffer | Uint8Array): RawCameraPreview {
   const bytes = input instanceof Uint8Array ? input : new Uint8Array(input);
-  if (bytes.byteLength < 4) throw new Error('RAW file is too short to contain a camera preview.');
+  if (bytes.byteLength < 4)
+    throw {
+      kind: 'decode-failed',
+      format: 'raw',
+      detail: 'RAW file is too short to contain a camera preview.',
+      remedy: 'Use a full RAW file from a supported camera or export it as DNG.',
+    };
   const candidates = [...tiffPreviewCandidates(bytes), ...scannedPreviewCandidates(bytes)].sort(
     (left, right) => right.length - left.length,
   );
@@ -237,5 +243,10 @@ export function extractRawCameraPreview(input: ArrayBuffer | Uint8Array): RawCam
     .flatMap((offset) => uncompressedTiffPreviews(bytes.subarray(offset)))
     .sort((left, right) => right.pixels - left.pixels)[0];
   if (uncompressed) return uncompressed;
-  throw new Error('No embedded camera preview was found in this RAW file.');
+  throw {
+    kind: 'decode-failed',
+    format: 'raw',
+    detail: 'No embedded camera preview was found in this RAW file.',
+    remedy: 'Use a DNG file for full development or a RAW file with an embedded camera preview.',
+  };
 }
