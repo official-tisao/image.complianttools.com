@@ -10,7 +10,14 @@ export { hough } from './hough.js';
 export { morphology } from './morphology.js';
 export { connectedComponents } from './connected-components.js';
 export { integralImage } from './integral-images.js';
+export {
+  integralImage32,
+  evaluateDescriptor,
+  type DescriptorFeature,
+  type DescriptorRect,
+} from './descriptor-eval.js';
 export { dcci, nedi } from './dcci-nedi.js';
+export { recordUpscaleComparison } from './upscale-model.js';
 export { pixelArtScale } from './pixel-art.js';
 export { saliencyRetarget } from './saliency-retarget.js';
 export { alphaMatting } from './alpha-matting.js';
@@ -55,3 +62,18 @@ export {
   teleaInpaint,
   navierStokesInpaint,
 } from './inpainting.js';
+export {
+  detectFacesTier1,
+  detectFacesTier1Reference,
+  detectBatch,
+  recordFaceDetectionTier2Status,
+} from './face-detection.js';
+export {
+  generateScanWindows,
+  generateMultiScaleWindows,
+  getBaseWindowSize,
+  nms,
+  mapDetectionToOriginal,
+  type ScanWindow,
+  type OverlappingDetection,
+} from './sliding-window.js';
