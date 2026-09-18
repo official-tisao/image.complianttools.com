@@ -587,5 +587,5 @@ Package metadata is not treated as sufficient for WASM codecs. The verifier walk
 
 | Asset | Licence | Provenance | SHA-256 | Checked |
 | --- | --- | --- | --- | --- |
-| _No third-party static assets registered._ | — | — | — | — |
+| `apps/web/static/verified_cascade.xml` | BSD-3-Clause | [source](https://github.com/opencv/opencv/raw/4.9.0/data/haarcascades/haarcascade_frontalface_default.xml) · [licence](https://github.com/opencv/opencv/blob/4.9.0/data/haarcascades/haarcascade_frontalface_default.xml) | `0f7d4527844eb514d4a4948e822da90fbb16a34a0bbbbc6adc6498747a5aafb0` | 2026-09-17 |
 
