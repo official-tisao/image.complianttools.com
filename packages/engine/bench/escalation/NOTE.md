@@ -1,0 +1,21 @@
+P4-21 Benchmark Files (written to disk):
+
+- p4-21-corpus-index.md
+- p4-21-t32-upscale.md
+- p4-21-t66-inpaint.md
+- p4-21-t62-ocr.md
+- p4-21-t27-smart-crop.md (planned)
+- p4-21-t60-compare.md (planned)
+- p4-21-t61-duplicates.md (planned)
+- p4-21-t67-expand.md (planned)
+- p4-21-t68-bg-remove.md (planned)
+- p4-21-t69-bg-replace.md (planned)
+- p4-21-t57-face-blur.md (planned)
+- p4-21-t63-accessibility.md (planned)
+- p4-21-t79-procedural.md (planned)
+- p4-21-t80-colour-match.md (planned)
+- p4-21-t81-adaptive-resize.md (planned)
+- p4-21-t71-describe.md (planned)
+- p4-21-denoise.md (planned)
+- p4-21-colour-tone.md (planned)
+- p4-21-README.md (planned)
