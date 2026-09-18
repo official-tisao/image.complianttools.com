@@ -1,1 +1,10 @@
-[]
+[
+  {
+    "path": "apps/web/static/verified_cascade.xml",
+    "sourceUrl": "https://github.com/opencv/opencv/raw/4.9.0/data/haarcascades/haarcascade_frontalface_default.xml",
+    "license": "BSD-3-Clause",
+    "licenseUrl": "https://github.com/opencv/opencv/blob/4.9.0/data/haarcascades/haarcascade_frontalface_default.xml",
+    "sha256": "0f7d4527844eb514d4a4948e822da90fbb16a34a0bbbbc6adc6498747a5aafb0",
+    "dateChecked": "2026-09-17"
+  }
+]
