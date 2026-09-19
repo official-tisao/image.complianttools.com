@@ -62,6 +62,7 @@ export {
   teleaInpaint,
   navierStokesInpaint,
 } from './inpainting.js';
+export { cutoutRefine, removeObject, removeBackground, expandImage } from './cutout-fill.js';
 export {
   detectFacesTier1,
   detectFacesTier1Reference,
