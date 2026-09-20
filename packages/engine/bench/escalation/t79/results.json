@@ -1,0 +1,558 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-09-20T14:30:59.870Z",
+  "runnerSha256": "c18e994aef34ae6211dfb1363986c2b024266173cea355e0308d38803e79bfc9",
+  "environment": {
+    "node": "v22.22.0",
+    "platform": "win32/x64",
+    "cpu": "Intel(R) Core(TM) i7-10750H CPU @ 2.60GHz",
+    "corpus": "Self-generated procedural outputs; no outside pixels or subjective reference targets.",
+    "warmupRuns": 1,
+    "measuredRuns": 7
+  },
+  "measurementScope": "Checks output dimensions, exact repeated-seed RGBA determinism, artifact integrity, and generation latency. It does not score visual quality or user preference.",
+  "summary": {
+    "value-noise": {
+      "cases": 3,
+      "allSeedRunsDeterministic": true,
+      "medianLatencyMs": 23.82230000000004,
+      "p95LatencyMs": 118.0965000000001
+    },
+    "fbm": {
+      "cases": 3,
+      "allSeedRunsDeterministic": true,
+      "medianLatencyMs": 22.749499999999898,
+      "p95LatencyMs": 118.86029999999982
+    },
+    "worley": {
+      "cases": 3,
+      "allSeedRunsDeterministic": true,
+      "medianLatencyMs": 6.315500000000156,
+      "p95LatencyMs": 34.00559999999996
+    },
+    "linear-gradient": {
+      "cases": 3,
+      "allSeedRunsDeterministic": true,
+      "medianLatencyMs": 1.087699999999586,
+      "p95LatencyMs": 3.660400000000209
+    },
+    "radial-gradient": {
+      "cases": 3,
+      "allSeedRunsDeterministic": true,
+      "medianLatencyMs": 1.2393000000001848,
+      "p95LatencyMs": 7.501800000000003
+    }
+  },
+  "cases": [
+    {
+      "id": "value-noise-128-seed-17",
+      "operation": "value-noise",
+      "seed": 17,
+      "dimensions": {
+        "width": 128,
+        "height": 128
+      },
+      "rawRgbaBytes": 65536,
+      "deterministicWarmupRuns": 1,
+      "deterministicMeasuredRuns": 7,
+      "stableRgbaSha256AcrossRuns": "26075717bd5f39fca65edae47873d16492afd44408556a36a40a70c25511a3c0",
+      "latencyMs": {
+        "samples": [
+          8.348299999999995,
+          7.575199999999995,
+          8.07409999999993,
+          7.592800000000011,
+          7.838399999999979,
+          6.908200000000079,
+          7.639400000000023
+        ],
+        "median": 7.639400000000023,
+        "p95": 8.348299999999995
+      },
+      "artifact": {
+        "path": "artifacts/value-noise-128-seed-17.png",
+        "width": 128,
+        "height": 128,
+        "pngBytes": 2539,
+        "pngSha256": "b9662a6e4e47b252d4449186451e661c56268f70505a979fc00c1af7ef12bb6a",
+        "rgbaSha256": "26075717bd5f39fca65edae47873d16492afd44408556a36a40a70c25511a3c0"
+      }
+    },
+    {
+      "id": "value-noise-256-seed-42",
+      "operation": "value-noise",
+      "seed": 42,
+      "dimensions": {
+        "width": 256,
+        "height": 256
+      },
+      "rawRgbaBytes": 262144,
+      "deterministicWarmupRuns": 1,
+      "deterministicMeasuredRuns": 7,
+      "stableRgbaSha256AcrossRuns": "20e7cd9555a897f289e460777f875f86bbf2a087e0519882bd7ae1ca05023d3a",
+      "latencyMs": {
+        "samples": [
+          24.250599999999963,
+          22.676699999999983,
+          20.780199999999923,
+          19.0394,
+          23.82230000000004,
+          24.76909999999998,
+          24.785499999999956
+        ],
+        "median": 23.82230000000004,
+        "p95": 24.785499999999956
+      },
+      "artifact": {
+        "path": "artifacts/value-noise-256-seed-42.png",
+        "width": 256,
+        "height": 256,
+        "pngBytes": 4774,
+        "pngSha256": "74c445000754d77bb79610c37dc21f1834278e814c9c84e335bda7c3417d24fe",
+        "rgbaSha256": "20e7cd9555a897f289e460777f875f86bbf2a087e0519882bd7ae1ca05023d3a"
+      }
+    },
+    {
+      "id": "value-noise-512-seed-101",
+      "operation": "value-noise",
+      "seed": 101,
+      "dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "rawRgbaBytes": 1048576,
+      "deterministicWarmupRuns": 1,
+      "deterministicMeasuredRuns": 7,
+      "stableRgbaSha256AcrossRuns": "2d817277d356d56d5e49e2039e79b9d1b57c427e9f51a590a7281a22f5274935",
+      "latencyMs": {
+        "samples": [
+          122.69910000000004,
+          118.0965000000001,
+          94.08460000000014,
+          99.39069999999992,
+          98.85529999999994,
+          109.06320000000005,
+          81.62290000000007
+        ],
+        "median": 99.39069999999992,
+        "p95": 122.69910000000004
+      },
+      "artifact": {
+        "path": "artifacts/value-noise-512-seed-101.png",
+        "width": 512,
+        "height": 512,
+        "pngBytes": 13426,
+        "pngSha256": "e0b0aa2469f34e5739062341528e321cf0df045c67da41f3d5f585e369b70faa",
+        "rgbaSha256": "2d817277d356d56d5e49e2039e79b9d1b57c427e9f51a590a7281a22f5274935"
+      }
+    },
+    {
+      "id": "fbm-128-seed-17",
+      "operation": "fbm",
+      "seed": 17,
+      "dimensions": {
+        "width": 128,
+        "height": 128
+      },
+      "rawRgbaBytes": 65536,
+      "deterministicWarmupRuns": 1,
+      "deterministicMeasuredRuns": 7,
+      "stableRgbaSha256AcrossRuns": "ed2c98e664870dafcd7a8b941506954da34f4ebc61d98e3d8c7bf7b266d69ae2",
+      "latencyMs": {
+        "samples": [
+          5.289899999999989,
+          5.371200000000044,
+          6.64469999999983,
+          5.430900000000065,
+          5.566000000000031,
+          5.883800000000065,
+          5.649300000000039
+        ],
+        "median": 5.566000000000031,
+        "p95": 6.64469999999983
+      },
+      "artifact": {
+        "path": "artifacts/fbm-128-seed-17.png",
+        "width": 128,
+        "height": 128,
+        "pngBytes": 17114,
+        "pngSha256": "47d385ad1f2d47c161db383eaac225a4bf4963dba6d8a486480a3e18a3374cdf",
+        "rgbaSha256": "ed2c98e664870dafcd7a8b941506954da34f4ebc61d98e3d8c7bf7b266d69ae2"
+      }
+    },
+    {
+      "id": "fbm-256-seed-42",
+      "operation": "fbm",
+      "seed": 42,
+      "dimensions": {
+        "width": 256,
+        "height": 256
+      },
+      "rawRgbaBytes": 262144,
+      "deterministicWarmupRuns": 1,
+      "deterministicMeasuredRuns": 7,
+      "stableRgbaSha256AcrossRuns": "baa2884bc6cd62ba6799dfdc8fd426f2721162ba146b4380aafa4852cb0af2f6",
+      "latencyMs": {
+        "samples": [
+          27.0920000000001,
+          28.84960000000001,
+          20.733999999999924,
+          22.749499999999898,
+          20.905699999999797,
+          21.799800000000232,
+          25.31600000000026
+        ],
+        "median": 22.749499999999898,
+        "p95": 28.84960000000001
+      },
+      "artifact": {
+        "path": "artifacts/fbm-256-seed-42.png",
+        "width": 256,
+        "height": 256,
+        "pngBytes": 66568,
+        "pngSha256": "e994dc118c529fc53700369bd1ad0ef9556434b9afe1cf61ebcad688628ea188",
+        "rgbaSha256": "baa2884bc6cd62ba6799dfdc8fd426f2721162ba146b4380aafa4852cb0af2f6"
+      }
+    },
+    {
+      "id": "fbm-512-seed-101",
+      "operation": "fbm",
+      "seed": 101,
+      "dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "rawRgbaBytes": 1048576,
+      "deterministicWarmupRuns": 1,
+      "deterministicMeasuredRuns": 7,
+      "stableRgbaSha256AcrossRuns": "9e9364fb196279832d064e0e9b02730fcb5fbe494935c3a79770e376ca311b0f",
+      "latencyMs": {
+        "samples": [
+          102.47569999999996,
+          118.86029999999982,
+          121.89420000000018,
+          102.00589999999966,
+          101.404,
+          109.61380000000008,
+          95.27110000000039
+        ],
+        "median": 102.47569999999996,
+        "p95": 121.89420000000018
+      },
+      "artifact": {
+        "path": "artifacts/fbm-512-seed-101.png",
+        "width": 512,
+        "height": 512,
+        "pngBytes": 265208,
+        "pngSha256": "d50d69d9fbf55de3230223ad72f0281dccb4de8ec4c4903b9a8ae2e879048e0b",
+        "rgbaSha256": "9e9364fb196279832d064e0e9b02730fcb5fbe494935c3a79770e376ca311b0f"
+      }
+    },
+    {
+      "id": "worley-128-seed-17",
+      "operation": "worley",
+      "seed": 17,
+      "dimensions": {
+        "width": 128,
+        "height": 128
+      },
+      "rawRgbaBytes": 65536,
+      "deterministicWarmupRuns": 1,
+      "deterministicMeasuredRuns": 7,
+      "stableRgbaSha256AcrossRuns": "3d7fea6394e44d56635e03fcc5e0e9b7dacdf24842892e4b1ad9e0c3311c34a2",
+      "latencyMs": {
+        "samples": [
+          1.7343000000000757,
+          1.9385000000002037,
+          1.887000000000171,
+          1.8595000000000255,
+          1.8679000000001906,
+          1.946100000000115,
+          1.6243999999996959
+        ],
+        "median": 1.8679000000001906,
+        "p95": 1.946100000000115
+      },
+      "artifact": {
+        "path": "artifacts/worley-128-seed-17.png",
+        "width": 128,
+        "height": 128,
+        "pngBytes": 19536,
+        "pngSha256": "bff66a9fbb1cae6db3547e868c0b9cad102f1a2d91b96345913002a305039858",
+        "rgbaSha256": "3d7fea6394e44d56635e03fcc5e0e9b7dacdf24842892e4b1ad9e0c3311c34a2"
+      }
+    },
+    {
+      "id": "worley-256-seed-42",
+      "operation": "worley",
+      "seed": 42,
+      "dimensions": {
+        "width": 256,
+        "height": 256
+      },
+      "rawRgbaBytes": 262144,
+      "deterministicWarmupRuns": 1,
+      "deterministicMeasuredRuns": 7,
+      "stableRgbaSha256AcrossRuns": "c0ea8ddfa1c927f772932960a6b876a6b5471d40ed88722ff01b89f32745c116",
+      "latencyMs": {
+        "samples": [
+          7.646200000000135,
+          6.315500000000156,
+          7.178999999999633,
+          9.620699999999943,
+          6.297500000000127,
+          6.092200000000048,
+          6.303699999999935
+        ],
+        "median": 6.315500000000156,
+        "p95": 9.620699999999943
+      },
+      "artifact": {
+        "path": "artifacts/worley-256-seed-42.png",
+        "width": 256,
+        "height": 256,
+        "pngBytes": 63119,
+        "pngSha256": "88e4ca76193a04d26786d3573c5de6b21d58bb5501e94ca63eb5e9190fe547a1",
+        "rgbaSha256": "c0ea8ddfa1c927f772932960a6b876a6b5471d40ed88722ff01b89f32745c116"
+      }
+    },
+    {
+      "id": "worley-512-seed-101",
+      "operation": "worley",
+      "seed": 101,
+      "dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "rawRgbaBytes": 1048576,
+      "deterministicWarmupRuns": 1,
+      "deterministicMeasuredRuns": 7,
+      "stableRgbaSha256AcrossRuns": "c4a4a72420277c61acbc24d7f460654007dfd7eacb080e99021e7914f045c959",
+      "latencyMs": {
+        "samples": [
+          34.0338999999999,
+          26.03769999999986,
+          26.431600000000344,
+          23.37609999999995,
+          23.52890000000025,
+          30.34479999999985,
+          34.00559999999996
+        ],
+        "median": 26.431600000000344,
+        "p95": 34.0338999999999
+      },
+      "artifact": {
+        "path": "artifacts/worley-512-seed-101.png",
+        "width": 512,
+        "height": 512,
+        "pngBytes": 166342,
+        "pngSha256": "93196613dd2ae26a2a895c8e1e55368e56f2d5e04981c03d95c41b2b11326647",
+        "rgbaSha256": "c4a4a72420277c61acbc24d7f460654007dfd7eacb080e99021e7914f045c959"
+      }
+    },
+    {
+      "id": "linear-gradient-128-seed-17",
+      "operation": "linear-gradient",
+      "seed": 17,
+      "dimensions": {
+        "width": 128,
+        "height": 128
+      },
+      "rawRgbaBytes": 65536,
+      "deterministicWarmupRuns": 1,
+      "deterministicMeasuredRuns": 7,
+      "stableRgbaSha256AcrossRuns": "099c7c0ff2322049046f88972231860994b4c82ba6e86efb32575ed79b06c728",
+      "latencyMs": {
+        "samples": [
+          0.2744999999999891,
+          0.265400000000227,
+          0.3752999999996973,
+          0.5104000000001179,
+          0.46630000000004657,
+          0.46680000000014843,
+          0.4553000000000793
+        ],
+        "median": 0.4553000000000793,
+        "p95": 0.5104000000001179
+      },
+      "artifact": {
+        "path": "artifacts/linear-gradient-128-seed-17.png",
+        "width": 128,
+        "height": 128,
+        "pngBytes": 19450,
+        "pngSha256": "260c40aa87270dc1b0337778c5f76783ac21b70e7b8116e71481af95cc3b11f7",
+        "rgbaSha256": "099c7c0ff2322049046f88972231860994b4c82ba6e86efb32575ed79b06c728"
+      }
+    },
+    {
+      "id": "linear-gradient-256-seed-42",
+      "operation": "linear-gradient",
+      "seed": 42,
+      "dimensions": {
+        "width": 256,
+        "height": 256
+      },
+      "rawRgbaBytes": 262144,
+      "deterministicWarmupRuns": 1,
+      "deterministicMeasuredRuns": 7,
+      "stableRgbaSha256AcrossRuns": "3e6dfa3eb5b3acebbe462d737a6f963f9ed4bffe965f5a82f9ca5ecaa066ab33",
+      "latencyMs": {
+        "samples": [
+          1.087699999999586,
+          1.2903999999998632,
+          0.916899999999714,
+          0.9140999999999622,
+          1.202900000000227,
+          0.9441999999999098,
+          1.258100000000013
+        ],
+        "median": 1.087699999999586,
+        "p95": 1.2903999999998632
+      },
+      "artifact": {
+        "path": "artifacts/linear-gradient-256-seed-42.png",
+        "width": 256,
+        "height": 256,
+        "pngBytes": 59310,
+        "pngSha256": "f8930fc934a8a3b85b5a8336317748cfeb0d2079145c52cafae2f05484bc0ac4",
+        "rgbaSha256": "3e6dfa3eb5b3acebbe462d737a6f963f9ed4bffe965f5a82f9ca5ecaa066ab33"
+      }
+    },
+    {
+      "id": "linear-gradient-512-seed-101",
+      "operation": "linear-gradient",
+      "seed": 101,
+      "dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "rawRgbaBytes": 1048576,
+      "deterministicWarmupRuns": 1,
+      "deterministicMeasuredRuns": 7,
+      "stableRgbaSha256AcrossRuns": "265de62cc261125263573a0a6bf3685f03ef4a5a53b6749272bbf45fc978ca72",
+      "latencyMs": {
+        "samples": [
+          3.190399999999954,
+          4.507500000000164,
+          3.2429000000001906,
+          3.2895000000003165,
+          3.322599999999966,
+          3.2867999999998574,
+          3.660400000000209
+        ],
+        "median": 3.2895000000003165,
+        "p95": 4.507500000000164
+      },
+      "artifact": {
+        "path": "artifacts/linear-gradient-512-seed-101.png",
+        "width": 512,
+        "height": 512,
+        "pngBytes": 174716,
+        "pngSha256": "6c3e63a234a4189f9c852c9d82dcf62e83de8717610ca1864c8f84077852d194",
+        "rgbaSha256": "265de62cc261125263573a0a6bf3685f03ef4a5a53b6749272bbf45fc978ca72"
+      }
+    },
+    {
+      "id": "radial-gradient-128-seed-17",
+      "operation": "radial-gradient",
+      "seed": 17,
+      "dimensions": {
+        "width": 128,
+        "height": 128
+      },
+      "rawRgbaBytes": 65536,
+      "deterministicWarmupRuns": 1,
+      "deterministicMeasuredRuns": 7,
+      "stableRgbaSha256AcrossRuns": "f9abff455289f9fc695d25e079914b936205a7ac2c78c002c0aff0a56ff2cdd5",
+      "latencyMs": {
+        "samples": [
+          0.3669999999997344,
+          0.35039999999980864,
+          0.37210000000004584,
+          0.4920999999999367,
+          0.3730000000000473,
+          0.4333000000001448,
+          0.36979999999994106
+        ],
+        "median": 0.37210000000004584,
+        "p95": 0.4920999999999367
+      },
+      "artifact": {
+        "path": "artifacts/radial-gradient-128-seed-17.png",
+        "width": 128,
+        "height": 128,
+        "pngBytes": 27584,
+        "pngSha256": "6b2346b1cd89dd1509821f2ddde78e8b19a8e3534534d5575ac9870059513d64",
+        "rgbaSha256": "f9abff455289f9fc695d25e079914b936205a7ac2c78c002c0aff0a56ff2cdd5"
+      }
+    },
+    {
+      "id": "radial-gradient-256-seed-42",
+      "operation": "radial-gradient",
+      "seed": 42,
+      "dimensions": {
+        "width": 256,
+        "height": 256
+      },
+      "rawRgbaBytes": 262144,
+      "deterministicWarmupRuns": 1,
+      "deterministicMeasuredRuns": 7,
+      "stableRgbaSha256AcrossRuns": "e3773698b3937942751a2b93024908928b864741ffd1878eaa5e1798d34633aa",
+      "latencyMs": {
+        "samples": [
+          1.2181000000000495,
+          1.2264000000000124,
+          1.2393000000001848,
+          1.2628999999997177,
+          1.3223000000002685,
+          1.2579000000000633,
+          1.1907000000001062
+        ],
+        "median": 1.2393000000001848,
+        "p95": 1.3223000000002685
+      },
+      "artifact": {
+        "path": "artifacts/radial-gradient-256-seed-42.png",
+        "width": 256,
+        "height": 256,
+        "pngBytes": 84119,
+        "pngSha256": "4257c370f10bdb1700a71971d5ef07d84fccff52f9f29d61ba4265455970d04f",
+        "rgbaSha256": "e3773698b3937942751a2b93024908928b864741ffd1878eaa5e1798d34633aa"
+      }
+    },
+    {
+      "id": "radial-gradient-512-seed-101",
+      "operation": "radial-gradient",
+      "seed": 101,
+      "dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "rawRgbaBytes": 1048576,
+      "deterministicWarmupRuns": 1,
+      "deterministicMeasuredRuns": 7,
+      "stableRgbaSha256AcrossRuns": "118daa5aed0187ac9e9b19f72eb58f5614c4982879be3b32d40f2bab92203740",
+      "latencyMs": {
+        "samples": [
+          6.067999999999756,
+          6.231499999999869,
+          6.529399999999896,
+          7.501800000000003,
+          12.092200000000048,
+          6.248199999999997,
+          5.813899999999649
+        ],
+        "median": 6.248199999999997,
+        "p95": 12.092200000000048
+      },
+      "artifact": {
+        "path": "artifacts/radial-gradient-512-seed-101.png",
+        "width": 512,
+        "height": 512,
+        "pngBytes": 265078,
+        "pngSha256": "e8066205e418f1c9731bac11d4f27a9d7ab951b408805c6e1f90ff12f5163ece",
+        "rgbaSha256": "118daa5aed0187ac9e9b19f72eb58f5614c4982879be3b32d40f2bab92203740"
+      }
+    }
+  ]
+}
