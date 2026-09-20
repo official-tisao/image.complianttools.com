@@ -1,0 +1,120 @@
+{
+  "continue": {
+    "iistart": "2018-08-02T15:49:02Z",
+    "continue": "||"
+  },
+  "query": {
+    "normalized": [
+      {
+        "from": "File:New_oak_leaves_with_female_flowers.jpg",
+        "to": "File:New oak leaves with female flowers.jpg"
+      }
+    ],
+    "pages": {
+      "71264386": {
+        "pageid": 71264386,
+        "ns": 6,
+        "title": "File:New oak leaves with female flowers.jpg",
+        "imagerepository": "local",
+        "imageinfo": [
+          {
+            "size": 5671146,
+            "width": 3720,
+            "height": 2790,
+            "url": "https://upload.wikimedia.org/wikipedia/commons/8/83/New_oak_leaves_with_female_flowers.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+            "descriptionurl": "https://commons.wikimedia.org/wiki/File:New_oak_leaves_with_female_flowers.jpg",
+            "descriptionshorturl": "https://commons.wikimedia.org/w/index.php?curid=71264386",
+            "extmetadata": {
+              "DateTime": {
+                "value": "2018-08-02 15:50:14",
+                "source": "mediawiki-metadata",
+                "hidden": ""
+              },
+              "ObjectName": {
+                "value": "New oak leaves with female flowers",
+                "source": "mediawiki-metadata"
+              },
+              "CommonsMetadataExtension": {
+                "value": 1.2,
+                "source": "extension",
+                "hidden": ""
+              },
+              "Categories": {
+                "value": "Taken with Panasonic Lumix DMC-FZ1000|CC-Zero|Retouched pictures|Self-published work|Featured pictures of Fagales|Green leaves|Quercus robur in Sweden|Images by W.carter|Files with coordinates missing SDC location of creation|Sweden photographs taken on 2018-05-19|Featured pictures of Lysekil Municipality|Quercus robur (flowers)|Featured photographs in the public domain|Featured pictures taken with compact digital camera|Trees in Brastad|Reused images by W.carter|Featured pictures by W.carter|Quercus robur in the Northern Hemisphere in May 2018",
+                "source": "commons-categories",
+                "hidden": ""
+              },
+              "Assessments": {
+                "value": "featured",
+                "source": "commons-categories",
+                "hidden": ""
+              },
+              "GPSLatitude": {
+                "value": "58.380021",
+                "source": "commons-desc-page"
+              },
+              "GPSLongitude": {
+                "value": "11.486592",
+                "source": "commons-desc-page"
+              },
+              "GPSMapDatum": {
+                "value": "WGS-84",
+                "source": "commons-desc-page",
+                "hidden": ""
+              },
+              "ImageDescription": {
+                "value": "Young oak leaves (<i>Quercus robur</i>) and female flowers in the setting sun, Brastad, Lysekil Municipality, Sweden. The leaves are dusted with pollen from the male flowers. Focus stacked from two photos (handheld).",
+                "source": "commons-desc-page"
+              },
+              "DateTimeOriginal": {
+                "value": "2018-05-19 18:37:17",
+                "source": "commons-desc-page"
+              },
+              "Credit": {
+                "value": "<span class=\"int-own-work\" lang=\"en\">Own work</span>",
+                "source": "commons-desc-page"
+              },
+              "Artist": {
+                "value": "<a href=\"//commons.wikimedia.org/wiki/User:W.carter\" title=\"User:W.carter\">W.carter</a>",
+                "source": "commons-desc-page"
+              },
+              "LicenseShortName": {
+                "value": "CC0",
+                "source": "commons-desc-page",
+                "hidden": ""
+              },
+              "UsageTerms": {
+                "value": "Creative Commons Zero, Public Domain Dedication",
+                "source": "commons-desc-page"
+              },
+              "AttributionRequired": {
+                "value": "false",
+                "source": "commons-desc-page",
+                "hidden": ""
+              },
+              "LicenseUrl": {
+                "value": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+                "source": "commons-desc-page"
+              },
+              "Copyrighted": {
+                "value": "True",
+                "source": "commons-desc-page",
+                "hidden": ""
+              },
+              "Restrictions": {
+                "value": "",
+                "source": "commons-desc-page",
+                "hidden": ""
+              },
+              "License": {
+                "value": "cc0",
+                "source": "commons-templates",
+                "hidden": ""
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}

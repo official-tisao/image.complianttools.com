@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-09-19",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "notes": [
+    "Each image is individually registered with its image-level CC0 source evidence, local SHA-256, and a preserved metadata response.",
+    "The Commons rows were checked through the file metadata API for LicenseShortName=CC0 and the CC0 deed URL. Cleveland Museum of Art rows were checked for share_license_status=CC0.",
+    "These four initial samples contain landscapes, foliage, an object, and a fine-line map. They are suitable for image-operation fixtures, not multilingual OCR ground truth.",
+    "CC0 addresses copyright and related rights identified by the source; it does not warrant privacy, publicity, trademark, or other independent rights. These initial samples avoid identifiable living people."
+  ],
+  "assets": [
+    {
+      "id": "landscape-dordogne",
+      "path": "landscape-dordogne.jpg",
+      "title": "Landscape Dordogne Château de Hautefort 18",
+      "creator": "Jebulon",
+      "dimensions": { "width": 4592, "height": 3056 },
+      "sizeBytes": 2140794,
+      "sha256": "c3e2eef6af01a10882c83f71ff849d2ffb95220aad0e70e98daf6cf27e1975b7",
+      "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/4/4d/Landscape_Dordogne_Ch%C3%A2teau_de_Hautefort_18.jpg",
+      "sourcePageUrl": "https://commons.wikimedia.org/wiki/File:Landscape_Dordogne_Ch%C3%A2teau_de_Hautefort_18.jpg",
+      "metadataApiUrl": "https://commons.wikimedia.org/w/api.php?action=query&format=json&titles=File:Landscape_Dordogne_Ch%C3%A2teau_de_Hautefort_18.jpg&prop=imageinfo&iiprop=url%7Csize%7Cextmetadata",
+      "metadataSnapshot": "landscape-dordogne.metadata.json",
+      "metadataSnapshotSha256": "a00d556a2800aa055d7cea0b052b4166e5e42d9c1f7b4a29a3ab6034aa6d676e",
+      "license": "CC0-1.0",
+      "licenseEvidence": "Commons imageinfo extmetadata: LicenseShortName=CC0; LicenseUrl=https://creativecommons.org/publicdomain/zero/1.0/"
+    },
+    {
+      "id": "oak-leaves",
+      "path": "oak-leaves.jpg",
+      "title": "New oak leaves with female flowers",
+      "creator": "W.carter",
+      "dimensions": { "width": 3720, "height": 2790 },
+      "sizeBytes": 5671146,
+      "sha256": "71c0f2fb2fa89385955bca609cf9983d493137a81879005143606d0fa74d2802",
+      "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/8/83/New_oak_leaves_with_female_flowers.jpg",
+      "sourcePageUrl": "https://commons.wikimedia.org/wiki/File:New_oak_leaves_with_female_flowers.jpg",
+      "metadataApiUrl": "https://commons.wikimedia.org/w/api.php?action=query&format=json&titles=File:New_oak_leaves_with_female_flowers.jpg&prop=imageinfo&iiprop=url%7Csize%7Cextmetadata",
+      "metadataSnapshot": "oak-leaves.metadata.json",
+      "metadataSnapshotSha256": "68de096c7215cedd551c66b4c77b281eb48d478105fba0254394bd83c880b2cb",
+      "license": "CC0-1.0",
+      "licenseEvidence": "Commons imageinfo extmetadata: LicenseShortName=CC0; LicenseUrl=https://creativecommons.org/publicdomain/zero/1.0/",
+      "fixtureNote": "The source describes this as focus-stacked from two handheld photographs; use for texture and segmentation, not restoration ground truth."
+    },
+    {
+      "id": "gold-weight",
+      "path": "gold-weight.jpg",
+      "title": "Gold Weight (abrammuo): Geometric",
+      "creator": "Asante goldsmith, unidentified",
+      "dimensions": { "width": 2619, "height": 2338 },
+      "sizeBytes": 3330155,
+      "sha256": "575c3663c372bb43e7da86a253cd9cb3602211bc39e3756332ca682963beb351",
+      "sourceUrl": "https://openaccess-cdn.clevelandart.org/1969.265/1969.265_print.jpg",
+      "sourcePageUrl": "https://clevelandart.org/art/1969.265",
+      "metadataApiUrl": "https://openaccess-api.clevelandart.org/api/artworks/1969.265?indent=1",
+      "metadataSnapshot": "gold-weight.metadata.json",
+      "metadataSnapshotSha256": "a7a15d396f58877f0fa73f5feb705b790710fe81c1ea63b94c1a120ecb70928e",
+      "license": "CC0-1.0",
+      "licenseEvidence": "Cleveland Museum of Art Open Access API: share_license_status=CC0"
+    },
+    {
+      "id": "rome-map",
+      "path": "rome-map.jpg",
+      "title": "La Pianta Grande di Roma",
+      "creator": "Giovanni Battista Nolli and collaborators",
+      "dimensions": { "width": 3400, "height": 2176 },
+      "sizeBytes": 3948980,
+      "sha256": "4f86a0ae3baa75bd29b690ef005e40029327824ec49f5241fd102e3a06126065",
+      "sourceUrl": "https://openaccess-cdn.clevelandart.org/2020.276.15/2020.276.15_print.jpg",
+      "sourcePageUrl": "https://clevelandart.org/art/2020.276.15",
+      "metadataApiUrl": "https://openaccess-api.clevelandart.org/api/artworks/2020.276.15?indent=1",
+      "metadataSnapshot": "rome-map.metadata.json",
+      "metadataSnapshotSha256": "d3c8ec700a20ab96be384047944ff1d67115c636c9fc9bf96be76fe3e06daf08",
+      "license": "CC0-1.0",
+      "licenseEvidence": "Cleveland Museum of Art Open Access API: share_license_status=CC0",
+      "fixtureNote": "Fine-line map artwork; use for line-detail and layout image operations, not modern-language OCR accuracy."
+    }
+  ]
+}
