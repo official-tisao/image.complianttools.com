@@ -18,3 +18,10 @@ Thumbs.db
 
 debug.log
 __pycache__/
+
+# OCR models are fetched on demand from the pinned tessdata_fast CDN for local
+# test/dev caches. Keep the one CDN-blocked model bundled for script coverage.
+apps/web/static/tessdata/**
+!apps/web/static/tessdata/script/
+apps/web/static/tessdata/script/**
+!apps/web/static/tessdata/script/Cyrillic.traineddata

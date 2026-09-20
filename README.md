@@ -210,14 +210,14 @@ Note how few `AI` marks there are: three.
 | Alpha matting / hair-edge cutout | | | | | | | | ● |
 | Upscale | ● | | | ● | ● | | | ◐ |
 | Edge-directed upscale (DCCI / NEDI) | | | | | | | | ● |
-| Pixel-art / line-art upscale (xBRZ / HQx) | | | | | | | | ● |
+| Pixel-art / line-art upscale (clean-room integer scaler) | | | | | | | | ● |
 | Object removal ("magic eraser") | | | | | | ● | | ◐ |
 | Exemplar fill (texture synthesis) | | | | | | | | ● |
 | Generative fill / expand | | | | | | ● | | ◐ |
 | Background replace | | | | | | ● | | ◐ |
-| Seamless composite (Poisson blend) | | | | | | | | ● |
+| Seamless composite (alpha blend; full pyramid/Poisson methods not shipped) | | | | | | | | ● |
 | Colour harmonization (colour transfer) | | | | | | | | ● |
-| Click-to-select object (GrabCut / watershed) | | | | | | ○ | | ● |
+| Click-to-select object (colour range / watershed) | | | | | | ○ | | ● |
 | Procedural image generation (QR, noise, patterns, avatars) | | | | | | ○ | | ● |
 | Generate image from a prompt | | | | | | ● | | AI |
 | Prompt-based edit ("magic edit") | | | | | | ● | | AI |
@@ -320,7 +320,7 @@ include an AI step if the user has configured one, but they issue no request of 
 | T29 | Flip / Mirror | `/flip` | Local | Horizontal, vertical, both |
 | T30 | Canvas Resize / Pad | `/canvas-resize` | Local | Anchor 3×3, pad colour or transparent, extend to aspect ratio |
 | T31 | Enlarge | `/enlarge` | Local | **Tier 0:** Lanczos3, Mitchell, Catmull-Rom, nearest. Instant, no model, no download |
-| T32 | Upscale | `/upscale` | Local ⇗AI | **Tier 1:** DCCI and NEDI edge-directed interpolation — sharper than Lanczos on edges, instant, deterministic, no download. **Tier 2:** Real-ESRGAN-class ONNX ×2/×4 on-device. Tier 3 escalation only for > ×4 or heavily degraded input. See also T70 for pixel/line art |
+| T32 | Upscale | `/upscale` | Local ⇗AI | **Tier 1:** DCCI and NEDI edge-directed interpolation — instant, deterministic, no download. **Tier 2 (engine adapter only):** Real-ESRGAN ONNX ×2/×4 requires caller-supplied converted weights and an explicit consent flag; no T32 route, model downloader, size-disclosure UI, or persistent-cache workflow exists yet. The project owner accepts the upstream BSD-3 label for the two exact official `.pth` assets, with asset-level terms risk recorded in `docs/model-assets.json`. On four clean synthetic 2× pairs, x2 did not beat Lanczos3 or DCCI; on 16 CC0-derived synthetic ×4 blur/noise/JPEG pairs, Real-ESRGAN x4 trailed Tier 1, while an evaluation-only Swin2SR q4f16 candidate had a small aggregate metric gain but mixed class PSNR and slow CPU/WASM runtime. Swin2SR is not selected: per-file licence notice and training-data provenance remain unestablished. Real degraded-camera performance remains unmeasured. **Tier 3 candidate:** > ×4 or heavy degradation, pending representative evidence. See T70 for pixel/line art |
 | T33 | Border / Frame | `/add-border` | Local | Width per side, colour, inner/outer, **instant-print** and film-sprocket presets (*not* "Polaroid" — that is a live trademark; the frame geometry is generic) |
 | T34 | Round Corners | `/round-corners` | Local | Per-corner radius, outputs alpha PNG/WebP |
 | T35 | Collage / Merge | `/collage` | Local | Grid, horizontal, vertical, mosaic; gap, background, alignment |
@@ -337,7 +337,7 @@ include an AI step if the user has configured one, but they issue no request of 
 | T41 | Threshold / Binarize | `/threshold` | Local | Global value, Otsu, adaptive (Sauvola) |
 | T42 | Auto Enhance | `/enhance` | Local | The OC `Enhance` toggle, expanded: auto-level + auto-contrast + mild local tone mapping |
 | T43 | Sharpen & Blur | `/sharpen` | Local | Unsharp mask, smart sharpen, Gaussian/box/motion/radial/lens blur |
-| T44 | Denoise & Despeckle | `/denoise` | Local | Median, bilateral, non-local means, OC-compatible `Despeckle` |
+| T44 | Denoise & Despeckle | `/denoise` | Local | Median, bilateral, wavelet/BayesShrink, OC-compatible `Despeckle`; non-local means remains excluded pending counsel |
 | T45 | Colour Picker & Palette | `/color-picker` | Local | Eyedropper, dominant-colour extraction (k-means + median cut), export as CSS/JSON/ASE/GPL |
 | T46 | Recolour / Hue Replace | `/recolor` | Local | Target hue range → replacement, tolerance, feather |
 | T47 | Duotone / Gradient Map | `/duotone` | Local | Two-colour and multi-stop gradient mapping |
@@ -370,27 +370,28 @@ include an AI step if the user has configured one, but they issue no request of 
 | T59 | Image Inspector | `/image-info` | Local | Dimensions, aspect, DPI, colour space, bit depth, channels, alpha, animation, chunk/box dump, entropy, est. quality factor |
 | T60 | Compare | `/compare` | Local | A/B slider, onion skin, difference blend, SSIM / PSNR / butteraugli, byte delta |
 | T61 | Duplicate Finder | `/find-duplicates` | Local | aHash/dHash/pHash + Hamming clustering across a folder |
-| T62 | OCR | `/ocr` | Local ⇗AI | Tesseract WASM, 100+ languages, on-device. Escalation only for handwriting and heavy skew |
+| T62 | OCR | `/ocr` | Local ⇗AI | The standalone page offers 124 language/variant choices, 37 script models, OSD orientation/script results, and `equ` equation text. Installed Edge reports the 270° correction for a generated image rotated 90° clockwise; language OCR and text download also pass on the same origin. Tesseract.js 7 uses all 163 pinned official `tessdata_fast` entries: 123 language/variant model binaries, one deprecated `frk` alias pointer to `deu_latf`, 37 script model binaries, and two helpers. Only the selected model is requested. A local static copy is preferred; missing files use their exact pinned jsDelivr URL except `script/Latin.traineddata` (89,384,811 bytes), which uses its pinned raw GitHub source because jsDelivr returns 403. The Latin script option discloses its 85.2 MiB size before recognition. `script/Cyrillic.traineddata` remains the sole bundled model. The page recommends upright images; OSD and Script models remain unloaded unless selected. Hausa is absent upstream. The exact eight self-generated print PNG fixtures and hashes are persisted in `packages/engine/bench/fixtures/ocr-language/`; the initial accuracy smoke is 7/8 exact, mean CER 0.00735. Arabic CDN delivery and Latin raw-source delivery passed browser smokes, which do not measure their OCR accuracy. Wider-language quality and offline shell caching remain open |
 | T63 | Accessibility Check | `/alt-text` | Local | Contrast ratio, text-in-image detection, colour-blind simulation, and the local **descriptive skeleton** (§4.9). Links to T71 if the user wants a drafted sentence |
 
 ### 4.8 Cutout, fill, and synthesis — local-first
 
-These are the tools competitors sell as "AI". Every one has a working classical implementation that
-ships as the primary path. The AI escalation, where it exists, is an explicitly-invoked upgrade for the
-narrow case documented in §13.1.3 — never the default, never required.
+These are the tools competitors sell as "AI". Local methods remain the primary path where implemented,
+but several tools are incomplete: T67 does not expand the canvas, T68 requires a user trimap and has no
+cleared Tier 2 model, and T69's Poisson path remains excluded. Any AI escalation is an explicitly invoked
+upgrade for the narrow case documented in §13.1.3 — never the default, never required.
 
 | # | Tool | Route | Mode | Primary implementation (Tier 0–2) | Escalation |
 | --- | --- | --- | --- | --- | --- |
-| T66 | Remove Object | `/remove-object` | Local ⇗AI | Brush a mask → **Telea fast-marching** for thin defects, **Criminisi exemplar synthesis** for structured regions, **texture synthesis** for repetitive fills. Multi-pass with a preview per algorithm so the user picks the best result | Large regions needing invented structure |
-| T67 | Expand Image | `/expand-image` | Local ⇗AI | Extend canvas → **mirror / edge-clamp / texture-synthesis / exemplar fill** into the new area. Excellent on sky, water, foliage, walls, gradients, fabric | Semantic scene continuation |
-| T68 | Remove Background | `/remove-background` | Local ⇗AI | **Tier 1:** chroma key, colour-range, magic wand with tolerance, **GrabCut** from a drawn rectangle, watershed. **Tier 2:** one-click on-device segmentation. Both refined by T77 | Fine hair, fur, motion blur, veils |
-| T69 | Replace Background | `/replace-background` | Local ⇗AI | Cutout (T68) → composite onto solid / gradient / pattern / **your own image** → **Poisson blending** (T78) → **colour transfer** (T80) → shadow synthesis from the matte | Only when the backdrop must be *generated* |
-| T70 | Pixel-Art & Line-Art Upscale | `/pixel-art-upscaler` | Local | **xBRZ / HQx / Scale2x / Eagle** — deterministic, instant, and genuinely better than any model on sprites, icons, line art, and screenshots. Nearest-neighbour integer scaling with a grid preview | None needed |
-| T77 | Cutout Refine (Alpha Matting) | `/cutout` | Local | **Closed-form matting**, **KNN matting**, trimap brush (foreground / background / unknown), **guided-filter** edge refinement, defringe, feather, alpha curve. Takes any rough mask to a production matte | — |
-| T78 | Seamless Composite | `/composite` | Local | **Poisson / gradient-domain blending** (seamless cloning), plus normal/multiply/screen/overlay modes, per-layer alpha, and a hard-edge re-composite for exact mask boundaries | — |
+| T66 | Remove Object | `/remove-object` | Local ⇗AI | Brush a mask → choose among **Telea**, **Navier–Stokes**, **confidence-priority**, **Efros–Leung**, or **quilting**. Three tiny generated texture fixtures have been measured; see §26. | Large or structural fills remain unmeasured |
+| T67 | Expand Image | `/expand-image` | Local ⇗AI | Current engine stub applies Telea inside a supplied same-size mask and returns the image unchanged without a mask; canvas expansion and outpaint are not implemented | Semantic scene continuation; implementation gap remains |
+| T68 | Remove Background | `/remove-background` | Local ⇗AI | User trimap → band-limited alpha matting → joint-bilateral refinement, alpha-band trim, and defringe. GrabCut and guided filter remain excluded; no cleared Tier 2 segmentation model is available | Requires a trimap; fine-edge quality remains unmeasured |
+| T69 | Replace Background | `/replace-background` | Local ⇗AI | Local cutout and compositing primitives include per-pixel alpha blending, colour transfer, and shadow synthesis. The function labelled Laplacian-pyramid blend is currently a simplified per-pixel blend, not a full pyramid; Poisson remains excluded pending counsel | Only when the backdrop must be generated; model need is unmeasured |
+| T70 | Pixel-Art & Line-Art Upscale | /pixel-art-upscaler | Local | Deterministic palette-aware scaling. A narrow four-fixture engine benchmark found no invented RGB colors after a strict-majority guard; the opaque stepped fixture matched nearest-neighbour exactly, while transparent edges gained intermediate alpha. Its 16-case route suite passes in Chromium and installed Edge; Firefox and WebKit pass all 15 functional cases and skip only the latency measurement. It covers every typed error kind and remedy, keyboard use, offline reuse, and the 320 CSS-pixel layout without horizontal overflow in all four browsers. Broad sprite preference and actual 400% browser zoom remain open, so full route STCC is not claimed. See [T70 benchmark](packages/engine/bench/escalation/t70/REPORT.md) | None needed |
+| T77 | Cutout Refine (Alpha Matting) | `/cutout` | Local | Band-limited colour-unmixing alpha matte from a trimap; joint-bilateral refinement, alpha-band trim, and defringe. Closed-form matting and guided filter are excluded | Hair/fur reference quality remains unmeasured |
+| T78 | Seamless Composite | `/composite` | Local | Layer compositing with alpha; the function labelled Laplacian-pyramid blend currently implements a simplified per-pixel alpha blend, not a full pyramid. Poisson/gradient-domain blending remains excluded pending counsel | — |
 | T79 | Procedural Generator | `/generate` | Local | **QR codes** and barcodes, Perlin / simplex / Worley noise, gradients (linear, radial, conic, mesh), geometric and dot/stripe patterns, checkerboards, identicons and avatars from a seed, initials avatars, placeholder frames with dimension labels, charts from pasted CSV, device mockup frames, favicons from text | — |
-| T80 | Colour Match | `/color-match` | Local | **Reinhard statistical colour transfer**, histogram matching, and per-channel mean/σ alignment — makes a composited subject sit naturally in a new scene, or matches a batch to a reference look | — |
-| T81 | Adaptive Resize | `/adaptive-resize` | Local | **Our own saliency-weighted warp retargeting** (§25.4) — change aspect ratio without distorting subjects, with protect/remove masks. *Not* seam carving, which is patent-excluded (§25.3.2), and not named "content-aware", which is Adobe terminology. Falls back to standard resize with an explanation when the saliency map is too uniform to warp safely | — |
+| T80 | Colour Match | /color-match | Local | Reinhard statistical colour transfer and per-channel histogram matching adjust global RGB distributions. On three generated texture pairs, mean normalized channel-CDF distance was 0.065537 unchanged, 0.014468 with Reinhard, and 0.002413 with histogram matching. Spatial preservation, photo composites, and user preference remain unmeasured. See [T80 benchmark](packages/engine/bench/escalation/p4-21-t80-colour-match.md) | — |
+| T81 | Adaptive Resize | /adaptive-resize | Local | Saliency-weighted continuous-warp retargeting (§25.4) with a protect mask. In three generated scenes, feasible masked subjects retained their exact pixel area and bbox dimensions (1.000×, 0% aspect change), but shifted 8.08 px on average as background content was compressed. The unmasked path measured 19.29% mean bbox-aspect change versus 33.53% for resize. Natural-photo quality and route-level STCC remain open. See [T81 benchmark](packages/engine/bench/escalation/t81/README.md). It is not seam carving, which remains excluded (§25.3.2) | — |
 
 ### 4.9 AI-only tools (Tier 3, justified)
 
@@ -856,14 +857,14 @@ own origin with long-lived immutable cache headers and SRI-equivalent integrity 
 | EXIF write/strip | `piexifjs` + custom chunk surgery for PNG/WebP/AVIF | Byte-level control, no re-encode | eager |
 | ICC parsing | custom (`packages/engine/src/icc`) | ~300 lines; avoids a heavy dep | eager |
 | **Tier 1 CV — simple ops** | hand-rolled in `packages/engine/src/cv/` | Flood fill, colour range, chroma key, Otsu/Sauvola, Hough, Canny/Sobel, spectral-residual saliency, Reinhard colour transfer, histogram matching, CLAHE, bilateral, median, unsharp, Laplacian-pyramid blend, DCCI, NEDI, pHash, SSIM. Each is 40–300 lines. Hand-rolling gives exact licence clarity, no bundle cost, worker-safety, and testability — all of which matter more here than saving a week | eager (SIMD-optimized WASM for the hot kernels) |
-| **Tier 1 CV — heavy ops** | **custom OpenCV WASM build**, modules `core` + `imgproc` + `photo` only | **Apache-2.0** (OpenCV relicensed from BSD-3 at 4.5.0) — clean for our engine. GrabCut, watershed, Telea and Navier–Stokes inpainting, `seamlessClone`. Reimplementing these correctly is weeks of work with a high bug surface. **A custom build is mandatory** — stock `opencv.js` is ~8 MB because it ships everything. **Note:** a permissive licence says nothing about *algorithm* patents; those are cleared separately in §25.3, and any algorithm that fails clearance is excluded from the build even though OpenCV ships it | lazy + consent |
-| **Tier 1 — exemplar inpainting** | hand-rolled Criminisi + image quilting | Not in OpenCV. This is the primary object-removal path (T66) and the highest-value single algorithm in Phase 4. Budget real time for it, and gate on the patent review in §28.6 | lazy |
-| **Tier 1 — matting** | hand-rolled closed-form / KNN matting | Not in stock OpenCV `imgproc`. Needed for T77's production-quality edges | lazy |
-| **Tier 1 — pixel-art scalers** | clean-room xBRZ / HQx / Scale2x | **Licence-critical:** reference implementations are GPL/LGPL and cannot enter the Apache-2.0 engine. See §28.6 required action 5 before writing T70 | lazy |
-| **Tier 2 — segmentation** | `onnxruntime-web` (MIT) + **U²-Net** (Apache-2.0), **ISNet/DIS** (Apache-2.0), or **BiRefNet** (MIT) weights | One-click background removal with no hint. **Ships only because Tier 1 requires a rectangle or strokes.** ⚠ **Do not use `@imgly/background-removal` as shipped:** its wrapper is MIT but the bundled **BRIA RMBG-1.4 weights are licensed for non-commercial use only**. Model weights carry their own licence independent of the loader — check every one (§25.5) | lazy + consent (≈40 MB, cached) |
-| **Tier 2 — upscale** | `onnxruntime-web` + **Real-ESRGAN** weights (BSD-3) | ×2/×4 without a key. Justified against DCCI/NEDI by measured quality on photographic detail. ⚠ avoid weights trained with a non-commercial or research-only clause | lazy + consent |
-| Face detection | `@mediapipe/tasks-vision` (Apache-2.0) + Viola–Jones (Tier 1, ours) | Small, fast, on-device. ⚠ The `.task` model files carry their own licence — confirm separately from the runtime (§25.3.4) | lazy |
-| OCR | `tesseract.js` (Apache-2.0) | 100+ languages, per-language lazy model. ⚠ Confirm each `tessdata` language file's licence — they are not uniformly sourced (§25.3.4) | lazy per language |
+| **Tier 1 CV — heavy ops** | No OpenCV runtime is currently bundled. The engine exports its local TypeScript/JavaScript methods: colour-range/watershed segmentation, Telea and Navier–Stokes inpainting, and band-limited alpha matting/refinement | Only cleared methods are described as shipping. GrabCut, `seamlessClone`, and any uncleared algorithm are excluded regardless of the OpenCV source licence. Route wiring, representative benchmarks, and STCC remain tracked in Phase 4 | lazy engine modules |
+| **Tier 1 — inpainting** | Current local methods: Telea, Navier–Stokes, confidence-priority, Efros–Leung, and quilting | T66's first three-texture generated benchmark is recorded in §26; it does not cover photographs or structural fills. Criminisi is not implemented | lazy engine module |
+| **Tier 1 — matting** | Hand-rolled band-limited colour-unmixing solve, joint-bilateral refinement, alpha-band trim, and defringe | Closed-form and KNN matting are not implemented; hair/fur quality has no measured reference corpus | lazy engine module |
+| **Tier 1 — pixel-art scaler** | clean-room 3×3-neighbourhood implementation in packages/engine/src/cv/pixel-art.ts | Four generated fixtures measured at ×2/×3/×4; no RGB palette additions after the strict-majority fix. Representative sprite quality and route-level STCC remain open; GPL/LGPL reference implementations stay excluded | lazy |
+| **Tier 2 — segmentation (candidate, blocked)** | `onnxruntime-web` is pinned and available; U²-Net / ISNet / BiRefNet weights have not been approved or registered | No segmentation model is shipped or loaded. Exact model terms and hashes must be approved before measurement or use. Never use `@imgly/background-removal` with its non-commercial BRIA RMBG-1.4 weights | not included |
+| **Tier 2 — upscale** | `onnxruntime-web` + official Real-ESRGAN x2/x4; Swin2SR q4f16 is evaluation-only | Engine-level inference is consent-gated and accepts caller-supplied converted weights. Exact Real-ESRGAN source checkpoint hashes are registered; the project owner accepts applying the upstream BSD-3 label to these official `.pth` files. Both ONNX conversions pass CPU parity and browser-WASM smoke. Across 16 controlled synthetic x4 pairs, Real-ESRGAN scored below Tier 1 on PSNR and SSIM; Swin2SR q4f16 improved aggregate metrics modestly but had mixed per-class PSNR and slow CPU/WASM runtime. Swin2SR's publisher-declared Apache-2.0 card is recorded, but a separate per-file notice and training-data provenance were not found, so it is not selected. No product route, size-disclosure/consent UI, downloader, or persistent-cache flow is implemented. Results do not cover real degraded camera photos. Community fine-tunes remain excluded | no model binary bundled; product delivery flow open |
+| Face detection | Cleared Tier 1 Viola–Jones cascade only; MediaPipe `.task` runtime/model path is not included | The registered cascade data is separate from the model-based `.task` assets, which remain excluded pending exact review. Labelled accuracy corpus and route-level STCC are open | Tier 1 only |
+| OCR | `tesseract.js` + `tesseract.js-core` (Apache-2.0) | All 163 recursive `tessdata_fast` entries are individually hash-registered as Apache-2.0; 162 are binary model assets and the deprecated `frk` entry is a symlink pointer to `deu_latf`. Worker/core stay same-origin. A selected model uses its local static file when present; otherwise the exact pinned jsDelivr commit serves the model, except `script/Latin.traineddata` (89,384,811 bytes), which falls back to its exact pinned `raw.githubusercontent.com` source after jsDelivr's 403. The Latin raw-source browser smoke verified the registered size and SHA-256. Only `script/Cyrillic.traineddata` is bundled. `pnpm ocr:verify-catalog` checks the 162 lazy URLs by HEAD without downloading models; it currently sees 161 jsDelivr successes and the expected Latin 403/raw fallback. OSD and Script data are requested only when selected. The test preparer downloads only named models into the ignored static cache and verifies their registered size and SHA-256; a clean production build prunes that cache. By default Playwright prepares English and OSD; set `PLAYWRIGHT_SKIP_OCR_TESSDATA_PREFETCH=1` for a focused E2E such as `pnpm exec playwright test e2e/ocr.spec.ts --project=chromium --grep "bundled Cyrillic"` to preserve and test the one-file bundled cache. The first accuracy measurement covers eight languages only. Hausa is absent from the official model set | same-origin worker/core; lazy per language/helper |
 | ZIP | `fflate` | Smallest, streaming, worker-safe | eager |
 | ICC profiles we ship | **our own**, generated from published primaries | The **Adobe RGB (1998) profile is Adobe-copyrighted and not redistributable**, and vendor profiles generally are not either. We synthesize working profiles from published primaries, white point, and transfer curves (sRGB per IEC 61966-2.1, Display P3 per SMPTE RP 431-2 + sRGB TRC, Adobe-RGB-compatible from its published chromaticities), labelled as *compatible with*, never as the vendor's profile. A user's embedded profile is always preserved verbatim regardless | eager |
 | Perceptual hashing | custom (`packages/engine/src/phash`) | ~150 lines | eager |
@@ -1715,12 +1716,12 @@ lower ones demonstrably fall short on a documented class of input.
 | Tier | Name | Definition | Key required | Offline | Deterministic |
 | :-: | --- | --- | :-: | :-: | :-: |
 | **0** | **Deterministic** | Closed-form maths / DSP. Resampling, colour transforms, convolution, quantization, geometry, encoding, metadata, compositing | No | Yes | Yes |
-| **1** | **Classical CV** | Published algorithms with no learned weights. GrabCut, matting, inpainting by exemplar, texture synthesis, saliency, edge-directed interpolation, Poisson blending, colour transfer, Hough, Otsu, watershed | No | Yes | Yes¹ |
-| **2** | **On-device model** | Learned weights executed locally via ONNX Runtime Web / WebGPU. Downloaded once, cached, never re-fetched. No key, no network at inference time | No | Yes² | Yes |
+| **1** | **Classical CV** | Cleared local algorithms only: colour-range/watershed segmentation, Telea and Navier–Stokes inpainting, band-limited alpha matting, joint-bilateral matte refinement, and edge-directed interpolation. The current composite blend is per-pixel alpha blending; Poisson remains excluded and a full multi-scale Laplacian pyramid is not implemented. GrabCut, closed-form matting, guided filter, and non-local means remain excluded pending counsel | No | Yes | Yes¹ |
+| **2** | **On-device model** | Learned weights executed locally via ONNX Runtime Web. The engine requires explicit consent and caller-supplied model bytes/path; size disclosure, persistent cache, and offline reuse are loader responsibilities and remain unverified for the current production path. No network is needed during inference after bytes are available locally | No | Conditional² | Yes |
 | **3** | **External model** | A provider API the user configured (BYOK) | **Yes** | No | No |
 
 ¹ Deterministic given a fixed seed for the randomized ones (PatchMatch-family search order).
-² After the one-time model download, which is explicitly consented to with its size shown.
+² Inference can run offline once model bytes are available locally. This is conditional, not a verified production guarantee; consented size disclosure, persistent caching, and repeat-offline browser delivery remain open under P4-14.
 
 **Rules of the ladder:**
 
@@ -1747,17 +1748,17 @@ surface from creeping.
 | --- | --- | --- | --- | --- |
 | **Text → image** (T64) | Procedural generation: gradients, Perlin/simplex/Worley noise, geometric patterns, QR/barcodes, identicons, initials avatars, placeholder frames, data charts (T79) | Cannot synthesize a photograph, illustration, or any depicted subject. There is no algorithm that turns "a golden retriever on a beach" into pixels | Everything. This is the only capability with no classical analogue whatsoever | **Tier 3 justified — AI-only** |
 | **Prompt edit** (T65) | Adjustments, filters, LUTs, recolour, gradient maps, local edits (T37, T38, T46) can perform any *specified* transformation | Cannot interpret intent. "Make it look like winter" requires knowing that grass becomes snow, leaves fall, and light goes blue — semantic knowledge absent from the pixels | Semantic interpretation of an instruction | **Tier 3 justified — AI-only** |
-| **Describe / alt text / caption / tags** (T71) | Tier 0 derives dimensions, aspect, dominant colours, transparency, orientation, EXIF subject; Tier 1 OCR (T62) extracts text; Tier 2 face detection counts people. Together these produce a **descriptive skeleton** | Cannot produce a natural-language description of *what is depicted*. No algorithm identifies "a woman handing a document across a desk" | Recognition and language generation | **Tier 3 justified — AI-only** |
-| **Object removal / inpaint** (T66) | **Tier 1, primary:** Telea fast-marching and Navier–Stokes inpainting for thin defects; Criminisi exemplar-based synthesis for structured regions; Efros–Leung / image-quilting texture synthesis. Handles blemishes, dust, scratches, power lines, logos, signage, and small-to-medium objects on textured or repetitive backgrounds — which is the large majority of real requests | Large regions where the fill must contain **structure not present anywhere in the source** — removing a person standing in front of a doorway requires inventing the doorway | Plausible novel structure over large areas | **Tier 1 primary, Tier 3 escalation for large/structural regions** |
-| **Generative expand / outpaint** (T67) | **Tier 1, primary:** mirror-extend, edge-clamp, texture synthesis, and exemplar fill into the new canvas. Genuinely good for sky, water, foliage, walls, gradients, and fabric — the common aspect-ratio-change case | Extending a *scene* — adding the rest of a building, more of a crowd, continuing a horizon with new landmarks | Novel scene continuation | **Tier 1 primary, Tier 3 escalation for scene extension** |
-| **Background removal** (T68) | **Tier 1:** chroma key, colour-range selection, magic-wand flood fill with tolerance, GrabCut from a user rectangle, watershed, closed-form / KNN alpha matting, guided-filter edge refinement. **Tier 2:** on-device segmentation model for one-click operation | Tier 1 needs a hint (a rectangle or a few strokes); Tier 2 covers zero-hint operation. Neither reliably matches the best commercial matting on fine hair, fur, motion blur, or semi-transparent veils | Marginally better matte on the hardest edges | **Tier 1 + Tier 2 primary. Tier 3 is a quality upgrade only, never required** |
-| **Background replace** (T69) | **Tier 0/1:** cutout (above) → composite onto solid, gradient, pattern, or a user-supplied image → **Poisson / gradient-domain blending** for seamless edges → **Reinhard statistical colour transfer** to harmonize the subject to the new backdrop → shadow synthesis from the alpha matte. This produces convincing composites with zero AI | Cannot *generate* a backdrop the user does not have, and cannot relight the subject from a physically new light direction | A synthesized backdrop, and physically-plausible relighting | **Tier 0/1 primary. Tier 3 only when the backdrop itself must be generated** |
-| **Upscale** (T70) | **Tier 0:** Lanczos3, Mitchell, Catmull-Rom (T31). **Tier 1:** DCCI and NEDI edge-directed interpolation for photographs; xBRZ / HQx / Scale2x for pixel art and line art — these are *better than any model* on their intended input and run instantly. **Tier 2:** on-device Real-ESRGAN-class ×2/×4 | Tier 0/1 cannot add detail that is not present; they interpolate cleanly rather than hallucinating. Tier 2 closes most of the gap. Beyond ×4, or for heavily degraded input, provider models are ahead | Invented plausible detail at high factors | **Tier 0/1/2 primary. Tier 3 for > ×4 or badly degraded input** |
-| **Segment / click-to-select** (T27 assist) | **Tier 1:** flood fill, GrabCut, watershed, edge-linked contours, saliency (spectral residual, fine-grained). **Tier 2:** on-device face and person detection | Selecting an arbitrary *named* object ("the red car") from a click, without a good colour or edge boundary | Semantic object identity | **Tier 1 + Tier 2 primary. Tier 3 optional assist** |
-| **Smart crop** (T27) | **Tier 0/1:** saliency map + face detection + rule-of-thirds scoring + entropy | Nothing material. Classical saliency is competitive here | — | **No Tier 3. Local only** |
-| **OCR** (T62) | **Tier 1/2:** Tesseract, 100+ languages, on-device | Handwriting, heavy skew, artistic type, dense tables | Better recognition on those classes | **Tier 1/2 primary. Tier 3 optional for handwriting** |
-| **Denoise** | **Tier 0/1:** median, bilateral, non-local means, wavelet | Extreme low-light sensor noise | Learned denoising is better at the extreme | **Tier 0/1 only for now. No Tier 3 until a user need is demonstrated** |
-| **Colour / tone** | **Tier 0:** full adjustment, curves, LUT, colour-transfer stack | Nothing. "Auto-enhance by AI" is a marketing claim, not a capability gap | — | **No Tier 3. Local only** |
+| **Describe / alt text / caption / tags** (T71) | Metadata and T62 OCR supply literal image facts/text; the cleared T57 cascade can supply face regions when used. These signals are not a natural-language scene description | Cannot describe depicted actions, objects, or relationships | Recognition and language generation | **Tier 3 justified — AI-only** |
+| **Object removal / inpaint** (T66) | **Tier 1 engine path:** Telea, Navier–Stokes, confidence-priority, Efros–Leung, and quilting are exposed by `removeObject`. On three generated 48×48 textures with identical 8×8 masks, Efros–Leung had highest mean ROI PSNR (20.0959 dB), Telea highest mean ROI SSIM (0.678207), and Navier–Stokes was fastest (0.347 ms median). See [`T66 measurements`](packages/engine/bench/escalation/p4-21-t66-inpaint.md). | This tiny synthetic corpus does not establish performance on real photographs, varied/large masks, or structural fills | Plausible novel structure over large areas | **Tier 1 remains available; any Tier 3 escalation requires a measured failing case** |
+| **Generative expand / outpaint** (T67) | The current `expandImage` is a mask-inpaint stub: without a mask it returns the input unchanged; with a mask it applies Telea at the same dimensions. It does not expand the canvas or synthesize new-area content | Any request that requires a larger canvas or scene continuation; no useful outpaint comparison exists yet | New canvas area and semantic scene continuation | **Implementation incomplete; defer model justification until the local path and corpus exist** |
+| **Background removal** (T68) | **Tier 1:** user-trimap band-limited colour-unmixing matte, joint-bilateral refinement, alpha-band trim, and defringe. GrabCut, closed-form matting, and guided filter are excluded. No cleared Tier 2 segmentation weights or shipped zero-hint model path are available | Requires a user-provided trimap; hair/fur/veil accuracy has no registered reference corpus yet | Zero-hint segmentation or a measured quality improvement | **Tier 1 hinted path only; Tier 2 remains blocked pending exact asset clearance and measurement** |
+| **Background replace** (T69) | Local cutout/compositing primitives include alpha-mask blending, colour transfer, and shadow synthesis. A function named for Laplacian-pyramid blending currently performs a simplified per-pixel alpha blend, not a full multi-scale pyramid. Poisson blending remains excluded pending counsel; no measured product comparison is recorded | Cannot generate a backdrop the user does not have; the composite quality gap is not yet measured | A synthesized backdrop or physically plausible relighting | **Local composition path only; no Tier 3 case admitted without a measured failing fixture** |
+| **Upscale** (T32; T70 is pixel-art-only) | **Tier 0:** Lanczos3, Mitchell, Catmull-Rom (T31). **Tier 1:** DCCI and NEDI edge-directed interpolation for photographs. Four CC0-derived synthetic 2× pairs measured DCCI at 29.6861 dB / 0.827896 mean SSIM and NEDI at 26.2109 dB / 0.766985. Real-ESRGAN x2 ONNX scored 26.6370 dB / 0.765509 on the same inputs; this did not beat Lanczos3 or DCCI. On 16 CC0-derived synthetic x4 blur/noise/JPEG cases, Real-ESRGAN averaged 22.9689 dB / 0.591359 versus Tier 1 at 25.5075 dB / 0.635145; evaluation-only Swin2SR q4f16 averaged 25.6881 dB / 0.666381 with lower clean-class PSNR and a 13.05 s Chromium WASM startup-plus-first-inference smoke. Swin2SR has a publisher-declared Apache-2.0 card, but no separate per-file notice or training-data provenance was found. The engine adapter requires caller-supplied weights and a consent flag; T32 route, download, size disclosure, and persistent-cache UI remain unimplemented. T70's clean-room 3×3-neighbourhood scaler remains local; four synthetic fixtures do not establish representative sprite quality | Tier 0/1 remains the measured default; the synthetic Swin2SR gain does not establish real-photo quality or acceptable interactive runtime. Real camera restoration remains unmeasured. Beyond ×4 or severe degradation remain candidate escalation cases | Invented plausible detail at high factors | **Tier 0/1 primary; Tier 2 remains experimental and is not product-selected; Tier 3 remains unmeasured** |
+| **Segment / click-to-select** (T27 assist) | **Tier 1:** colour range, watershed, flood fill, contours, and saliency. GrabCut is excluded. No cleared MediaPipe `.task` detector or segmentation weights are available | Selecting an arbitrary named object without a usable colour or edge boundary; no comparative fixture is recorded yet | Semantic object identity | **Tier 1 hinted path; Tier 2 is blocked; no Tier 3 case admitted yet** |
+| **Smart crop** (T27) | **Tier 0/1:** saliency map, cleared face cascade, rule-of-thirds scoring, and entropy; no benchmark corpus is recorded yet | No measured evidence currently establishes where this path fails | — | **Local path retained; Tier 3 not justified by current evidence** |
+| **OCR** (T62) | All 163 official recursive `tessdata_fast` entries are pinned and hash-registered: 123 language/variant binaries, one deprecated `frk` alias pointer to `deu_latf`, 37 script-model binaries, and two helpers (`osd` for orientation/script detection and `equ` for equations). Models load only after selection: local static data when present, otherwise the exact pinned jsDelivr file, except the 89,384,811-byte Latin script model which uses its exact pinned GitHub raw source because jsDelivr returns 403. Only `script/Cyrillic.traineddata` is bundled. The catalogue HEAD check passes for 161 other jsDelivr entries; a full browser load verifies the Latin fallback's registered size and SHA-256. The page recommends upright images and makes OSD optional. Eight exact generated-print PNG fixtures and their hashes are persisted; accuracy measured 7/8 exact, Hindi CER 0.0588, mean CER 0.00735. After online warm-up, same-page offline E2E repeated all eight language fixture recognitions with identical output and zero external requests. Arabic and pseudo-locale selector labels were also browser-checked. Hausa is absent upstream. See [`OCR measurements`](packages/engine/bench/escalation/p4-21-t62-ocr.md). | The accuracy corpus is limited to eight simple generated print samples, not the expanded catalogue, handwriting, artistic type, tables, photos, or skewed captures. Offline opening/reloading of a fresh app page remains unverified because app-shell/worker/core caching is not guaranteed. | Better recognition on those unmeasured classes | **The pinned catalogue runs locally with eight measured languages and warmed-cache, same-page offline reuse; broader accuracy and offline fresh-start evidence remain open** |
+| **Denoise** | **Tier 0/1:** median, bilateral, and wavelet/BayesShrink filters. Non-local means remains excluded pending counsel | Extreme low-light sensor noise has no registered measured comparison | Learned denoising is a candidate only if a compliant fixture shows a material failure | **No Tier 3 until a user need and measured gap are demonstrated** |
+| **Colour / tone** | T80 local benchmark: on three self-generated texture pairs, mean normalized RGB 1D Wasserstein distance was 0.065537 unchanged, 0.014468 with Reinhard, and 0.002413 with histogram matching. See [T80 measurements](packages/engine/bench/escalation/p4-21-t80-colour-match.md). | This measures global color distribution only; it does not measure spatial preservation, photo composites, or user preference | — | **No model gap; retain local path; route STCC and photo-preference evidence remain open** |
 
 **Adding a row requires:** a working Tier 0–2 implementation already merged, a named class of input where
 it measurably fails, a reproducible comparison in `packages/engine/bench/escalation/` showing both
@@ -1766,17 +1767,12 @@ fixture is.
 
 #### 13.1.4 What this means for the product
 
-The practical outcome of applying P11 honestly:
-
-- **Three tools are AI-only** — T64 (generate from prompt), T65 (prompt edit), T71 (describe / alt text).
-  That is 3 of 81.
-- **Six tools have an optional AI escalation** — T32, T62, T66, T67, T68, T69 — each fully functional
-  without a key.
-- **Seventy-two tools never touch a network**, at any tier, for any input.
-- **Seventy-eight of 81 tools are fully usable with no key, no account, and no network.**
-- A visitor who connects nothing gets background removal, upscaling, object removal, generative-style
-  expansion, background replacement, OCR, smart crop, and every conversion, edit, and optimization.
-  They are not using a crippled version; they are using the product.
+The current implementation evidence is narrower than the target product design. T64, T65, and T71
+remain AI-only by design. T32 has a consented experimental ONNX engine path and a complete local
+Tier 1 fallback; T62 has a local Tesseract path; T66 has local inpainting primitives. T67 remains an
+expand-image stub, T68 requires a user trimap and has no cleared model path, and T69's model need is
+not measured. Route wiring and STCC acceptance are tracked separately in `feature-audit.csv` and
+`PLAN.md`; a register row or engine export alone does not mean the app flow is complete.
 
 This also shortens the BYOK story from an obligation to an option, which is the correct framing for
 §17: the connect page is for the minority who want the last few percent, not a gate the majority must
@@ -1819,10 +1815,10 @@ same features:
 
 | Tool | Primary path (always available) | Escalation capability | Escalation trigger |
 | --- | --- | --- | --- |
-| T66 Remove Object | Telea / Criminisi / texture synthesis | `erase`, else `inpaint` | User clicks *"Try with AI"* after seeing the local result, or the masked region exceeds the configured area threshold and the UI *suggests* it |
-| T67 Expand Image | Mirror / edge-clamp / exemplar fill | `outpaint`, else `inpaint` on the pad | User clicks *"Try with AI"* |
-| T68 Remove Background | GrabCut / matting (Tier 1) or on-device segmentation (Tier 2) | `removeBackground` | User clicks *"Refine with AI"* |
-| T69 Replace Background | Cutout + Poisson blend + colour transfer | `replaceBackground`, else `removeBackground` + `generate` | Only when the user asks for a **generated** backdrop |
+| T66 Remove Object | Telea / Navier–Stokes / confidence-priority / Efros–Leung / quilting (synthetic benchmark only) | `erase`, else `inpaint` | User clicks *"Try with AI"* after seeing the local result, or the masked region exceeds the configured area threshold and the UI *suggests* it |
+| T67 Expand Image | Current engine stub applies Telea inpaint to a supplied mask; canvas expansion is not implemented | `expandImage` | No shipped AI action; local implementation gap remains |
+| T68 Remove Background | User-trimap colour-unmixing matte with joint-bilateral refinement; no cleared Tier 2 model | `removeBackground` | Model path blocked pending exact asset approval |
+| T69 Replace Background | Local alpha composite; the Laplacian-named function is currently a simplified per-pixel alpha blend; Poisson excluded | `replaceBackground` | Only if a user asks for a generated backdrop and the measured gap supports escalation |
 | T32 Upscale | DCCI / NEDI (Tier 1) or ONNX ×2/×4 (Tier 2) | `upscale` | Factor > 4, or user clicks *"Try with AI"* |
 | T62 OCR | Tesseract on-device | `describe` in `ocr` mode | User clicks *"Try with AI"* — suggested when local confidence is low |
 | T64 Generate | — (T79 procedural generator is the adjacent local tool) | `generate` | Inherent |
@@ -2610,7 +2606,7 @@ script-src 'self' 'wasm-unsafe-eval';
 style-src 'self';
 img-src 'self' data: blob:;
 font-src 'self';
-connect-src 'self' blob:;
+connect-src 'self' blob: https://cdn.jsdelivr.net https://raw.githubusercontent.com/tesseract-ocr/tessdata_fast/87416418657359cb625c412a48b6e1d6d41c29bd/script/Latin.traineddata;
 worker-src 'self' blob:;
 child-src 'self' blob:;
 manifest-src 'self';
@@ -2625,7 +2621,13 @@ require-trusted-types-for 'script';
 Notes:
 
 - `'wasm-unsafe-eval'` is required for WebAssembly and is strictly narrower than `'unsafe-eval'`.
-- **`connect-src` starts with no third-party hosts.** When the user connects a provider, the app cannot
+- `https://cdn.jsdelivr.net` is permitted only for the selected Apache-2.0 `tessdata_fast` model at
+  the pinned commit when that model is not available locally. The pinned
+  `script/Latin.traineddata` file uses its exact `raw.githubusercontent.com` path because jsDelivr
+  returns 403 for that 89 MB file. These requests fetch model binaries only; OCR pixels stay in the
+  browser and are never sent to either host. The worker and runtime remain same-origin. Do not
+  broaden either source to a host wildcard without a separate review.
+- Other provider hosts are not part of the base `connect-src`. When the user connects a provider, the app cannot
   widen a header-delivered CSP at runtime — so provider requests are issued from a **dedicated worker
   whose own CSP is derived from the user's configured provider set**, delivered via a
   `Content-Security-Policy` on the worker script response, or (where that is not possible on the host)
@@ -3289,8 +3291,14 @@ Cache policy:
 | `/_app/immutable/*` | `public, max-age=31536000, immutable` |
 | `/wasm/*`, `/models/*` (content-hashed filenames) | `public, max-age=31536000, immutable` |
 | `/fonts/*` | `public, max-age=31536000, immutable` |
+| `/ocr-runtime/*` (Tesseract runtime files under their package-version directory) | `public, max-age=31536000, immutable` |
 | HTML routes | `public, max-age=0, must-revalidate` |
 | `/sw.js` | `public, max-age=0, must-revalidate` |
+
+Tesseract worker and core files use a `v<package-version>` URL directory. Updating either
+`tesseract.js` or `tesseract.js-core` therefore changes the runtime URL before immutable browser caching
+is applied. The preview server mirrors this path-scoped cache policy so same-page offline OCR tests
+exercise the production header contract.
 
 ### 23.4 Cross-origin isolation
 
@@ -3315,6 +3323,16 @@ binary from a pinned release URL, verifies a `sha256` recorded in `wasm-lock.jso
 `apps/web/static/wasm/<name>.<hash>.wasm`. A mismatch fails the build. The loader verifies the hash
 again at runtime where `SubresourceIntegrity` is unavailable for `fetch`+`instantiate`
 (**⚠ VERIFY** current SRI support for WASM streaming and use it if available).
+
+ONNX Runtime Web 1.30.0 is installed from the exact lockfile-pinned npm package and is dynamically
+imported only after an explicit model-open action. Its WASM binaries are emitted as package assets by
+the production bundler and served same-origin; the app does not fetch them from a CDN or add a
+`connect-src` origin. The threaded SIMD WASM binary is about 14.2 MB before compression and the
+WebGPU/JSEP variant is about 28.3 MB, so deployment and cache budgets must account for them even
+though the initial route does not load them. WASM is the broad-compatibility path; WebGPU is attempted
+where available and requires a secure context. Model-specific WebGPU operator coverage still needs
+validation. Model download, consent, size disclosure, and caching remain responsibilities of the
+model loader.
 
 ### 23.6 CI pipeline
 
@@ -3532,7 +3550,7 @@ status all change the answer, and I have not read the claims.
 | **Non-local means** (Buades et al. 2005) | Unclear | **Deferred.** Ship bilateral + wavelet BayesShrink (1998 / 2000) first. NLM only if cleared, and it is not required for quality |
 | **Criminisi exemplar inpainting** (2004, MSR) | Filed ~2003 — screening suggests **expired**, but the claims matter | **Design around it.** Our exemplar inpainter is built on **Efros–Leung (1999)** and **image quilting (2001)**, which *predate* Criminisi and are therefore prior art, with our own confidence-ordered fill priority. Clean either way |
 | **GrabCut** (2004, Microsoft) | Filed ~2004 — screening suggests **expired**; ships in Apache-2.0 OpenCV | **Use, subject to clearance.** If not cleared: colour-range + watershed + our own iterative colour-model refinement, with the quality difference stated in the UI |
-| **Poisson image editing** (2003, MSR) | Filed ~2003 — screening suggests **expired** | **Use, subject to clearance.** If not cleared: **Laplacian pyramid blending** (Burt & Adelson 1983 — unambiguously expired), which is excellent and was arguably the better default anyway |
+| **Poisson image editing** (2003, MSR) | Filed ~2003 — screening suggests **expired** | **Use only if cleared.** The planned fallback is a full Laplacian pyramid (Burt & Adelson 1983 — expired); the current function with that name is only a simplified per-pixel alpha blend and does not satisfy the planned method |
 | **Simplex noise** (Perlin, US 6,867,776) | Filed 2001 — screening suggests expired | **Sidestepped entirely.** We ship **OpenSimplex2** (public domain), which was created specifically to avoid this patent |
 | **LZW** (GIF) | Expired 2003–2004 worldwide | Clear |
 | **S3TC / DXT** (DDS) | Expired ~2017–2018 | Clear |
@@ -3612,6 +3630,8 @@ unreviewed by being absent from both.
 | `mediabunny` 1.25.1 | **MPL-2.0 — verified 2026-08-19** | Browser-local MP4 and WebM container reading over platform WebCodecs; its TypeScript source is used unmodified and no media is uploaded |
 | `ag-psd` 31.0.2 | **MIT — verified 2026-08-19** | Browser-local PSD/PSB read and write; no upload or external service |
 | `dxf-parser` 1.1.2, transitive `loglevel` 1.9.2 | **MIT — verified 2026-08-22** | Browser-local DXF parsing; both installed manifests and bundled MIT licence files verified |
+| `onnxruntime-web` 1.30.0 | **MIT — verified 2026-09-19** | Lazy browser ONNX inference. WebGPU is attempted when available, with WASM fallback; the model loader must obtain consent and provide a same-origin cached model URL or bytes |
+| `tesseract.js` 7.0.0 | **Apache-2.0 — verified 2026-09-19** | Browser-local OCR engine; package and transitive dependencies are pinned and checked by `verify:licenses`. Language data is registered separately as model assets |
 | `pako` 1.0.11 | **MIT AND Zlib — verified 2026-08-18** | Deflate, pulled in by `utif`. Both terms of the conjunction are allowlisted |
 
 ##### Candidate register — not installed, licences unverified
@@ -3635,8 +3655,6 @@ meaningless.
 | `imagetracerjs` | Unlicense (public domain) | Vectorize |
 | `libarchive.js` → libarchive | BSD-2 | CBZ/CBR. ⚠ Confirm the RAR reader used is libarchive's own BSD implementation and **not** derived from the `unrar` source, whose licence forbids reuse |
 | OpenCV (custom build: `core`, `imgproc`, `photo`) | Apache-2.0 (since 4.5.0) | Tier 1 CV heavy ops. Licence ✅; **algorithm patents cleared separately** in §25.3.2 |
-| `onnxruntime-web` | MIT | Tier 2 model runtime |
-| `tesseract.js` | Apache-2.0 | OCR engine |
 | `@mediapipe/tasks-vision` | Apache-2.0 | Face detection runtime |
 | `exifr` | MIT | Metadata read |
 | `piexifjs` | MIT | Metadata write |
@@ -3650,23 +3668,18 @@ files byte-identical or rename the modified ones (e.g. `CT-Sans`) and ship the O
 `@font-face` `local()` lookups must not be used to pull a user's licensed system font into a rendered
 export — that would embed a font we have no right to.
 
-**Data and model assets, cleared separately from their loaders** (this is the §25.5 rule applied to our
-own remaining picks, since flagging the principle for RMBG and then not applying it here would be
-exactly the mistake being warned about).
-
-**All of these are candidates.** No model or data asset is registered in `docs/static-assets.json`
-today, so none has a pinned hash and none can be licence-verified. The enforcement that matters is
-already live and does not depend on this table: `verify:static-assets` fails on **any** asset present in
-`static/` that lacks a register row with a source URL, licence, licence URL, sha256, and check date.
-An unverified asset therefore cannot ship — it fails the build the moment it is added, whether or not
-anyone remembered to update the list below.
+**Data and model assets are cleared separately from their loaders.**
+`docs/static-assets.json` records the exact shipped static path, source URL, license, license URL,
+SHA-256, and check date. `verify:assets` checks every static asset against that register. The table
+below distinguishes registered decisions from candidates that remain blocked.
 
 | Asset | Expected licence | Note |
 | --- | --- | --- |
-| Tesseract `tessdata` language files | Apache-2.0 | Prefer `tessdata_fast`; ⚠ confirm per-language, they are not uniformly sourced |
+| Tesseract `tessdata_fast` files | Apache-2.0 — all 163 recursive `.traineddata` tree entries at commit `87416418657359cb625c412a48b6e1d6d41c29bd` (123 language/variant binaries, one deprecated `frk` alias pointer, 37 script-model binaries, and two helpers) are individually SHA-256-registered. Non-Cyrillic entries use local ignored caches in tests or pinned jsDelivr URLs when missing; the oversized Latin script model uses its exact pinned GitHub raw source because jsDelivr returns 403. The CDN-blocked Cyrillic script model is the only bundled data file. The first Chromium measurement covers eight generated print fixtures (seven exact; one Hindi digit substitution); Hausa is absent from that official snapshot |
 | MediaPipe face/person detector `.task` files | Apache-2.0 | ⚠ confirm — model cards differ from the runtime licence |
 | Segmentation weights (U²-Net / ISNet / BiRefNet) | Apache-2.0 / MIT | ⚠ confirm the **weights**, not the training repo. **Never RMBG-1.4** (non-commercial) |
-| Real-ESRGAN weights | BSD-3 | ⚠ several community fine-tunes are non-commercial; use the original release |
+| Real-ESRGAN official upstream `.pth` weights | BSD-3 label accepted by project owner for exactly two official general-image release assets. Their source sizes and SHA-256 values are registered in `docs/model-assets.json`; both were used for reproducible ONNX conversion and CPU parity. The upstream repository publishes BSD-3 but the binary releases carry no separate asset-level license text. Both x2/x4 browser WASM shape smokes pass. On the current synthetic x2 and controlled x4 datasets, Real-ESRGAN trailed Tier 1; real camera restoration and product model hosting remain open. Community fine-tunes remain excluded |
+| ONNX Community Swin2SR q4f16 x4 | Apache-2.0 is publisher-declared for the model repository/card; exact ONNX size, revision and SHA-256 are registered. The 16-pair synthetic benchmark showed a modest aggregate quality gain but mixed PSNR by degradation class; CPU/WASM runtime is slow. No separate per-file notice or training-data provenance was found. Evaluation-only, not selected for product delivery |
 | OpenSimplex2 | Public domain | Noise |
 | Fixture corpus | CC0 / self-generated | §22.2 provenance rules |
 
@@ -3701,8 +3714,8 @@ deliberate engineering commitment with a home in the repo, not a hand-wave.
 | **GIF encoder + optimizer** | `codecs/gif/` | LZW encode, palette quantization (Wu / median-cut / octree), frame differencing, transparency optimization, dispose-method selection, `-O1..3` equivalents | Format is fully specified; LZW is patent-free; the optimization passes are well-documented techniques |
 | **RAW pipeline** | `codecs/raw/` | **Stage 1:** extract the largest embedded camera rendering (byte-preserved JPEG or lossless BMP from an uncompressed RGB TIFF preview) using bounded container/IFD parsing. **Stage 2:** our own demosaic (AHD, VNG, bilinear), black/white level, WB, colour-matrix, tone curve, starting with DNG | Stage 1 covers the common need without pretending that a camera preview is a raw develop. DNG's spec is published by Adobe; the major proprietary formats are TIFF-derived and well documented by the open community |
 | **EPS preview extractor + PS subset** | `codecs/eps/` | DCS/EPSF binary-header preview extraction; a small interpreter for path/fill/stroke/transform operators | Preview extraction is trivial and handles most real EPS files. The subset is bounded, and anything outside it is reported unsupported, not guessed |
-| **Pixel-art scaler** | `ops/upscale/pixelart/` | Our own 3×3-neighbourhood rule set for ×2/×3/×4, with edge-continuation and corner-rounding rules of our own design, tuned against a sprite corpus | The technique class is public; the specific rule tables are what is copyrighted, so we write our own. This is a fun, bounded, testable problem |
-| **Saliency-guided retargeting** (T81) | `ops/retarget/` | Non-uniform column/row scaling driven by a smoothed saliency profile, with protect/remove masks — replaces seam carving | Continuous warping, not discrete seam removal: a different mechanism, simpler to implement, and it avoids the temporal artefacts seam carving produces |
+| **Pixel-art scaler** | ops/upscale/pixelart/ | Our own 3×3-neighbourhood rule table for ×2/×3/×4; four generated fixtures found no invented RGB colors after the strict-majority fix and measured intermediate alpha at transparent edges. Representative sprite-quality evidence remains open | The technique class is public; the specific rule tables are what is copyrighted, so we write our own. This is a bounded, testable problem |
+| **Saliency-guided retargeting** (T81) | ops/retarget/ | Non-uniform column/row scaling driven by a smoothed saliency profile, with a protect mask that preserves marked rows/columns exactly when the requested geometry can fit them; protected content may shift as surrounding content is compressed | Continuous warping, not discrete seam removal: a different mechanism, simpler to implement, and it avoids the temporal artefacts seam carving produces |
 | **Exemplar inpainting** | `ops/inpaint/exemplar/` | Efros–Leung sampling + image quilting with our own confidence-ordered fill priority and patch-blend | Built on 1999–2001 prior art by design |
 | **Edge-aware matte refinement** | `ops/matting/refine/` | Joint bilateral filtering + our own alpha-band trimming and defringe — replaces guided filter | Joint bilateral is old, simple, and unencumbered |
 | **ICC profile synthesis** | `color/icc/build.ts` | Generate v2/v4 profiles from primaries, white point, and TRC | The ICC spec is public; a matrix/TRC profile is a small, well-defined structure |
@@ -3862,19 +3875,22 @@ Undo/redo covers every recipe mutation.
 built here, classically, before any adapter is written. Doing this phase properly is what makes the
 register in §13.1.3 short.
 
-*Tier 1 — segmentation and matting:* flood fill with tolerance, colour-range selection, chroma key,
-GrabCut from a rectangle, watershed, closed-form and KNN matting, guided-filter refinement, trimap
-brush, defringe. → **T68 (primary), T77.**
+*Tier 1 — segmentation and matting:* flood fill, colour-range selection, chroma key, watershed,
+trimap-driven band-limited colour-unmixing matte, joint-bilateral refinement, alpha-band trim, and
+defringe. GrabCut, closed-form matting, and guided filter remain excluded. → **T68, T77.**
 
-*Tier 1 — inpainting and synthesis:* Telea fast-marching, Navier–Stokes, Criminisi exemplar-based
-synthesis, Efros–Leung and image-quilting texture synthesis, with a per-algorithm preview so the user
-picks the winner. → **T66 (primary), T67 (primary).**
+*Tier 1 — inpainting and synthesis:* the current T66 engine exposes Telea, Navier–Stokes,
+confidence-priority, Efros–Leung, and quilting methods; their first generated-fixture comparison is
+recorded under P4-21. T67's current function is a same-size Telea mask-inpaint stub, not an outpaint
+implementation. → **T66 measured narrowly; T67 implementation incomplete.**
 
-*Tier 1 — compositing:* Poisson / gradient-domain blending, Reinhard colour transfer, histogram
-matching, shadow synthesis from an alpha matte. → **T69 (primary), T78, T80.**
+*Tier 1 — compositing:* alpha-mask composition, colour transfer, and shadow synthesis from an alpha
+matte. The function labelled Laplacian-pyramid blend currently performs a simplified per-pixel alpha
+blend; a full multi-scale pyramid has not been implemented. Poisson blending remains excluded pending
+counsel; T69 composite comparisons remain open. T80 has a generated global-distribution benchmark, while photo preference and route-level STCC remain open.
 
-*Tier 1 — resampling:* DCCI and NEDI edge-directed interpolation; xBRZ / HQx / Scale2x / Eagle for
-pixel and line art; seam carving with protect/remove masks. → **T32 (Tier 1), T70, T81.**
+*Tier 1 — resampling:* DCCI and NEDI edge-directed interpolation for photographs; our clean-room 3×3-neighbourhood pixel-art scaler has four generated fixtures, but representative sprites remain untested;
+continuous-warp retargeting rather than seam carving. → **T32 (Tier 1), T70, T81.**
 
 *Tier 1 — analysis:* spectral-residual and fine-grained saliency, Hough deskew, Otsu and Sauvola
 thresholding, pHash/dHash/aHash clustering, SSIM / PSNR / butteraugli. → **T27, T60, T61.**
@@ -3882,8 +3898,10 @@ thresholding, pHash/dHash/aHash clustering, SSIM / PSNR / butteraugli. → **T27
 *Tier 1 — synthesis from nothing:* QR and barcode encoders, Perlin / simplex / Worley noise, gradient
 and pattern generators, identicons, initials avatars, placeholder frames, CSV charts. → **T79.**
 
-*Tier 2 — on-device models, each justified against Tier 1:* segmentation for one-click background
-removal (T68), Real-ESRGAN-class ×2/×4 (T32), face and plate detection (T57), Tesseract OCR (T62).
+*Tier 2 — on-device models, each justified against Tier 1:* the consent-checking Real-ESRGAN x2/x4 ONNX
+engine adapter (T32) and local Tesseract OCR worker (T62) are integrated at engine level; T32 does not yet have a product model-delivery flow, while T62 has its own `/ocr` route. Segmentation weights
+(T68) and MediaPipe face models (T57) remain excluded pending exact asset review; Tesseract's full
+catalogue is registered, but only eight generated-language fixtures have initial accuracy evidence.
 
 **Exit criteria — all of these, or Phase 5 does not start:**
 
@@ -4083,7 +4101,7 @@ resolved before shipping, with the safe alternative named. `—` means no known 
 
 | Capability | Algorithm | Ref | Flag |
 | --- | --- | --- | --- |
-| Seamless composite | **Poisson image editing** / gradient-domain blending | Pérez, Gangnet, Blake, SIGGRAPH 2003 | ⚠ **Pending clearance** (§25.3.2). Fallback: **Laplacian pyramid blending** (Burt & Adelson 1983, unambiguously expired) — excellent, and arguably the better default anyway. Ship the fallback first so T78 is never blocked |
+| Seamless composite | **Poisson image editing** / gradient-domain blending | Pérez, Gangnet, Blake, SIGGRAPH 2003 | ⚠ **Pending clearance** (§25.3.2). Planned fallback: a full Laplacian pyramid (Burt & Adelson 1983, expired). The current function with that name is a simplified alpha blend; implement and benchmark the real multiscale method before claiming this fallback is complete |
 | Multi-band blend | Laplacian pyramid blending | Burt & Adelson 1983 | — |
 | Harmonize subject to backdrop | **Reinhard colour transfer** (mean/σ in Lαβ) | Reinhard, Ashikhmin, Gooch, Shirley, IEEE CG&A 2001 | — Simple, ~60 lines, very effective |
 | Match a reference look | Histogram matching / specification | classical | — |
@@ -4097,7 +4115,7 @@ resolved before shipping, with the safe alternative named. `—` means no known 
 | Edge-aware upscale (photos) | **NEDI** | Li & Orchard, IEEE TIP 2001 | — |
 | Edge-aware upscale (photos) | **DCCI** | Zhou, Shen, Zhou, IET Image Processing 2012 | — Good quality/cost ratio; **default Tier 1 for T32** |
 | Edge-aware upscale (photos) | ICBI | Giachetti & Asuni, IEEE TIP 2011 | — |
-| Pixel art / sprites | **Our own 3×3-neighbourhood scaler** | Our own rule tables for ×2/×3/×4, tuned against a sprite corpus (§25.4) | ✅ xBRZ (GPL-3), HQx (LGPL-2.1), and Scale2x (GPL-2) reference implementations are all **EXCLUDED** (§25.3.1). The *technique class* is public and unpatented; the specific rule tables are the copyrighted part, so we write our own |
+| Pixel art / sprites | Our own 3×3-neighbourhood scaler | Our own rule table for ×2/×3/×4; four generated P4-21 fixtures cover palette leakage and transparent-alpha changes, while representative sprite-quality evidence remains open | xBRZ (GPL-3), HQx (LGPL-2.1), and Scale2x (GPL-2) reference implementations remain excluded (§25.3.1); the technique class is public and unpatented, so we write our own rules |
 | Aspect change without distortion | **Our own saliency-weighted warp retargeting** | Non-uniform row/column scaling from a smoothed saliency profile (§25.4) | ✅ **Seam carving EXCLUDED** (§25.3.2) — filed ~2007, plausibly live to ~2027. Continuous warping is a different mechanism, not a seam-removal implementation |
 | Iterative sharpening | Iterative back-projection | Irani & Peleg 1991 | — |
 
