@@ -15,6 +15,9 @@ WORKDIR /app
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml .nvmrc .env.example ./
 COPY apps/web/package.json ./apps/web/
 COPY packages/engine/package.json ./packages/engine/
+# The root manifest pins a patched ONNX Runtime package; make the patch available
+# before the lockfile install layer runs.
+COPY patches/ ./patches/
 
 # Install all workspace dependencies using the frozen lockfile.
 RUN pnpm install --frozen-lockfile --ignore-scripts
