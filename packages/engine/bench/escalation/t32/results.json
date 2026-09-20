@@ -1,0 +1,488 @@
+{
+  "schemaVersion": 1,
+  "benchmark": "P4-21 T32 Tier 1 scale-2 reconstruction",
+  "recordedAt": "2026-09-20T00:24:38.374Z",
+  "corpusManifestSha256": "2eccd74e8dc2d4d57492ffb95717c9efcfc398010b0c7354af6705545ecfe6c5",
+  "fixtureCount": 4,
+  "resolutionPolicy": "Lanczos3-reduced reference, maximum long edge 256px and even dimensions; synthetic low-resolution input is exactly half width and height.",
+  "latencyMethodology": "1 warmup and 3 timed runs per fixture and method; timing excludes JPEG decode, fixture reduction, low-resolution generation, and metrics. p95 uses nearest-rank; with three samples this is the maximum sample.",
+  "qualityMethodology": {
+    "psnr": "Exact 8-bit RGB channel MSE against the reduced reference; PSNR=10*log10(255^2/MSE).",
+    "ssim": "Mean local SSIM of Rec.601 luminance, using an 11x11 Gaussian window (sigma 1.5), constants C1=(0.01*255)^2 and C2=(0.03*255)^2, clamped-edge extension, and full-resolution window centers."
+  },
+  "artifactMethodology": "Each reduced reference, generated low-resolution input, and algorithm output is saved as an 8-bit RGBA lossless PNG using the pinned workspace @jsquash/png package; paths are relative to this benchmark directory, with encoded-file SHA-256 recorded.",
+  "runtime": {
+    "node": "v22.22.0",
+    "platform": "win32",
+    "architecture": "x64",
+    "cpuModel": "Intel(R) Core(TM) i7-10750H CPU @ 2.60GHz",
+    "logicalCpuCount": 12,
+    "runtime": "Node.js CPU, single-threaded benchmark loop; no browser or GPU backend."
+  },
+  "implementationNotes": [
+    "DCCI and NEDI labels refer to the repository implementations invoked from the engine build; this benchmark does not independently validate conformance to academic algorithm specifications.",
+    "The source fixture JPEGs already contain source compression; the deterministic reduced reference and half-resolution Lanczos3 degradation isolate repeatable resize behavior, not camera sensor restoration.",
+    "Results cover the Tier 1 scale-2 path only. No learned model, ONNX Runtime, or Real-ESRGAN path is loaded or compared.",
+    "Four fixtures are image-operation samples, not a statistically representative natural-image corpus or OCR ground truth."
+  ],
+  "aggregateLatency": {
+    "lanczos3": {
+      "sampleCount": 12,
+      "medianMs": 19.898,
+      "p95Ms": 48.909
+    },
+    "dcci-implementation": {
+      "sampleCount": 12,
+      "medianMs": 32.912,
+      "p95Ms": 59.892
+    },
+    "nedi-implementation": {
+      "sampleCount": 12,
+      "medianMs": 19.549,
+      "p95Ms": 56.097
+    }
+  },
+  "aggregateQuality": {
+    "lanczos3": {
+      "fixtureCount": 4,
+      "meanPsnrRgbDb": 30.7267,
+      "meanSsimLuminanceGaussian11x11": 0.858497
+    },
+    "dcci-implementation": {
+      "fixtureCount": 4,
+      "meanPsnrRgbDb": 29.6861,
+      "meanSsimLuminanceGaussian11x11": 0.827896
+    },
+    "nedi-implementation": {
+      "fixtureCount": 4,
+      "meanPsnrRgbDb": 26.2109,
+      "meanSsimLuminanceGaussian11x11": 0.766985
+    }
+  },
+  "fixtures": [
+    {
+      "id": "landscape-dordogne",
+      "sourceSha256": "c3e2eef6af01a10882c83f71ff849d2ffb95220aad0e70e98daf6cf27e1975b7",
+      "sourceDimensions": {
+        "width": 4592,
+        "height": 3056
+      },
+      "referenceDimensions": {
+        "width": 256,
+        "height": 170
+      },
+      "lowResolutionDimensions": {
+        "width": 128,
+        "height": 85
+      },
+      "referenceArtifact": {
+        "path": "artifacts/landscape-dordogne-reference.png",
+        "width": 256,
+        "height": 170,
+        "pngSha256": "497c07b5d0f8b6b053dc2bfb3295219b169781557e366fe4f97844a37af05fba"
+      },
+      "lowResolutionArtifact": {
+        "path": "artifacts/landscape-dordogne-low-resolution.png",
+        "width": 128,
+        "height": 85,
+        "pngSha256": "7470f1b6cec31e8505158c46e4f484a74349c2cf4c8dabc485ac7085cfbed811"
+      },
+      "downsample": "Lanczos3, 2x reduction from the reduced reference",
+      "methods": [
+        {
+          "method": "lanczos3",
+          "output": {
+            "width": 256,
+            "height": 170,
+            "rgbaSha256": "f3af799602dff8f0b5199dfaa789b51818b3239b4ec1198dbfa5e4e6034b3923",
+            "pngArtifact": {
+              "path": "artifacts/landscape-dordogne-lanczos3.png",
+              "width": 256,
+              "height": 170,
+              "pngSha256": "d9f8801a7d94e926d794e2026f49a193b4e9eed15d1651e0240d2e379ca68e9d"
+            }
+          },
+          "latency": {
+            "samplesMs": [
+              19.841,
+              18.613,
+              39.733
+            ],
+            "medianMs": 19.841,
+            "p95Ms": 39.733
+          },
+          "psnrRgbDb": 26.2237,
+          "ssimLuminanceGaussian11x11": 0.810634
+        },
+        {
+          "method": "dcci-implementation",
+          "output": {
+            "width": 256,
+            "height": 170,
+            "rgbaSha256": "4c046fedc9fedec810fcdeb7bf7d9e849cb6d24deb69053bbf79cc3a4cea9d24",
+            "pngArtifact": {
+              "path": "artifacts/landscape-dordogne-dcci-implementation.png",
+              "width": 256,
+              "height": 170,
+              "pngSha256": "633fa95754d4bcecab6909c9c6a1c86a8283cbe78b7b4a1a93af36b4ffa44089"
+            }
+          },
+          "latency": {
+            "samplesMs": [
+              59.892,
+              25.812,
+              30.253
+            ],
+            "medianMs": 30.253,
+            "p95Ms": 59.892
+          },
+          "psnrRgbDb": 25.4354,
+          "ssimLuminanceGaussian11x11": 0.766513
+        },
+        {
+          "method": "nedi-implementation",
+          "output": {
+            "width": 256,
+            "height": 170,
+            "rgbaSha256": "4d4efff1ad5cca1f87cddc222994113aef8f59af3315fa8d84c5fdec79bfbd77",
+            "pngArtifact": {
+              "path": "artifacts/landscape-dordogne-nedi-implementation.png",
+              "width": 256,
+              "height": 170,
+              "pngSha256": "dc9f7ff1e9b3c2a3e774e340616a716d32700c76c9c149ee32b845e598dc6c9c"
+            }
+          },
+          "latency": {
+            "samplesMs": [
+              21.366,
+              20.02,
+              22.242
+            ],
+            "medianMs": 21.366,
+            "p95Ms": 22.242
+          },
+          "psnrRgbDb": 22.4947,
+          "ssimLuminanceGaussian11x11": 0.649173
+        }
+      ]
+    },
+    {
+      "id": "oak-leaves",
+      "sourceSha256": "71c0f2fb2fa89385955bca609cf9983d493137a81879005143606d0fa74d2802",
+      "sourceDimensions": {
+        "width": 3720,
+        "height": 2790
+      },
+      "referenceDimensions": {
+        "width": 256,
+        "height": 192
+      },
+      "lowResolutionDimensions": {
+        "width": 128,
+        "height": 96
+      },
+      "referenceArtifact": {
+        "path": "artifacts/oak-leaves-reference.png",
+        "width": 256,
+        "height": 192,
+        "pngSha256": "afdbb84313810df61368a0836a1b2c582084bcce1cf20e6005b8810a2872d19f"
+      },
+      "lowResolutionArtifact": {
+        "path": "artifacts/oak-leaves-low-resolution.png",
+        "width": 128,
+        "height": 96,
+        "pngSha256": "5dfd3b64092a00acab217f1ab54c908f01729382056a7840be2c0245a243a37b"
+      },
+      "downsample": "Lanczos3, 2x reduction from the reduced reference",
+      "methods": [
+        {
+          "method": "lanczos3",
+          "output": {
+            "width": 256,
+            "height": 192,
+            "rgbaSha256": "dd44e188fb132eafdc51ddbed44d8edbfd09e82bc6c610096869c3072250a2ec",
+            "pngArtifact": {
+              "path": "artifacts/oak-leaves-lanczos3.png",
+              "width": 256,
+              "height": 192,
+              "pngSha256": "9644ddfcc413c2952bac7c94b7cfbb39a4c477a8e60f5098985c15e65d8e62e6"
+            }
+          },
+          "latency": {
+            "samplesMs": [
+              21.354,
+              18.358,
+              48.909
+            ],
+            "medianMs": 21.354,
+            "p95Ms": 48.909
+          },
+          "psnrRgbDb": 32.7161,
+          "ssimLuminanceGaussian11x11": 0.960488
+        },
+        {
+          "method": "dcci-implementation",
+          "output": {
+            "width": 256,
+            "height": 192,
+            "rgbaSha256": "475613e3546f76a32dc4bbde9d3e4fe81442204b861323a3807aae33cd62c6e0",
+            "pngArtifact": {
+              "path": "artifacts/oak-leaves-dcci-implementation.png",
+              "width": 256,
+              "height": 192,
+              "pngSha256": "fa88a67a505817554cad5fd83abb576e15a017630e1706c5258391bc555d86d2"
+            }
+          },
+          "latency": {
+            "samplesMs": [
+              32.912,
+              34.1,
+              37.707
+            ],
+            "medianMs": 34.1,
+            "p95Ms": 37.707
+          },
+          "psnrRgbDb": 31.1246,
+          "ssimLuminanceGaussian11x11": 0.944093
+        },
+        {
+          "method": "nedi-implementation",
+          "output": {
+            "width": 256,
+            "height": 192,
+            "rgbaSha256": "a42d04bfb5095dbf2c8c599a845be86040f35ebe5992c4047e54acea51d152dd",
+            "pngArtifact": {
+              "path": "artifacts/oak-leaves-nedi-implementation.png",
+              "width": 256,
+              "height": 192,
+              "pngSha256": "7a1cdb8f7a3fab42eb3410a4c42d78c362392e3afba6ef8cf5202f5e25e36fc3"
+            }
+          },
+          "latency": {
+            "samplesMs": [
+              18.629,
+              18.55,
+              16.687
+            ],
+            "medianMs": 18.55,
+            "p95Ms": 18.629
+          },
+          "psnrRgbDb": 25.9293,
+          "ssimLuminanceGaussian11x11": 0.871965
+        }
+      ]
+    },
+    {
+      "id": "gold-weight",
+      "sourceSha256": "575c3663c372bb43e7da86a253cd9cb3602211bc39e3756332ca682963beb351",
+      "sourceDimensions": {
+        "width": 2619,
+        "height": 2338
+      },
+      "referenceDimensions": {
+        "width": 256,
+        "height": 228
+      },
+      "lowResolutionDimensions": {
+        "width": 128,
+        "height": 114
+      },
+      "referenceArtifact": {
+        "path": "artifacts/gold-weight-reference.png",
+        "width": 256,
+        "height": 228,
+        "pngSha256": "2e30cab9de942469e9025617b8d4fb90bc277adb5f8948398c9f93c00ceb7c83"
+      },
+      "lowResolutionArtifact": {
+        "path": "artifacts/gold-weight-low-resolution.png",
+        "width": 128,
+        "height": 114,
+        "pngSha256": "42b7780fae477fdd6dbdeb9dfe684a1cdfc50a2ba859a5d182c1fec03da77944"
+      },
+      "downsample": "Lanczos3, 2x reduction from the reduced reference",
+      "methods": [
+        {
+          "method": "lanczos3",
+          "output": {
+            "width": 256,
+            "height": 228,
+            "rgbaSha256": "619cb93cd5b291fc071658e200b9d14c476355e3d4cc683c863dff3f13b3d60a",
+            "pngArtifact": {
+              "path": "artifacts/gold-weight-lanczos3.png",
+              "width": 256,
+              "height": 228,
+              "pngSha256": "0364868b31c740c940aa5e906cd4d775ef92756786c0b4a5d9a3efd182f51457"
+            }
+          },
+          "latency": {
+            "samplesMs": [
+              19.898,
+              21.909,
+              18.638
+            ],
+            "medianMs": 19.898,
+            "p95Ms": 21.909
+          },
+          "psnrRgbDb": 35.1906,
+          "ssimLuminanceGaussian11x11": 0.94072
+        },
+        {
+          "method": "dcci-implementation",
+          "output": {
+            "width": 256,
+            "height": 228,
+            "rgbaSha256": "27df0ce7839e7d1f3e3e24e7bb60f98e1e5442d4d27a5cc9dbd3c88d2ddefa6e",
+            "pngArtifact": {
+              "path": "artifacts/gold-weight-dcci-implementation.png",
+              "width": 256,
+              "height": 228,
+              "pngSha256": "7173c7a564a960041a630d5fd06aa465c775628de360cdd7cf0f78641166f3c5"
+            }
+          },
+          "latency": {
+            "samplesMs": [
+              39.904,
+              32.995,
+              46.703
+            ],
+            "medianMs": 39.904,
+            "p95Ms": 46.703
+          },
+          "psnrRgbDb": 33.9374,
+          "ssimLuminanceGaussian11x11": 0.927503
+        },
+        {
+          "method": "nedi-implementation",
+          "output": {
+            "width": 256,
+            "height": 228,
+            "rgbaSha256": "38a0463d3f7e87dce2736905cc3837526fc93372b69b69169f6038ec11590da8",
+            "pngArtifact": {
+              "path": "artifacts/gold-weight-nedi-implementation.png",
+              "width": 256,
+              "height": 228,
+              "pngSha256": "c1e8ae40f1f2f44b618c1257a5eea054f71d6e0f9124521007fc9f61002741d0"
+            }
+          },
+          "latency": {
+            "samplesMs": [
+              30.546,
+              28.241,
+              56.097
+            ],
+            "medianMs": 30.546,
+            "p95Ms": 56.097
+          },
+          "psnrRgbDb": 29.3459,
+          "ssimLuminanceGaussian11x11": 0.878408
+        }
+      ]
+    },
+    {
+      "id": "rome-map",
+      "sourceSha256": "4f86a0ae3baa75bd29b690ef005e40029327824ec49f5241fd102e3a06126065",
+      "sourceDimensions": {
+        "width": 3400,
+        "height": 2176
+      },
+      "referenceDimensions": {
+        "width": 256,
+        "height": 164
+      },
+      "lowResolutionDimensions": {
+        "width": 128,
+        "height": 82
+      },
+      "referenceArtifact": {
+        "path": "artifacts/rome-map-reference.png",
+        "width": 256,
+        "height": 164,
+        "pngSha256": "847af3448398e172b610615d9389b14dfc52d32811f5728aa35173eba5f624e3"
+      },
+      "lowResolutionArtifact": {
+        "path": "artifacts/rome-map-low-resolution.png",
+        "width": 128,
+        "height": 82,
+        "pngSha256": "5dc937cdde47fbb178285369fe4948ea2af9f6e17b7fb6944a7200d56bc1f7f2"
+      },
+      "downsample": "Lanczos3, 2x reduction from the reduced reference",
+      "methods": [
+        {
+          "method": "lanczos3",
+          "output": {
+            "width": 256,
+            "height": 164,
+            "rgbaSha256": "97f9875c506bd8f32c64053cd337c0423eb650d7b4fb0bb131455437f2e8c90f",
+            "pngArtifact": {
+              "path": "artifacts/rome-map-lanczos3.png",
+              "width": 256,
+              "height": 164,
+              "pngSha256": "312b3eb883db83f56d01fd12328ce604856f97c9f3088be5d143c9e7dfbfef09"
+            }
+          },
+          "latency": {
+            "samplesMs": [
+              19.174,
+              21.812,
+              24.344
+            ],
+            "medianMs": 21.812,
+            "p95Ms": 24.344
+          },
+          "psnrRgbDb": 28.7762,
+          "ssimLuminanceGaussian11x11": 0.722148
+        },
+        {
+          "method": "dcci-implementation",
+          "output": {
+            "width": 256,
+            "height": 164,
+            "rgbaSha256": "044f7a16c2a85ef8e10bfe3334b9848bbb2657877600a5f75c01afdd74b451d6",
+            "pngArtifact": {
+              "path": "artifacts/rome-map-dcci-implementation.png",
+              "width": 256,
+              "height": 164,
+              "pngSha256": "78bdcd2493e17d342d4e4a2484feaf42d0871303a7ba2b28c6f86df902f5a023"
+            }
+          },
+          "latency": {
+            "samplesMs": [
+              25.835,
+              24.81,
+              26.904
+            ],
+            "medianMs": 25.835,
+            "p95Ms": 26.904
+          },
+          "psnrRgbDb": 28.2471,
+          "ssimLuminanceGaussian11x11": 0.673473
+        },
+        {
+          "method": "nedi-implementation",
+          "output": {
+            "width": 256,
+            "height": 164,
+            "rgbaSha256": "b436992922d7bd77fb4c3965a9c23c36c0cf638d9691e1327874bf30d4556714",
+            "pngArtifact": {
+              "path": "artifacts/rome-map-nedi-implementation.png",
+              "width": 256,
+              "height": 164,
+              "pngSha256": "b8ca70d88e9c2816ce0045f64097264115b6b11f3f9876903cde2a5bff6a531f"
+            }
+          },
+          "latency": {
+            "samplesMs": [
+              18.046,
+              18.554,
+              19.549
+            ],
+            "medianMs": 18.554,
+            "p95Ms": 19.549
+          },
+          "psnrRgbDb": 27.0735,
+          "ssimLuminanceGaussian11x11": 0.668394
+        }
+      ]
+    }
+  ]
+}

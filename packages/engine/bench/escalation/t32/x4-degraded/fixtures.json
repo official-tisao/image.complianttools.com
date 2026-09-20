@@ -1,0 +1,472 @@
+{
+  "schemaVersion": 1,
+  "benchmark": "P4-21 T32 x4 controlled synthetic photo degradation fixtures",
+  "generator": {
+    "script": "packages/engine/bench/escalation/t32/x4-degraded/prepare-fixtures.mjs",
+    "node": "v22.22.0",
+    "maximumReferenceLongEdge": 256,
+    "referenceDimensions": "Each source is Lanczos3 reduced to a maximum 256px long edge; both dimensions are rounded down to a multiple of four to permit exact x4 scale checks.",
+    "sourceManifest": "../fixtures/cc0/manifest.json",
+    "sourceManifestSha256": "2eccd74e8dc2d4d57492ffb95717c9efcfc398010b0c7354af6705545ecfe6c5",
+    "transformations": "Clean x4 downsample; one controlled reference-size blur; JPEG quality 45 after downsample; and controlled blur + deterministic grain + JPEG quality 45. Inputs are synthetic degradations derived from the individually registered CC0 photos, not real degraded camera captures.",
+    "jpeg": "Pinned workspace @jsquash/jpeg, baseline encoder settings except the recorded quality value.",
+    "blur": "Repository applyBlur gaussian mode, implemented as three box-blur passes; radius 1 at reference dimensions.",
+    "grain": "Repository deterministic grain filter, amount 12 per-channel at low-resolution dimensions.",
+    "baseline": "The exact Tier 1 engine resizeRaster Lanczos3 implementation is applied to every saved input and the result is saved with its pixel and PNG hashes."
+  },
+  "fixtureCount": 16,
+  "fixtures": [
+    {
+      "id": "landscape-dordogne-clean-x4",
+      "degradationCase": "clean-x4",
+      "sourceAssetId": "landscape-dordogne",
+      "sourceSha256": "c3e2eef6af01a10882c83f71ff849d2ffb95220aad0e70e98daf6cf27e1975b7",
+      "reference": {
+        "path": "artifacts/landscape-dordogne-reference.png",
+        "width": 256,
+        "height": 168,
+        "pngSha256": "3522a9a1b634638895ca38fc9a10adb9915db7adf25ef81239c4cf60ef3b2134"
+      },
+      "input": {
+        "path": "artifacts/landscape-dordogne-clean-x4-input.png",
+        "width": 64,
+        "height": 42,
+        "pngSha256": "25cbe0e4c107ac632ca3175a73fe169e524363b94627d9c5b86f2b52d69907ff"
+      },
+      "tier1Lanczos3": {
+        "path": "artifacts/landscape-dordogne-clean-x4-tier1-lanczos3.png",
+        "width": 256,
+        "height": 168,
+        "pngSha256": "f05bccc1c87d9300e7e38358afccfbd587aac0cd4869f0e88a63c55deecedaf2"
+      },
+      "degradation": {
+        "resize": "Lanczos3 x4 reduction"
+      }
+    },
+    {
+      "id": "landscape-dordogne-blur-x4",
+      "degradationCase": "blur-x4",
+      "sourceAssetId": "landscape-dordogne",
+      "sourceSha256": "c3e2eef6af01a10882c83f71ff849d2ffb95220aad0e70e98daf6cf27e1975b7",
+      "reference": {
+        "path": "artifacts/landscape-dordogne-reference.png",
+        "width": 256,
+        "height": 168,
+        "pngSha256": "3522a9a1b634638895ca38fc9a10adb9915db7adf25ef81239c4cf60ef3b2134"
+      },
+      "input": {
+        "path": "artifacts/landscape-dordogne-blur-x4-input.png",
+        "width": 64,
+        "height": 42,
+        "pngSha256": "46ee09de6c84d7c07338df1837051f6ec8275cd45aea3b44beb17ae271251f80"
+      },
+      "tier1Lanczos3": {
+        "path": "artifacts/landscape-dordogne-blur-x4-tier1-lanczos3.png",
+        "width": 256,
+        "height": 168,
+        "pngSha256": "88bfe2f82aedad98cce1a22fdeaa340cafd7374e38a80b7ee6b1e25e249ad45a"
+      },
+      "degradation": {
+        "blur": "three-pass box approximation of Gaussian, radius 1 at reference size",
+        "resize": "Lanczos3 x4 reduction"
+      }
+    },
+    {
+      "id": "landscape-dordogne-jpeg-q45-x4",
+      "degradationCase": "jpeg-q45-x4",
+      "sourceAssetId": "landscape-dordogne",
+      "sourceSha256": "c3e2eef6af01a10882c83f71ff849d2ffb95220aad0e70e98daf6cf27e1975b7",
+      "reference": {
+        "path": "artifacts/landscape-dordogne-reference.png",
+        "width": 256,
+        "height": 168,
+        "pngSha256": "3522a9a1b634638895ca38fc9a10adb9915db7adf25ef81239c4cf60ef3b2134"
+      },
+      "input": {
+        "path": "artifacts/landscape-dordogne-jpeg-q45-x4-input.png",
+        "width": 64,
+        "height": 42,
+        "pngSha256": "0a7b393aeb85da294504a05eb51cec4687930d0c6a0472ab24a7d5307b9e2947"
+      },
+      "tier1Lanczos3": {
+        "path": "artifacts/landscape-dordogne-jpeg-q45-x4-tier1-lanczos3.png",
+        "width": 256,
+        "height": 168,
+        "pngSha256": "0651308dad72446e15f0273f777cc7e23841d37238f905caf6245a41dd9e4cd2"
+      },
+      "degradation": {
+        "resize": "Lanczos3 x4 reduction",
+        "jpegQuality": 45
+      }
+    },
+    {
+      "id": "landscape-dordogne-blur-grain-jpeg-q45-x4",
+      "degradationCase": "blur-grain-jpeg-q45-x4",
+      "sourceAssetId": "landscape-dordogne",
+      "sourceSha256": "c3e2eef6af01a10882c83f71ff849d2ffb95220aad0e70e98daf6cf27e1975b7",
+      "reference": {
+        "path": "artifacts/landscape-dordogne-reference.png",
+        "width": 256,
+        "height": 168,
+        "pngSha256": "3522a9a1b634638895ca38fc9a10adb9915db7adf25ef81239c4cf60ef3b2134"
+      },
+      "input": {
+        "path": "artifacts/landscape-dordogne-blur-grain-jpeg-q45-x4-input.png",
+        "width": 64,
+        "height": 42,
+        "pngSha256": "898fe8b2f32bdf750353ab0f96e7d4b335ff6934fc98ebeb0fa4ce0885c52bdb"
+      },
+      "tier1Lanczos3": {
+        "path": "artifacts/landscape-dordogne-blur-grain-jpeg-q45-x4-tier1-lanczos3.png",
+        "width": 256,
+        "height": 168,
+        "pngSha256": "e4e048667cd1b83ddc4bb76367c8bee61bc4b5f623d516e23044144d693cd896"
+      },
+      "degradation": {
+        "blur": "three-pass box approximation of Gaussian, radius 1 at reference size",
+        "resize": "Lanczos3 x4 reduction",
+        "deterministicGrain": "amount 12, per-channel",
+        "jpegQuality": 45
+      }
+    },
+    {
+      "id": "oak-leaves-clean-x4",
+      "degradationCase": "clean-x4",
+      "sourceAssetId": "oak-leaves",
+      "sourceSha256": "71c0f2fb2fa89385955bca609cf9983d493137a81879005143606d0fa74d2802",
+      "reference": {
+        "path": "artifacts/oak-leaves-reference.png",
+        "width": 256,
+        "height": 192,
+        "pngSha256": "afdbb84313810df61368a0836a1b2c582084bcce1cf20e6005b8810a2872d19f"
+      },
+      "input": {
+        "path": "artifacts/oak-leaves-clean-x4-input.png",
+        "width": 64,
+        "height": 48,
+        "pngSha256": "5c187e0790bee6e9f450771120661560405770a24777a142dc61bc4a17bcbd5c"
+      },
+      "tier1Lanczos3": {
+        "path": "artifacts/oak-leaves-clean-x4-tier1-lanczos3.png",
+        "width": 256,
+        "height": 192,
+        "pngSha256": "73171022d39b6eb4dd6f2eacf0b8018a932af1070f01f3f4b41e06a893c36a28"
+      },
+      "degradation": {
+        "resize": "Lanczos3 x4 reduction"
+      }
+    },
+    {
+      "id": "oak-leaves-blur-x4",
+      "degradationCase": "blur-x4",
+      "sourceAssetId": "oak-leaves",
+      "sourceSha256": "71c0f2fb2fa89385955bca609cf9983d493137a81879005143606d0fa74d2802",
+      "reference": {
+        "path": "artifacts/oak-leaves-reference.png",
+        "width": 256,
+        "height": 192,
+        "pngSha256": "afdbb84313810df61368a0836a1b2c582084bcce1cf20e6005b8810a2872d19f"
+      },
+      "input": {
+        "path": "artifacts/oak-leaves-blur-x4-input.png",
+        "width": 64,
+        "height": 48,
+        "pngSha256": "9825710009d00fea2db2ca117099ea9fe530cb4b14e05d9a88df2a4155c13268"
+      },
+      "tier1Lanczos3": {
+        "path": "artifacts/oak-leaves-blur-x4-tier1-lanczos3.png",
+        "width": 256,
+        "height": 192,
+        "pngSha256": "6bcef2229e7e9fd45f537ad45bbb4b7da55aa2c0c6bec548997fd5a7e67f0868"
+      },
+      "degradation": {
+        "blur": "three-pass box approximation of Gaussian, radius 1 at reference size",
+        "resize": "Lanczos3 x4 reduction"
+      }
+    },
+    {
+      "id": "oak-leaves-jpeg-q45-x4",
+      "degradationCase": "jpeg-q45-x4",
+      "sourceAssetId": "oak-leaves",
+      "sourceSha256": "71c0f2fb2fa89385955bca609cf9983d493137a81879005143606d0fa74d2802",
+      "reference": {
+        "path": "artifacts/oak-leaves-reference.png",
+        "width": 256,
+        "height": 192,
+        "pngSha256": "afdbb84313810df61368a0836a1b2c582084bcce1cf20e6005b8810a2872d19f"
+      },
+      "input": {
+        "path": "artifacts/oak-leaves-jpeg-q45-x4-input.png",
+        "width": 64,
+        "height": 48,
+        "pngSha256": "7ba6e259db2d233a8b1dbc888cfe77e80b3102880022de4ea9c5b16984dd7e87"
+      },
+      "tier1Lanczos3": {
+        "path": "artifacts/oak-leaves-jpeg-q45-x4-tier1-lanczos3.png",
+        "width": 256,
+        "height": 192,
+        "pngSha256": "4310d676880acba4ecb5185adaa5967be83e71717e5ee822244f3a3ade2db56c"
+      },
+      "degradation": {
+        "resize": "Lanczos3 x4 reduction",
+        "jpegQuality": 45
+      }
+    },
+    {
+      "id": "oak-leaves-blur-grain-jpeg-q45-x4",
+      "degradationCase": "blur-grain-jpeg-q45-x4",
+      "sourceAssetId": "oak-leaves",
+      "sourceSha256": "71c0f2fb2fa89385955bca609cf9983d493137a81879005143606d0fa74d2802",
+      "reference": {
+        "path": "artifacts/oak-leaves-reference.png",
+        "width": 256,
+        "height": 192,
+        "pngSha256": "afdbb84313810df61368a0836a1b2c582084bcce1cf20e6005b8810a2872d19f"
+      },
+      "input": {
+        "path": "artifacts/oak-leaves-blur-grain-jpeg-q45-x4-input.png",
+        "width": 64,
+        "height": 48,
+        "pngSha256": "c2b7d5b23ddada514ef432b4cb0fc3901cf015b64ee1fd7a1970e1c28a17f6bd"
+      },
+      "tier1Lanczos3": {
+        "path": "artifacts/oak-leaves-blur-grain-jpeg-q45-x4-tier1-lanczos3.png",
+        "width": 256,
+        "height": 192,
+        "pngSha256": "0e5588e67034325519ebb3732af054b0ec2921c1ad9d9bb26157d1d2894b2d0e"
+      },
+      "degradation": {
+        "blur": "three-pass box approximation of Gaussian, radius 1 at reference size",
+        "resize": "Lanczos3 x4 reduction",
+        "deterministicGrain": "amount 12, per-channel",
+        "jpegQuality": 45
+      }
+    },
+    {
+      "id": "gold-weight-clean-x4",
+      "degradationCase": "clean-x4",
+      "sourceAssetId": "gold-weight",
+      "sourceSha256": "575c3663c372bb43e7da86a253cd9cb3602211bc39e3756332ca682963beb351",
+      "reference": {
+        "path": "artifacts/gold-weight-reference.png",
+        "width": 256,
+        "height": 228,
+        "pngSha256": "2e30cab9de942469e9025617b8d4fb90bc277adb5f8948398c9f93c00ceb7c83"
+      },
+      "input": {
+        "path": "artifacts/gold-weight-clean-x4-input.png",
+        "width": 64,
+        "height": 57,
+        "pngSha256": "000fd0d63e86e2a46cd9a48271abe6d17630892c1717a6c45bb01e7ed974c052"
+      },
+      "tier1Lanczos3": {
+        "path": "artifacts/gold-weight-clean-x4-tier1-lanczos3.png",
+        "width": 256,
+        "height": 228,
+        "pngSha256": "308a409f5b48f499c33ef33dc5c7a70e88b32009933378e0e2b259fb2a087038"
+      },
+      "degradation": {
+        "resize": "Lanczos3 x4 reduction"
+      }
+    },
+    {
+      "id": "gold-weight-blur-x4",
+      "degradationCase": "blur-x4",
+      "sourceAssetId": "gold-weight",
+      "sourceSha256": "575c3663c372bb43e7da86a253cd9cb3602211bc39e3756332ca682963beb351",
+      "reference": {
+        "path": "artifacts/gold-weight-reference.png",
+        "width": 256,
+        "height": 228,
+        "pngSha256": "2e30cab9de942469e9025617b8d4fb90bc277adb5f8948398c9f93c00ceb7c83"
+      },
+      "input": {
+        "path": "artifacts/gold-weight-blur-x4-input.png",
+        "width": 64,
+        "height": 57,
+        "pngSha256": "bb660481ad0fc1d847400f6669798bde4ab63907c89b428c33d6f5c1af36892e"
+      },
+      "tier1Lanczos3": {
+        "path": "artifacts/gold-weight-blur-x4-tier1-lanczos3.png",
+        "width": 256,
+        "height": 228,
+        "pngSha256": "da8b6ae920289b2cfbe22c501dd9e1e53d906d68c21cbaa74e6d895fba4022d6"
+      },
+      "degradation": {
+        "blur": "three-pass box approximation of Gaussian, radius 1 at reference size",
+        "resize": "Lanczos3 x4 reduction"
+      }
+    },
+    {
+      "id": "gold-weight-jpeg-q45-x4",
+      "degradationCase": "jpeg-q45-x4",
+      "sourceAssetId": "gold-weight",
+      "sourceSha256": "575c3663c372bb43e7da86a253cd9cb3602211bc39e3756332ca682963beb351",
+      "reference": {
+        "path": "artifacts/gold-weight-reference.png",
+        "width": 256,
+        "height": 228,
+        "pngSha256": "2e30cab9de942469e9025617b8d4fb90bc277adb5f8948398c9f93c00ceb7c83"
+      },
+      "input": {
+        "path": "artifacts/gold-weight-jpeg-q45-x4-input.png",
+        "width": 64,
+        "height": 57,
+        "pngSha256": "afd7c224ad62e2c714f9356e11e2e2d0e328991e95ba1c2a61080578fe4134bf"
+      },
+      "tier1Lanczos3": {
+        "path": "artifacts/gold-weight-jpeg-q45-x4-tier1-lanczos3.png",
+        "width": 256,
+        "height": 228,
+        "pngSha256": "143cec64848fa93110b075d6cf1ce5a53a8bd73ffa7da7ba13cd92f4a7adf19f"
+      },
+      "degradation": {
+        "resize": "Lanczos3 x4 reduction",
+        "jpegQuality": 45
+      }
+    },
+    {
+      "id": "gold-weight-blur-grain-jpeg-q45-x4",
+      "degradationCase": "blur-grain-jpeg-q45-x4",
+      "sourceAssetId": "gold-weight",
+      "sourceSha256": "575c3663c372bb43e7da86a253cd9cb3602211bc39e3756332ca682963beb351",
+      "reference": {
+        "path": "artifacts/gold-weight-reference.png",
+        "width": 256,
+        "height": 228,
+        "pngSha256": "2e30cab9de942469e9025617b8d4fb90bc277adb5f8948398c9f93c00ceb7c83"
+      },
+      "input": {
+        "path": "artifacts/gold-weight-blur-grain-jpeg-q45-x4-input.png",
+        "width": 64,
+        "height": 57,
+        "pngSha256": "ba181c70c3ddcc686eb8f5523c422cb94a94e145de3b12be74998d339bc2c20e"
+      },
+      "tier1Lanczos3": {
+        "path": "artifacts/gold-weight-blur-grain-jpeg-q45-x4-tier1-lanczos3.png",
+        "width": 256,
+        "height": 228,
+        "pngSha256": "0fc412fb94e9826bf4e3221a06174238d3e5f299f2bef1d928e0f547b0f287dc"
+      },
+      "degradation": {
+        "blur": "three-pass box approximation of Gaussian, radius 1 at reference size",
+        "resize": "Lanczos3 x4 reduction",
+        "deterministicGrain": "amount 12, per-channel",
+        "jpegQuality": 45
+      }
+    },
+    {
+      "id": "rome-map-clean-x4",
+      "degradationCase": "clean-x4",
+      "sourceAssetId": "rome-map",
+      "sourceSha256": "4f86a0ae3baa75bd29b690ef005e40029327824ec49f5241fd102e3a06126065",
+      "reference": {
+        "path": "artifacts/rome-map-reference.png",
+        "width": 252,
+        "height": 160,
+        "pngSha256": "ed993f4d62c4cd1cdb459764406d8fcd6706d580026b2b3036138f006a0e2a41"
+      },
+      "input": {
+        "path": "artifacts/rome-map-clean-x4-input.png",
+        "width": 63,
+        "height": 40,
+        "pngSha256": "93dd74a8e6b0b7cce847c19331dbcee6d98cac0f81e5a6ae68eb5736d068070f"
+      },
+      "tier1Lanczos3": {
+        "path": "artifacts/rome-map-clean-x4-tier1-lanczos3.png",
+        "width": 252,
+        "height": 160,
+        "pngSha256": "932e36d9fffa52c9704fa8b9c19aba69d346bba3ad5b92d0d103ed08de529dd5"
+      },
+      "degradation": {
+        "resize": "Lanczos3 x4 reduction"
+      }
+    },
+    {
+      "id": "rome-map-blur-x4",
+      "degradationCase": "blur-x4",
+      "sourceAssetId": "rome-map",
+      "sourceSha256": "4f86a0ae3baa75bd29b690ef005e40029327824ec49f5241fd102e3a06126065",
+      "reference": {
+        "path": "artifacts/rome-map-reference.png",
+        "width": 252,
+        "height": 160,
+        "pngSha256": "ed993f4d62c4cd1cdb459764406d8fcd6706d580026b2b3036138f006a0e2a41"
+      },
+      "input": {
+        "path": "artifacts/rome-map-blur-x4-input.png",
+        "width": 63,
+        "height": 40,
+        "pngSha256": "a1e86ba5c518119874794eb9f8ede238379d85bba6ced03b39c95370c80f1577"
+      },
+      "tier1Lanczos3": {
+        "path": "artifacts/rome-map-blur-x4-tier1-lanczos3.png",
+        "width": 252,
+        "height": 160,
+        "pngSha256": "82a284741fbf181db5c17b57bbe2e505e25bce7b66ee0b2e8edf0c81aaffc832"
+      },
+      "degradation": {
+        "blur": "three-pass box approximation of Gaussian, radius 1 at reference size",
+        "resize": "Lanczos3 x4 reduction"
+      }
+    },
+    {
+      "id": "rome-map-jpeg-q45-x4",
+      "degradationCase": "jpeg-q45-x4",
+      "sourceAssetId": "rome-map",
+      "sourceSha256": "4f86a0ae3baa75bd29b690ef005e40029327824ec49f5241fd102e3a06126065",
+      "reference": {
+        "path": "artifacts/rome-map-reference.png",
+        "width": 252,
+        "height": 160,
+        "pngSha256": "ed993f4d62c4cd1cdb459764406d8fcd6706d580026b2b3036138f006a0e2a41"
+      },
+      "input": {
+        "path": "artifacts/rome-map-jpeg-q45-x4-input.png",
+        "width": 63,
+        "height": 40,
+        "pngSha256": "7e2878aefa8a463ed4550dd4d9b4e7cc6be4aab5f1828fd6171f4ee45a80f386"
+      },
+      "tier1Lanczos3": {
+        "path": "artifacts/rome-map-jpeg-q45-x4-tier1-lanczos3.png",
+        "width": 252,
+        "height": 160,
+        "pngSha256": "9fd3b9fa5ee817705ad65227d8a24e6938241701dc795ff25651eeeb517295c9"
+      },
+      "degradation": {
+        "resize": "Lanczos3 x4 reduction",
+        "jpegQuality": 45
+      }
+    },
+    {
+      "id": "rome-map-blur-grain-jpeg-q45-x4",
+      "degradationCase": "blur-grain-jpeg-q45-x4",
+      "sourceAssetId": "rome-map",
+      "sourceSha256": "4f86a0ae3baa75bd29b690ef005e40029327824ec49f5241fd102e3a06126065",
+      "reference": {
+        "path": "artifacts/rome-map-reference.png",
+        "width": 252,
+        "height": 160,
+        "pngSha256": "ed993f4d62c4cd1cdb459764406d8fcd6706d580026b2b3036138f006a0e2a41"
+      },
+      "input": {
+        "path": "artifacts/rome-map-blur-grain-jpeg-q45-x4-input.png",
+        "width": 63,
+        "height": 40,
+        "pngSha256": "4ea0a3de6214d2557ea417d2094bcf23b495cd773cb27d9c8d5af7eb216d5fc3"
+      },
+      "tier1Lanczos3": {
+        "path": "artifacts/rome-map-blur-grain-jpeg-q45-x4-tier1-lanczos3.png",
+        "width": 252,
+        "height": 160,
+        "pngSha256": "dec78c2b2c9436d64d1ce3a6b85e2282fb75f1ef95649f5d23495f759bfb1817"
+      },
+      "degradation": {
+        "blur": "three-pass box approximation of Gaussian, radius 1 at reference size",
+        "resize": "Lanczos3 x4 reduction",
+        "deterministicGrain": "amount 12, per-channel",
+        "jpegQuality": 45
+      }
+    }
+  ]
+}

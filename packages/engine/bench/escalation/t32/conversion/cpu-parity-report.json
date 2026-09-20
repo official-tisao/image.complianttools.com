@@ -1,0 +1,93 @@
+{
+  "schemaVersion": 1,
+  "scope": "Offline PyTorch-to-ONNX export and ONNX Runtime CPU parity; browser inference is not measured here.",
+  "pythonVersion": "3.12.2",
+  "toolchain": {
+    "torch": "2.5.1+cpu",
+    "torchvision": "0.20.1+cpu",
+    "onnx": "1.17.0",
+    "onnxruntime": "1.20.1",
+    "numpy": "2.5.3",
+    "basicsr": "1.4.2"
+  },
+  "basicSR": {
+    "repository": "https://github.com/XPixelGroup/BasicSR",
+    "tag": "v1.4.2",
+    "commit": "651835a1b9d38dbbdaf45750f56906be2364f01a",
+    "license": "Apache-2.0"
+  },
+  "architecture": {
+    "name": "RRDBNet",
+    "blocks": 23,
+    "features": 64,
+    "growthChannels": 32,
+    "inputChannels": 3,
+    "outputChannels": 3
+  },
+  "onnx": {
+    "opset": 17,
+    "provider": "CPUExecutionProvider"
+  },
+  "parityTolerance": {
+    "absolute": 0.0001,
+    "relative": 0.0001
+  },
+  "models": [
+    {
+      "assetId": "realesrgan-x4plus-v0.1.0",
+      "sourceFilename": "RealESRGAN_x4plus.pth",
+      "sourceSizeBytes": 67040989,
+      "sourceSha256": "4fa0d38905f75ac06eb49a7951b426670021be3018265fd191d2125df9d682f1",
+      "scale": 4,
+      "onnxFilename": "RealESRGAN_x4plus.onnx",
+      "onnxSizeBytes": 67051647,
+      "onnxSha256": "890dbcfb92e7fee06ab00d16daa15f98ca3b57e3145d068d2eacfc4625a57d73",
+      "parity": [
+        {
+          "inputShape": [1, 3, 8, 12],
+          "outputShape": [1, 3, 32, 48],
+          "seed": 20260919,
+          "maxAbsError": 0.0000057220458984375,
+          "meanAbsError": 0.000000620988430455327,
+          "result": "pass"
+        },
+        {
+          "inputShape": [1, 3, 10, 14],
+          "outputShape": [1, 3, 40, 56],
+          "seed": 20260920,
+          "maxAbsError": 0.00002002716064453125,
+          "meanAbsError": 0.0000012382627119222889,
+          "result": "pass"
+        }
+      ]
+    },
+    {
+      "assetId": "realesrgan-x2plus-v0.2.1",
+      "sourceFilename": "RealESRGAN_x2plus.pth",
+      "sourceSizeBytes": 67061725,
+      "sourceSha256": "49fafd45f8fd7aa8d31ab2a22d14d91b536c34494a5cfe31eb5d89c2fa266abb",
+      "scale": 2,
+      "onnxFilename": "RealESRGAN_x2plus.onnx",
+      "onnxSizeBytes": 67076002,
+      "onnxSha256": "472e38432b5d27aaa238ca9ceebc6491a82923c67076e3dc770ab2219861ad18",
+      "parity": [
+        {
+          "inputShape": [1, 3, 8, 12],
+          "outputShape": [1, 3, 16, 24],
+          "seed": 20260919,
+          "maxAbsError": 0.0000019669532775878906,
+          "meanAbsError": 0.0000003719162293691627,
+          "result": "pass"
+        },
+        {
+          "inputShape": [1, 3, 10, 14],
+          "outputShape": [1, 3, 20, 28],
+          "seed": 20260920,
+          "maxAbsError": 0.0000019073486328125,
+          "meanAbsError": 0.000000390661540430931,
+          "result": "pass"
+        }
+      ]
+    }
+  ]
+}
