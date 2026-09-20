@@ -1,11 +1,11 @@
-/* P4-21 Benchmark: procedural generator (T79) — PARTIAL */
+/* P4-21 local outcome benchmark: procedural generator (T79) — PARTIAL; model comparison: NOT APPLICABLE */
 export const p4_21_t79_procedural = {
 capability: 'procedural-generator / T79',
 status: 'PARTIAL',
 reason:
 'Clean-room procedural synthesis exports (`procedural-synthesis.ts`) are real and deterministic: `valueNoiseTexture`, `linearGradient`, `radialGradient`, ' +
 '`placeholderFrame`, `identicon`, `noiseTexture`, `worleyNoise`, `domainWarp`, `fbm`, `valueNoiseImage`. OpenSimplex2 (not Perlin/simplex) proven clean; no GPL-derived code. ' +
-'No fixture reference outputs (no `bench/escalation/reference/procedural/` images) and no measured latency/quality benchmarks exist.',
+'No model gap is identified or asserted. The local outcome benchmark is partial because no fixture reference outputs (no `bench/escalation/reference/procedural/` images) or measured latency/quality results exist.',
 measuredResult: 'tier1_available_no_measurement',
 referenceFixtureAvailable: false,
 fixtureStatus: 'absent (not fabricated)',

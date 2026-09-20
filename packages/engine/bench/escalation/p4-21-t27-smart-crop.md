@@ -2,6 +2,9 @@
 export const p4_21_t27_smart_crop = {
 capability: 'smart-crop',
 status: 'PARTIAL',
-reason: 'Tier 1 available (saliency + face detection). No Tier 3 gap (README §13.1.3).',
-measuredResult: 'tier1_sufficient',
+reason: 'Saliency/rule-of-thirds scoring and the cleared Tier 1 face cascade exist, but no compliant reference corpus or comparative measurement is recorded. Current evidence does not establish Tier 1 sufficiency or a Tier 3 gap.',
+measuredResult: 'not_measured',
+fixturesPresent: false,
+measurementsPresent: false,
+modelComparisonAuthorized: false,
 };
