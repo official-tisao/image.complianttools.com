@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
   computeTiles,
   hasOnnxAcceleration,
@@ -6,7 +6,36 @@ import {
   initOnnxRuntime,
   runTiledInference,
   verifyTier1Fallback,
+  type OnnxRuntimeState,
+  type OnnxTileOutputs,
 } from '../src/onnx-runtime.js';
+
+function stateWithFakeSession(): OnnxRuntimeState {
+  const state = initOnnxRuntime({
+    webGpu: false,
+    wasmSimd: false,
+    wasmThreads: false,
+    webGl2: false,
+    offscreenCanvas: true,
+    fileSystemAccess: false,
+    opfs: false,
+    webCodecs: false,
+  });
+  return {
+    ...state,
+    backend: 'wasm',
+    session: {
+      run: vi.fn(async () => ({} as OnnxTileOutputs)),
+      release: vi.fn(async () => undefined),
+      startProfiling: vi.fn(),
+      endProfiling: vi.fn(),
+      inputNames: [],
+      outputNames: [],
+      inputMetadata: [],
+      outputMetadata: [],
+    } as unknown as NonNullable<OnnxRuntimeState['session']>,
+  };
+}
 
 describe('P4-14 ONNX runtime integration', () => {
   it('computeTiles splits a region correctly', () => {
@@ -70,18 +99,38 @@ describe('P4-14 ONNX runtime integration', () => {
   it('modelDownloadInfo exposes size and consent state', () => {
     const info = modelDownloadInfo({
       modelPath: 'assets-v1/model/test',
+      cachedModelPath: 'assets-v1/model/test',
       modelName: 'test-model',
       modelSizeBytes: 41943040,
+      consentGranted: true,
     });
     expect(info.name).toBe('test-model');
     expect(info.sizeBytes).toBe(41943040);
     expect(info.consented).toBe(true);
-    expect(info.cachedPath).toBe('assets-v1/model/test-model');
+    expect(info.cachedPath).toBe('assets-v1/model/test');
   });
 
   it('modelDownloadInfo shows unconsented when path missing', () => {
     const info = modelDownloadInfo({ modelPath: '', modelName: 'test', modelSizeBytes: 1024 });
     expect(info.consented).toBe(false);
+  });
+
+  it('does not infer persistent caching from a supplied model path', () => {
+    const state = initOnnxRuntime(
+      {
+        webGpu: false,
+        wasmSimd: true,
+        wasmThreads: false,
+        webGl2: false,
+        offscreenCanvas: true,
+        fileSystemAccess: false,
+        opfs: false,
+        webCodecs: false,
+      },
+      { modelPath: 'temporary/object-url', modelName: 'test-model', consentGranted: true },
+    );
+    expect(state.cached).toBe(false);
+    expect(modelDownloadInfo(state.sessionConfig!).cachedPath).toBeUndefined();
   });
 
   it('initOnnxRuntime creates state with tier1 fallback', () => {
@@ -96,7 +145,7 @@ describe('P4-14 ONNX runtime integration', () => {
         opfs: false,
         webCodecs: false,
       },
-      { modelPath: 'm', modelName: 'n' },
+      { modelPath: 'm', cachedModelPath: 'm', modelName: 'n', consentGranted: true },
     );
     expect(state.capabilities.webGpu).toBe(true);
     expect(state.tier1FallbackAvailable).toBe(true);
@@ -106,18 +155,11 @@ describe('P4-14 ONNX runtime integration', () => {
   it('runTiledInference processes all tiles and reports complete', async () => {
     const tiles = computeTiles(256, 256, 128); // 4 tiles
     const progressCalls: { loadedTiles: number; totalTiles: number; phase: string }[] = [];
+    const state = stateWithFakeSession();
     const result = await runTiledInference(
-      initOnnxRuntime({
-        webGpu: false,
-        wasmSimd: false,
-        wasmThreads: false,
-        webGl2: false,
-        offscreenCanvas: true,
-        fileSystemAccess: false,
-        opfs: false,
-        webCodecs: false,
-      }),
+      state,
       tiles,
+      () => ({}),
       (p) =>
         progressCalls.push({
           loadedTiles: p.loadedTiles,
@@ -127,6 +169,7 @@ describe('P4-14 ONNX runtime integration', () => {
     );
     expect(result.completed).toBe(true);
     expect(result.tileResults.length).toBe(4);
+    expect(state.session?.run).toHaveBeenCalledTimes(4);
     expect(progressCalls.length).toBeGreaterThan(0);
     expect(progressCalls[progressCalls.length - 1]!.phase).toBe('complete');
   });
@@ -136,17 +179,9 @@ describe('P4-14 ONNX runtime integration', () => {
     const signal = { cancelled: false };
     signal.cancelled = true;
     const result = await runTiledInference(
-      initOnnxRuntime({
-        webGpu: false,
-        wasmSimd: false,
-        wasmThreads: false,
-        webGl2: false,
-        offscreenCanvas: true,
-        fileSystemAccess: false,
-        opfs: false,
-        webCodecs: false,
-      }),
+      stateWithFakeSession(),
       tiles,
+      () => ({}),
       undefined,
       signal,
     );
