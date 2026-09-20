@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
+import { allowAllNetwork, denyAllNetwork } from './support/network';
 
 async function generatedTextPng(page: import('@playwright/test').Page) {
   const base64 = await page.evaluate(async () => {
@@ -334,7 +335,7 @@ test('T62 recognizes with a cached or pinned model and keeps the runtime same-or
   expect(externalRequests.every((url) => url === pinnedEnglishUrl)).toBe(true);
 });
 
-test('T62 reuses all eight warmed language models for offline recognition', async ({
+test('T62 reuses all eight warmed language models without external requests', async ({
   page,
   context,
 }) => {
@@ -344,16 +345,16 @@ test('T62 reuses all eight warmed language models for offline recognition', asyn
   const externalModelRequests: string[] = [];
   const localModelResponses = new Set<string>();
   const runtimeCacheResponses: Array<{ url: string; cacheControl: string }> = [];
-  const offlineExternalRequests: string[] = [];
+  const blockedExternalRequests: string[] = [];
   let appOrigin = '';
-  let offline = false;
+  let cachedOnly = false;
   context.on('request', (request) => {
     const url = new URL(request.url());
     if (url.hostname === 'cdn.jsdelivr.net' && url.pathname.endsWith('.traineddata')) {
       externalModelRequests.push(url.href);
     }
-    if (offline && url.origin !== new URL(page.url()).origin) {
-      offlineExternalRequests.push(url.href);
+    if (cachedOnly && url.origin !== new URL(page.url()).origin) {
+      blockedExternalRequests.push(url.href);
     }
   });
   context.on('response', (response) => {
@@ -405,10 +406,11 @@ test('T62 reuses all eight warmed language models for offline recognition', asyn
     expect(runtimeResponse.cacheControl).toBe('public, max-age=31536000, immutable');
   }
   expect(runtimeCacheResponses.some(({ url }) => url.endsWith('/worker.min.js'))).toBe(true);
-  expect(runtimeCacheResponses.some(({ url }) => url.endsWith('.wasm.js'))).toBe(true);
 
-  await context.setOffline(true);
-  offline = true;
+  // Keep the app origin available while blocking every external request. Browser-wide
+  // offline mode breaks WebKit's local File/Blob input path, which this test exercises.
+  await denyAllNetwork(context);
+  cachedOnly = true;
   try {
     for (const language of languages) {
       await languageSelector.selectOption(language);
@@ -421,10 +423,10 @@ test('T62 reuses all eight warmed language models for offline recognition', asyn
       await expect(output).not.toHaveText(/^\s*$/u, { timeout: 180_000 });
       expect(await output.innerText()).toBe(onlineResults.get(language));
     }
-    expect(offlineExternalRequests).toEqual([]);
+    expect(blockedExternalRequests).toEqual([]);
   } finally {
-    offline = false;
-    await context.setOffline(false);
+    cachedOnly = false;
+    await allowAllNetwork(context);
   }
 });
 

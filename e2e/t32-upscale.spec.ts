@@ -404,6 +404,11 @@ test('T32 keeps model delivery opt-in and uses the configured backup after a pri
   });
 
   await page.goto('/upscale');
+  await page.getByTestId('t32-file-input').setInputFiles({
+    name: 'tier1-fallback.png',
+    mimeType: 'image/png',
+    buffer: await generatedPng(page),
+  });
   await expect(page.getByTestId('t32-tier2-download')).toBeVisible();
   expect(primaryRequests).toBe(0);
   expect(fallbackRequests).toBe(0);

@@ -73,7 +73,7 @@ test('T81 static Arabic HTML includes its localized tool content without JavaScr
   const page = await context.newPage();
   await page.goto('/ar/adaptive-resize');
   await expect(page.locator('h1')).toHaveText('تغيير الحجم التكيفي');
-  await expect(page.getByText('هل تزيل هذه الطريقة المسارات؟')).toBeVisible();
+  await expect(page.getByText('هل يستخدم هذا الأسلوب نحت المسارات؟')).toBeVisible();
   await expect(page.locator('input[type=file]')).toHaveCount(1);
   await context.close();
 });

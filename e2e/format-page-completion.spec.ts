@@ -22,7 +22,6 @@ for (const locale of ['en', 'en-XA', 'ar'] as const) {
     test(`${locale}/${route} has static format-specific discovery content`, async ({ page }) => {
       const prefix = locale === 'en' ? '' : `/${locale}`;
       await page.goto(`${prefix}/${route}`);
-      await page.waitForLoadState('networkidle');
       await expect(page.locator('link[rel=alternate]')).toHaveCount(4);
       await expect(page.locator('meta[property="og:image"]')).toHaveAttribute(
         'content',
@@ -46,7 +45,6 @@ for (const locale of ['en', 'en-XA', 'ar'] as const) {
 test('format tool pages stay within SEO title and description length limits', async ({ page }) => {
   for (const route of routes) {
     await page.goto(`/${route}`);
-    await page.waitForLoadState('networkidle');
     const title = await page.title();
     expect(title.length, `${route} title "${title}"`).toBeLessThanOrEqual(60);
     const description = await page.locator('meta[name="description"]').getAttribute('content');
