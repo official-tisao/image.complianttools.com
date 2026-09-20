@@ -114,3 +114,4 @@ export * from './types.js';
 export * from './wasm/integrity.js';
 export * from './cv/index.js';
 export * from './onnx-runtime.js';
+export * from './ocr.js';
