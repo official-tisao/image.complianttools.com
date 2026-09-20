@@ -11,11 +11,14 @@
   "pnpm": {
     "overrides": {
       "argparse@2.0.1": "1.0.10"
+    },
+    "patchedDependencies": {
+      "onnxruntime-web@1.30.0": "patches/onnxruntime-web@1.30.0.patch"
     }
   },
   "scripts": {
     "dev": "turbo dev",
-    "build": "pnpm verify:attributions && tsx scripts/fetch-wasm.ts --verify && turbo build && pnpm verify:route-budgets && pnpm size",
+    "build": "node scripts/prune-ocr-tessdata-cache.mjs && pnpm verify:attributions && tsx scripts/fetch-wasm.ts --verify && turbo build && pnpm verify:route-budgets && pnpm size",
     "test": "turbo test",
     "test:e2e": "playwright test",
     "test:no-network": "playwright test e2e/no-network.spec.ts",
@@ -31,6 +34,9 @@
     "verify:licenses:write": "tsx scripts/verify-licenses.ts --write",
     "verify:attributions": "tsx scripts/verify-attributions.ts",
     "verify:assets": "tsx scripts/verify-static-assets.ts",
+    "ocr:fetch-assets": "node scripts/ensure-ocr-tessdata.mjs",
+    "ocr:cdn-smoke": "node scripts/ocr-cdn-browser-smoke.mjs",
+    "ocr:verify-catalog": "node scripts/verify-ocr-cdn-catalog.mjs",
     "verify:headers": "tsx scripts/verify-headers.ts",
     "verify:trademarks": "tsx scripts/verify-trademarks.ts",
     "verify:wasm": "tsx scripts/fetch-wasm.ts --verify",

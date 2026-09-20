@@ -16,6 +16,7 @@
  *      preload`.
  *   2. README §23.3 — the path-scoped Cache-Control policy
  *      (`/_app/immutable/*`, `/wasm/*`, `/models/*`, `/fonts/*`,
+ *      `/ocr-runtime/*`,
  *      `/sw.js`, `*.html`).
  *   3. Structural: the `/*` catch-all block must exist and must contain
  *      every required §16.5 header. A header buried inside an unrelated
@@ -324,6 +325,7 @@ const cacheControlRequirements: ReadonlyArray<CacheControlRequirement> = [
   { path: '/wasm/*', expected: 'public, max-age=31536000, immutable' },
   { path: '/models/*', expected: 'public, max-age=31536000, immutable' },
   { path: '/fonts/*', expected: 'public, max-age=31536000, immutable' },
+  { path: '/ocr-runtime/*', expected: 'public, max-age=31536000, immutable' },
   { path: '/sw.js', expected: 'public, max-age=0, must-revalidate' },
   { path: '/*.html', expected: 'public, max-age=0, must-revalidate' },
 ];
