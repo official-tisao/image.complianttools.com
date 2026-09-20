@@ -20,7 +20,8 @@ async function generatedPng(
       for (let y = 0; y < height; y += 1) {
         for (let x = 0; x < width; x += 1) {
           const offset = (y * width + x) * 4;
-          const value = pattern === 'uniform' ? 128 : 18 + ((x * 17 + y * 31 + Math.floor((x * y) / 7)) % 220);
+          const value =
+            pattern === 'uniform' ? 128 : 18 + ((x * 17 + y * 31 + Math.floor((x * y) / 7)) % 220);
           image.data[offset] = value;
           image.data[offset + 1] = pattern === 'uniform' ? value : 18 + ((value + x * 3) % 220);
           image.data[offset + 2] = pattern === 'uniform' ? value : 18 + ((value + y * 5) % 220);
@@ -57,13 +58,17 @@ for (const locale of ['en', 'en-XA', 'ar'] as const) {
     await expect(page.locator('script[type="application/ld+json"]')).toHaveCount(1);
     await expect(page.locator('.t81-faq details')).toHaveCount(3);
     expect((await page.title()).length).toBeLessThanOrEqual(60);
-    expect((await page.locator('meta[name="description"]').getAttribute('content'))?.length).toBeLessThanOrEqual(155);
+    expect(
+      (await page.locator('meta[name="description"]').getAttribute('content'))?.length,
+    ).toBeLessThanOrEqual(155);
     await expect(page.locator('main')).toHaveAttribute('lang', locale);
     await expect(page.locator('main')).toHaveAttribute('dir', locale === 'ar' ? 'rtl' : 'ltr');
   });
 }
 
-test('T81 static Arabic HTML includes its localized tool content without JavaScript', async ({ browser }) => {
+test('T81 static Arabic HTML includes its localized tool content without JavaScript', async ({
+  browser,
+}) => {
   const context = await browser.newContext({ javaScriptEnabled: false });
   const page = await context.newPage();
   await page.goto('/ar/adaptive-resize');
@@ -73,7 +78,9 @@ test('T81 static Arabic HTML includes its localized tool content without JavaScr
   await context.close();
 });
 
-test('T81 retargets a generated PNG, paints an approximate mask, and downloads the preview', async ({ page }) => {
+test('T81 retargets a generated PNG, paints an approximate mask, and downloads the preview', async ({
+  page,
+}) => {
   await page.goto('/adaptive-resize');
   const appOrigin = new URL(page.url()).origin;
   const outsideRequests: string[] = [];
@@ -81,7 +88,9 @@ test('T81 retargets a generated PNG, paints an approximate mask, and downloads t
     if (new URL(request.url()).origin !== appOrigin) outsideRequests.push(request.url());
   });
   const png = await generatedPng(page, 48, 40);
-  await page.getByTestId('t81-input').setInputFiles({ name: 'fixture.png', mimeType: 'image/png', buffer: png });
+  await page
+    .getByTestId('t81-input')
+    .setInputFiles({ name: 'fixture.png', mimeType: 'image/png', buffer: png });
   await expect(page.getByTestId('t81-run')).toBeEnabled();
   await page.getByTestId('t81-width').fill('38');
   await page.getByTestId('t81-height').fill('30');
@@ -93,11 +102,15 @@ test('T81 retargets a generated PNG, paints an approximate mask, and downloads t
   const bounds = await canvas.boundingBox();
   if (!bounds) throw new Error('The protection mask canvas is not visible.');
   await canvas.click({ position: { x: bounds.width / 2, y: bounds.height / 2 } });
-  const beforeKeyboardMark = Number((await page.locator('.t81-mask-actions').textContent())?.match(/\d+/u)?.[0] ?? 0);
+  const beforeKeyboardMark = Number(
+    (await page.locator('.t81-mask-actions').textContent())?.match(/\d+/u)?.[0] ?? 0,
+  );
   await canvas.focus();
   await page.keyboard.press('ArrowLeft');
   await page.keyboard.press('Space');
-  const afterKeyboardMark = Number((await page.locator('.t81-mask-actions').textContent())?.match(/\d+/u)?.[0] ?? 0);
+  const afterKeyboardMark = Number(
+    (await page.locator('.t81-mask-actions').textContent())?.match(/\d+/u)?.[0] ?? 0,
+  );
   expect(afterKeyboardMark).toBeGreaterThan(beforeKeyboardMark);
 
   await page.getByTestId('t81-run').focus();
@@ -109,7 +122,10 @@ test('T81 retargets a generated PNG, paints an approximate mask, and downloads t
 
   const outputUrl = await page.getByTestId('t81-after').getAttribute('src');
   expect(outputUrl).toMatch(/^blob:/u);
-  const previewBytes = await page.evaluate(async (url) => Array.from(new Uint8Array(await (await fetch(url!)).arrayBuffer())), outputUrl);
+  const previewBytes = await page.evaluate(
+    async (url) => Array.from(new Uint8Array(await (await fetch(url!)).arrayBuffer())),
+    outputUrl,
+  );
   const downloadWaiter = page.waitForEvent('download');
   await page.getByTestId('t81-download').click();
   const download = await downloadWaiter;
@@ -120,22 +136,32 @@ test('T81 retargets a generated PNG, paints an approximate mask, and downloads t
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 });
 
-test('T81 reports the unchanged-image fallback for a uniform saliency profile', async ({ page }) => {
+test('T81 reports the unchanged-image fallback for a uniform saliency profile', async ({
+  page,
+}) => {
   await page.goto('/adaptive-resize');
   const png = await generatedPng(page, 32, 24, 'uniform');
-  await page.getByTestId('t81-input').setInputFiles({ name: 'uniform.png', mimeType: 'image/png', buffer: png });
+  await page
+    .getByTestId('t81-input')
+    .setInputFiles({ name: 'uniform.png', mimeType: 'image/png', buffer: png });
   await page.getByTestId('t81-width').fill('24');
   await page.getByTestId('t81-height').fill('18');
   await page.getByTestId('t81-run').click();
-  await expect(page.getByRole('status')).toContainText('engine returned the original image unchanged');
+  await expect(page.getByRole('status')).toContainText(
+    'engine returned the original image unchanged',
+  );
   await expect(page.getByTestId('t81-after')).toHaveCount(0);
   await expect(page.getByTestId('t81-download')).toHaveCount(0);
 });
 
-test('T81 rejects invalid dimensions and an over-constrained painted mask with recovery advice', async ({ page }) => {
+test('T81 rejects invalid dimensions and an over-constrained painted mask with recovery advice', async ({
+  page,
+}) => {
   await page.goto('/adaptive-resize');
   const png = await generatedPng(page, 48, 40);
-  await page.getByTestId('t81-input').setInputFiles({ name: 'fixture.png', mimeType: 'image/png', buffer: png });
+  await page
+    .getByTestId('t81-input')
+    .setInputFiles({ name: 'fixture.png', mimeType: 'image/png', buffer: png });
   await page.getByTestId('t81-width').fill('0');
   await page.getByTestId('t81-run').click();
   await expect(page.getByRole('alert')).toHaveAttribute('data-error-kind', 'invalid-dimensions');
@@ -150,5 +176,7 @@ test('T81 rejects invalid dimensions and an over-constrained painted mask with r
   await canvas.click({ position: { x: bounds.width / 2, y: bounds.height / 2 } });
   await page.getByTestId('t81-run').click();
   await expect(page.getByRole('alert')).toHaveAttribute('data-error-kind', 'mask-does-not-fit');
-  await expect(page.getByRole('alert')).toContainText('Increase the target size or clear/reduce the protected area');
+  await expect(page.getByRole('alert')).toContainText(
+    'Increase the target size or clear/reduce the protected area',
+  );
 });

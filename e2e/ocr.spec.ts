@@ -265,12 +265,13 @@ test('T62 orientation helper returns page rotation and confidence data', async (
 
 test('T62 recognizes with a cached or pinned model and keeps the runtime same-origin', async ({
   page,
+  context,
 }) => {
   const externalRequests: string[] = [];
   const modelRuntimeRequests: string[] = [];
   const localEnglishModelStatuses: number[] = [];
   let appOrigin = '';
-  page.on('request', (request) => {
+  context.on('request', (request) => {
     if (!appOrigin) return;
     const requestUrl = new URL(request.url());
     if (requestUrl.origin !== appOrigin) externalRequests.push(request.url());
@@ -281,7 +282,7 @@ test('T62 recognizes with a cached or pinned model and keeps the runtime same-or
       modelRuntimeRequests.push(request.url());
     }
   });
-  page.on('response', (response) => {
+  context.on('response', (response) => {
     if (new URL(response.url()).pathname === '/tessdata/eng.traineddata') {
       localEnglishModelStatuses.push(response.status());
     }
@@ -346,7 +347,7 @@ test('T62 reuses all eight warmed language models for offline recognition', asyn
   const offlineExternalRequests: string[] = [];
   let appOrigin = '';
   let offline = false;
-  page.on('request', (request) => {
+  context.on('request', (request) => {
     const url = new URL(request.url());
     if (url.hostname === 'cdn.jsdelivr.net' && url.pathname.endsWith('.traineddata')) {
       externalModelRequests.push(url.href);
@@ -355,7 +356,7 @@ test('T62 reuses all eight warmed language models for offline recognition', asyn
       offlineExternalRequests.push(url.href);
     }
   });
-  page.on('response', (response) => {
+  context.on('response', (response) => {
     const url = new URL(response.url());
     const localModel = /^\/tessdata\/([^/]+)\.traineddata$/u.exec(url.pathname);
     if (url.origin === appOrigin && localModel && response.status() === 200) {

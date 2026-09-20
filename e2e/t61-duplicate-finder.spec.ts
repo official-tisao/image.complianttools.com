@@ -101,7 +101,9 @@ test('T61 finds exact copies and conservative near matches locally; review CSV d
   await page.getByTestId('t61-report').click();
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toBe('duplicate-review.csv');
-  await expect(page.getByText('This page never deletes or changes your original files.')).toBeVisible();
+  await expect(
+    page.getByText('This page never deletes or changes your original files.'),
+  ).toBeVisible();
   expect(externalRequests).toEqual([]);
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 });
@@ -128,14 +130,17 @@ test('T61 reports bounded-input and decode errors with actionable remedies', asy
   await expect(page.getByTestId('t61-error')).toContainText('Remedy: Re-export that file');
 });
 
-test('T61 supports keyboard operation and cancellation without uploading inputs', async ({ page }) => {
+test('T61 supports keyboard operation and cancellation without uploading inputs', async ({
+  page,
+}) => {
   await page.addInitScript(() => {
-    const subtle = crypto.subtle as any;
+    const subtle = crypto.subtle;
     const nativeDigest = subtle.digest.bind(subtle);
-    subtle.digest = (...args: any[]) =>
-      new Promise((resolve, reject) => {
-        window.setTimeout(() => nativeDigest(...args).then(resolve, reject), 750);
+    const delayedDigest: SubtleCrypto['digest'] = (algorithm, data) =>
+      new Promise<ArrayBuffer>((resolve, reject) => {
+        window.setTimeout(() => nativeDigest(algorithm, data).then(resolve, reject), 750);
       });
+    Object.defineProperty(subtle, 'digest', { configurable: true, value: delayedDigest });
   });
   await page.goto('/find-duplicates');
   const input = page.getByTestId('t61-input');
@@ -143,7 +148,11 @@ test('T61 supports keyboard operation and cancellation without uploading inputs'
   await expect(input).toBeFocused();
   await input.setInputFiles([
     { name: 'cancel-a.png', mimeType: 'image/png', buffer: await generatedPng(page) },
-    { name: 'cancel-b.png', mimeType: 'image/png', buffer: await generatedPng(page, { variation: 1 }) },
+    {
+      name: 'cancel-b.png',
+      mimeType: 'image/png',
+      buffer: await generatedPng(page, { variation: 1 }),
+    },
   ]);
   await page.getByTestId('t61-scan').focus();
   await page.keyboard.press('Enter');

@@ -109,7 +109,13 @@ function validateRecord(record: StaticAssetRecord): void {
  * This list is an explicit set of names, not a pattern, so that a genuine third-party asset cannot
  * slip past the gate by being dropped in with a plausible-looking filename.
  */
-const firstPartyControlFiles = new Set(['.gitkeep', '_headers', '_redirects', 'favicon.ico']);
+const firstPartyControlFiles = new Set([
+  '.gitkeep',
+  '_headers',
+  '_redirects',
+  'favicon.ico',
+  't32-runtime-config.json',
+]);
 
 export async function verifyStaticAssets(): Promise<void> {
   const register = JSON.parse(await readFile(registerPath, 'utf8')) as StaticAssetRecord[];

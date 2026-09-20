@@ -13,6 +13,8 @@
  *     guarantee repeat offline use. First-use and persistence are not guaranteed.
  */
 import type Tesseract from 'tesseract.js';
+import { createCanvasFromRgba, getBrowserOrigin, isBrowserOffline } from './capabilities.js';
+import { fetchAsset } from './ai/transport.js';
 import { OCR_RUNTIME_VERSION } from './ocr-runtime-version.js';
 import {
   tessdataRegistry,
@@ -195,11 +197,12 @@ const OCR_LOCAL_LANG_PATH = '/tessdata/';
 const OCR_CACHE_PATH = `complianttools/tessdata_fast/${TESSDATA_PINNED_COMMIT}`;
 
 function localAssetUrl(path: string): string {
-  if (typeof window === 'undefined') {
+  const origin = getBrowserOrigin();
+  if (!origin) {
     throw new Error('OCR requires a browser context to load its local assets.');
   }
-  const url = new URL(path, window.location.origin);
-  if (url.origin !== window.location.origin) {
+  const url = new URL(path, origin);
+  if (url.origin !== origin) {
     throw new Error('OCR assets must be served from the application origin.');
   }
   return url.href;
@@ -237,7 +240,7 @@ async function hasLocalTessdata(models: readonly string[]): Promise<boolean> {
         .map(encodeURIComponent)
         .join('/')}.traineddata`;
       try {
-        const response = await fetch(localAssetUrl(modelPath), {
+        const response = await fetchAsset(localAssetUrl(modelPath), {
           method: 'HEAD',
           cache: 'no-store',
         });
@@ -300,9 +303,6 @@ async function resolveTessdataPath(model: string): Promise<{
 }
 
 function toCanvas(imageData: OcrWorkerIn['imageData']): HTMLCanvasElement {
-  if (typeof document === 'undefined') {
-    throw new Error('OCR image conversion requires a browser document.');
-  }
   const { width, height, data } = imageData;
   if (
     !Number.isInteger(width) ||
@@ -314,17 +314,7 @@ function toCanvas(imageData: OcrWorkerIn['imageData']): HTMLCanvasElement {
     throw new Error('OCR expects a valid RGBA ImageData buffer.');
   }
 
-  const normalized =
-    typeof ImageData !== 'undefined' && imageData instanceof ImageData
-      ? imageData
-      : new ImageData(data, width, height);
-  const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
-  const context = canvas.getContext('2d');
-  if (!context) throw new Error('The browser could not create an OCR canvas.');
-  context.putImageData(normalized, 0, 0);
-  return canvas;
+  return createCanvasFromRgba(width, height, data);
 }
 
 function extractWords(blocks: Tesseract.Block[] | null): NonNullable<OcrResult['words']> {
@@ -600,7 +590,7 @@ export function createOcrWorker(): OcrWorkerHandle {
       });
     } catch (error) {
       const detail = toErrorMessage(error);
-      const offline = typeof navigator !== 'undefined' && navigator.onLine === false;
+      const offline = isBrowserOffline();
       emitError(
         input.jobId,
         detail,
@@ -630,7 +620,7 @@ export function createOcrWorker(): OcrWorkerHandle {
         .then(() => recognize(input))
         .catch((error: unknown) => {
           const detail = error instanceof Error ? error.message : String(error);
-          const offline = typeof navigator !== 'undefined' && navigator.onLine === false;
+          const offline = isBrowserOffline();
           emitError(
             input.jobId,
             detail,

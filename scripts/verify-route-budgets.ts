@@ -40,7 +40,9 @@ const cases = [
   ...phaseTwoToolRoutes.map((route) => ({
     archetype: `phase-two:${route}`,
     route: `${route}.html`,
-    budget: 115_000,
+    // The RAW converter carries its additional decoder and demosaicing path. Give that route a
+    // separate 117 KB ceiling while keeping the shared tool-route guard at 115 KB.
+    budget: route === 'raw-converter' ? 117_000 : 115_000,
     requiresInput: true,
   })),
 ] as const;

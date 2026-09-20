@@ -77,13 +77,17 @@ for (const locale of ['en', 'en-XA', 'ar'] as const) {
     await expect(page.locator('script[type="application/ld+json"]')).toHaveCount(1);
     await expect(page.locator('.t80-faq details')).toHaveCount(3);
     expect((await page.title()).length).toBeLessThanOrEqual(60);
-    expect((await page.locator('meta[name="description"]').getAttribute('content'))?.length).toBeLessThanOrEqual(155);
+    expect(
+      (await page.locator('meta[name="description"]').getAttribute('content'))?.length,
+    ).toBeLessThanOrEqual(155);
     await expect(page.locator('main')).toHaveAttribute('lang', locale);
     await expect(page.locator('main')).toHaveAttribute('dir', locale === 'ar' ? 'rtl' : 'ltr');
   });
 }
 
-test('T80 static Arabic HTML includes its tool content and FAQ without JavaScript', async ({ browser }) => {
+test('T80 static Arabic HTML includes its tool content and FAQ without JavaScript', async ({
+  browser,
+}) => {
   const context = await browser.newContext({ javaScriptEnabled: false });
   const page = await context.newPage();
   await page.goto('/ar/color-match');
@@ -93,7 +97,9 @@ test('T80 static Arabic HTML includes its tool content and FAQ without JavaScrip
   await context.close();
 });
 
-test('T80 locally matches a generated still-PNG pair and downloads the exact preview bytes', async ({ page }) => {
+test('T80 locally matches a generated still-PNG pair and downloads the exact preview bytes', async ({
+  page,
+}) => {
   const outsideRequests: string[] = [];
   let appOrigin = '';
   await page.goto('/color-match');
@@ -103,8 +109,12 @@ test('T80 locally matches a generated still-PNG pair and downloads the exact pre
   });
 
   const { source, reference } = await generatedPair(page);
-  await page.getByTestId('t80-source-input').setInputFiles({ name: 'source.png', mimeType: 'image/png', buffer: source });
-  await page.getByTestId('t80-reference-input').setInputFiles({ name: 'reference.png', mimeType: 'image/png', buffer: reference });
+  await page
+    .getByTestId('t80-source-input')
+    .setInputFiles({ name: 'source.png', mimeType: 'image/png', buffer: source });
+  await page
+    .getByTestId('t80-reference-input')
+    .setInputFiles({ name: 'reference.png', mimeType: 'image/png', buffer: reference });
   await expect(page.getByTestId('t80-run')).toBeEnabled();
   await page.getByRole('radio', { name: /Per-channel histogram matching/u }).check();
   await page.getByTestId('t80-run').click();
@@ -132,7 +142,10 @@ test('T80 locally matches a generated still-PNG pair and downloads the exact pre
     ]).flat(),
   ).flat();
   expect(outputPixels).not.toEqual(sourcePixels);
-  const previewBytes = await page.evaluate(async (url) => Array.from(new Uint8Array(await (await fetch(url!)).arrayBuffer())), outputUrl);
+  const previewBytes = await page.evaluate(
+    async (url) => Array.from(new Uint8Array(await (await fetch(url!)).arrayBuffer())),
+    outputUrl,
+  );
   const downloadWaiter = page.waitForEvent('download');
   await page.getByTestId('t80-download').click();
   const download = await downloadWaiter;
@@ -146,8 +159,12 @@ test('T80 locally matches a generated still-PNG pair and downloads the exact pre
 test('T80 matching controls work with the keyboard', async ({ page }) => {
   await page.goto('/color-match');
   const { source, reference } = await generatedPair(page);
-  await page.getByTestId('t80-source-input').setInputFiles({ name: 'source.png', mimeType: 'image/png', buffer: source });
-  await page.getByTestId('t80-reference-input').setInputFiles({ name: 'reference.png', mimeType: 'image/png', buffer: reference });
+  await page
+    .getByTestId('t80-source-input')
+    .setInputFiles({ name: 'source.png', mimeType: 'image/png', buffer: source });
+  await page
+    .getByTestId('t80-reference-input')
+    .setInputFiles({ name: 'reference.png', mimeType: 'image/png', buffer: reference });
   const histogram = page.getByRole('radio', { name: /Per-channel histogram matching/u });
   await histogram.focus();
   await page.keyboard.press('Space');
@@ -158,15 +175,25 @@ test('T80 matching controls work with the keyboard', async ({ page }) => {
   await expect(page.getByTestId('t80-after')).toBeVisible();
 });
 
-test('T80 rejects unsupported, oversized, and animated PNG inputs with typed recovery messages', async ({ page }) => {
+test('T80 rejects unsupported, oversized, and animated PNG inputs with typed recovery messages', async ({
+  page,
+}) => {
   await page.goto('/color-match');
   const sourceInput = page.getByTestId('t80-source-input');
-  await sourceInput.setInputFiles({ name: 'not-image.txt', mimeType: 'text/plain', buffer: Buffer.from('not a PNG') });
+  await sourceInput.setInputFiles({
+    name: 'not-image.txt',
+    mimeType: 'text/plain',
+    buffer: Buffer.from('not a PNG'),
+  });
   await expect(page.getByRole('alert')).toHaveAttribute('data-error-kind', 'unsupported-file');
   await expect(page.getByRole('alert')).toContainText('Export the image as a still PNG');
 
   const valid = await generatedPng(page, 2, 2, [20, 30, 40], [80, 90, 100]);
-  await sourceInput.setInputFiles({ name: 'animated.png', mimeType: 'image/png', buffer: await pngWithAnimationControl(page) });
+  await sourceInput.setInputFiles({
+    name: 'animated.png',
+    mimeType: 'image/png',
+    buffer: await pngWithAnimationControl(page),
+  });
   await expect(page.getByRole('alert')).toHaveAttribute('data-error-kind', 'animated-image');
   await expect(page.getByRole('alert')).toContainText('Export one still frame');
 
@@ -185,7 +212,11 @@ test('T80 rejects unsupported, oversized, and animated PNG inputs with typed rec
   const tooManyPixels = Buffer.from(valid);
   tooManyPixels.writeUInt32BE(3_000, 16);
   tooManyPixels.writeUInt32BE(3_000, 20);
-  await sourceInput.setInputFiles({ name: 'large-dimensions.png', mimeType: 'image/png', buffer: tooManyPixels });
+  await sourceInput.setInputFiles({
+    name: 'large-dimensions.png',
+    mimeType: 'image/png',
+    buffer: tooManyPixels,
+  });
   await expect(page.getByRole('alert')).toHaveAttribute('data-error-kind', 'image-too-large');
   await expect(page.getByRole('alert')).toContainText('6 megapixels');
 });

@@ -200,7 +200,13 @@ test('T32 source and output dimension limits reject decompression and scale bomb
 });
 
 test('T32 rejects an encoded PNG that exceeds the output-byte limit', async ({ page }) => {
-  await page.addInitScript(() => {
+  await page.goto('/upscale');
+  await page.getByTestId('t32-file-input').setInputFiles({
+    name: 'small.png',
+    mimeType: 'image/png',
+    buffer: await generatedPng(page),
+  });
+  await page.evaluate(() => {
     HTMLCanvasElement.prototype.toBlob = function (callback) {
       // Override only the reported size, avoiding a 32 MiB allocation in this boundary test.
       const oversized = new Blob([]);
@@ -208,14 +214,11 @@ test('T32 rejects an encoded PNG that exceeds the output-byte limit', async ({ p
       callback(oversized);
     };
   });
-  await page.goto('/upscale');
-  await page.getByTestId('t32-file-input').setInputFiles({
-    name: 'small.png',
-    mimeType: 'image/png',
-    buffer: await generatedPng(page),
-  });
   await page.getByTestId('t32-run').click();
-  await expect(page.getByTestId('t32-error')).toHaveAttribute('data-error-kind', 'output-too-large');
+  await expect(page.getByTestId('t32-error')).toHaveAttribute(
+    'data-error-kind',
+    'output-too-large',
+  );
   await expect(page.getByTestId('t32-error')).toContainText('Choose a lower scale factor');
 });
 
@@ -366,4 +369,48 @@ test('T32 keyboard users can choose an image, scale, and download the result', a
   await page.keyboard.press('Enter');
   expect((await downloadPromise).suggestedFilename()).toBe('keyboard-nedi-2x.png');
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+});
+
+test('T32 keeps model delivery opt-in and uses the configured backup after a primary 403', async ({
+  page,
+  context,
+}) => {
+  const primaryUrl = 'https://primary.invalid/realesrgan-x2.onnx';
+  const fallbackUrl = 'https://backup.invalid/realesrgan-x2.onnx';
+  let primaryRequests = 0;
+  let fallbackRequests = 0;
+  await context.route('**/t32-runtime-config.json', (route) =>
+    route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        schemaVersion: 1,
+        tier2: {
+          x2: {
+            primaryUrlBase64: Buffer.from(primaryUrl).toString('base64'),
+            fallbackUrlBase64: Buffer.from(fallbackUrl).toString('base64'),
+          },
+          x4: { primaryUrlBase64: '', fallbackUrlBase64: '' },
+        },
+      }),
+    }),
+  );
+  await context.route(primaryUrl, async (route) => {
+    primaryRequests += 1;
+    await route.fulfill({ status: 403, body: 'model host unavailable' });
+  });
+  await context.route(fallbackUrl, async (route) => {
+    fallbackRequests += 1;
+    await route.fulfill({ status: 503, body: 'backup unavailable' });
+  });
+
+  await page.goto('/upscale');
+  await expect(page.getByTestId('t32-tier2-download')).toBeVisible();
+  expect(primaryRequests).toBe(0);
+  expect(fallbackRequests).toBe(0);
+
+  await page.getByTestId('t32-tier2-download').click();
+  await expect(page.getByTestId('t32-tier2-error')).toContainText('HTTP 503');
+  expect(primaryRequests).toBe(1);
+  expect(fallbackRequests).toBe(1);
+  await expect(page.getByTestId('t32-run')).toBeEnabled();
 });

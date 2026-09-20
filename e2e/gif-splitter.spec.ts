@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { allowAllNetwork, denyAllNetwork } from './support/network.js';
+import { allowAllNetwork, denyAllNetwork, LOCAL_ORIGIN } from './support/network.js';
 import {
   encodeGif,
   inspectImageContainer,
@@ -38,7 +38,7 @@ for (const format of ['webp', 'webm', 'mp4'] as const) {
     const crossOrigin: string[] = [];
     page.on('request', (request) => {
       const url = new URL(request.url());
-      if (url.origin !== 'http://127.0.0.1:4173') crossOrigin.push(request.url());
+      if (url.origin !== LOCAL_ORIGIN) crossOrigin.push(request.url());
     });
     await page.goto('/gif-converter');
     await page.waitForLoadState('networkidle');

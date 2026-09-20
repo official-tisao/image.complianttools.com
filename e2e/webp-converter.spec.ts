@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { allowAllNetwork, denyAllNetwork } from './support/network.js';
+import { allowAllNetwork, denyAllNetwork, LOCAL_ORIGIN } from './support/network.js';
 import {
   encodeGif,
   inspectImageContainer,
@@ -50,9 +50,8 @@ test('creates lossy, lossless, and animated WebP locally with exact-byte preview
   const localRequests: string[] = [];
   page.on('request', (request) => {
     const url = new URL(request.url());
-    if (url.origin !== 'http://127.0.0.1:4173' && url.protocol !== 'blob:')
-      crossOrigin.push(request.url());
-    if (url.origin === 'http://127.0.0.1:4173') localRequests.push(url.pathname);
+    if (url.origin !== LOCAL_ORIGIN && url.protocol !== 'blob:') crossOrigin.push(request.url());
+    if (url.origin === LOCAL_ORIGIN) localRequests.push(url.pathname);
   });
   await page.goto('/webp-converter');
   await page.waitForLoadState('networkidle');
@@ -160,7 +159,7 @@ test('reports corrupt local input with a typed remedy and no network fallback', 
   const crossOrigin: string[] = [];
   page.on('request', (request) => {
     const url = new URL(request.url());
-    if (url.origin !== 'http://127.0.0.1:4173') crossOrigin.push(request.url());
+    if (url.origin !== LOCAL_ORIGIN) crossOrigin.push(request.url());
   });
   await page.goto('/webp-converter');
   await page.waitForLoadState('networkidle');

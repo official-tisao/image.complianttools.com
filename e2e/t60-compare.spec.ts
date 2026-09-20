@@ -3,7 +3,10 @@ import { readFile } from 'node:fs/promises';
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 
-const fixtureRoot = new URL('../packages/engine/bench/escalation/t60-t61/fixtures/artifacts/', import.meta.url);
+const fixtureRoot = new URL(
+  '../packages/engine/bench/escalation/t60-t61/fixtures/artifacts/',
+  import.meta.url,
+);
 
 async function generatedPng(page: import('@playwright/test').Page, width = 12, height = 8) {
   const base64 = await page.evaluate(

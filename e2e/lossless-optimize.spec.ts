@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 
 import { expect, test } from '@playwright/test';
-import { allowAllNetwork, denyAllNetwork } from './support/network.js';
+import { allowAllNetwork, denyAllNetwork, LOCAL_ORIGIN } from './support/network.js';
 
 function gifWithRemovableComment(): Buffer {
   const base = Buffer.from('R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==', 'base64');
@@ -21,7 +21,7 @@ test('downloads a smaller independently verified GIF without a network fallback'
   const source = gifWithRemovableComment();
   const crossOrigin: string[] = [];
   page.on('request', (request) => {
-    if (new URL(request.url()).origin !== 'http://127.0.0.1:4173') crossOrigin.push(request.url());
+    if (new URL(request.url()).origin !== LOCAL_ORIGIN) crossOrigin.push(request.url());
   });
   await page.goto('/lossless-optimize');
   await page.waitForLoadState('networkidle');
