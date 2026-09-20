@@ -26,6 +26,7 @@ const paths = [
   'image-info',
   'pixel-art-upscaler',
   'ocr',
+  'compare',
 ] as const;
 
 export const GET = () =>
