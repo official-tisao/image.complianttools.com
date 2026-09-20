@@ -17,7 +17,20 @@ export {
   type DescriptorRect,
 } from './descriptor-eval.js';
 export { dcci, nedi } from './dcci-nedi.js';
-export { recordUpscaleComparison } from './upscale-model.js';
+export {
+  getUpscaleTier2Availability,
+  upscaleWithRealEsrgan,
+  prepareRealEsrganInput,
+  reconstructRealEsrganFrame,
+  validateRealEsrganOutput,
+  type RealEsrganVariant,
+  type RealEsrganScale,
+  type UpscaleModelSource,
+  type UpscaleTier2Availability,
+  type UpscaleModelResult,
+  type UpscaleRuntimeAdapter,
+  type UpscaleModelProgress,
+} from './upscale-model.js';
 export { pixelArtScale } from './pixel-art.js';
 export { saliencyRetarget } from './saliency-retarget.js';
 export { alphaMatting } from './alpha-matting.js';
@@ -83,6 +96,9 @@ export {
   hasOnnxAcceleration,
   modelDownloadInfo,
   initOnnxRuntime,
+  openOnnxRuntime,
+  runOnnxInference,
   runTiledInference,
+  closeOnnxRuntime,
   verifyTier1Fallback,
 } from '../onnx-runtime.js';

@@ -21,7 +21,11 @@ import type { RasterImage } from '../types.js';
 export type ScaleFactor = 2 | 3 | 4;
 
 /** Deterministic, factor-independent nearest-neighbour integer scale. */
-function nearestNeighbourScale(image: RasterImage, factor: ScaleFactor): RasterImage {
+function nearestNeighbourScale(
+  image: RasterImage,
+  factor: ScaleFactor,
+  onProgress?: (progress: number) => void,
+): RasterImage {
   const w = image.width;
   const h = image.height;
   const newW = w * factor;
@@ -41,6 +45,7 @@ function nearestNeighbourScale(image: RasterImage, factor: ScaleFactor): RasterI
       out[outOff + 2] = src[srcOff + 2]!;
       out[outOff + 3] = src[srcOff + 3]!;
     }
+    if ((y & 31) === 31 || y === newH - 1) onProgress?.(((y + 1) / newH) * 0.4);
   }
   return {
     ...image,
@@ -62,14 +67,19 @@ function nearestNeighbourScale(image: RasterImage, factor: ScaleFactor): RasterI
  * artefacts at transparent boundaries; independent continuation rules fix
  * those artefacts deterministically.
  */
-function applyRuleTable(image: RasterImage, factor: ScaleFactor): RasterImage {
+function applyRuleTable(
+  image: RasterImage,
+  factor: ScaleFactor,
+  onProgress?: (progress: number) => void,
+): RasterImage {
   const w = image.width;
   const h = image.height;
   const newW = w * factor;
   const newH = h * factor;
-  const scaled = nearestNeighbourScale(image, factor);
+  const scaled = nearestNeighbourScale(image, factor, onProgress);
   const srcData = scaled.frames[0]!.data;
   const out = new Uint8ClampedArray(srcData);
+  const neighbourColours = new Map<string, { r: number; g: number; b: number; count: number }>();
 
   // For each output pixel that falls on the boundary of a source pixel
   // neighbourhood, apply the continuation rule if the neighbourhood shows
@@ -84,38 +94,45 @@ function applyRuleTable(image: RasterImage, factor: ScaleFactor): RasterImage {
       // Fully opaque flat regions are preserved exactly.
       if (centerA >= 200) continue;
 
-      let opaqueR = 0,
-        opaqueG = 0,
-        opaqueB = 0,
-        opaqueCount = 0;
+      neighbourColours.clear();
+      let opaqueCount = 0;
       for (let dy = -1; dy <= 1; dy++) {
         for (let dx = -1; dx <= 1; dx++) {
           if (dx === 0 && dy === 0) continue;
           const nOff = ((y + dy) * newW + (x + dx)) * 4;
           const na = srcData[nOff + 3]!;
           if (na > 128) {
-            opaqueR += srcData[nOff]!;
-            opaqueG += srcData[nOff + 1]!;
-            opaqueB += srcData[nOff + 2]!;
+            const r = srcData[nOff]!;
+            const g = srcData[nOff + 1]!;
+            const b = srcData[nOff + 2]!;
+            const key = `${r},${g},${b}`;
+            const existing = neighbourColours.get(key);
+            if (existing) existing.count++;
+            else neighbourColours.set(key, { r, g, b, count: 1 });
             opaqueCount++;
           }
         }
       }
 
-      // If there is a clear dominant opaque neighbour set, propagate it.
-      // The threshold (> 128 alpha) prevents blending arbitrary low-alpha
-      // noise; this is the explicit rule-table behaviour rather than an
-      // arbitrary average.
-      if (opaqueCount > 0) {
-        out[off] = Math.round(opaqueR / opaqueCount);
-        out[off + 1] = Math.round(opaqueG / opaqueCount);
-        out[off + 2] = Math.round(opaqueB / opaqueCount);
+      // Propagate a source-palette colour only when it has a strict majority.
+      // Averaging unlike neighbours invents colours and can create visible
+      // halos around transparent pixel-art edges.
+      let dominantColour: { r: number; g: number; b: number; count: number } | undefined;
+      for (const colour of neighbourColours.values()) {
+        if (!dominantColour || colour.count > dominantColour.count) dominantColour = colour;
+      }
+      if (dominantColour && dominantColour.count > opaqueCount / 2) {
+        out[off] = dominantColour.r;
+        out[off + 1] = dominantColour.g;
+        out[off + 2] = dominantColour.b;
         // Preserve partial transparency rather than forcing to 255.
         // The continuation extends colour but respects the original alpha
         // profile: if the centre was semi-transparent, keep some transparency.
         out[off + 3] = Math.min(255, Math.max(centerA, Math.round((255 * opaqueCount) / 8)));
       }
     }
+    if ((y & 31) === 31 || y === newH - 2)
+      onProgress?.(0.4 + ((y - 1) / Math.max(1, newH - 2)) * 0.6);
   }
 
   return {
@@ -136,10 +153,26 @@ function applyRuleTable(image: RasterImage, factor: ScaleFactor): RasterImage {
  *
  * No external code; rules independently designed.
  */
-export function pixelArtScale(image: RasterImage, factor: ScaleFactor): RasterImage {
+export function pixelArtScale(
+  image: RasterImage,
+  factor: ScaleFactor,
+  onProgress?: (progress: number) => void,
+): RasterImage {
   if (factor !== 2 && factor !== 3 && factor !== 4) {
     // TypeScript restricts to 2 | 3 | 4, but guard defensively.
-    throw new RangeError(`pixelArtScale only supports factors 2, 3, or 4; received ${factor}`);
+    throw new PixelArtScaleError(factor);
   }
-  return applyRuleTable(image, factor);
+  const result = applyRuleTable(image, factor, onProgress);
+  onProgress?.(1);
+  return result;
+}
+
+export class PixelArtScaleError extends RangeError {
+  readonly kind = 'invalid-factor' as const;
+  readonly remedy = 'Choose an integer scale factor of 2, 3, or 4.';
+
+  constructor(factor: number) {
+    super(`pixelArtScale only supports factors 2, 3, or 4; received ${factor}`);
+    this.name = 'PixelArtScaleError';
+  }
 }

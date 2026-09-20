@@ -35,10 +35,10 @@ function rgbToLab(pixel: { r: number; g: number; b: number }): { L: number; a: n
 }
 
 function labToRgb(L: number, a: number, b_: number): { r: number; g: number; b: number } {
-  // Inverse approximation
-  const r = L + a * 2;
-  const g = L - a * 2 + b_ * 2;
-  const b = L + b_ * 2;
+  // Invert the same simplified Rec.709/opponent matrix used by rgbToLab.
+  const g = L - 0.4974 * a - 0.1444 * b_;
+  const r = g + 2 * a;
+  const b = g + a + 2 * b_;
   return {
     r: Math.max(0, Math.min(255, Math.round(r * 255))),
     g: Math.max(0, Math.min(255, Math.round(g * 255))),
@@ -59,6 +59,37 @@ function computeMeanStd(array: Float64Array): { mean: number; std: number } {
   return { mean, std };
 }
 
+function imageLabChannels(image: RasterImage): {
+  readonly L: Float64Array;
+  readonly a: Float64Array;
+  readonly b: Float64Array;
+} {
+  const pixelCount = image.width * image.height;
+  const data = image.frames[0]?.data;
+  if (
+    !Number.isSafeInteger(pixelCount) ||
+    pixelCount <= 0 ||
+    !data ||
+    data.length !== pixelCount * 4
+  ) {
+    throw new RangeError(
+      'Colour-transfer images must have positive dimensions and complete RGBA data.',
+    );
+  }
+
+  const L = new Float64Array(pixelCount);
+  const a = new Float64Array(pixelCount);
+  const b = new Float64Array(pixelCount);
+  for (let index = 0; index < pixelCount; index++) {
+    const offset = index * 4;
+    const lab = rgbToLab({ r: data[offset]!, g: data[offset + 1]!, b: data[offset + 2]! });
+    L[index] = lab.L;
+    a[index] = lab.a;
+    b[index] = lab.b;
+  }
+  return { L, a, b };
+}
+
 /** Reinhard mean/std transfer: adjust source image to match target statistics. */
 export function reinhardTransfer(
   source: RasterImage,
@@ -66,40 +97,13 @@ export function reinhardTransfer(
   _opts?: ColourTransferOptions,
 ): RasterImage {
   const srcData = source.frames[0]!.data;
-  const tgtData = target.frames[0]!.data;
   const w = source.width;
   const h = source.height;
 
-  // Read source and target pixels into Lαβ arrays.
-  const srcL = new Float64Array(w * h);
-  const srcA = new Float64Array(w * h);
-  const srcB = new Float64Array(w * h);
-  const tgtL = new Float64Array(w * h);
-  const tgtA = new Float64Array(w * h);
-  const tgtB = new Float64Array(w * h);
-
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) {
-      const off = (y * w + x) * 4;
-      const srcLab = rgbToLab({
-        r: srcData[off]!,
-        g: srcData[off + 1]!,
-        b: srcData[off + 2]!,
-      });
-      const tgtLab = rgbToLab({
-        r: tgtData[off]!,
-        g: tgtData[off + 1]!,
-        b: tgtData[off + 2]!,
-      });
-      const idx = y * w + x;
-      srcL[idx] = srcLab.L;
-      srcA[idx] = srcLab.a;
-      srcB[idx] = srcLab.b;
-      tgtL[idx] = tgtLab.L;
-      tgtA[idx] = tgtLab.a;
-      tgtB[idx] = tgtLab.b;
-    }
-  }
+  // Reference images are commonly a different size from the source; compute each distribution
+  // independently instead of indexing the target using source-image dimensions.
+  const { L: srcL, a: srcA, b: srcB } = imageLabChannels(source);
+  const { L: tgtL, a: tgtA, b: tgtB } = imageLabChannels(target);
 
   // Compute mean/std for each channel on source and target.
   const srcStatsL = computeMeanStd(srcL);
@@ -181,18 +185,12 @@ export function histogramMatch(
     // Build lookup table mapping source value → reference value.
     const lookup = new Uint8Array(256);
     for (let v = 0; v < 256; v++) {
-      const targetCum = Math.round((cumSrc[v]! / totalSrc) * (totalRef - 1));
-      // Find reference value with closest cumulative count.
-      let bestVal = 0;
-      let bestDiff = Infinity;
-      for (let refV = 0; refV < 256; refV++) {
-        const diff = Math.abs(cumRef[refV]! - targetCum);
-        if (diff < bestDiff) {
-          bestDiff = diff;
-          bestVal = refV;
-        }
+      const sourceCdf = cumSrc[v]! / totalSrc;
+      let referenceValue = 0;
+      while (referenceValue < 255 && cumRef[referenceValue]! / totalRef < sourceCdf) {
+        referenceValue++;
       }
-      lookup[v] = bestVal;
+      lookup[v] = referenceValue;
     }
 
     // Apply lookup per pixel (only RGB channels, preserve alpha).
