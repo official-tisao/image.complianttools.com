@@ -48,7 +48,7 @@ self.onmessage = (event: MessageEvent<Input>) => {
     const data = pixels.buffer as ArrayBuffer;
     self.postMessage(
       { type: 'result', width: result.width, height: result.height, data },
-      [data],
+      { transfer: [data] },
     );
   } catch {
     self.postMessage({ type: 'error' });

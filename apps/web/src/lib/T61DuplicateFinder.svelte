@@ -157,10 +157,10 @@
     },
   } as const;
 
-  let { locale = 'en-XA', canonicalPath = '/en-XA/find-duplicates' } = $props<{
+  let { locale = 'en-XA', canonicalPath = '/en-XA/find-duplicates' }: {
     locale?: Locale;
     canonicalPath?: string;
-  }>();
+  } = $props();
   let input = $state<HTMLInputElement>();
   let files = $state<File[]>([]);
   let exactGroups = $state<ExactGroup[]>([]);
@@ -302,13 +302,16 @@
         await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
       }
 
-      const byDigest = new Map<string, LocalImage[]>();
+      const byDigest: Record<string, LocalImage[]> = Object.create(null) as Record<
+        string,
+        LocalImage[]
+      >;
       for (const image of checked) {
-        const group = byDigest.get(image.sha256) ?? [];
+        const group = byDigest[image.sha256] ?? [];
         group.push(image);
-        byDigest.set(image.sha256, group);
+        byDigest[image.sha256] = group;
       }
-      const exact = [...byDigest.entries()]
+      const exact = Object.entries(byDigest)
         .filter(([, images]) => images.length > 1)
         .map(([digest, images]) => ({ id: `exact-${digest}`, images }));
       const possible: NearPair[] = [];
@@ -378,7 +381,14 @@
   }
 
   function downloadReport() {
-    const rows = [[copy.match, copy.file, copy.dimensions, copy.size, copy.difference, copy.decision]];
+    const rows: (string | number)[][] = [[
+      copy.match,
+      copy.file,
+      copy.dimensions,
+      copy.size,
+      copy.difference,
+      copy.decision,
+    ]];
     for (const group of exactGroups) {
       for (const image of group.images) {
         rows.push([
@@ -442,7 +452,6 @@
   <link rel="alternate" hreflang="x-default" href="https://image.complianttools.com/find-duplicates" />
   <meta property="og:title" content={copy.title} />
   <meta property="og:description" content={copy.description} />
-  <meta http-equiv="content-language" content={locale} />
 </svelte:head>
 
 <header class="tool-header duplicate-header" lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}>

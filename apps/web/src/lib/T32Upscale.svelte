@@ -1,8 +1,18 @@
 <script lang="ts">
-  import { onDestroy } from 'svelte';
+  import { onDestroy, onMount } from 'svelte';
   import CompareCanvas from './CompareCanvas.svelte';
   import ToolPageCompletion from './ToolPageCompletion.svelte';
   import { translate, type Locale } from './i18n';
+  import {
+    downloadAndCacheT32Model,
+    loadT32ModelSources,
+    readCachedT32Model,
+    t32Tier2SupportIssue,
+    T32_MODELS,
+    type T32ModelDefinition,
+    type T32ModelFactor,
+    type T32ModelSources,
+  } from './t32-tier2-models';
 
   const MAX_FILE_BYTES = 32 * 1024 * 1024;
   const MAX_SOURCE_PIXELS = 12_000_000;
@@ -22,7 +32,7 @@
     | 'cancelled';
   type Dimensions = { width: number; height: number };
   type WorkerResponse =
-    | { type: 'result'; width: number; height: number; data: ArrayBuffer }
+    | { type: 'result'; width: number; height: number; data: ArrayBuffer; backend?: string }
     | { type: 'error'; detail?: string };
 
   class UpscaleError extends Error {
@@ -41,8 +51,8 @@
   let outputUrl = $state('');
   let sourceDimensions = $state<Dimensions>();
   let outputDimensions = $state<Dimensions>();
-  let outputMethod = $state<Method>();
   let outputFactor = $state<Factor>();
+  let outputEngine = $state('');
   let outputBytes = $state(0);
   let method = $state<Method>('dcci');
   let factor = $state<Factor>(2);
@@ -50,12 +60,47 @@
   let status = $state('');
   let error = $state<UpscaleError>();
   let latency = $state(0);
+  let tier2SupportIssue = $state('');
+  let tier2Downloading = $state(false);
+  let tier2CanCancelDownload = $state(false);
+  let tier2CheckingRuntime = $state(false);
+  let tier2DownloadBytes = $state(0);
+  let tier2DownloadSource = $state<'primary' | 'fallback'>('primary');
+  let tier2Status = $state('');
+  let tier2Error = $state('');
+  let tier2Sources = $state<Partial<Record<T32ModelFactor, T32ModelSources>>>({});
+  let tier2Loaded = $state<{ factor: T32ModelFactor }>();
   let activeWorker: Worker | undefined;
   let rejectActiveWorker: ((reason: unknown) => void) | undefined;
+  let tier2DownloadAbort: AbortController | undefined;
   let currentTask = 0;
+
+  const selectedTier2Model = $derived(T32_MODELS[factor]);
+  const selectedTier2Sources = $derived(tier2Sources[factor]);
+  const selectedTier2Loaded = $derived(tier2Loaded?.factor === factor);
+  const tier2ProgressPercent = $derived(
+    Math.min(100, Math.floor((tier2DownloadBytes / selectedTier2Model.sizeBytes) * 100)),
+  );
 
   const t = (key: string, fallback: string, value?: string | number) =>
     translate(locale, key, fallback, value);
+
+  onMount(() => {
+    tier2SupportIssue = t32Tier2SupportIssue();
+    for (const modelFactor of [2, 4] as const) {
+      void loadT32ModelSources(modelFactor)
+        .then((sources) => {
+          tier2Sources = { ...tier2Sources, [modelFactor]: sources };
+        })
+        .catch((cause) => {
+          tier2Sources = {
+            ...tier2Sources,
+            [modelFactor]: { primaryUrl: '', fallbackUrl: '' },
+          };
+          tier2Error = cause instanceof Error ? cause.message : String(cause);
+        });
+    }
+  });
   const title = $derived(t('t32.title', 'Image Upscaler'));
   const description = $derived(
     t(
@@ -283,8 +328,8 @@
     sourceFile = undefined;
     sourceDimensions = undefined;
     outputDimensions = undefined;
-    outputMethod = undefined;
     outputFactor = undefined;
+    outputEngine = '';
     outputBytes = 0;
     error = undefined;
     busy = false;
@@ -336,8 +381,8 @@
       outputUrl = nextUrl;
       outputBytes = blob.size;
       outputDimensions = { width: result.width, height: result.height };
-      outputMethod = method;
       outputFactor = factor;
+      outputEngine = method;
       latency = performance.now() - started;
       status = t(
         't32.status.done',
@@ -347,6 +392,217 @@
     } catch (cause) {
       if (task !== currentTask) return;
       error = cause instanceof UpscaleError ? cause : new UpscaleError('processing-failed');
+    } finally {
+      if (task === currentTask) busy = false;
+    }
+  }
+
+  function tier2RuntimeAvailable(): boolean {
+    tier2SupportIssue = t32Tier2SupportIssue();
+    return !tier2SupportIssue;
+  }
+
+  async function loadOrDownloadTier2Model() {
+    if (tier2Downloading || busy) return;
+    tier2Error = '';
+    tier2Status = '';
+    if (!tier2RuntimeAvailable()) return;
+    const selectedFactor = factor;
+    const definition = T32_MODELS[selectedFactor];
+    tier2Downloading = true;
+    tier2CanCancelDownload = false;
+    tier2DownloadBytes = 0;
+    try {
+      tier2Status = t('t32.tier2.checking', 'Checking this browser for a previously saved model…');
+      let modelBytes = await readCachedT32Model(definition);
+      if (!modelBytes) {
+        const sources: T32ModelSources = await loadT32ModelSources(selectedFactor);
+        if (!sources.primaryUrl) {
+          throw new Error('A primary model URL is not configured for this deployment.');
+        }
+        const storage = await navigator.storage?.estimate();
+        if (
+          storage?.quota !== undefined &&
+          storage.usage !== undefined &&
+          storage.quota - storage.usage < definition.sizeBytes + 8 * 1024 * 1024
+        ) {
+          throw new Error('There is not enough browser storage available to save this model.');
+        }
+
+        tier2DownloadAbort = new AbortController();
+        tier2CanCancelDownload = true;
+        tier2Status = t('t32.tier2.downloading', 'Downloading the experimental model…');
+        modelBytes = await downloadAndCacheT32Model(
+          definition,
+          sources,
+          tier2DownloadAbort.signal,
+          (progress) => {
+            tier2DownloadBytes = progress.receivedBytes;
+            tier2DownloadSource = progress.source;
+            tier2Status =
+              progress.source === 'fallback'
+                ? t(
+                    't32.tier2.fallback',
+                    'The primary host was unavailable. Downloading from the configured backup host…',
+                  )
+                : t('t32.tier2.downloading', 'Downloading the experimental model…');
+          },
+        );
+      } else {
+        tier2DownloadBytes = definition.sizeBytes;
+      }
+      tier2CanCancelDownload = false;
+      tier2Status = t(
+        't32.tier2.runtimeCheck',
+        'Model bytes are verified. Checking browser runtime with a small local inference…',
+      );
+      tier2CheckingRuntime = true;
+      const smoke = await runTier2Worker(new ImageData(8, 12), definition, modelBytes);
+      if (smoke.image.width !== 8 * selectedFactor || smoke.image.height !== 12 * selectedFactor) {
+        throw new Error('The browser runtime smoke returned an unexpected output size.');
+      }
+      tier2Loaded = { factor: selectedFactor };
+      tier2DownloadBytes = definition.sizeBytes;
+      tier2Status = t(
+        't32.tier2.verified',
+        'Model size and SHA-256 are verified, and a small browser runtime inference passed. The model is saved in this browser and ready to use.',
+      );
+    } catch (cause) {
+      tier2DownloadBytes = 0;
+      if (tier2DownloadAbort?.signal.aborted) {
+        tier2Status = t('t32.tier2.cancelled', 'Model download cancelled. Tier 1 remains ready.');
+      } else {
+        tier2Status = '';
+        tier2Error = cause instanceof Error ? cause.message : String(cause);
+      }
+    } finally {
+      tier2Downloading = false;
+      tier2CanCancelDownload = false;
+      tier2CheckingRuntime = false;
+      tier2DownloadAbort = undefined;
+    }
+  }
+
+  function cancelTier2Download() {
+    tier2DownloadAbort?.abort();
+  }
+
+  function runTier2Worker(
+    image: ImageData,
+    definition: T32ModelDefinition,
+    modelBytes: Uint8Array,
+  ): Promise<{ image: ImageData; backend: string }> {
+    return new Promise((resolve, reject) => {
+      const worker = new Worker(
+        new URL('../workers/t32-upscale-tier2-worker.ts', import.meta.url),
+        { type: 'module' },
+      );
+      activeWorker = worker;
+      rejectActiveWorker = reject;
+      const finish = () => {
+        worker.terminate();
+        if (activeWorker === worker) activeWorker = undefined;
+        if (rejectActiveWorker === reject) rejectActiveWorker = undefined;
+      };
+      worker.onmessage = (event: MessageEvent<WorkerResponse>) => {
+        finish();
+        if (event.data.type === 'error') {
+          reject(new UpscaleError('processing-failed', event.data.detail));
+          return;
+        }
+        resolve({
+          image: new ImageData(
+            new Uint8ClampedArray(event.data.data),
+            event.data.width,
+            event.data.height,
+          ),
+          backend: event.data.backend ?? 'WASM',
+        });
+      };
+      worker.onerror = (event) => {
+        finish();
+        reject(new UpscaleError('processing-failed', event.message));
+      };
+      const pixels = image.data.slice().buffer;
+      const registeredModel = modelBytes.buffer as ArrayBuffer;
+      if (modelBytes.byteOffset !== 0 || modelBytes.byteLength !== registeredModel.byteLength) {
+        finish();
+        reject(
+          new UpscaleError('processing-failed', 'The verified model data has an invalid buffer.'),
+        );
+        return;
+      }
+      worker.postMessage(
+        {
+          width: image.width,
+          height: image.height,
+          data: pixels,
+          modelData: registeredModel,
+          variant: definition.variant,
+          modelSizeBytes: definition.sizeBytes,
+        },
+        [pixels, registeredModel],
+      );
+    });
+  }
+
+  async function upscaleWithTier2() {
+    if (!sourceFile || !sourceDimensions || !tier2Loaded || busy || tier2Downloading) return;
+    if (!tier2RuntimeAvailable()) return;
+    const definition = T32_MODELS[factor];
+    if (tier2Loaded.factor !== factor) {
+      tier2Error = `Load the ${factor}× model before running it.`;
+      return;
+    }
+    const dimensions = {
+      width: sourceDimensions.width * factor,
+      height: sourceDimensions.height * factor,
+    };
+    if (dimensions.width * dimensions.height > MAX_OUTPUT_PIXELS) {
+      error = new UpscaleError('output-too-large');
+      return;
+    }
+    const task = ++currentTask;
+    error = undefined;
+    tier2Error = '';
+    busy = true;
+    status = t('t32.tier2.inference', 'Running the experimental AI model locally…');
+    latency = 0;
+    const started = performance.now();
+    try {
+      const image = await decode(sourceFile, sourceDimensions);
+      if (task !== currentTask) return;
+      const modelBytes = await readCachedT32Model(definition);
+      if (!modelBytes)
+        throw new Error(
+          'The verified model is no longer available in browser storage. Load it again.',
+        );
+      const result = await runTier2Worker(image, definition, modelBytes);
+      if (task !== currentTask) return;
+      const blob = await encodePng(result.image);
+      if (task !== currentTask) return;
+      if (blob.size > MAX_OUTPUT_BYTES) throw new UpscaleError('output-too-large');
+      const nextUrl = URL.createObjectURL(blob);
+      if (outputUrl && outputUrl !== sourceUrl) URL.revokeObjectURL(outputUrl);
+      outputUrl = nextUrl;
+      outputBytes = blob.size;
+      outputDimensions = { width: result.image.width, height: result.image.height };
+      outputFactor = factor;
+      outputEngine = 'realesrgan';
+      latency = performance.now() - started;
+      status = t(
+        't32.tier2.output',
+        'Experimental AI output: {value}.',
+        `${result.image.width} × ${result.image.height} pixels · ${result.backend}`,
+      );
+    } catch (cause) {
+      if (task !== currentTask) return;
+      if (cause instanceof UpscaleError && cause.kind === 'output-too-large') {
+        error = cause;
+      } else {
+        const detail = cause instanceof Error ? cause.message : String(cause);
+        tier2Error = `The experimental AI model could not run in this browser. ${detail}`;
+      }
     } finally {
       if (task === currentTask) busy = false;
     }
@@ -369,8 +625,8 @@
     if (!sourceFile || !outputUrl) return;
     const base = sourceFile.name.replace(/\.png$/iu, '') || 'upscaled-image';
     const name =
-      outputDimensions && outputMethod && outputFactor
-        ? `${base}-${outputMethod}-${outputFactor}x.png`
+      outputDimensions && outputEngine && outputFactor
+        ? `${base}-${outputEngine}-${outputFactor}x.png`
         : sourceFile.name;
     const anchor = document.createElement('a');
     anchor.href = outputUrl;
@@ -380,6 +636,7 @@
 
   onDestroy(() => {
     currentTask += 1;
+    tier2DownloadAbort?.abort();
     rejectActiveWorker?.(new UpscaleError('cancelled'));
     activeWorker?.terminate();
     rejectActiveWorker = undefined;
@@ -419,7 +676,7 @@
         accept="image/png,.png"
         aria-describedby="t32-file-help"
         data-testid="t32-file-input"
-        disabled={busy}
+        disabled={busy || tier2CheckingRuntime}
         onchange={choose}
       />
     </label>
@@ -431,7 +688,7 @@
     </p>
   </section>
 
-  <section class="workspace" aria-busy={busy}>
+  <section class="workspace" aria-busy={busy || tier2CheckingRuntime}>
     <div class="canvas-panel">
       {#if sourceUrl && outputUrl}
         <CompareCanvas
@@ -449,12 +706,22 @@
     <div class="options-panel" role="region" aria-labelledby="t32-options-heading">
       <h2 id="t32-options-heading">{t('workspace.options', 'Options')}</h2>
       <label for="t32-method">{t('t32.method', 'Scaling method')}</label>
-      <select id="t32-method" data-testid="t32-method" bind:value={method} disabled={busy}>
+      <select
+        id="t32-method"
+        data-testid="t32-method"
+        bind:value={method}
+        disabled={busy || tier2CheckingRuntime}
+      >
         <option value="dcci">DCCI</option>
         <option value="nedi">NEDI</option>
       </select>
       <label for="t32-factor">{t('t32.factor', 'Scale factor')}</label>
-      <select id="t32-factor" data-testid="t32-factor" bind:value={factor} disabled={busy}>
+      <select
+        id="t32-factor"
+        data-testid="t32-factor"
+        bind:value={factor}
+        disabled={busy || tier2Downloading || tier2CheckingRuntime}
+      >
         <option value={2}>2×</option>
         <option value={4}>4×</option>
       </select>
@@ -492,6 +759,106 @@
           'Output is limited to 4 megapixels and 32 MiB. New PNG output does not retain source metadata.',
         )}
       </p>
+      <section class="tier2-panel" aria-labelledby="t32-tier2-heading" data-testid="t32-tier2">
+        <h3 id="t32-tier2-heading">{t('t32.tier2.heading', 'Experimental advanced AI model')}</h3>
+        <p>
+          {t(
+            't32.tier2.description',
+            'Tier 1 is ready immediately. Real-ESRGAN is an experimental alternative; measured synthetic results did not show a general quality win. The selected file is',
+          )}
+          <strong> {selectedTier2Model.sizeBytes.toLocaleString()} bytes </strong>
+          {t(
+            't32.tier2.downloadDisclosure',
+            'and downloads only after you choose it. The browser checks support after download and keeps the file in local browser storage. Review the output before using it.',
+          )}
+        </p>
+        <p class="tier2-attribution">
+          {t(
+            't32.tier2.attribution',
+            'Real-ESRGAN by xinntao; BSD-3-Clause per the publisher model card. The optional model stays on this device after download.',
+          )}
+        </p>
+        {#if tier2SupportIssue}
+          <p data-testid="t32-tier2-unsupported">
+            {tier2SupportIssue}
+            {t('t32.tier2.tier1Available', 'Tier 1 remains available.')}
+          </p>
+        {:else if !selectedTier2Sources}
+          <p data-testid="t32-tier2-config-loading">
+            {t('t32.tier2.configLoading', 'Checking whether this deployment has a model source…')}
+          </p>
+        {:else if selectedTier2Sources && !selectedTier2Sources.primaryUrl}
+          <p data-testid="t32-tier2-unconfigured">
+            {t(
+              't32.tier2.unconfigured',
+              'No primary model URL is configured for this deployment. Tier 1 remains available.',
+            )}
+          </p>
+        {:else if selectedTier2Loaded}
+          <p role="status" data-testid="t32-tier2-ready">
+            {t(
+              't32.tier2.ready',
+              'The verified {value}× model is saved in this browser. Runtime support is checked when you run it.',
+              factor,
+            )}
+          </p>
+        {/if}
+        {#if tier2Downloading && !tier2CheckingRuntime}
+          <progress
+            data-testid="t32-tier2-progress"
+            value={tier2DownloadBytes}
+            max={selectedTier2Model.sizeBytes}
+            aria-label={t('t32.tier2.progressLabel', 'Experimental model download progress')}
+          ></progress>
+          <span data-testid="t32-tier2-progress-text">
+            {tier2ProgressPercent}% · {tier2DownloadBytes.toLocaleString()} /
+            {selectedTier2Model.sizeBytes.toLocaleString()} bytes
+            {tier2DownloadSource === 'fallback' ? ` · ${t('t32.tier2.backup', 'backup host')}` : ''}
+          </span>
+        {/if}
+        {#if tier2Status}<p role="status" aria-live="polite" data-testid="t32-tier2-status">
+            {tier2Status}
+          </p>{/if}
+        {#if tier2Error}
+          <p role="alert" data-testid="t32-tier2-error">
+            {tier2Error}
+            {t('t32.tier2.tier1Available', 'Tier 1 remains available.')}
+          </p>
+        {/if}
+        {#if !tier2SupportIssue && selectedTier2Sources?.primaryUrl && !selectedTier2Loaded}
+          <button
+            class="button"
+            type="button"
+            data-testid="t32-tier2-download"
+            disabled={busy || tier2Downloading || tier2CheckingRuntime}
+            onclick={loadOrDownloadTier2Model}
+          >
+            {t('t32.tier2.downloadButton', 'Load saved or download {value}× model', factor)}
+            ({Math.ceil(selectedTier2Model.sizeBytes / (1024 * 1024))} MiB)
+          </button>
+        {/if}
+        {#if tier2Downloading && tier2CanCancelDownload}
+          <button
+            class="button"
+            type="button"
+            data-testid="t32-tier2-cancel"
+            onclick={cancelTier2Download}
+          >
+            {t('t32.tier2.cancelDownload', 'Cancel model download')}
+          </button>
+        {/if}
+        {#if sourceFile && selectedTier2Loaded}
+          <button
+            class="button"
+            type="button"
+            data-testid="t32-tier2-run"
+            disabled={busy || tier2Downloading}
+            onclick={upscaleWithTier2}
+          >
+            {t('t32.tier2.run', 'Run experimental AI model ({value}×)', factor)}
+          </button>
+        {/if}
+      </section>
     </div>
   </section>
 
@@ -513,14 +880,14 @@
         class="button"
         type="button"
         data-testid="t32-run"
-        disabled={!sourceFile || busy}
+        disabled={!sourceFile || busy || tier2CheckingRuntime}
         onclick={upscale}>{t('t32.run', 'Upscale')}</button
       >
       <button
         class="button primary"
         type="button"
         data-testid="t32-download"
-        disabled={!outputUrl || busy}
+        disabled={!outputUrl || busy || tier2CheckingRuntime}
         onclick={download}>{t('workspace.download', 'Download PNG')}</button
       >
     </div>

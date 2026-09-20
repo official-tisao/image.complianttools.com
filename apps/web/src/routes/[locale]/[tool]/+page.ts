@@ -25,6 +25,7 @@ const tools = [
   'embedded-converter',
   'lossless-optimize',
   'pixel-art-upscaler',
+  'upscale',
   'ocr',
 ] as const;
 

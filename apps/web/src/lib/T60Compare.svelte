@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
+  import { translate, type Locale } from './i18n';
   import CompareCanvas from './CompareCanvas.svelte';
 
   const MAX_FILE_BYTES = 32 * 1024 * 1024;
@@ -9,6 +10,20 @@
   type Side = 'before' | 'after';
   type Source = { file: File; url: string; width: number; height: number };
   type HashMetric = { distance: number; bits: number };
+  type T60ErrorKind =
+    | 'unsupported-file'
+    | 'file-too-large'
+    | 'image-too-large'
+    | 'decode-failed'
+    | 'canvas-unavailable'
+    | 'dimensions-mismatch'
+    | 'cancelled'
+    | 'worker-failed';
+  type T60Error = {
+    readonly kind: T60ErrorKind;
+    readonly message: string;
+    readonly remedy: string;
+  };
   type ComparisonMetrics = {
     ssim: number;
     psnr: number | null;
@@ -18,25 +33,82 @@
     pHash: HashMetric;
   };
 
+  let { locale = 'en' } = $props<{ locale?: Locale }>();
+
+  // Translators: Keep PNG, JPEG, WebP, and MiB as format and measurement names.
+  const errorMessages: Readonly<Record<T60ErrorKind, readonly [string, string]>> = {
+    'unsupported-file': [
+      'Choose a PNG, JPEG, or WebP image.',
+      'Choose a PNG, JPEG, or WebP image.',
+    ],
+    'file-too-large': [
+      'Each image must be smaller than 32 MiB.',
+      'Choose images smaller than 32 MiB each.',
+    ],
+    'image-too-large': [
+      'Choose images no larger than 20 megapixels.',
+      'Choose images no larger than 20 megapixels each.',
+    ],
+    'decode-failed': [
+      'The browser could not decode this image.',
+      'Re-export a valid PNG, JPEG, or WebP image and try again.',
+    ],
+    'canvas-unavailable': [
+      'This browser could not create a comparison canvas.',
+      'Try a modern browser with 2D image-canvas support.',
+    ],
+    'dimensions-mismatch': [
+      'The images have different dimensions. Metrics require matching dimensions; both images are still available in the visual comparison.',
+      'Choose two images with the same dimensions; the visual comparison remains available.',
+    ],
+    cancelled: [
+      'The comparison was cancelled.',
+      'Choose either image again to restart the comparison.',
+    ],
+    'worker-failed': [
+      'The comparison metrics could not be calculated.',
+      'Try again, or choose smaller images if the problem continues.',
+    ],
+  };
+
+  function createT60Error(kind: T60ErrorKind, detail?: string): T60Error {
+    const [messageFallback, remedyFallback] = errorMessages[kind];
+    const message = translate(locale, `t60.error.${kind}`, messageFallback);
+    const remedy = translate(locale, `t60.remedy.${kind}`, remedyFallback);
+    return { kind, message: detail ? `${message} ${detail}` : message, remedy };
+  }
+
+  function isT60Error(cause: unknown): cause is T60Error {
+    if (!cause || typeof cause !== 'object') return false;
+    return (
+      'kind' in cause &&
+      typeof cause.kind === 'string' &&
+      cause.kind in errorMessages &&
+      'message' in cause &&
+      typeof cause.message === 'string' &&
+      'remedy' in cause &&
+      typeof cause.remedy === 'string'
+    );
+  }
+
   let before = $state<Source | undefined>();
   let after = $state<Source | undefined>();
   let metrics = $state<ComparisonMetrics | undefined>();
   let metricsDimensions = $state<{ width: number; height: number } | undefined>();
   let busy = $state(false);
-  let error = $state('');
+  let error = $state<T60Error | undefined>();
   let activeWorker: Worker | undefined;
-  let rejectActiveWorker: ((cause: Error) => void) | undefined;
+  let rejectActiveWorker: ((cause: T60Error) => void) | undefined;
   let taskNumber = 0;
 
-  const currentSources = $derived(before && after ? [before, after] as const : undefined);
+  const currentSources = $derived(before && after ? ([before, after] as const) : undefined);
 
   function errorText(cause: unknown) {
     return cause instanceof Error ? cause.message : String(cause);
   }
 
   function replaceSource(side: Side, file: File) {
-    activeWorker?.terminate();
-    rejectActiveWorker?.(new Error('Comparison cancelled because an image changed.'));
+    rejectActiveWorker?.(createT60Error('cancelled'));
     activeWorker = undefined;
     rejectActiveWorker = undefined;
     const current = side === 'before' ? before : after;
@@ -46,7 +118,7 @@
     else after = source;
     metrics = undefined;
     metricsDimensions = undefined;
-    error = '';
+    error = undefined;
   }
 
   async function choose(side: Side, event: Event) {
@@ -55,11 +127,11 @@
     input.value = '';
     if (!file) return;
     if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) {
-      error = 'Choose a PNG, JPEG, or WebP image.';
+      error = createT60Error('unsupported-file');
       return;
     }
     if (file.size > MAX_FILE_BYTES) {
-      error = 'Each image must be smaller than 32 MiB.';
+      error = createT60Error('file-too-large');
       return;
     }
     replaceSource(side, file);
@@ -72,7 +144,7 @@
     try {
       bitmap = await createImageBitmap(source.file);
       if (!bitmap.width || !bitmap.height || bitmap.width * bitmap.height > MAX_SOURCE_PIXELS) {
-        throw new Error('Choose images no larger than 20 megapixels.');
+        throw createT60Error('image-too-large');
       }
       source.width = bitmap.width;
       source.height = bitmap.height;
@@ -83,12 +155,13 @@
       canvas.width = width;
       canvas.height = height;
       const context = canvas.getContext('2d', { willReadFrequently: true });
-      if (!context) throw new Error('This browser could not create a comparison canvas.');
+      if (!context) throw createT60Error('canvas-unavailable');
       context.drawImage(bitmap, 0, 0, width, height);
       const pixels = context.getImageData(0, 0, width, height).data;
       return { width, height, data: pixels.slice() };
     } catch (cause) {
-      throw new Error(`Could not read ${source.file.name}: ${errorText(cause)}`);
+      if (isT60Error(cause)) throw cause;
+      throw createT60Error('decode-failed', `${source.file.name}: ${errorText(cause)}`);
     } finally {
       bitmap?.close();
     }
@@ -101,9 +174,15 @@
     afterPixels: Uint8ClampedArray,
   ): Promise<{ metrics: ComparisonMetrics }> {
     return new Promise((resolve, reject) => {
-      const worker = new Worker(new URL('../workers/compare-worker.ts', import.meta.url), {
-        type: 'module',
-      });
+      let worker: Worker;
+      try {
+        worker = new Worker(new URL('../workers/compare-worker.ts', import.meta.url), {
+          type: 'module',
+        });
+      } catch (cause) {
+        reject(createT60Error('worker-failed', errorText(cause)));
+        return;
+      }
       activeWorker = worker;
       const stop = () => {
         worker.terminate();
@@ -116,23 +195,33 @@
       };
       worker.onmessage = (event: MessageEvent<{ metrics?: ComparisonMetrics; error?: string }>) => {
         stop();
-        if (event.data.error) reject(new Error(event.data.error));
+        if (event.data.error) reject(createT60Error('worker-failed', event.data.error));
         else if (event.data.metrics) resolve({ metrics: event.data.metrics });
-        else reject(new Error('The comparison worker returned no metrics.'));
+        else reject(createT60Error('worker-failed', 'The worker returned no metrics.'));
       };
       worker.onerror = (event) => {
         stop();
-        reject(new Error(event.message || 'The comparison worker stopped unexpectedly.'));
+        reject(
+          createT60Error(
+            'worker-failed',
+            event.message || 'The comparison worker stopped unexpectedly.',
+          ),
+        );
       };
-      worker.postMessage(
-        {
-          width,
-          height,
-          before: beforePixels.buffer,
-          after: afterPixels.buffer,
-        },
-        [beforePixels.buffer, afterPixels.buffer],
-      );
+      try {
+        worker.postMessage(
+          {
+            width,
+            height,
+            before: beforePixels.buffer,
+            after: afterPixels.buffer,
+          },
+          [beforePixels.buffer, afterPixels.buffer],
+        );
+      } catch (cause) {
+        stop();
+        reject(createT60Error('worker-failed', errorText(cause)));
+      }
     });
   }
 
@@ -141,15 +230,17 @@
     busy = true;
     metrics = undefined;
     metricsDimensions = undefined;
-    error = '';
+    error = undefined;
     try {
       const [beforeProxy, afterProxy] = await Promise.all([
         decodeMetricProxy(before),
         decodeMetricProxy(after),
       ]);
+      if (task !== taskNumber) return;
       if (beforeProxy.width !== afterProxy.width || beforeProxy.height !== afterProxy.height) {
-        throw new Error(
-          `The images have different dimensions (${before.width} × ${before.height} and ${after.width} × ${after.height}). Metrics require matching dimensions; both images are still available in the visual comparison.`,
+        throw createT60Error(
+          'dimensions-mismatch',
+          `(${before.width} × ${before.height} and ${after.width} × ${after.height}).`,
         );
       }
       const result = await runComparisonWorker(
@@ -162,10 +253,23 @@
       metrics = result.metrics;
       metricsDimensions = { width: beforeProxy.width, height: beforeProxy.height };
     } catch (cause) {
-      if (task === taskNumber) error = errorText(cause);
+      if (task === taskNumber) {
+        error = isT60Error(cause) ? cause : createT60Error('worker-failed', errorText(cause));
+      }
     } finally {
       if (task === taskNumber) busy = false;
     }
+  }
+
+  function cancelComparison() {
+    if (!busy) return;
+    taskNumber += 1;
+    rejectActiveWorker?.(createT60Error('cancelled'));
+    activeWorker?.terminate();
+    activeWorker = undefined;
+    rejectActiveWorker = undefined;
+    busy = false;
+    error = createT60Error('cancelled');
   }
 
   function percent(metric: HashMetric) {
@@ -175,7 +279,7 @@
   onDestroy(() => {
     taskNumber += 1;
     activeWorker?.terminate();
-    rejectActiveWorker?.(new Error('Comparison page closed.'));
+    rejectActiveWorker?.(createT60Error('cancelled'));
     if (before) URL.revokeObjectURL(before.url);
     if (after) URL.revokeObjectURL(after.url);
   });
@@ -214,7 +318,9 @@
     <p class="privacy-copy">Files stay on your device. Images are not uploaded.</p>
     <div class="t60-inputs">
       <label class="file-entry">
-        <span>Before image {#if before}<small>{before.file.name}</small>{/if}</span>
+        <span
+          >Before image {#if before}<small>{before.file.name}</small>{/if}</span
+        >
         <input
           data-testid="t60-before-input"
           type="file"
@@ -224,7 +330,9 @@
         />
       </label>
       <label class="file-entry">
-        <span>After image {#if after}<small>{after.file.name}</small>{/if}</span>
+        <span
+          >After image {#if after}<small>{after.file.name}</small>{/if}</span
+        >
         <input
           data-testid="t60-after-input"
           type="file"
@@ -243,6 +351,7 @@
           beforeUrl={currentSources[0].url}
           afterUrl={currentSources[1].url}
           alt="Before and after image comparison"
+          {locale}
         />
       {:else}
         <div class="empty-canvas">
@@ -259,28 +368,52 @@
         not identity.
       </p>
       {#if busy}
-        <p data-testid="t60-status" aria-live="polite">Comparing locally…</p>
+        <div class="t60-progress">
+          <p data-testid="t60-status" aria-live="polite">Comparing locally…</p>
+          <button data-testid="t60-cancel" type="button" onclick={cancelComparison}>
+            Cancel comparison
+          </button>
+        </div>
       {:else if error}
-        <p class="error" data-testid="t60-error" role="alert">{error}</p>
+        <p class="error" data-testid="t60-error" data-error-kind={error.kind} role="alert">
+          {error.message}
+          <br />
+          <strong>{translate(locale, 'error.remedyLabel', 'Remedy')}:</strong>
+          {error.remedy}
+        </p>
       {:else if metrics && metricsDimensions}
         <p class="t60-verdict" data-testid="t60-verdict">{metrics.verdict}</p>
         <p data-testid="t60-proxy-size">
           Metrics proxy: {metricsDimensions.width} × {metricsDimensions.height}
         </p>
         <dl class="t60-results" data-testid="t60-results">
-          <div><dt>Approximate SSIM</dt><dd>{metrics.ssim.toFixed(4)}</dd></div>
-          <div><dt>PSNR</dt><dd>{metrics.psnr === null ? '∞ (identical)' : `${metrics.psnr.toFixed(2)} dB`}</dd></div>
+          <div>
+            <dt>Approximate SSIM</dt>
+            <dd>{metrics.ssim.toFixed(4)}</dd>
+          </div>
+          <div>
+            <dt>PSNR</dt>
+            <dd>{metrics.psnr === null ? '∞ (identical)' : `${metrics.psnr.toFixed(2)} dB`}</dd>
+          </div>
           <div>
             <dt>Average hash agreement</dt>
-            <dd>{percent(metrics.averageHash)} ({metrics.averageHash.distance}/{metrics.averageHash.bits} differing)</dd>
+            <dd>
+              {percent(metrics.averageHash)} ({metrics.averageHash.distance}/{metrics.averageHash
+                .bits} differing)
+            </dd>
           </div>
           <div>
             <dt>Difference hash agreement</dt>
-            <dd>{percent(metrics.differenceHash)} ({metrics.differenceHash.distance}/{metrics.differenceHash.bits} differing)</dd>
+            <dd>
+              {percent(metrics.differenceHash)} ({metrics.differenceHash.distance}/{metrics
+                .differenceHash.bits} differing)
+            </dd>
           </div>
           <div>
             <dt>pHash agreement</dt>
-            <dd>{percent(metrics.pHash)} ({metrics.pHash.distance}/{metrics.pHash.bits} differing)</dd>
+            <dd>
+              {percent(metrics.pHash)} ({metrics.pHash.distance}/{metrics.pHash.bits} differing)
+            </dd>
           </div>
         </dl>
       {:else}

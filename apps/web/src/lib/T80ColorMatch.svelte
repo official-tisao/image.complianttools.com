@@ -424,6 +424,7 @@
     status = '';
   }
 
+  /* eslint-disable no-control-regex -- Reject ASCII control bytes in exported filenames. */
   function downloadName(file: File): string {
     const stem = file.name.replace(/\.[^.]+$/u, '').replace(/[\\/:*?"<>|\u0000-\u001f]/gu, '_').slice(0, 100) || 'image';
     return `${stem}-color-matched.png`;

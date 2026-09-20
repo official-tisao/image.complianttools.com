@@ -48,7 +48,7 @@ self.onmessage = (event: MessageEvent<Request>) => {
     const outputBuffer = pixels.buffer as ArrayBuffer;
     self.postMessage(
       { type: 'result', width: result.width, height: result.height, data: outputBuffer, fallback },
-      [outputBuffer],
+      { transfer: [outputBuffer] },
     );
   } catch (cause) {
     const detail = cause instanceof Error ? cause.message : String(cause);

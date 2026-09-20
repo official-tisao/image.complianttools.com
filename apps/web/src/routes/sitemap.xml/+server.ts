@@ -25,8 +25,16 @@ const paths = [
   'remove-exif',
   'image-info',
   'pixel-art-upscaler',
+  'upscale',
   'ocr',
   'compare',
+  'color-match',
+  'generate',
+  'find-duplicates',
+  'smart-crop',
+  'blur-face',
+  'adaptive-resize',
+  'alt-text',
 ] as const;
 
 export const GET = () =>

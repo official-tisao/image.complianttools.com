@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onDestroy } from 'svelte';
+  import { onDestroy, tick } from 'svelte';
 
   type Locale = 'en' | 'en-XA' | 'ar';
   type Region = { x: number; y: number; width: number; height: number };
@@ -42,6 +42,7 @@
     clearAreas: 'Clear all areas',
     clearImage: 'Remove image',
     download: 'Download blurred PNG',
+    outputTooLarge: 'The PNG output exceeds the 32 MiB download limit. Choose a smaller image and try again.',
     status: (count: number) => `${count} ${count === 1 ? 'area' : 'areas'} will be blurred in the downloaded image.`,
     needRegion: 'Mark at least one face area before downloading.',
     tooManyRegions: 'You can mark up to 12 areas.',
@@ -101,6 +102,7 @@
     clearAreas: 'مسح كل المناطق',
     clearImage: 'إزالة الصورة',
     download: 'تنزيل PNG مموهة',
+    outputTooLarge: 'يتجاوز ملف PNG الناتج حد التنزيل البالغ 32 ميبيبايت. اختر صورة أصغر ثم أعد المحاولة.',
     status: (count: number) => `سيتم تمويه ${count} منطقة في الصورة التي سيتم تنزيلها.`,
     needRegion: 'حدّد منطقة وجه واحدة على الأقل قبل التنزيل.',
     tooManyRegions: 'يمكنك تحديد 12 منطقة كحد أقصى.',
@@ -292,6 +294,8 @@
       regionY = 0;
       regionWidth = Math.min(128, inspected.width);
       regionHeight = Math.min(128, inspected.height);
+      await tick();
+      if (task !== selectionTask) return;
       redraw();
       if (!error) message = copy.loaded(file.name, inspected.width, inspected.height);
     } catch (cause) {
@@ -395,7 +399,7 @@
         canvas!.toBlob((result) => result ? resolve(result) : reject(new Error('canvas')), 'image/png');
       });
       if (blob.size > MAX_OUTPUT_BYTES) {
-        notice = copy.remedies['too-large'];
+        notice = copy.outputTooLarge;
         return;
       }
       const url = URL.createObjectURL(blob);
@@ -403,7 +407,9 @@
       const baseName = sourceName.replace(/\.png$/iu, '') || 'image';
       link.href = url;
       link.download = `${baseName}-blurred.png`;
+      document.body.append(link);
       link.click();
+      link.remove();
       window.setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch {
       error = 'canvas';
@@ -466,6 +472,18 @@
           <div class="selection" style={selectionStyle} aria-hidden="true"></div>
         {/if}
       </div>
+      <fieldset class="t57-coordinates">
+        <legend>{copy.coordinates}</legend>
+        <label for="t57-x">{copy.x}</label>
+        <input id="t57-x" data-testid="t57-region-x" type="number" min="0" max={dimensions.width} step="1" bind:value={regionX} />
+        <label for="t57-y">{copy.y}</label>
+        <input id="t57-y" data-testid="t57-region-y" type="number" min="0" max={dimensions.height} step="1" bind:value={regionY} />
+        <label for="t57-width">{copy.width}</label>
+        <input id="t57-width" data-testid="t57-region-width" type="number" min="8" max={dimensions.width} step="1" bind:value={regionWidth} />
+        <label for="t57-height">{copy.height}</label>
+        <input id="t57-height" data-testid="t57-region-height" type="number" min="8" max={dimensions.height} step="1" bind:value={regionHeight} />
+        <button type="button" class="button" data-testid="t57-add-coordinates" onclick={addCoordinateRegion}>{copy.addCoordinates}</button>
+      </fieldset>
       <label class="blur-control" for="t57-blur">
         <span>{copy.blurStrength}</span>
         <output for="t57-blur">{copy.blurValue(blurRadius)}</output>
@@ -537,7 +555,12 @@
   .limits, .draw-help, .ready, .filename { color: #475467; }
   .filename { font-weight: 650; }
   .t57-canvas-wrap { position: relative; width: min(100%, 760px); margin: 18px auto; overflow: hidden; border: 1px solid #9ba6b7; border-radius: 6px; background: repeating-conic-gradient(#eee 0 25%, #fff 0 50%) 50% / 20px 20px; line-height: 0; touch-action: none; }
-  canvas { display: block; width: 100%; height: auto; max-height: 70vh; object-fit: contain; touch-action: none; cursor: crosshair; }
+  canvas { display: block; width: 100%; height: auto; touch-action: none; cursor: crosshair; }
+  .t57-coordinates { display: grid; grid-template-columns: repeat(4, minmax(100px, 1fr)); align-items: end; gap: 8px 12px; margin: 18px 0; padding: 14px; border: 1px solid #d6dbe3; border-radius: 8px; }
+  .t57-coordinates legend { padding: 0 6px; font-weight: 650; }
+  .t57-coordinates label { font-size: .9rem; font-weight: 600; }
+  .t57-coordinates input { width: 100%; min-height: 40px; padding: 6px 8px; border: 1px solid #7b8798; border-radius: 6px; font: inherit; }
+  .t57-coordinates button { grid-column: 1 / -1; justify-self: start; }
   .selection { position: absolute; border: 2px solid #facc15; background: rgb(250 204 21 / 22%); pointer-events: none; }
   .blur-control { display: flex; justify-content: space-between; max-width: 480px; font-weight: 650; }
   input[type="range"] { display: block; width: min(100%, 480px); margin: 8px 0 18px; accent-color: #174ea6; }
@@ -553,4 +576,5 @@
   .error { background: #fff0f0; color: #8c1d18; }
   .t57-faq details { margin: 10px 0; padding: 12px; border: 1px solid #d6dbe3; border-radius: 8px; }
   .t57-faq summary { cursor: pointer; font-weight: 650; }
+  @media (max-width: 640px) { .t57-coordinates { grid-template-columns: repeat(2, minmax(100px, 1fr)); } }
 </style>

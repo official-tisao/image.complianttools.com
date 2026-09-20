@@ -5,7 +5,6 @@
     PixelArtToolOptionsSchema,
     pixelArtToolOptionDescriptions,
     type PixelArtToolErrorKind,
-    type PixelArtToolOptions,
   } from '@complianttools/image-engine/schemas/pixel-art';
   import type { ScaleFactor } from '@complianttools/image-engine/cv/pixel-art';
   import CompareCanvas from './CompareCanvas.svelte';
@@ -105,16 +104,6 @@
     },
   ]);
 
-  const errorFallback: Readonly<Record<PixelArtToolErrorKind, string>> = {
-    'unsupported-file': 'Choose a valid PNG image; this tool currently accepts PNG only.',
-    'file-too-large': 'Choose a PNG smaller than 32 MiB.',
-    'image-too-large':
-      'Choose a smaller image or use a lower scale factor so the output stays within 16 megapixels.',
-    'invalid-options': 'Choose a scale factor of 2×, 3×, or 4×, then try again.',
-    'decode-failed': 'Export a valid, non-animated PNG and choose it again.',
-    'processing-failed':
-      'Try a smaller PNG or a lower scale factor. Your original file is unchanged.',
-  };
   const detailFallback: Readonly<Record<PixelArtToolErrorKind, string>> = {
     'unsupported-file': 'The selected file is not a supported still PNG.',
     'file-too-large': 'The selected PNG exceeds the 32 MiB file limit.',

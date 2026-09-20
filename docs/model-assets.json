@@ -19,27 +19,50 @@
       "releaseAssetHasSeparateLicenseText": false,
       "sizeBytes": 67040989,
       "sha256": "4fa0d38905f75ac06eb49a7951b426670021be3018265fd191d2125df9d682f1",
-      "architecture": { "name": "RRDBNet", "scale": 4, "blocks": 23, "features": 64, "growthChannels": 32 },
+      "architecture": {
+        "name": "RRDBNet",
+        "scale": 4,
+        "blocks": 23,
+        "features": 64,
+        "growthChannels": 32
+      },
       "inAppBundle": false,
       "onnxConversion": {
         "filename": "RealESRGAN_x4plus.onnx",
-        "sizeBytes": 67051647,
-        "sha256": "890dbcfb92e7fee06ab00d16daa15f98ca3b57e3145d068d2eacfc4625a57d73",
+        "sizeBytes": 67132609,
+        "sha256": "c999e5e3365a23cda6d627c407005076c160f420d6b122a0ef7c9d4210aee96a",
         "opset": 17,
-        "converter": "packages/engine/bench/escalation/t32/conversion/convert.py",
+        "converter": "QtMeshEditor ONNX export served by fernandotonon/QtMeshEditor-models at d14119a40dfeef208e4e724dfaceb2640d2df95b; parity-checked against the registered official .pth checkpoint",
         "architectureSource": "BasicSR v1.4.2 commit 651835a1b9d38dbbdaf45750f56906be2364f01a (Apache-2.0)",
-        "toolchain": { "python": "3.12.2", "torch": "2.5.1+cpu", "torchvision": "0.20.1+cpu", "onnx": "1.17.0", "onnxruntime": "1.20.1", "numpy": "2.5.3" },
+        "toolchain": {
+          "python": "3.12.2",
+          "torch": "2.5.1+cpu",
+          "torchvision": "0.20.1+cpu",
+          "onnx": "1.17.0",
+          "onnxruntime": "1.20.1",
+          "numpy": "2.5.3"
+        },
         "cpuParityReport": "packages/engine/bench/escalation/t32/conversion/cpu-parity-report.json",
         "browserSmoke": {
           "browser": "Chromium 151.0.7922.34",
           "provider": "wasm",
-          "inputShape": [1, 3, 8, 12],
-          "outputShape": [1, 3, 32, 48],
+          "inputShape": [
+            1,
+            3,
+            8,
+            12
+          ],
+          "outputShape": [
+            1,
+            3,
+            32,
+            48
+          ],
           "finiteValues": 4608,
-          "inferenceMs": 5204,
+          "inferenceMs": 3122.095,
+          "modelBytes": 67132609,
+          "modelSha256": "c999e5e3365a23cda6d627c407005076c160f420d6b122a0ef7c9d4210aee96a",
           "modelAndWasmSameOrigin": true,
-          "modelRequests": 1,
-          "wasmRequests": 2,
           "externalRequests": 0,
           "failedRequests": 0,
           "httpErrors": 0
@@ -50,16 +73,50 @@
           "provider": "wasm",
           "fixture": "packages/engine/bench/escalation/t32/x4-degraded/artifacts/landscape-dordogne-blur-grain-jpeg-q45-x4-input.png",
           "inputSha256": "898fe8b2f32bdf750353ab0f96e7d4b335ff6934fc98ebeb0fa4ce0885c52bdb",
-          "inputShape": [1, 3, 42, 64],
-          "outputShape": [1, 3, 168, 256],
+          "inputShape": [
+            1,
+            3,
+            42,
+            64
+          ],
+          "outputShape": [
+            1,
+            3,
+            168,
+            256
+          ],
           "finiteValues": 129024,
-          "startupAndFirstInferenceMs": 6911,
+          "startupAndFirstInferenceMs": 9438,
+          "modelBytes": 67132609,
+          "modelSha256": "c999e5e3365a23cda6d627c407005076c160f420d6b122a0ef7c9d4210aee96a",
           "modelAndWasmSameOrigin": true,
           "externalRequests": 0,
           "failedRequests": 0,
           "httpErrors": 0
         },
-        "qualityBenchmark": "packages/engine/bench/escalation/t32/x4-degraded/results.json"
+        "qualityBenchmark": "packages/engine/bench/escalation/t32/x4-degraded/results.json",
+        "referenceConverter": "packages/engine/bench/escalation/t32/conversion/convert.py",
+        "sourceRepositoryUrl": "https://huggingface.co/fernandotonon/QtMeshEditor-models",
+        "sourceRevision": "d14119a40dfeef208e4e724dfaceb2640d2df95b",
+        "sourceUrl": "https://huggingface.co/fernandotonon/QtMeshEditor-models/resolve/d14119a40dfeef208e4e724dfaceb2640d2df95b/RealESRGAN_x4plus.onnx",
+        "license": "BSD-3-Clause (publisher-declared for Real-ESRGAN x2plus/x4plus on the dedicated model card)",
+        "licenseEvidenceUrl": "https://huggingface.co/fernandotonon/QtMeshEditor-realesrgan-onnx/blob/766bac4b35aaeefe85a065ece8ee2f827b1314d8/README.md",
+        "deliveryStatus": "Pinned public Hugging Face ONNX export; full bytes verified, CPU-parity checked against its registered official .pth source, browser-WASM smoke passed, and no model bytes are bundled.",
+        "qualityStatus": "On 16 CC0-derived synthetic scale-4 pairs, the model scored below Tier 1 Lanczos3 in both PSNR and SSIM; natural degraded-photo benefit remains unmeasured.",
+        "hostBrowserVerification": {
+          "checkedAt": "2026-09-20",
+          "browser": "Chromium 151.0.7922.34",
+          "origin": "http://127.0.0.1 (test-only local page)",
+          "status": 200,
+          "responseType": "cors",
+          "contentLength": 67132609,
+          "receivedBytes": 67132609,
+          "streamChunks": 1137,
+          "sha256": "c999e5e3365a23cda6d627c407005076c160f420d6b122a0ef7c9d4210aee96a",
+          "elapsedMs": 7129,
+          "rangeStatus": 206,
+          "rangeHeader": "bytes 0-0/67132609"
+        }
       },
       "conversionStatus": "source hash verified; dynamic-spatial ONNX converted, CPU-parity verified, and x4 browser-WASM fixture smoke passed; on 16 CC0-derived synthetic x4 pairs the model trailed Tier 1 on PSNR and SSIM; real camera restoration remains unmeasured"
     },
@@ -75,19 +132,77 @@
       "releaseAssetHasSeparateLicenseText": false,
       "sizeBytes": 67061725,
       "sha256": "49fafd45f8fd7aa8d31ab2a22d14d91b536c34494a5cfe31eb5d89c2fa266abb",
-      "architecture": { "name": "RRDBNet", "scale": 2, "blocks": 23, "features": 64, "growthChannels": 32 },
+      "architecture": {
+        "name": "RRDBNet",
+        "scale": 2,
+        "blocks": 23,
+        "features": 64,
+        "growthChannels": 32
+      },
       "inAppBundle": false,
       "onnxConversion": {
         "filename": "RealESRGAN_x2plus.onnx",
-        "sizeBytes": 67076002,
-        "sha256": "472e38432b5d27aaa238ca9ceebc6491a82923c67076e3dc770ab2219861ad18",
+        "sizeBytes": 67156218,
+        "sha256": "35d016524a6eb7e9a99f192cfa81b6cf1f80fdf8f1b51605d77f0763f5ccba7f",
         "opset": 17,
-        "converter": "packages/engine/bench/escalation/t32/conversion/convert.py",
+        "converter": "QtMeshEditor ONNX export served by fernandotonon/QtMeshEditor-models at d14119a40dfeef208e4e724dfaceb2640d2df95b; parity-checked against the registered official .pth checkpoint",
         "architectureSource": "BasicSR v1.4.2 commit 651835a1b9d38dbbdaf45750f56906be2364f01a (Apache-2.0)",
-        "toolchain": { "python": "3.12.2", "torch": "2.5.1+cpu", "torchvision": "0.20.1+cpu", "onnx": "1.17.0", "onnxruntime": "1.20.1", "numpy": "2.5.3" },
+        "toolchain": {
+          "python": "3.12.2",
+          "torch": "2.5.1+cpu",
+          "torchvision": "0.20.1+cpu",
+          "onnx": "1.17.0",
+          "onnxruntime": "1.20.1",
+          "numpy": "2.5.3"
+        },
         "cpuParityReport": "packages/engine/bench/escalation/t32/conversion/cpu-parity-report.json",
-        "browserSmoke": { "browser": "Chromium 151", "provider": "wasm", "inputShape": [1, 3, 8, 12], "outputShape": [1, 3, 16, 24], "externalRequests": 0 },
-        "qualityBenchmark": "packages/engine/bench/escalation/t32/model-results.json"
+        "browserSmoke": {
+          "browser": "Chromium 151.0.7922.34",
+          "provider": "wasm",
+          "inputShape": [
+            1,
+            3,
+            8,
+            12
+          ],
+          "outputShape": [
+            1,
+            3,
+            16,
+            24
+          ],
+          "finiteValues": 1152,
+          "inferenceMs": 3129.66,
+          "modelBytes": 67156218,
+          "modelSha256": "35d016524a6eb7e9a99f192cfa81b6cf1f80fdf8f1b51605d77f0763f5ccba7f",
+          "modelAndWasmSameOrigin": true,
+          "externalRequests": 0,
+          "failedRequests": 0,
+          "httpErrors": 0
+        },
+        "qualityBenchmark": "packages/engine/bench/escalation/t32/model-results.json",
+        "referenceConverter": "packages/engine/bench/escalation/t32/conversion/convert.py",
+        "sourceRepositoryUrl": "https://huggingface.co/fernandotonon/QtMeshEditor-models",
+        "sourceRevision": "d14119a40dfeef208e4e724dfaceb2640d2df95b",
+        "sourceUrl": "https://huggingface.co/fernandotonon/QtMeshEditor-models/resolve/d14119a40dfeef208e4e724dfaceb2640d2df95b/RealESRGAN_x2plus.onnx",
+        "license": "BSD-3-Clause (publisher-declared for Real-ESRGAN x2plus/x4plus on the dedicated model card)",
+        "licenseEvidenceUrl": "https://huggingface.co/fernandotonon/QtMeshEditor-realesrgan-onnx/blob/766bac4b35aaeefe85a065ece8ee2f827b1314d8/README.md",
+        "deliveryStatus": "Pinned public Hugging Face ONNX export; full bytes verified, CPU-parity checked against its registered official .pth source, browser-WASM smoke passed, and no model bytes are bundled.",
+        "qualityStatus": "On four CC0-derived clean synthetic scale-2 pairs, mean PSNR/SSIM did not beat Lanczos3 or DCCI; natural degraded-photo benefit remains unmeasured.",
+        "hostBrowserVerification": {
+          "checkedAt": "2026-09-20",
+          "browser": "Chromium 151.0.7922.34",
+          "origin": "http://127.0.0.1 (test-only local page)",
+          "status": 200,
+          "responseType": "cors",
+          "contentLength": 67156218,
+          "receivedBytes": 67156218,
+          "streamChunks": 1173,
+          "sha256": "35d016524a6eb7e9a99f192cfa81b6cf1f80fdf8f1b51605d77f0763f5ccba7f",
+          "elapsedMs": 6435,
+          "rangeStatus": 206,
+          "rangeHeader": "bytes 0-0/67156218"
+        }
       },
       "conversionStatus": "source hash verified; dynamic-spatial ONNX converted, CPU-parity verified, and x2 browser-WASM smoke passed; synthetic model comparison did not beat Lanczos3 or DCCI"
     },
@@ -111,7 +226,12 @@
       },
       "sizeBytes": 15249949,
       "sha256": "94561159849a4d3145daf15d2a54dd6ef7cbd9cf7b9e99525d78a494f9556d0d",
-      "architecture": { "name": "Swin2SR", "scale": 4, "windowSize": 8, "quantization": "q4f16" },
+      "architecture": {
+        "name": "Swin2SR",
+        "scale": 4,
+        "windowSize": 8,
+        "quantization": "q4f16"
+      },
       "inAppBundle": false,
       "evaluationStatus": "evaluation-only candidate; publisher-declared Apache-2.0 license recorded; separate per-file notice and training-data provenance were not found; the 16-pair synthetic benchmark showed a modest aggregate quality gain but mixed class PSNR and slow CPU/WASM inference; product use remains gated on asset review, representative real-photo evidence, acceptable performance, and product consent/delivery work",
       "onnxConversion": {
@@ -122,15 +242,25 @@
         "repositoryRevision": "9b3baf051f6708d0b697580489e4415b64c7378e",
         "conversionMethod": "Automatically converted and uploaded according to the publisher's model card.",
         "baseModel": "caidas/swin2SR-realworld-sr-x4-64-bsrgan-psnr",
-        "inputs": ["pixel_values"],
-        "outputs": ["reconstruction"],
+        "inputs": [
+          "pixel_values"
+        ],
+        "outputs": [
+          "reconstruction"
+        ],
         "scaleFactor": 4,
         "requiredInputWindowMultiple": 8,
         "qualityBenchmark": {
           "report": "packages/engine/bench/escalation/t32/x4-degraded/results-swin2sr.json",
           "fixtureCount": 16,
-          "aggregateTier1Lanczos3": { "meanPsnrRgbDb": 25.5075, "meanSsimLuminanceGaussian11x11": 0.635145 },
-          "aggregateSwin2srQ4f16": { "meanPsnrRgbDb": 25.6881, "meanSsimLuminanceGaussian11x11": 0.666381 },
+          "aggregateTier1Lanczos3": {
+            "meanPsnrRgbDb": 25.5075,
+            "meanSsimLuminanceGaussian11x11": 0.635145
+          },
+          "aggregateSwin2srQ4f16": {
+            "meanPsnrRgbDb": 25.6881,
+            "meanSsimLuminanceGaussian11x11": 0.666381
+          },
           "cpuSessionRunMedianMs": 3131.935,
           "cpuSessionRunP95MsNearestRank": 4365.515
         },
@@ -139,8 +269,18 @@
           "provider": "wasm",
           "fixture": "packages/engine/bench/escalation/t32/x4-degraded/artifacts/swin2sr-q4f16/landscape-dordogne-clean-x4-swin2sr-padded-input.png",
           "fixtureSha256": "dfd0b428688f40cad8e49ea70fc236019867cdedfe684e7887369b3e45092d1a",
-          "inputShape": [1, 3, 48, 64],
-          "outputShape": [1, 3, 192, 256],
+          "inputShape": [
+            1,
+            3,
+            48,
+            64
+          ],
+          "outputShape": [
+            1,
+            3,
+            192,
+            256
+          ],
           "finiteValues": 147456,
           "startupAndFirstInferenceMs": 13046,
           "modelAndWasmSameOrigin": true,

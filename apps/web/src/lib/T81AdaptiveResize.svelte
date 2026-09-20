@@ -30,8 +30,8 @@
 
   const enText = {
     title: 'Adaptive Resize',
-    description: 'Retarget a small still PNG with local saliency-weighted continuous warping. This method redistributes scaling across rows and columns; it does not remove seams and can visibly distort image content.',
-    metaDescription: 'Locally retarget a still PNG with saliency-weighted continuous warping. Adjust its size, paint an approximate mask, preview, and download.',
+    description: 'Continuous-warp retargeting adjusts a small still PNG by redistributing sampling across rows and columns. It is not seam carving and can visibly distort image content.',
+    metaDescription: 'Retarget a still PNG with local continuous warping, not seam carving. Set its size, paint an approximate mask, preview, and download.',
     eyebrow: 'Local image tool',
     privacy: 'Your image stays in this browser. No model, upload, or network service is used.',
     inputHeading: 'Choose an image and output size',
@@ -59,8 +59,8 @@
     dimensions: 'Output dimensions',
     fallback: 'The saliency profile was too uniform, so the engine returned the original image unchanged. No resized output was created. Try an image with more visible detail or use ordinary resize instead.',
     faqHeading: 'Questions about adaptive resize',
-    faqMethod: 'Does this remove seams?',
-    faqMethodAnswer: 'No. This is saliency-weighted continuous warping: it changes sampling density across image rows and columns. It does not remove seams and can distort content.',
+    faqMethod: 'Is this seam carving?',
+    faqMethodAnswer: 'No. This is continuous-warp retargeting: it changes sampling density across image rows and columns. It does not remove seams and can distort content.',
     faqMask: 'What does the protection mask do?',
     faqMaskAnswer: 'Painted regions bias row and column sampling density. The mask is approximate: it does not guarantee unchanged pixels, and a protected mask that does not fit the requested dimensions is rejected.',
     faqPrivacy: 'Are images uploaded?',
@@ -105,8 +105,8 @@
 
   const arText: LocalizedCopy = {
     title: 'تغيير الحجم التكيفي',
-    description: 'أعد تهيئة أبعاد صورة PNG ثابتة صغيرة باستخدام تشويه مستمر محلي موزون بالبروز البصري. يوزع هذا الأسلوب التحجيم على الصفوف والأعمدة؛ ولا يزيل المسارات، وقد يشوه محتوى الصورة بوضوح.',
-    metaDescription: 'أعد تهيئة صورة PNG ثابتة صغيرة محليًا بتشويه مستمر موزون بالبروز. اضبط الأبعاد، وارسم قناع حماية تقريبيًا اختياريًا، وافحص المعاينة ثم نزّل PNG.',
+    description: 'تعيد إعادة التهيئة بالتشويه المستمر ضبط صورة PNG ثابتة صغيرة عبر توزيع أخذ العينات على الصفوف والأعمدة. هذا ليس نحتًا للمسارات وقد يشوه محتوى الصورة بوضوح.',
+    metaDescription: 'أعد تهيئة صورة PNG محليًا بالتشويه المستمر لا بنحت المسارات. اضبط الحجم، وارسم قناعًا تقريبيًا، وافحص المعاينة ونزّلها.',
     eyebrow: 'أداة صور محلية',
     privacy: 'تبقى صورتك في هذا المتصفح. لا يُستخدم نموذج أو رفع أو خدمة شبكة.',
     inputHeading: 'اختر صورة وحجم الإخراج',
@@ -134,8 +134,8 @@
     dimensions: 'أبعاد الإخراج',
     fallback: 'كان ملف البروز متجانسًا جدًا، لذلك أعاد المحرك الصورة الأصلية دون تغيير. لم يُنشأ إخراج بأبعاد جديدة. جرّب صورة ذات تفاصيل أوضح أو استخدم تغيير الحجم العادي.',
     faqHeading: 'أسئلة حول تغيير الحجم التكيفي',
-    faqMethod: 'هل تزيل هذه الطريقة المسارات؟',
-    faqMethodAnswer: 'لا. هذا تشويه مستمر موزون بالبروز: يغير كثافة أخذ العينات عبر صفوف الصورة وأعمدتها. لا يزيل المسارات وقد يشوه المحتوى.',
+    faqMethod: 'هل يستخدم هذا الأسلوب نحت المسارات؟',
+    faqMethodAnswer: 'لا. هذه إعادة تهيئة بالتشويه المستمر: تغير كثافة أخذ العينات عبر صفوف الصورة وأعمدتها. لا تزيل المسارات وقد تشوه المحتوى.',
     faqMask: 'ماذا يفعل قناع الحماية؟',
     faqMaskAnswer: 'توجه المناطق المرسومة كثافة أخذ العينات في الصفوف والأعمدة. القناع تقريبي ولا يضمن بقاء البكسلات دون تغيير، ويُرفض إذا لم يتسع القناع للأبعاد المطلوبة.',
     faqPrivacy: 'هل تُرفع الصور؟',
@@ -185,12 +185,13 @@
   let busy = $state(false);
   let status = $state('');
   let error = $state<ErrorKind>();
-  let maskCanvas: HTMLCanvasElement | undefined;
+  let maskCanvas = $state<HTMLCanvasElement>();
   let maskCursor = $state({ x: 0, y: 0 });
   let drawing = false;
   let activeWorker: Worker | undefined;
   let rejectWorker: ((reason: ErrorKind) => void) | undefined;
   let operationId = 0;
+  let selectionId = 0;
 
   const pseudo = (value: string) =>
     `⟦${value.replace(/[aeiou]/giu, (vowel) => ({ a: 'á', e: 'ë', i: 'ï', o: 'ô', u: 'ü' })[vowel.toLowerCase()] ?? vowel)}⟧`;
@@ -305,6 +306,7 @@
     input.value = '';
     if (!file) return;
 
+    const currentSelection = ++selectionId;
     cancelWorker();
     clearOutput();
     if (selected) URL.revokeObjectURL(selected.url);
@@ -316,6 +318,7 @@
     error = undefined;
     try {
       const dimensions = await inspectPng(file);
+      if (currentSelection !== selectionId) return;
       const next: SelectedImage = { file, dimensions, url: URL.createObjectURL(file) };
       selected = next;
       targetWidth = dimensions.width;
@@ -355,13 +358,14 @@
     context.putImageData(painted, 0, 0);
   }
 
-  async function decode(file: File): Promise<{ readonly width: number; readonly height: number; readonly data: Uint8ClampedArray }> {
+  async function decode(file: File, expected: Dimensions): Promise<{ readonly width: number; readonly height: number; readonly data: Uint8ClampedArray }> {
     let bitmap: ImageBitmap | undefined;
     try {
       bitmap = await createImageBitmap(file);
       if (!bitmap.width || !bitmap.height || bitmap.width > MAX_AXIS || bitmap.height > MAX_AXIS || bitmap.width * bitmap.height > MAX_PIXELS) {
         throw new Error('image-too-large');
       }
+      if (bitmap.width !== expected.width || bitmap.height !== expected.height) throw new Error('invalid-png');
       const canvas = document.createElement('canvas');
       canvas.width = bitmap.width;
       canvas.height = bitmap.height;
@@ -418,7 +422,7 @@
       try {
         const sourceBuffer = image.data.buffer as ArrayBuffer;
         const maskBuffer = mask?.buffer as ArrayBuffer | undefined;
-        const transfer: Transferable[] = [sourceBuffer];
+        const transfer: ArrayBuffer[] = [sourceBuffer];
         if (maskBuffer) transfer.push(maskBuffer);
         worker.postMessage(
           { width: image.width, height: image.height, targetWidth: width, targetHeight: height, data: sourceBuffer, protectMask: maskBuffer },
@@ -472,13 +476,14 @@
     cancelWorker();
     const task = ++operationId;
     const sourceFile = selected.file;
+    const sourceDimensions = selected.dimensions;
     const mask = protectEnabled && protectedPixelCount > 0 ? protectionMask?.slice() : undefined;
     clearOutput();
     error = undefined;
     status = '';
     busy = true;
     try {
-      const image = await decode(sourceFile);
+      const image = await decode(sourceFile, sourceDimensions);
       if (task !== operationId) return;
       const result = await runWorker(image, targetWidth, targetHeight, mask);
       if (task !== operationId || result.type !== 'result') return;
@@ -508,6 +513,7 @@
     error = 'cancelled';
   }
 
+  /* eslint-disable no-control-regex -- Reject ASCII control bytes in exported filenames. */
   function downloadName(file: File): string {
     const stem = file.name.replace(/\.[^.]+$/u, '').replace(/[\\/:*?"<>|\u0000-\u001f]/gu, '_').slice(0, 100) || 'image';
     return `${stem}-adaptive-resized.png`;
@@ -623,24 +629,24 @@
       <legend>{tr('dimensions')}</legend>
       <label>
         <span>{tr('width')}</span>
-        <input data-testid="t81-width" type="number" min="1" max={MAX_AXIS} step="1" value={targetWidth} oninput={(event) => { targetWidth = (event.currentTarget as HTMLInputElement).value === '' ? 0 : Number((event.currentTarget as HTMLInputElement).value); clearResult(); }} />
+        <input data-testid="t81-width" type="number" min="1" max={MAX_AXIS} step="1" value={targetWidth} disabled={busy} oninput={(event) => { targetWidth = (event.currentTarget as HTMLInputElement).value === '' ? 0 : Number((event.currentTarget as HTMLInputElement).value); clearResult(); }} />
       </label>
       <label>
         <span>{tr('height')}</span>
-        <input data-testid="t81-height" type="number" min="1" max={MAX_AXIS} step="1" value={targetHeight} oninput={(event) => { targetHeight = (event.currentTarget as HTMLInputElement).value === '' ? 0 : Number((event.currentTarget as HTMLInputElement).value); clearResult(); }} />
+        <input data-testid="t81-height" type="number" min="1" max={MAX_AXIS} step="1" value={targetHeight} disabled={busy} oninput={(event) => { targetHeight = (event.currentTarget as HTMLInputElement).value === '' ? 0 : Number((event.currentTarget as HTMLInputElement).value); clearResult(); }} />
       </label>
     </fieldset>
 
     <div class="t81-mask-controls">
       <label class="t81-mask-toggle">
-        <input data-testid="t81-mask-toggle" type="checkbox" checked={protectEnabled} disabled={!selected} onchange={toggleProtection} />
+        <input data-testid="t81-mask-toggle" type="checkbox" checked={protectEnabled} disabled={busy || !selected} onchange={toggleProtection} />
         <span>{tr('maskToggle')}</span>
       </label>
       <p id="t81-mask-help" class="t81-help">{tr('maskHelp')}</p>
       {#if protectEnabled && selected}
         <p id="t81-mask-keyboard" class="t81-help">{tr('maskKeyboard')}</p>
         <div class="t81-mask-actions">
-          <button class="button" data-testid="t81-clear-mask" type="button" onclick={clearMask}>{tr('clearMask')}</button>
+          <button class="button" data-testid="t81-clear-mask" type="button" disabled={busy} onclick={clearMask}>{tr('clearMask')}</button>
           <span>{tr('maskCount')}: {protectedPixelCount}</span>
         </div>
         <div class="t81-mask-stage" style={`aspect-ratio: ${selected.dimensions.width} / ${selected.dimensions.height}`}>
@@ -650,7 +656,8 @@
             data-testid="t81-mask-canvas"
             aria-label={tr('maskCanvasLabel')}
             aria-describedby="t81-mask-help t81-mask-keyboard"
-            tabindex="0"
+            tabindex={busy ? -1 : 0}
+            style:pointer-events={busy ? 'none' : 'auto'}
             onpointerdown={pointerDown}
             onpointermove={pointerMove}
             onpointerup={pointerUp}
