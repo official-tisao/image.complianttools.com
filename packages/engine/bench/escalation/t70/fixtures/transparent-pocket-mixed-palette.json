@@ -1,0 +1,69 @@
+{
+  "id": "transparent-pocket-mixed-palette",
+  "description": "Transparent centre surrounded by eight distinct opaque colours; no colour is dominant.",
+  "width": 3,
+  "height": 3,
+  "focusPixel": {
+    "x": 1,
+    "y": 1
+  },
+  "sourceGenerated": true,
+  "rgbaSha256": "dd521d3f045c519ab86d3aa5cf77386c265c7932d4c9a02f0352d9b79d708bb9",
+  "rgbaBase64": "8Cgo/x7SRv8eRvD/gjLc/wAAAADw0hT/8HgU/xTS3P/cHtL/",
+  "paletteRgba": [
+    [
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      130,
+      50,
+      220,
+      255
+    ],
+    [
+      20,
+      210,
+      220,
+      255
+    ],
+    [
+      220,
+      30,
+      210,
+      255
+    ],
+    [
+      240,
+      120,
+      20,
+      255
+    ],
+    [
+      240,
+      210,
+      20,
+      255
+    ],
+    [
+      240,
+      40,
+      40,
+      255
+    ],
+    [
+      30,
+      210,
+      70,
+      255
+    ],
+    [
+      30,
+      70,
+      240,
+      255
+    ]
+  ]
+}

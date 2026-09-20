@@ -1,0 +1,33 @@
+{
+  "id": "transparent-pocket-clear-dominance",
+  "description": "Transparent centre with seven red and one blue opaque neighbours; red is the strict majority.",
+  "width": 3,
+  "height": 3,
+  "focusPixel": {
+    "x": 1,
+    "y": 1
+  },
+  "sourceGenerated": true,
+  "rgbaSha256": "677ed772d6cc54f043a54d1174da94e6495f622a68ae8efb5874e6e8f3684698",
+  "rgbaBase64": "3DI8/9wyPP/cMjz/3DI8/wAAAADcMjz/3DI8/9wyPP8eUOb/",
+  "paletteRgba": [
+    [
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      220,
+      50,
+      60,
+      255
+    ],
+    [
+      30,
+      80,
+      230,
+      255
+    ]
+  ]
+}
