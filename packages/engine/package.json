@@ -118,9 +118,11 @@
     "imagetracerjs": "1.2.6",
     "mediabunny": "1.25.1",
     "mp4box": "2.4.1",
+    "onnxruntime-web": "1.30.0",
     "parse-exr": "1.0.2",
     "pdf-lib": "1.17.1",
     "pdfjs-dist": "5.4.624",
+    "tesseract.js": "7.0.0",
     "utif": "3.1.0",
     "zod": "4.4.3"
   }
