@@ -9,6 +9,7 @@ export default tseslint.config(
   {
     ignores: [
       '**/.svelte-kit/**',
+      '**/.lvgl/**',
       '**/.turbo/**',
       '**/.venv/**',
       '**/venv/**',
@@ -84,7 +85,11 @@ export default tseslint.config(
     languageOptions: { globals: globals.browser },
   },
   {
-    files: ['apps/relay/**/*.{js,mjs,cjs,ts}', 'packages/cli/**/*.{js,mjs,cjs,ts}', 'packages/extension/**/*.{js,mjs,cjs,ts}'],
+    files: [
+      'apps/relay/**/*.{js,mjs,cjs,ts}',
+      'packages/cli/**/*.{js,mjs,cjs,ts}',
+      'packages/extension/**/*.{js,mjs,cjs,ts}',
+    ],
     languageOptions: {
       globals: {
         ...globals.node,
@@ -94,7 +99,11 @@ export default tseslint.config(
     },
   },
   {
-    files: ['*.config.{js,mjs,cjs,ts}', 'apps/*/dev-server.mjs', 'packages/*/scripts/**/*.{js,mjs,cjs}'],
+    files: [
+      '*.config.{js,mjs,cjs,ts}',
+      'apps/*/dev-server.mjs',
+      'packages/*/scripts/**/*.{js,mjs,cjs}',
+    ],
     languageOptions: { globals: globals.node },
   },
   {
