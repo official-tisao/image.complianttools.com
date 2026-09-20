@@ -12,6 +12,10 @@
       "types": "./dist/ops/raster.d.ts",
       "default": "./dist/ops/raster.js"
     },
+    "./ops/smart-crop": {
+      "types": "./dist/ops/smart-crop.d.ts",
+      "default": "./dist/ops/smart-crop.js"
+    },
     "./codecs/encode": {
       "types": "./dist/codecs/encode.d.ts",
       "default": "./dist/codecs/encode.js"
