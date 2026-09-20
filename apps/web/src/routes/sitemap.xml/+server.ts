@@ -24,6 +24,8 @@ const paths = [
   'exif-viewer',
   'remove-exif',
   'image-info',
+  'pixel-art-upscaler',
+  'ocr',
 ] as const;
 
 export const GET = () =>

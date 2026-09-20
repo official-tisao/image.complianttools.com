@@ -665,6 +665,143 @@ const arabic: Readonly<Record<string, string>> = {
   'lossless.previewAlt': 'الناتج المحسن والمتحقق من بكسلاته',
   'lossless.download': 'تنزيل الناتج',
   'lossless.metaDescription': 'حسّن ملفات PNG وGIF وJPEG محليًا من دون تغيير البكسلات المعروضة.',
+  // Translators: keep Tesseract, OCR, OSD, PSM, and model codes unchanged; preserve {value}.
+  'ocr.title': 'استخراج النص من الصور',
+  'ocr.input': 'الصورة وخيارات التعرّف',
+  'ocr.previewAlt': 'الصورة المحددة لاستخراج النص',
+  'ocr.finished': 'اكتمل التعرّف خلال {value} مللي ثانية',
+  'ocr.description':
+    'استخرج النص محليًا باستخدام نماذج Tesseract للغات والكتابات واتجاه الصفحة والمعادلات.',
+  'ocr.metaDescription':
+    'استخرج النص من الصور محليًا باستخدام نماذج Tesseract للغات والكتابات واتجاه الصفحة.',
+  'ocr.back': '← الأدوات',
+  'ocr.choose': 'اختر صورة نقطية',
+  'ocr.fileHelp':
+    'PNG أو JPEG أو WebP أو GIF أو BMP أو AVIF. الحد الأقصى 50 ميغابايت و20 ميغابكسل.',
+  'ocr.run': 'استخراج النص',
+  'ocr.working': 'جارٍ تحميل النموذج والتعرّف على النص…',
+  'ocr.progress': 'جارٍ تحميل النموذج والتعرّف على النص ({value}٪)…',
+  'ocr.idle': 'اختر صورة ونموذجًا لبدء استخراج النص.',
+  'ocr.result': 'نتيجة OCR',
+  'ocr.recognizedText': 'النص المستخرج',
+  'ocr.confidence': 'الثقة',
+  'ocr.modelUsed': 'النموذج المستخدم',
+  'ocr.download': 'تنزيل النص',
+  'ocr.noText': 'لم يتم التعرّف على نص.',
+  'ocr.orientation': 'اتجاه الصفحة',
+  'ocr.orientationConfidence': 'ثقة الاتجاه',
+  'ocr.script': 'الكتابة المكتشفة',
+  'ocr.scriptConfidence': 'ثقة الكتابة',
+  'ocr.equation': 'نص المعادلة',
+  'ocr.orientationGuidance':
+    'لأفضل نتيجة، أدر الصورة لتكون مستقيمة. إذا كان اتجاهها غير واضح أو كانت نتيجة OCR ضعيفة، شغّل «اتجاه الصفحة» لتحميل نموذج OSD الاختياري. لا تُحمّل بيانات OSD أو نماذج الكتابات افتراضيًا.',
+  'ocr.offlineNote':
+    'يحتاج أول تحميل للنموذج إلى اتصال. يمكن إعادة استخدام النماذج التي حُمّلت بنجاح من التخزين المحلي، لكن توفر الصفحة والعامل وملفات التشغيل دون اتصال غير مضمون.',
+  'ocr.formatNote':
+    'تعرض هذه الصفحة نماذج اللغات والكتابات المسجلة ومساعدي الاتجاه والمعادلات. يُطلب النموذج المحدد فقط عند تشغيل OCR: من التخزين المحلي إن توفر، وإلا من CDN المثبت tessdata_fast. لا تُحمّل نماذج OSD والكتابات إلا عند اختيارها.',
+  'ocr.faqLocal': 'هل تُرفع صورتي؟',
+  'ocr.faqLocalAnswer':
+    'لا. تتم قراءة الصورة ومعالجتها في متصفحك. تُحمّل ملفات العامل والتشغيل من التطبيق، وإذا لم يكن النموذج المحدد مخزنًا محليًا فيُطلب ملف النموذج المثبت فقط من jsDelivr. لا تُرسل بيانات الصورة إلى jsDelivr.',
+  'ocr.faqModels': 'ما النماذج المتاحة؟',
+  'ocr.faqModelsAnswer':
+    'تتضمن القائمة نماذج اللغة والكتابات الرسمية المثبتة، ومساعدي اتجاه الصفحة والتعرّف على المعادلات. لا يحتوي الإصدار المثبت على نموذج Hausa.',
+  'ocr.faqAccuracy': 'هل اختُبرت دقة كل نموذج؟',
+  'ocr.faqAccuracyAnswer':
+    'لا. قياسات الدقة الحالية تغطي عينة طباعة اصطناعية واحدة لكل لغة من اللغات الثماني الأولية فقط؛ لا تُعد بقية النماذج مقاسة.',
+  'ocr.error.title': 'تعذّر إكمال OCR',
+  'ocr.error.fileRequired': 'اختر صورة أولًا.',
+  'ocr.error.fileType': 'نوع الصورة غير مدعوم في هذا المتصفح.',
+  'ocr.error.fileSize': 'يتجاوز حجم الملف حد 50 ميغابايت.',
+  'ocr.error.imageSize': 'تتجاوز الصورة حد 20 ميغابكسل.',
+  'ocr.error.decode': 'تعذّر فك ترميز الصورة محليًا.',
+  'ocr.error.options': 'اختر نموذج OCR مسجلًا ووضع تخطيط صالحًا.',
+  'ocr.error.unsupported-language': 'رمز اللغة غير مسجل.',
+  'ocr.error.unsupported-model': 'النموذج غير مسجل.',
+  'ocr.error.tessdata-not-registered': 'بيانات النموذج غير مسجلة.',
+  'ocr.error.tessdata-download-failed': 'تعذّر تحميل بيانات النموذج.',
+  'ocr.error.worker-terminated': 'تم إيقاف عامل OCR.',
+  'ocr.error.offline-unavailable': 'ملفات OCR المطلوبة غير متاحة دون اتصال.',
+  'ocr.error.recognition-failed': 'فشل التعرّف على النص.',
+  'ocr.remedy.title': 'الحل',
+  'ocr.remedy.unsupported-language': 'اختر لغة أو صيغة مسجلة في قائمة T62.',
+  'ocr.remedy.unsupported-model': 'اختر نموذج كتابة أو مساعدًا مسجلًا.',
+  'ocr.remedy.tessdata-not-registered': 'اختر نموذجًا مسجلًا في القائمة.',
+  'ocr.remedy.tessdata-download-failed': 'تحقق من الاتصال أو حمّل النموذج قبل العمل دون اتصال.',
+  'ocr.remedy.worker-terminated': 'أعد المحاولة لبدء عامل جديد.',
+  'ocr.remedy.offline-unavailable': 'اتصل بالإنترنت لتحميل ملفات OCR ثم أعد المحاولة.',
+  'ocr.remedy.recognition-failed': 'جرّب صورة أوضح أو نموذجًا مختلفًا.',
+  'option.ocr.mode.label': 'وضع التعرّف',
+  'option.ocr.mode.help': 'اختر نموذج لغة أو كتابة أو مساعد اتجاه أو معادلات.',
+  'option.ocr.mode.option.language': 'لغة أو صيغة',
+  'option.ocr.mode.option.script': 'نموذج كتابة',
+  'option.ocr.mode.option.orientation': 'اتجاه الصفحة',
+  'option.ocr.mode.option.equation': 'تعرّف المعادلات',
+  'option.ocr.language.label': 'اللغة أو الصيغة',
+  'option.ocr.language.help':
+    'يُحمّل النموذج المحدد عند الطلب من التخزين المحلي أو CDN المثبت tessdata_fast.',
+  'option.ocr.baseLanguage.label': 'لغة النص الأساسي',
+  'option.ocr.baseLanguage.help': 'يُحمّل نموذج اللغة المحدد مع مساعد المعادلات.',
+  'option.ocr.script.label': 'نموذج الكتابة',
+  'option.ocr.script.help': 'قد يغطي نموذج الكتابة أكثر من لغة واحدة.',
+  'option.ocr.psm.label': 'وضع تخطيط الصفحة',
+  'option.ocr.psm.help': 'التخطيط التلقائي هو الافتراضي؛ اختر وضعًا آخر لترتيب نص معروف.',
+  // Translators: keep PNG and the numeric scale factors unchanged; preserve the {value} placeholder.
+  't70.title': 'مكبّر فن البكسل',
+  't70.description':
+    'كبّر صور PNG الثابتة لفن البكسل بمقدار 2× أو 3× أو 4× باستخدام خوارزمية محلية حتمية تراعي لوحة الألوان. يبقى الملف الأصلي دون تغيير حتى تفعّل التكبير.',
+  't70.metaDescription':
+    'كبّر صور PNG الثابتة لفن البكسل محليًا بمقدار 2× أو 3× أو 4×. افحص معاينة PNG دون فقد قبل التنزيل.',
+  't70.faq.input': 'ما الملفات التي يمكنني استخدامها؟',
+  't70.faq.inputAnswer':
+    'تقبل هذه الصفحة صور PNG الثابتة حتى 32 ميغابايت و20 ميغابكسل. تُرفض ملفات PNG المتحركة بدلًا من تكبير إطار واحد بصمت.',
+  't70.faq.factors': 'ما عوامل التكبير المدعومة؟',
+  't70.faq.factorsAnswer':
+    'اختر عددًا صحيحًا: 2× أو 3× أو 4×. يقتصر الناتج على 16 ميغابكسل لتجنب تخصيص مساحة كبيرة غير محدودة في المتصفح.',
+  't70.faq.alpha': 'هل يمكن أن تتغير الحواف الشفافة؟',
+  't70.faq.alphaAnswer':
+    'نعم. قد تغيّر قاعدة استمرار الحواف قيمة ألفا المتوسطة حول حدود الشفافية. افحص المعاينة قبل التنزيل.',
+  't70.faq.quality': 'هل تحسّن الخوارزمية كل صورة؟',
+  't70.faq.qualityAnswer':
+    'لا توجد نتيجة عامة مثبتة لجودة كل الصور. تستخدم المقارنة الحالية أربع عينات مولدة ذاتيًا؛ وقد تختلف النتيجة حسب لوحة الألوان وشكل الحواف.',
+  't70.faq.metadata': 'ماذا يحدث للبيانات الوصفية؟',
+  't70.faq.metadataAnswer':
+    'يُرمّز الناتج المكبّر كملف PNG جديد من البكسلات، لذلك لا تُنسخ بيانات الملف الأصلي الوصفية. عند إيقاف التكبير، يُنزّل الملف الأصلي دون تغيير بايتاته.',
+  't70.choose': 'اختر صورة PNG ثابتة',
+  't70.fileHelp':
+    'PNG ثابتة فقط · الحد الأقصى 32 ميغابايت · الحد الأقصى 20 ميغابكسل · تُرفض ملفات PNG المتحركة.',
+  't70.previewAlt': 'صورة PNG لفن البكسل قبل التكبير وبعده',
+  't70.status.unchanged': 'ملف PNG الأصلي دون تغيير.',
+  't70.status.working': 'جارٍ تكبير فن البكسل…',
+  't70.status.done': 'أبعاد الناتج المكبّر: {value} بكسل.',
+  't70.status.latency': 'اكتمل التكبير والترميز خلال {value} مللي ثانية',
+  't70.progress': 'تقدم التكبير',
+  't70.outputDimensions': 'أبعاد الناتج',
+  't70.limits':
+    'الناتج المكبّر ملف PNG جديد ولا تُنسخ إليه البيانات الوصفية الأصلية. افحص الحواف الشفافة: قد تتغير قيمة ألفا المتوسطة.',
+  't70.formatNote':
+    'تقبل الصفحة صور PNG الثابتة وتكتب PNG دون فقد. التكبير متوقف افتراضيًا ويحافظ على الملف الأصلي بايتًا ببايت. عند تفعيله، تستخدم الخوارزمية النظيفة قواعد حتمية 2× و3× و4×؛ ولا تثبت تفضيلًا عامًا للصور، وقد تتغير ألفا عند الحواف الشفافة. تبقى المعالجة والمعاينة والتصدير محلية بعد تحميل الصفحة والعامل.',
+  't70.error.title': 'تعذر إكمال تكبير فن البكسل',
+  't70.error.unsupported-file': 'الملف المحدد ليس صورة PNG ثابتة مدعومة.',
+  't70.error.file-too-large': 'يتجاوز ملف PNG المحدد حد 32 ميغابايت.',
+  't70.error.image-too-large': 'يتجاوز المصدر أو الناتج المكبّر حد البكسلات.',
+  't70.error.invalid-options': 'خيارات التكبير المحددة غير صالحة.',
+  't70.error.decode-failed': 'تعذر على المتصفح فك ترميز ملف PNG.',
+  't70.error.processing-failed': 'تعذّر على خوارزمية فن البكسل إكمال معالجة هذه الصورة.',
+  't70.remedy.unsupported-file': 'اختر ملف PNG ثابتًا صالحًا؛ هذه الأداة تقبل PNG فقط حاليًا.',
+  't70.remedy.file-too-large': 'اختر ملف PNG أصغر من 32 ميغابايت.',
+  't70.remedy.image-too-large': 'اختر صورة أصغر أو عامل تكبير أقل لإبقاء الناتج ضمن 16 ميغابكسل.',
+  't70.remedy.invalid-options': 'اختر عامل تكبير 2× أو 3× أو 4× ثم حاول مجددًا.',
+  't70.remedy.decode-failed': 'صدّر ملف PNG ثابتًا وصالحًا ثم اختره مجددًا.',
+  't70.remedy.processing-failed':
+    'جرّب ملف PNG أصغر أو عامل تكبير أقل. يبقى الملف الأصلي دون تغيير.',
+  'option.pixelArt.enabled.label': 'تفعيل تكبير فن البكسل',
+  'option.pixelArt.enabled.help':
+    'متوقف افتراضيًا. عند إيقاف هذا الخيار، يُنزّل ملف PNG الأصلي دون تغيير بايتاته.',
+  'option.pixelArt.factor.label': 'عامل التكبير الصحيح',
+  'option.pixelArt.factor.help': 'يُطبّق فقط عند تفعيل التكبير. العوامل المدعومة هي 2× و3× و4×.',
+  'option.pixelArt.factor.option.2': '2×',
+  'option.pixelArt.factor.option.3': '3×',
+  'option.pixelArt.factor.option.4': '4×',
 };
 
 const accents: Readonly<Record<string, string>> = {

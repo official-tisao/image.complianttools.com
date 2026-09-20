@@ -24,6 +24,8 @@ const tools = [
   'raw-converter',
   'embedded-converter',
   'lossless-optimize',
+  'pixel-art-upscaler',
+  'ocr',
 ] as const;
 
 // Routes intentionally excluded from localized entries:

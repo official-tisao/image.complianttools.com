@@ -413,6 +413,13 @@ details summary {
   .tool-header nav {
     display: none;
   }
+  .file-entry {
+    flex-wrap: wrap;
+  }
+  .file-entry input {
+    flex: 1 1 100%;
+    max-width: 100%;
+  }
   .workspace {
     grid-template-columns: 1fr;
   }
