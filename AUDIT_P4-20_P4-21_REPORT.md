@@ -1,4 +1,33 @@
-# FINAL READ-ONLY AUDIT — P4-20 (Remaining local tools) & P4-21 (Escalation Benchmark Corpus)
+# Current delivery status — 2026-09-21
+
+This section supersedes the historical 2026-09-18 audit retained below. That snapshot describes an earlier branch state and its claims about missing routes, models, fixtures, measurements, and P4-22 are no longer current.
+
+## P4-20 — engine integration complete; STCC remains open
+
+- The engine adapters, product routes, fixtures, model delivery, and current route evidence are present. The Appendix A STCC row remains unchecked: shared behavior is implemented, but full route-level acceptance is not established for all eleven capabilities.
+- **T32:** Tier 1 DCCI/NEDI remains available immediately. The user-started Real-ESRGAN x2/x4 browser path verifies pinned model bytes, runs through `onnxruntime-web`, and falls back to Tier 1 on unsupported devices or delivery failure. The project owner accepted the BSD-3 label for the exact `.pth` checkpoints. Public Hugging Face ONNX files are commit-pinned; per-model Docker runtime URL and fallback settings can replace the host. The container supplies URLs only and never downloads model weights. Synthetic measurements show no quality advantage over Tier 1 on the tested inputs; representative camera-image quality and durable production hosting remain open.
+- **T62:** The pinned official `tessdata_fast` catalogue registers 163 items, with exact file hashes. Models load in the browser only when selected; production uses the registered CDN/raw source and browser cache. Only `script/Cyrillic.traineddata` is tracked, and the production build prunes ignored test downloads. English, French, Spanish, Hindi, Mandarin Chinese, German, Japanese, and Italian are available in the registered catalogue. Hausa is absent upstream and is skipped. OSD and script helpers remain opt-in. Existing evidence covers eight generated language fixtures, one individual CC0 sample, and same-page warm-cache offline reuse; expanded-catalogue accuracy and fresh-page offline startup remain open.
+- **T57:** Manual region blur remains available; optional YuNet suggestions download only after the user asks and accept only the registered model bytes. The selected corpus is the deterministic in-repository synthetic face suite, released CC0, with five exact boxes. Chromium matched all five at IoU ≥ 0.50. This proves functional and edge-case handling only; it does not establish real-photo detection accuracy.
+
+## P4-21 — measured, still incomplete
+
+The corpus now contains measured entries for T27, T32, T57, T60, T61, T62, T66, T70, T79, T80, and T81, with CC0 or generated fixtures and scope limitations recorded. T57 uses the selected synthetic CC0 fixture suite. The overall acceptance item remains open because not every register capability has an approved, measured local-versus-reference comparison and a complete shortfall statement; no-model-gap, AI-only, and blocked entries retain their stated status.
+
+## P4-22 — register reconciliation in progress
+
+`PLAN.md`, `README.md`, `feature-audit.csv`, the model register, and the T57 hosting note now record the current T32/T57/T62 evidence and limits. P4-22 remains partial: its remaining acceptance items include reviewing every register row for status-appropriate evidence and deleting/logging Tier 3 entries only where results justify that decision. No row is removed based on synthetic evidence alone.
+
+## Current verification
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm test:gates`, `pnpm build`, `pnpm verify:route-budgets`, `pnpm size`, engine benchmark, OCR source checks, RAW corpus, and credential-leak verification pass.
+- No-network E2E passed 6/6. The full CI-mode three-browser E2E run passed with 1,081 tests, 32 expected skips, and three tests that passed on retry under browser contention. After adding explicit hydration waits to the affected T60/T70 cases, the nine targeted regressions passed across Chromium, Firefox, and WebKit.
+- All four Lighthouse groups passed their 15-run assertions. The refreshed T57 production-preview smoke matched all five synthetic boxes (5 TP, 0 FP, 0 FN; IoU 0.7575–0.8830); the new first-transfer and same-session timings are recorded in the machine-readable result.
+- Embedded fixture generation and C11 `-Wall -Wextra -Werror` compilation against the pinned LVGL v8 and v9 checkouts pass. Arduino AVR Uno and ESP32 sketches also compile against the pinned board libraries.
+- Docker validation could not complete because Docker Desktop returned HTTP 500 from the local daemon during container inspection; local image/Compose validation remains unverified.
+
+---
+
+# Historical snapshot — 2026-09-18 (superseded above)
 
 Branch: `feat/p4-20-p4-21` | Date: 2026-09-18 | Read-only; no commits, no pushes, no modifications.
 
