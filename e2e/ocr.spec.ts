@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 
 import AxeBuilder from '@axe-core/playwright';
@@ -262,6 +263,74 @@ test('T62 orientation helper returns page rotation and confidence data', async (
   await expect(result.getByText('Orientation confidence', { exact: true })).toBeVisible();
   await expect(result.getByText('Detected script', { exact: true })).toBeVisible();
   await expect(result.getByText('Script confidence', { exact: true })).toBeVisible();
+});
+
+test('T62 fetches only the pinned OSD model when orientation is first requested', async ({
+  page,
+  context,
+}) => {
+  test.setTimeout(300_000);
+  const localOsdPath = 'apps/web/static/tessdata/osd.traineddata';
+  test.skip(
+    existsSync(localOsdPath),
+    'The default Playwright setup prefetches OSD; run with PLAYWRIGHT_SKIP_OCR_TESSDATA_PREFETCH=1 to verify CDN delivery.',
+  );
+
+  const assetRecords = JSON.parse(await readFile('docs/static-assets.json', 'utf8')) as Array<{
+    path: string;
+    delivery?: string;
+    deliveryUrl?: string;
+    upstreamCommit?: string;
+  }>;
+  const osdRecord = assetRecords.find(
+    (record) => record.path === 'apps/web/static/tessdata/osd.traineddata',
+  );
+  if (!osdRecord || osdRecord.delivery !== 'lazy-cdn' || !osdRecord.upstreamCommit) {
+    throw new Error('The OSD model must have a pinned lazy-CDN register entry.');
+  }
+  const expectedOsdUrl =
+    `https://cdn.jsdelivr.net/gh/tesseract-ocr/tessdata_fast@${osdRecord.upstreamCommit}/` +
+    'osd.traineddata';
+  expect(osdRecord.deliveryUrl).toBe(expectedOsdUrl);
+
+  const traineddataRequests: Array<{ url: string; method: string }> = [];
+  context.on('request', (request) => {
+    if (new URL(request.url()).pathname.endsWith('.traineddata')) {
+      traineddataRequests.push({ url: request.url(), method: request.method() });
+    }
+  });
+
+  await page.goto('/ocr');
+  await expect(page.locator('html')).toHaveAttribute('data-hydrated', 'true');
+  expect(traineddataRequests).toEqual([]);
+
+  const orientationMode = page.getByRole('button', { name: 'Page orientation', exact: true });
+  await orientationMode.click();
+  await expect(orientationMode).toHaveAttribute('aria-pressed', 'true');
+  await page.getByLabel('Choose a raster image').setInputFiles({
+    name: 'rotated-generated-text.png',
+    mimeType: 'image/png',
+    buffer: await generatedRotatedTextPng(page),
+  });
+  expect(traineddataRequests).toEqual([]);
+
+  await page.getByRole('button', { name: 'Recognize text' }).click();
+  const result = page.getByTestId('ocr-result');
+  await expect(result.getByText('Page orientation', { exact: true })).toBeVisible({
+    timeout: 240_000,
+  });
+  await expect(result.locator('dd').nth(0)).toHaveText('270°');
+  await expect(result.getByText('Orientation confidence', { exact: true })).toBeVisible();
+  await expect(result.getByText('Detected script', { exact: true })).toBeVisible();
+  await expect(result.getByText('Script confidence', { exact: true })).toBeVisible();
+
+  const observedRequests = traineddataRequests.map(({ url, method }) => {
+    const parsed = new URL(url);
+    return parsed.hostname === 'cdn.jsdelivr.net'
+      ? `${method} ${parsed.href}`
+      : `${method} ${parsed.pathname}`;
+  });
+  expect(observedRequests).toEqual(['HEAD /tessdata/osd.traineddata', `GET ${expectedOsdUrl}`]);
 });
 
 test('T62 recognizes with a cached or pinned model and keeps the runtime same-origin', async ({
