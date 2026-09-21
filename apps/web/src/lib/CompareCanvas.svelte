@@ -1,4 +1,11 @@
 <script lang="ts">
+  import type { OptionDescription } from '@complianttools/image-engine/schemas/options';
+  import {
+    T60CompareOptionsSchema,
+    t60CompareOptionDescriptions,
+    type T60CompareOptions,
+  } from '@complianttools/image-engine/schemas/t60-compare-options';
+  import GeneratedControls from './GeneratedControls.svelte';
   import { translate, type Locale } from './i18n';
   let {
     beforeUrl,
@@ -6,14 +13,56 @@
     alt = 'Image comparison',
     locale = 'en',
   } = $props<{ beforeUrl: string; afterUrl: string; alt?: string; locale?: Locale }>();
-  let mode = $state<'split' | 'side' | 'onion' | 'difference' | 'output'>('split');
-  let split = $state(50);
-  let opacity = $state(50);
-  let gain = $state(4);
+  let options = $state<T60CompareOptions>(T60CompareOptionsSchema.parse({}));
   let zoom = $state(0);
   let panX = $state(0);
   let panY = $state(0);
   const zoomScale = $derived(zoom === 0 ? 1 : zoom);
+  const localizedDescriptions = $derived.by(() => {
+    const labelKeys: Record<string, string> = {
+      mode: 'compare.mode',
+      split: 'compare.splitPosition',
+      opacity: 'compare.opacity',
+      gain: 'compare.gain',
+    };
+    const descriptions: Record<string, OptionDescription> = {};
+    for (const [path, description] of Object.entries(t60CompareOptionDescriptions)) {
+      const localized: OptionDescription = {
+        ...description,
+        label: translate(locale, labelKeys[path] ?? path, description.label),
+        help: translate(locale, `${labelKeys[path] ?? path}.help`, description.help ?? ''),
+      };
+      if (description.optionLabels) {
+        localized.optionLabels = Object.fromEntries(
+          Object.entries(description.optionLabels).map(([value, fallback]) => [
+            value,
+            translate(locale, `compare.${value}`, fallback),
+          ]),
+        );
+      }
+      descriptions[path] = localized;
+    }
+    return descriptions;
+  });
+  const visibleDescriptions = $derived.by(() => {
+    const paths =
+      options.mode === 'split'
+        ? ['mode', 'split']
+        : options.mode === 'onion'
+          ? ['mode', 'opacity']
+          : options.mode === 'difference'
+            ? ['mode', 'gain']
+            : ['mode'];
+    return Object.fromEntries(paths.map((path) => [path, localizedDescriptions[path]!])) as Record<
+      string,
+      OptionDescription
+    >;
+  });
+  const optionValues = $derived({ ...options });
+  function updateOption(path: string, value: unknown) {
+    const parsed = T60CompareOptionsSchema.safeParse({ ...options, [path]: value });
+    if (parsed.success) options = parsed.data;
+  }
   const pan = (x: number, y: number) => {
     panX += x;
     panY += y;
@@ -23,34 +72,24 @@
 <section
   class="compare"
   data-testid="compare-canvas"
-  style={`--split:${split}%;--opacity:${opacity / 100};--gain:${gain};--zoom:${zoomScale};--pan-x:${panX}px;--pan-y:${panY}px`}
+  style={`--split:${options.split}%;--opacity:${options.opacity / 100};--gain:${options.gain};--zoom:${zoomScale};--pan-x:${panX}px;--pan-y:${panY}px`}
 >
-  <div class="compare-modes" aria-label={translate(locale, 'compare.mode', 'Comparison mode')}>
-    {#each ['split', 'side', 'onion', 'difference', 'output'] as value (value)}<button
-        type="button"
-        aria-pressed={mode === value}
-        onclick={() => (mode = value as typeof mode)}
-        >{translate(locale, `compare.${value}`, value)}</button
-      >{/each}
+  <div class="compare-options">
+    <GeneratedControls
+      descriptions={visibleDescriptions}
+      values={optionValues}
+      onChange={updateOption}
+      {locale}
+    />
   </div>
-  <div class:pixelated={zoom >= 4} class="compare-stage" data-mode={mode}>
-    {#if mode === 'side'}<img src={beforeUrl} {alt} /><img src={afterUrl} {alt} />
+  <div class:pixelated={zoom >= 4} class="compare-stage" data-mode={options.mode}>
+    {#if options.mode === 'side'}<img src={beforeUrl} {alt} /><img src={afterUrl} {alt} />
     {:else}<img class="before" src={beforeUrl} {alt} /><img
         class="after"
         src={afterUrl}
         {alt}
       />{/if}
-    {#if mode === 'split'}<div class="split-line"></div>
-      <!-- svelte-ignore a11y_no_redundant_roles --><input
-        class="split-control"
-        aria-label={translate(locale, 'compare.split', 'Before and after split')}
-        aria-valuetext={`${split}% ${translate(locale, 'compare.after', 'after')}`}
-        role="slider"
-        type="range"
-        min="0"
-        max="100"
-        bind:value={split}
-      />{/if}
+    {#if options.mode === 'split'}<div class="split-line"></div>{/if}
   </div>
   <div class="canvas-tools">
     <button type="button" onclick={() => (zoom = 0)}
@@ -75,12 +114,6 @@
       type="button"
       aria-label={translate(locale, 'compare.panRight', 'Pan image right')}
       onclick={() => pan(32, 0)}>→</button
-    >{#if mode === 'onion'}<label
-        >{translate(locale, 'compare.opacity', 'Opacity')}
-        <input type="range" min="0" max="100" bind:value={opacity} /></label
-      >{/if}{#if mode === 'difference'}<label
-        >{translate(locale, 'compare.gain', 'Gain')}
-        <input type="range" min="1" max="20" bind:value={gain} /></label
-      >{/if}
+    >
   </div>
 </section>

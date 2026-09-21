@@ -41,6 +41,10 @@ async function generatedPng(page: import('@playwright/test').Page, width = 12, h
   return Buffer.from(base64, 'base64');
 }
 
+async function waitForHydration(page: import('@playwright/test').Page) {
+  await page.locator('html[data-hydrated="true"]').waitFor();
+}
+
 async function generatedSolidPng(
   page: import('@playwright/test').Page,
   width: number,
@@ -146,7 +150,7 @@ test('T60 compares registered CC0 reference and JPEG fixtures locally', async ({
   });
 
   await page.goto('/compare');
-  await page.locator('html[data-hydrated="true"]').waitFor();
+  await waitForHydration(page);
   origin = new URL(page.url()).origin;
   await page.getByTestId('t60-before-input').setInputFiles({
     name: 'gold-weight-reference.png',
@@ -165,9 +169,9 @@ test('T60 compares registered CC0 reference and JPEG fixtures locally', async ({
   await expect(page.getByTestId('t60-results')).toContainText('dB');
   await expect(page.getByTestId('compare-canvas')).toBeVisible();
   await expect(page.locator('.compare-stage .before')).toHaveJSProperty('naturalWidth', 128);
-  await page.getByRole('button', { name: 'side', exact: true }).click();
+  await page.getByLabel('Comparison mode').selectOption('side');
   await expect(page.locator('.compare-stage')).toHaveAttribute('data-mode', 'side');
-  await page.getByRole('button', { name: 'onion', exact: true }).click();
+  await page.getByLabel('Comparison mode').selectOption('onion');
   await expect(page.locator('.compare-stage')).toHaveAttribute('data-mode', 'onion');
   expect(externalRequests).toEqual([]);
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
@@ -177,6 +181,7 @@ test('T60 withholds pixel metrics for different source dimensions but keeps the 
   page,
 }) => {
   await page.goto('/compare');
+  await waitForHydration(page);
   await page.getByTestId('t60-before-input').setInputFiles({
     name: 'reference.png',
     mimeType: 'image/png',
@@ -195,6 +200,7 @@ test('T60 withholds pixel metrics for different source dimensions but keeps the 
 
 test('T60 reports an unsupported file with a typed remedy', async ({ page }) => {
   await page.goto('/compare');
+  await waitForHydration(page);
   await page.getByTestId('t60-before-input').setInputFiles({
     name: 'notes.txt',
     mimeType: 'text/plain',
@@ -211,6 +217,7 @@ test('T60 reports an unsupported file with a typed remedy', async ({ page }) => 
 
 test('T60 rejects an oversized file before decoding it', async ({ page }) => {
   await page.goto('/compare');
+  await waitForHydration(page);
   await page.getByTestId('t60-before-input').setInputFiles({
     name: 'oversized.png',
     mimeType: 'image/png',
@@ -223,6 +230,7 @@ test('T60 rejects an oversized file before decoding it', async ({ page }) => {
 
 test('T60 rejects an image over the pixel cap with a typed remedy', async ({ page }) => {
   await page.goto('/compare');
+  await waitForHydration(page);
   const largeImage = await generatedSolidPng(page, 4600, 4600);
   expect(largeImage.byteLength).toBeLessThan(32 * 1024 * 1024);
   await page.getByTestId('t60-before-input').setInputFiles({
@@ -250,7 +258,7 @@ test('T60 reports unavailable canvas support with an actionable remedy', async (
     });
   });
   await page.goto('/compare');
-  await page.locator('html[data-hydrated="true"]').waitFor();
+  await waitForHydration(page);
   const reference = await readFile(new URL('gold-weight-reference.png', fixtureRoot));
   await page.getByTestId('t60-before-input').setInputFiles({
     name: 'before.png',
@@ -274,6 +282,7 @@ test('T60 reports unavailable canvas support with an actionable remedy', async (
 
 test('T60 reports a typed decode error for corrupt image bytes', async ({ page }) => {
   await page.goto('/compare');
+  await waitForHydration(page);
   await page.getByTestId('t60-before-input').setInputFiles({
     name: 'reference.png',
     mimeType: 'image/png',
@@ -303,6 +312,7 @@ test('T60 reports a typed worker error when comparison workers cannot start', as
     });
   });
   await page.goto('/compare');
+  await waitForHydration(page);
   const png = await generatedPng(page);
   await page.getByTestId('t60-before-input').setInputFiles({
     name: 'before.png',
@@ -338,6 +348,7 @@ test('T60 cancellation terminates a pending worker and reports a restart remedy'
     });
   });
   await page.goto('/compare');
+  await waitForHydration(page);
   const png = await generatedPng(page);
   await page.getByTestId('t60-before-input').setInputFiles({
     name: 'before.png',
@@ -365,6 +376,7 @@ test('T60 cancellation terminates a pending worker and reports a restart remedy'
 
 test('T60 comparison modes and split control work with the keyboard', async ({ page }) => {
   await page.goto('/compare');
+  await waitForHydration(page);
   const png = await generatedPng(page);
   await page.getByTestId('t60-before-input').setInputFiles({
     name: 'before.png',
@@ -378,27 +390,22 @@ test('T60 comparison modes and split control work with the keyboard', async ({ p
   });
   await expect(page.getByTestId('t60-results')).toBeVisible();
 
-  const splitMode = page.getByRole('button', { name: 'split', exact: true });
-  const side = page.getByRole('button', { name: 'side', exact: true });
-  const onion = page.getByRole('button', { name: 'onion', exact: true });
-  await page.getByTestId('t60-after-input').press('Tab');
-  await expect(splitMode).toBeFocused();
-  await page.keyboard.press('Tab');
-  await expect(side).toBeFocused();
-  await page.keyboard.press('Space');
+  const mode = page.getByLabel('Comparison mode');
+  await expect(mode).toHaveValue('split');
+  await mode.focus();
+  await page.keyboard.press('ArrowDown');
   await expect(page.locator('.compare-stage')).toHaveAttribute('data-mode', 'side');
-  await page.keyboard.press('Tab');
-  await expect(onion).toBeFocused();
-  await page.keyboard.press('Enter');
+  await page.keyboard.press('ArrowDown');
   await expect(page.locator('.compare-stage')).toHaveAttribute('data-mode', 'onion');
-  await page.keyboard.press('Shift+Tab');
-  await page.keyboard.press('Shift+Tab');
-  await expect(splitMode).toBeFocused();
-  await page.keyboard.press('Enter');
-  const split = page.locator(
-    '[data-testid="compare-canvas"] input[aria-label="Before and after split"]',
-  );
-  for (let step = 0; step < 5; step += 1) await page.keyboard.press('Tab');
+  await mode.selectOption('split');
+  const reset = page.getByTestId('option-mode').locator('button.reset');
+  await expect(reset).toBeDisabled();
+  await mode.selectOption('side');
+  await expect(reset).toBeEnabled();
+  await reset.click();
+  await expect(mode).toHaveValue('split');
+  const split = page.getByLabel('Split position', { exact: true });
+  await split.focus();
   await expect(split).toBeFocused();
   await page.keyboard.press('ArrowRight');
   await expect(split).toHaveValue('51');
@@ -411,6 +418,7 @@ test('T60 compares a 12 MP image pair within the Chromium route latency budget',
   test.skip(browserName !== 'chromium', 'The route latency threshold is calibrated on Chromium.');
   test.setTimeout(30_000);
   await page.goto('/compare');
+  await waitForHydration(page);
   const source = await generatedSolidPng(page, 4000, 3000);
   expect(source.byteLength).toBeLessThan(32 * 1024 * 1024);
   await page.getByTestId('t60-before-input').setInputFiles({
@@ -441,6 +449,7 @@ test('T60 repeats comparison after same-page worker warm-up with browser network
     'WebKit cannot decode a local Blob through createImageBitmap while offline in this app context; Chromium and Firefox cover the warm-cache operation.',
   );
   await page.goto('/compare');
+  await waitForHydration(page);
   const source = await generatedPng(page, 128, 96);
   const before = { name: 'warm-before.png', mimeType: 'image/png', buffer: source };
   const after = { name: 'warm-after.png', mimeType: 'image/png', buffer: source };

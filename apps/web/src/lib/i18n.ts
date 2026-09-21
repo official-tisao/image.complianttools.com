@@ -59,6 +59,8 @@ const arabic: Readonly<Record<string, string>> = {
   'inspector.faqFormatsAnswer':
     'يوفر PNG وJPEG وGIF وWebP فحصًا حتميًا كاملًا حاليًا. ترفض الصيغ الأخرى برسالة قابلة للتنفيذ.',
   'compare.mode': 'وضع المقارنة',
+  // Translators: Preserve the meaning of each comparison view and keep percentage ranges intact.
+  'compare.mode.help': 'اختر طريقة عرض الصورتين في عارض المقارنة.',
   'compare.after': 'بعد',
   // Translators: keep DCCI, NEDI, PNG, MiB, and numeric scale factors unchanged; preserve {value}.
   't32.title': 'مكبّر الصور',
@@ -110,12 +112,16 @@ const arabic: Readonly<Record<string, string>> = {
   't32.remedy.processing-failed': 'حاول مجددًا باستخدام PNG أصغر. تبقى صورة المصدر دون تغيير.',
   't32.remedy.cancelled': 'اختر طريقة وابدأ التكبير مجددًا عندما تكون جاهزًا.',
   'compare.split': 'قبل وبعد',
+  'compare.splitPosition': 'موضع التقسيم',
+  'compare.splitPosition.help': 'حدد مقدار تغطية الصورة بعد التعديل للصورة قبل التعديل.',
   'compare.side': 'جنبًا إلى جنب',
   'compare.onion': 'تراكب شفاف',
   'compare.difference': 'إظهار الاختلاف',
   'compare.output': 'الصورة بعد التعديل',
   'compare.opacity': 'الشفافية',
+  'compare.opacity.help': 'حدد شفافية صورة بعد التعديل المتراكبة.',
   'compare.gain': 'التباين',
+  'compare.gain.help': 'زد قيمة التباين لإظهار فروق البكسل الصغيرة بوضوح أكبر.',
   'compare.percent': 'مئة بالمئة',
   'compare.fit': 'ملاءمة',
   'compare.zoom': 'تكبير',
