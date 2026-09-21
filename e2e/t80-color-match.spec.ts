@@ -116,7 +116,10 @@ test('T80 locally matches a generated still-PNG pair and downloads the exact pre
     .getByTestId('t80-reference-input')
     .setInputFiles({ name: 'reference.png', mimeType: 'image/png', buffer: reference });
   await expect(page.getByTestId('t80-run')).toBeEnabled();
-  await page.getByRole('radio', { name: /Per-channel histogram matching/u }).check();
+  await page
+    .getByTestId('option-t80-method')
+    .getByRole('button', { name: 'Per-channel histogram matching' })
+    .click();
   await page.getByTestId('t80-run').click();
 
   await expect(page.getByTestId('t80-before')).toHaveJSProperty('naturalWidth', 4);
@@ -165,10 +168,12 @@ test('T80 matching controls work with the keyboard', async ({ page }) => {
   await page
     .getByTestId('t80-reference-input')
     .setInputFiles({ name: 'reference.png', mimeType: 'image/png', buffer: reference });
-  const histogram = page.getByRole('radio', { name: /Per-channel histogram matching/u });
+  const histogram = page
+    .getByTestId('option-t80-method')
+    .getByRole('button', { name: 'Per-channel histogram matching' });
   await histogram.focus();
   await page.keyboard.press('Space');
-  await expect(histogram).toBeChecked();
+  await expect(histogram).toHaveAttribute('aria-pressed', 'true');
   const run = page.getByTestId('t80-run');
   await run.focus();
   await page.keyboard.press('Enter');

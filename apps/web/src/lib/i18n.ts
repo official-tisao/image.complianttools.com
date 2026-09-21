@@ -68,6 +68,11 @@ const arabic: Readonly<Record<string, string>> = {
   'option.t61.aspectRatioTolerance.label': 'تفاوت نسبة العرض إلى الارتفاع',
   'option.t61.aspectRatioTolerance.help':
     'اسمح بهذا الاختلاف المئوي بين نسب أبعاد الصور قبل مقارنة البصمات.',
+  'option.t80.method.label': 'طريقة نقل الألوان',
+  'option.t80.method.help':
+    'اختر الطريقة الإحصائية المحلية لمطابقة توزيع المصدر مع الصورة المرجعية.',
+  'option.t80.method.option.reinhard': 'النقل الإحصائي بطريقة رينهارد',
+  'option.t80.method.option.histogram': 'مطابقة المدرج التكراري لكل قناة',
   // Translators: Preserve the meaning of each comparison view and keep percentage ranges intact.
   'compare.mode.help': 'اختر طريقة عرض الصورتين في عارض المقارنة.',
   'compare.after': 'بعد',

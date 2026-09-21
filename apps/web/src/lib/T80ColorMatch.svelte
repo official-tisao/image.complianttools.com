@@ -1,11 +1,22 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
+  import type { OptionDescription } from '@complianttools/image-engine/schemas/options';
+  import {
+    T80ColorMatchOptionsSchema,
+    t80ColorMatchOptionDescriptions,
+    type T80ColorMatchOptions,
+  } from '@complianttools/image-engine/schemas/t80-color-match-options';
+  import GeneratedControls from './GeneratedControls.svelte';
+  import { localizeOptions } from './i18n';
 
   type Locale = 'en' | 'en-XA' | 'ar';
-  type Method = 'reinhard' | 'histogram';
   type Side = 'source' | 'reference';
   type Dimensions = { readonly width: number; readonly height: number };
-  type SelectedImage = { readonly file: File; readonly url: string; readonly dimensions: Dimensions };
+  type SelectedImage = {
+    readonly file: File;
+    readonly url: string;
+    readonly dimensions: Dimensions;
+  };
   type ErrorKind =
     | 'unsupported-file'
     | 'file-too-large'
@@ -18,7 +29,12 @@
     | 'processing-failed'
     | 'cancelled';
   type WorkerResult =
-    | { readonly type: 'result'; readonly width: number; readonly height: number; readonly data: ArrayBuffer }
+    | {
+        readonly type: 'result';
+        readonly width: number;
+        readonly height: number;
+        readonly data: ArrayBuffer;
+      }
     | { readonly type: 'error' };
 
   const MAX_FILE_BYTES = 16 * 1024 * 1024;
@@ -29,8 +45,10 @@
 
   const en = {
     title: 'Colour Match',
-    description: 'Adjust a still PNG’s global colour distribution to a reference using Reinhard transfer or per-channel histogram matching. Processing stays in your browser; no model or network service is used.',
-    metaDescription: 'Match global colour distributions between still PNG images with local Reinhard or histogram methods. Compare the preview before downloading a PNG.',
+    description:
+      'Adjust a still PNG’s global colour distribution to a reference using Reinhard transfer or per-channel histogram matching. Processing stays in your browser; no model or network service is used.',
+    metaDescription:
+      'Match global colour distributions between still PNG images with local Reinhard or histogram methods. Compare the preview before downloading a PNG.',
     eyebrow: 'Local colour tool',
     privacy: 'Images stay in this browser. No model, upload, or network service is used.',
     source: 'Source image (still PNG)',
@@ -57,18 +75,22 @@
     dimensions: 'Output dimensions',
     faqHeading: 'Questions about this tool',
     faqInput: 'Which images can I use?',
-    faqInputAnswer: 'Choose two still PNG files, each smaller than 16 MiB and no larger than 6 megapixels. Animated PNG files are rejected.',
+    faqInputAnswer:
+      'Choose two still PNG files, each smaller than 16 MiB and no larger than 6 megapixels. Animated PNG files are rejected.',
     faqMethod: 'What does matching change?',
-    faqMethodAnswer: 'It changes RGB values to bring global colour statistics closer to the reference. It does not move pixels or establish that the result looks natural for every pair.',
+    faqMethodAnswer:
+      'It changes RGB values to bring global colour statistics closer to the reference. It does not move pixels or establish that the result looks natural for every pair.',
     faqPrivacy: 'Are my images uploaded?',
-    faqPrivacyAnswer: 'No. Decoding, colour processing, preview, and PNG export run locally in your browser. This tool does not load a model or call a network service.',
+    faqPrivacyAnswer:
+      'No. Decoding, colour processing, preview, and PNG export run locally in your browser. This tool does not load a model or call a network service.',
     related: 'Related tools',
     convert: 'Convert images',
     errorPrefix: 'Try this',
     errors: {
       'unsupported-file': 'Choose a valid PNG image.',
       'file-too-large': 'The PNG exceeds the 16 MiB file limit.',
-      'image-too-large': 'The source and reference must each be at most 6 megapixels and 8 megapixels combined.',
+      'image-too-large':
+        'The source and reference must each be at most 6 megapixels and 8 megapixels combined.',
       'animated-image': 'Animated PNG is not supported.',
       'invalid-png': 'The PNG structure is incomplete or invalid.',
       'decode-failed': 'The browser could not decode this PNG.',
@@ -80,7 +102,8 @@
     remedies: {
       'unsupported-file': 'Export the image as a still PNG and choose it again.',
       'file-too-large': 'Choose a PNG smaller than 16 MiB.',
-      'image-too-large': 'Choose smaller images and keep the combined dimensions within the stated limit.',
+      'image-too-large':
+        'Choose smaller images and keep the combined dimensions within the stated limit.',
       'animated-image': 'Export one still frame as a regular PNG.',
       'invalid-png': 'Export a valid PNG and choose it again.',
       'decode-failed': 'Export a valid, non-animated PNG and try again.',
@@ -93,8 +116,10 @@
 
   const ar = {
     title: 'مطابقة الألوان',
-    description: 'اضبط التوزيع العام للألوان في صورة PNG ثابتة ليتقارب مع صورة مرجعية باستخدام طريقة رينهارد أو مطابقة المدرج التكراري لكل قناة. تتم المعالجة في المتصفح دون نموذج أو خدمة شبكة.',
-    metaDescription: 'طابق التوزيعات العامة للألوان بين صور PNG ثابتة محليًا. افحص المعاينة قبل تنزيل صورة PNG.',
+    description:
+      'اضبط التوزيع العام للألوان في صورة PNG ثابتة ليتقارب مع صورة مرجعية باستخدام طريقة رينهارد أو مطابقة المدرج التكراري لكل قناة. تتم المعالجة في المتصفح دون نموذج أو خدمة شبكة.',
+    metaDescription:
+      'طابق التوزيعات العامة للألوان بين صور PNG ثابتة محليًا. افحص المعاينة قبل تنزيل صورة PNG.',
     eyebrow: 'أداة ألوان محلية',
     privacy: 'تبقى الصور في هذا المتصفح. لا يُستخدم نموذج أو رفع أو خدمة شبكة.',
     source: 'الصورة المصدر (PNG ثابتة)',
@@ -121,11 +146,14 @@
     dimensions: 'أبعاد الإخراج',
     faqHeading: 'أسئلة حول هذه الأداة',
     faqInput: 'ما الصور التي يمكنني استخدامها؟',
-    faqInputAnswer: 'اختر ملفي PNG ثابتين، حجم كل منهما أقل من 16 ميبيبايت ولا يتجاوز 6 ميغابكسل. تُرفض صور PNG المتحركة.',
+    faqInputAnswer:
+      'اختر ملفي PNG ثابتين، حجم كل منهما أقل من 16 ميبيبايت ولا يتجاوز 6 ميغابكسل. تُرفض صور PNG المتحركة.',
     faqMethod: 'ما الذي تغيّره المطابقة؟',
-    faqMethodAnswer: 'تغيّر قيم RGB لتقريب الإحصاءات العامة للألوان من الصورة المرجعية. لا تنقل وحدات البكسل ولا تثبت أن النتيجة تبدو طبيعية لكل زوج من الصور.',
+    faqMethodAnswer:
+      'تغيّر قيم RGB لتقريب الإحصاءات العامة للألوان من الصورة المرجعية. لا تنقل وحدات البكسل ولا تثبت أن النتيجة تبدو طبيعية لكل زوج من الصور.',
     faqPrivacy: 'هل يتم رفع صوري؟',
-    faqPrivacyAnswer: 'لا. يجري فك الترميز ومعالجة الألوان والمعاينة والتصدير محليًا في المتصفح. لا تحمّل الأداة نموذجًا ولا تتصل بخدمة شبكة.',
+    faqPrivacyAnswer:
+      'لا. يجري فك الترميز ومعالجة الألوان والمعاينة والتصدير محليًا في المتصفح. لا تحمّل الأداة نموذجًا ولا تتصل بخدمة شبكة.',
     related: 'أدوات ذات صلة',
     convert: 'تحويل الصور',
     errorPrefix: 'جرّب هذا',
@@ -158,7 +186,7 @@
   let { locale = 'en' }: { locale?: Locale } = $props();
   let source = $state<SelectedImage>();
   let reference = $state<SelectedImage>();
-  let method = $state<Method>('reinhard');
+  let options = $state<T80ColorMatchOptions>(T80ColorMatchOptionsSchema.parse({}));
   let outputUrl = $state('');
   let outputBytes = $state(0);
   let busy = $state(false);
@@ -183,6 +211,12 @@
     { question: t('faqMethod'), answer: t('faqMethodAnswer') },
     { question: t('faqPrivacy'), answer: t('faqPrivacyAnswer') },
   ]);
+  const localizedOptionDescriptions = $derived(
+    localizeOptions(locale, t80ColorMatchOptionDescriptions) as Readonly<
+      Record<string, OptionDescription>
+    >,
+  );
+  const optionValues = $derived({ 't80.method': options.method });
 
   function errorText(kind: ErrorKind): string {
     const selected = locale === 'ar' ? ar : en;
@@ -224,7 +258,8 @@
       header.length < 24 ||
       !PNG_SIGNATURE.every((byte, index) => header[index] === byte) ||
       String.fromCharCode(...header.slice(12, 16)) !== 'IHDR'
-    ) throw new Error('unsupported-file');
+    )
+      throw new Error('unsupported-file');
 
     const view = new DataView(header.buffer, header.byteOffset, header.byteLength);
     const width = view.getUint32(16);
@@ -278,7 +313,11 @@
     }
   }
 
-  async function decode(file: File): Promise<{ readonly width: number; readonly height: number; readonly data: Uint8ClampedArray }> {
+  async function decode(file: File): Promise<{
+    readonly width: number;
+    readonly height: number;
+    readonly data: Uint8ClampedArray;
+  }> {
     let bitmap: ImageBitmap | undefined;
     try {
       bitmap = await createImageBitmap(file);
@@ -308,12 +347,14 @@
   function runWorker(
     sourcePixels: Awaited<ReturnType<typeof decode>>,
     referencePixels: Awaited<ReturnType<typeof decode>>,
-    selectedMethod: Method,
+    selectedMethod: T80ColorMatchOptions['method'],
   ): Promise<WorkerResult> {
     return new Promise((resolve, reject) => {
       let worker: Worker;
       try {
-        worker = new Worker(new URL('../workers/t80-color-match-worker.ts', import.meta.url), { type: 'module' });
+        worker = new Worker(new URL('../workers/t80-color-match-worker.ts', import.meta.url), {
+          type: 'module',
+        });
       } catch {
         reject('processing-failed' satisfies ErrorKind);
         return;
@@ -345,7 +386,11 @@
           {
             method: selectedMethod,
             source: { width: sourcePixels.width, height: sourcePixels.height, data: sourceBuffer },
-            reference: { width: referencePixels.width, height: referencePixels.height, data: referenceBuffer },
+            reference: {
+              width: referencePixels.width,
+              height: referencePixels.height,
+              data: referenceBuffer,
+            },
           },
           [sourceBuffer, referenceBuffer],
         );
@@ -367,7 +412,10 @@
     context.putImageData(imageData, 0, 0);
     try {
       return await new Promise((resolve, reject) => {
-        canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error('processing-failed')), 'image/png');
+        canvas.toBlob(
+          (blob) => (blob ? resolve(blob) : reject(new Error('processing-failed'))),
+          'image/png',
+        );
       });
     } finally {
       canvas.width = 0;
@@ -380,7 +428,11 @@
       error = 'missing-image';
       return;
     }
-    if (source.dimensions.width * source.dimensions.height + reference.dimensions.width * reference.dimensions.height > MAX_TOTAL_PIXELS) {
+    if (
+      source.dimensions.width * source.dimensions.height +
+        reference.dimensions.width * reference.dimensions.height >
+      MAX_TOTAL_PIXELS
+    ) {
       error = 'image-too-large';
       return;
     }
@@ -388,13 +440,16 @@
     const task = ++runNumber;
     const sourceFile = source.file;
     const referenceFile = reference.file;
-    const selectedMethod = method;
+    const selectedMethod = options.method;
     clearOutput();
     error = undefined;
     status = '';
     busy = true;
     try {
-      const [sourcePixels, referencePixels] = await Promise.all([decode(sourceFile), decode(referenceFile)]);
+      const [sourcePixels, referencePixels] = await Promise.all([
+        decode(sourceFile),
+        decode(referenceFile),
+      ]);
       if (task !== runNumber) return;
       const result = await runWorker(sourcePixels, referencePixels, selectedMethod);
       if (task !== runNumber || result.type !== 'result') return;
@@ -405,7 +460,10 @@
       status = t('done');
     } catch (cause) {
       if (task !== runNumber) return;
-      error = typeof cause === 'string' && cause in en.errors ? cause as ErrorKind : typedKind(cause) ?? 'processing-failed';
+      error =
+        typeof cause === 'string' && cause in en.errors
+          ? (cause as ErrorKind)
+          : (typedKind(cause) ?? 'processing-failed');
     } finally {
       if (task === runNumber) busy = false;
     }
@@ -417,8 +475,10 @@
     error = 'cancelled';
   }
 
-  function setMethod(next: Method) {
-    method = next;
+  function setMethod(next: unknown) {
+    const parsed = T80ColorMatchOptionsSchema.safeParse({ ...options, method: next });
+    if (!parsed.success) return;
+    options = parsed.data;
     clearOutput();
     error = undefined;
     status = '';
@@ -426,7 +486,11 @@
 
   /* eslint-disable no-control-regex -- Reject ASCII control bytes in exported filenames. */
   function downloadName(file: File): string {
-    const stem = file.name.replace(/\.[^.]+$/u, '').replace(/[\\/:*?"<>|\u0000-\u001f]/gu, '_').slice(0, 100) || 'image';
+    const stem =
+      file.name
+        .replace(/\.[^.]+$/u, '')
+        .replace(/[\\/:*?"<>|\u0000-\u001f]/gu, '_')
+        .slice(0, 100) || 'image';
     return `${stem}-color-matched.png`;
   }
 
@@ -434,9 +498,28 @@
   const schema = $derived({
     '@context': 'https://schema.org',
     '@graph': [
-      { '@type': 'SoftwareApplication', name: title, applicationCategory: 'MultimediaApplication', operatingSystem: 'Web', offers: { '@type': 'Offer', price: 0, priceCurrency: 'USD' } },
-      { '@type': 'FAQPage', mainEntity: faq.map((item) => ({ '@type': 'Question', name: item.question, acceptedAnswer: { '@type': 'Answer', text: item.answer } })) },
-      { '@type': 'BreadcrumbList', itemListElement: [{ '@type': 'ListItem', position: 1, name: t('convert'), item: `${ORIGIN}/convert` }, { '@type': 'ListItem', position: 2, name: title, item: canonical }] },
+      {
+        '@type': 'SoftwareApplication',
+        name: title,
+        applicationCategory: 'MultimediaApplication',
+        operatingSystem: 'Web',
+        offers: { '@type': 'Offer', price: 0, priceCurrency: 'USD' },
+      },
+      {
+        '@type': 'FAQPage',
+        mainEntity: faq.map((item) => ({
+          '@type': 'Question',
+          name: item.question,
+          acceptedAnswer: { '@type': 'Answer', text: item.answer },
+        })),
+      },
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: t('convert'), item: `${ORIGIN}/convert` },
+          { '@type': 'ListItem', position: 2, name: title, item: canonical },
+        ],
+      },
     ],
   });
 
@@ -461,7 +544,9 @@
   <meta property="og:image" content={`${ORIGIN}/og/tools.svg`} />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:image" content={`${ORIGIN}/og/tools.svg`} />
-  <svelte:element this={'script'} type="application/ld+json">{JSON.stringify(schema)}</svelte:element>
+  <svelte:element this={"script"} type="application/ld+json"
+    >{JSON.stringify(schema)}</svelte:element
+  >
 </svelte:head>
 
 <main class="tool-page t80-page" lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}>
@@ -473,41 +558,72 @@
   </header>
 
   <section class="t80-controls" aria-labelledby="t80-input-heading">
-    <h2 id="t80-input-heading">{locale === 'ar' ? 'اختر الصورتين' : locale === 'en-XA' ? pseudo('Choose both images') : 'Choose both images'}</h2>
+    <h2 id="t80-input-heading">
+      {locale === 'ar'
+        ? 'اختر الصورتين'
+        : locale === 'en-XA'
+          ? pseudo('Choose both images')
+          : 'Choose both images'}
+    </h2>
     <div class="t80-file-grid">
       <label class="t80-file-card">
         <span>{t('source')}</span>
-        <input data-testid="t80-source-input" type="file" accept="image/png,.png" aria-label={t('chooseSource')} onchange={(event) => choose('source', event)} />
+        <input
+          data-testid="t80-source-input"
+          type="file"
+          accept="image/png,.png"
+          aria-label={t('chooseSource')}
+          onchange={(event) => choose('source', event)}
+        />
         {#if source}
-          <span class="t80-selected">{source.file.name} · {source.dimensions.width} × {source.dimensions.height}</span>
+          <span class="t80-selected"
+            >{source.file.name} · {source.dimensions.width} × {source.dimensions.height}</span
+          >
         {/if}
       </label>
       <label class="t80-file-card">
         <span>{t('reference')}</span>
-        <input data-testid="t80-reference-input" type="file" accept="image/png,.png" aria-label={t('chooseReference')} onchange={(event) => choose('reference', event)} />
+        <input
+          data-testid="t80-reference-input"
+          type="file"
+          accept="image/png,.png"
+          aria-label={t('chooseReference')}
+          onchange={(event) => choose('reference', event)}
+        />
         {#if reference}
-          <span class="t80-selected">{reference.file.name} · {reference.dimensions.width} × {reference.dimensions.height}</span>
+          <span class="t80-selected"
+            >{reference.file.name} · {reference.dimensions.width} × {reference.dimensions
+              .height}</span
+          >
           <img class="t80-reference-thumb" src={reference.url} alt={t('referencePreview')} />
         {/if}
       </label>
     </div>
     <p class="t80-help">{t('inputHelp')}</p>
 
-    <fieldset class="t80-methods">
-      <legend>{t('method')}</legend>
-      <label>
-        <input type="radio" name="t80-method" value="reinhard" checked={method === 'reinhard'} onchange={() => setMethod('reinhard')} />
-        <span><strong>{t('reinhard')}</strong><small>{t('reinhardHelp')}</small></span>
-      </label>
-      <label>
-        <input type="radio" name="t80-method" value="histogram" checked={method === 'histogram'} onchange={() => setMethod('histogram')} />
-        <span><strong>{t('histogram')}</strong><small>{t('histogramHelp')}</small></span>
-      </label>
-    </fieldset>
+    <div class="t80-methods">
+      <GeneratedControls
+        descriptions={localizedOptionDescriptions}
+        values={optionValues}
+        onChange={(_path, value) => setMethod(value)}
+        {locale}
+      />
+    </div>
 
     <div class="t80-actions">
-      <button class="button primary" data-testid="t80-run" type="button" disabled={busy || !source || !reference} onclick={matchColours}>{t('apply')}</button>
-      {#if busy}<button class="button" data-testid="t80-cancel" type="button" onclick={cancelMatching}>{t('cancel')}</button>{/if}
+      <button
+        class="button primary"
+        data-testid="t80-run"
+        type="button"
+        disabled={busy || !source || !reference}
+        onclick={matchColours}>{t('apply')}</button
+      >
+      {#if busy}<button
+          class="button"
+          data-testid="t80-cancel"
+          type="button"
+          onclick={cancelMatching}>{t('cancel')}</button
+        >{/if}
     </div>
     {#if busy}<p role="status" aria-live="polite">{t('busy')}</p>
     {:else if status}<p role="status" aria-live="polite">{status}</p>
@@ -528,38 +644,135 @@
           <img data-testid="t80-after" src={outputUrl} alt={t('after')} />
         </figure>
       </div>
-      <p>{t('dimensions')}: {source.dimensions.width} × {source.dimensions.height} · {Math.ceil(outputBytes / 1024)} KiB PNG</p>
-      <a class="button primary t80-download" data-testid="t80-download" href={outputUrl} download={downloadName(source.file)}>{t('download')}</a>
+      <p>
+        {t('dimensions')}: {source.dimensions.width} × {source.dimensions.height} · {Math.ceil(
+          outputBytes / 1024,
+        )} KiB PNG
+      </p>
+      <a
+        class="button primary t80-download"
+        data-testid="t80-download"
+        href={outputUrl}
+        download={downloadName(source.file)}>{t('download')}</a
+      >
     </section>
   {/if}
 
   <section class="tool-completion t80-faq" aria-labelledby="t80-faq-heading">
     <h2 id="t80-faq-heading">{t('faqHeading')}</h2>
     {#each faq as item (item.question)}
-      <details><summary>{item.question}</summary><p>{item.answer}</p></details>
+      <details>
+        <summary>{item.question}</summary>
+        <p>{item.answer}</p>
+      </details>
     {/each}
-    <nav aria-label={t('related')}><a href={locale === 'en' ? '/convert' : `/${locale}/convert`}>{t('convert')}</a></nav>
+    <nav aria-label={t('related')}>
+      <a href={locale === 'en' ? '/convert' : `/${locale}/convert`}>{t('convert')}</a>
+    </nav>
   </section>
 </main>
 
 <style>
-  .t80-controls, .t80-result, .t80-faq { width: min(1080px, calc(100% - 32px)); margin: 0 auto 40px; }
-  .t80-controls { padding: 24px; border: 1px solid #1c1a171a; border-radius: 12px; background: white; }
-  .t80-controls h2, .t80-result h2 { margin-block-start: 0; }
-  .t80-file-grid, .t80-preview-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
-  .t80-file-card { display: grid; gap: 12px; min-width: 0; padding: 16px; border: 1px solid #1c1a1720; border-radius: 8px; }
-  .t80-file-card > span:first-child, .t80-methods legend { font-weight: 600; }
-  .t80-file-card input { max-width: 100%; }
-  .t80-selected, .t80-help, .t80-methods small { color: #5c5a56; font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
-  .t80-reference-thumb { max-width: 160px; max-height: 100px; object-fit: contain; justify-self: start; background: #eee; }
-  .t80-methods { display: grid; gap: 12px; margin: 24px 0; padding: 16px; border: 1px solid #1c1a1720; border-radius: 8px; }
-  .t80-methods label { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; }
-  .t80-methods label span { display: grid; gap: 4px; }
-  .t80-actions { display: flex; flex-wrap: wrap; gap: 10px; }
-  .t80-result { padding: 24px; border: 1px solid #1c1a171a; border-radius: 12px; background: #fff; }
-  .t80-preview-grid figure { min-width: 0; margin: 0; padding: 12px; border: 1px solid #1c1a171a; border-radius: 8px; background: #f5f3f0; }
-  .t80-preview-grid figcaption { margin-block-end: 8px; font-weight: 600; }
-  .t80-preview-grid img { display: block; width: 100%; height: min(420px, 55vw); object-fit: contain; background-color: #eee; }
-  .t80-download { display: inline-block; margin-block-start: 8px; }
-  @media (max-width: 700px) { .t80-file-grid, .t80-preview-grid { grid-template-columns: 1fr; } .t80-controls, .t80-result { padding: 16px; } }
+  .t80-controls,
+  .t80-result,
+  .t80-faq {
+    width: min(1080px, calc(100% - 32px));
+    margin: 0 auto 40px;
+  }
+  .t80-controls {
+    padding: 24px;
+    border: 1px solid #1c1a171a;
+    border-radius: 12px;
+    background: white;
+  }
+  .t80-controls h2,
+  .t80-result h2 {
+    margin-block-start: 0;
+  }
+  .t80-file-grid,
+  .t80-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+  .t80-file-card {
+    display: grid;
+    gap: 12px;
+    min-width: 0;
+    padding: 16px;
+    border: 1px solid #1c1a1720;
+    border-radius: 8px;
+  }
+  .t80-file-card > span:first-child {
+    font-weight: 600;
+  }
+  .t80-file-card input {
+    max-width: 100%;
+  }
+  .t80-selected,
+  .t80-help {
+    color: #5c5a56;
+    font-size: 13px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
+  .t80-reference-thumb {
+    max-width: 160px;
+    max-height: 100px;
+    object-fit: contain;
+    justify-self: start;
+    background: #eee;
+  }
+  .t80-methods {
+    display: grid;
+    gap: 12px;
+    margin: 24px 0;
+    padding: 16px;
+    border: 1px solid #1c1a1720;
+    border-radius: 8px;
+  }
+  .t80-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .t80-result {
+    padding: 24px;
+    border: 1px solid #1c1a171a;
+    border-radius: 12px;
+    background: #fff;
+  }
+  .t80-preview-grid figure {
+    min-width: 0;
+    margin: 0;
+    padding: 12px;
+    border: 1px solid #1c1a171a;
+    border-radius: 8px;
+    background: #f5f3f0;
+  }
+  .t80-preview-grid figcaption {
+    margin-block-end: 8px;
+    font-weight: 600;
+  }
+  .t80-preview-grid img {
+    display: block;
+    width: 100%;
+    height: min(420px, 55vw);
+    object-fit: contain;
+    background-color: #eee;
+  }
+  .t80-download {
+    display: inline-block;
+    margin-block-start: 8px;
+  }
+  @media (max-width: 700px) {
+    .t80-file-grid,
+    .t80-preview-grid {
+      grid-template-columns: 1fr;
+    }
+    .t80-controls,
+    .t80-result {
+      padding: 16px;
+    }
+  }
 </style>
