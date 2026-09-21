@@ -101,19 +101,20 @@ test('T63 previews a local image, drafts and reviews alt text by keyboard, and w
   context,
 }) => {
   const externalRequests: string[] = [];
-  await page.goto('/alt-text');
-  const appOrigin = new URL(page.url()).origin;
+  const appOrigin = new URL(test.info().project.use.baseURL ?? 'http://127.0.0.1:4173').origin;
   page.on('request', (request) => {
     if (new URL(request.url()).origin !== appOrigin) externalRequests.push(request.url());
   });
-  await context.setOffline(true);
+  await page.goto('/alt-text');
+  const imageBuffer = await generatedPng(page);
 
   await page.getByTestId('t63-file-input').setInputFiles({
     name: 'manual-review.png',
     mimeType: 'image/png',
-    buffer: await generatedPng(page),
+    buffer: imageBuffer,
   });
   await expect(page.getByTestId('t63-preview-image')).toHaveJSProperty('naturalWidth', 16);
+  await context.setOffline(true);
   await expect(page.getByTestId('t63-attribute-empty')).toBeVisible();
   await expect(page.getByTestId('t63-copy')).toBeDisabled();
 
@@ -168,10 +169,13 @@ test('T63 copies the exact escaped attribute shown in the preview', async ({ pag
 test('T63 reports typed file and draft errors with remedies', async ({ page }) => {
   await page.goto('/alt-text');
   const input = page.getByTestId('t63-file-input');
-  await input.setInputFiles({
-    name: 'unsupported.txt',
-    mimeType: 'text/plain',
-    buffer: Buffer.from('not an image'),
+  await input.evaluate((element) => {
+    const file = new File(['not an image'], 'unsupported.txt', { type: 'text/plain' });
+    const transfer = new DataTransfer();
+    transfer.items.add(file);
+    const fileInput = element as HTMLInputElement;
+    fileInput.files = transfer.files;
+    fileInput.dispatchEvent(new Event('change', { bubbles: true }));
   });
   await expect(page.getByTestId('t63-file-error')).toHaveAttribute(
     'data-error-kind',
