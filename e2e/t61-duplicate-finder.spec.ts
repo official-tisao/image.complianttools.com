@@ -87,6 +87,31 @@ test('T61 localized Arabic route is prerendered right-to-left with translated co
   await context.close();
 });
 
+test('T61 exposes schema-backed matching controls with reset and keyboard support', async ({
+  page,
+}) => {
+  await page.goto('/find-duplicates');
+  await page.locator('html[data-hydrated="true"]').waitFor();
+
+  const average = page.getByTestId('option-t61-averageDistance');
+  const difference = page.getByTestId('option-t61-differenceDistance');
+  const aspect = page.getByTestId('option-t61-aspectRatioTolerance');
+  await expect(average).toBeVisible();
+  await expect(difference).toBeVisible();
+  await expect(aspect).toBeVisible();
+
+  const averageInput = average.locator('input[type="range"]');
+  await expect(averageInput).toHaveValue('6');
+  await averageInput.focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(averageInput).toHaveValue('7');
+  const reset = average.locator('button.reset');
+  await expect(reset).toBeEnabled();
+  await reset.click();
+  await expect(averageInput).toHaveValue('6');
+  await expect(reset).toBeDisabled();
+});
+
 test('T61 finds exact copies and conservative near matches locally; review CSV does not delete files', async ({
   page,
 }) => {

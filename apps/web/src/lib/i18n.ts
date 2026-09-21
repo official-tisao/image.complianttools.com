@@ -59,6 +59,15 @@ const arabic: Readonly<Record<string, string>> = {
   'inspector.faqFormatsAnswer':
     'يوفر PNG وJPEG وGIF وWebP فحصًا حتميًا كاملًا حاليًا. ترفض الصيغ الأخرى برسالة قابلة للتنفيذ.',
   'compare.mode': 'وضع المقارنة',
+  'option.t61.averageDistance.label': 'مسافة البصمة المتوسطة',
+  'option.t61.averageDistance.help':
+    'اسمح بهذا العدد من البتات المختلفة في بصمة المتوسط ذات 64 بت للتطابق البصري المحتمل.',
+  'option.t61.differenceDistance.label': 'مسافة بصمة الاختلاف',
+  'option.t61.differenceDistance.help':
+    'اسمح بهذا العدد من البتات المختلفة في بصمة الاختلاف ذات 56 بت للتطابق البصري المحتمل.',
+  'option.t61.aspectRatioTolerance.label': 'تفاوت نسبة العرض إلى الارتفاع',
+  'option.t61.aspectRatioTolerance.help':
+    'اسمح بهذا الاختلاف المئوي بين نسب أبعاد الصور قبل مقارنة البصمات.',
   // Translators: Preserve the meaning of each comparison view and keep percentage ranges intact.
   'compare.mode.help': 'اختر طريقة عرض الصورتين في عارض المقارنة.',
   'compare.after': 'بعد',
