@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-09-21",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "benchmarkPurpose": "T61 supplementary topic-matched, distinct-source autumn-leaf negative sample",
+  "notes": [
+    "Each source is individually registered from its Wikimedia Commons file page and exact MediaWiki imageinfo response; the API reported LicenseShortName=CC0 and a CC0 deed URL for each item.",
+    "The benchmark uses 960x640 Commons thumbnails to keep the fixture repository small; the pinned thumbnail URL and the original file metadata are preserved per item.",
+    "Both photographs share autumn leaves as their subject but differ visibly in scene composition and texture. Cross-source pairs are topic-matched negatives, not near-identical visual hard negatives or a representative benchmark of all duplicate-search use."
+  ],
+  "assets": [
+    {
+      "id": "autumn-leaves-rascanu",
+      "path": "autumn-leaves-rascanu.jpg",
+      "title": "Autumn leaves, Dumitru Rascanu park",
+      "creator": "Iurie Nistor",
+      "dimensions": {
+        "width": 960,
+        "height": 640
+      },
+      "sizeBytes": 212125,
+      "sha256": "c322b5e0bc7e7c55e5ef070ed3f6d96e6bc2d48fa61b2d12a5d3ddcabebe10b4",
+      "sourceUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/39/Autumn_leaves%2C_Dumitru_Rascanu_park.jpg/960px-Autumn_leaves%2C_Dumitru_Rascanu_park.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "sourcePageUrl": "https://commons.wikimedia.org/wiki/File:Autumn_leaves,_Dumitru_Rascanu_park.jpg",
+      "metadataApiUrl": "https://commons.wikimedia.org/w/api.php?action=query&format=json&titles=File%3AAutumn%20leaves%2C%20Dumitru%20Rascanu%20park.jpg&prop=imageinfo&iiprop=url%7Csize%7Csha1%7Cextmetadata&iiurlwidth=960",
+      "metadataSnapshot": "autumn-leaves-rascanu.metadata.json",
+      "metadataSnapshotSha256": "94d57620ccb45860dc3723537e393cf76cf4484834aa4c5cacb716123ccf078c",
+      "license": "CC0-1.0",
+      "licenseEvidence": "Commons imageinfo extmetadata: LicenseShortName=CC0; LicenseUrl=http://creativecommons.org/publicdomain/zero/1.0/deed.en"
+    },
+    {
+      "id": "autumn-leaves-valea-morilor",
+      "path": "autumn-leaves-valea-morilor.jpg",
+      "title": "Autumn leaves, Valea Morilor park 1",
+      "creator": "Iurie Nistor",
+      "dimensions": {
+        "width": 960,
+        "height": 640
+      },
+      "sizeBytes": 370698,
+      "sha256": "8d892463a16c013f3cd2489106b3d337438bfc33422b129730645adb7ae14ac8",
+      "sourceUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/47/Autumn_leaves%2C_Valea_Morilor_park_1.jpg/960px-Autumn_leaves%2C_Valea_Morilor_park_1.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "sourcePageUrl": "https://commons.wikimedia.org/wiki/File:Autumn_leaves,_Valea_Morilor_park_1.jpg",
+      "metadataApiUrl": "https://commons.wikimedia.org/w/api.php?action=query&format=json&titles=File%3AAutumn%20leaves%2C%20Valea%20Morilor%20park%201.jpg&prop=imageinfo&iiprop=url%7Csize%7Csha1%7Cextmetadata&iiurlwidth=960",
+      "metadataSnapshot": "autumn-leaves-valea-morilor.metadata.json",
+      "metadataSnapshotSha256": "b427c6dacdcb353bde51b3c22e4a0963ee2c2205227ff45476cb7bca7d721de8",
+      "license": "CC0-1.0",
+      "licenseEvidence": "Commons imageinfo extmetadata: LicenseShortName=CC0; LicenseUrl=http://creativecommons.org/publicdomain/zero/1.0/deed.en"
+    }
+  ]
+}

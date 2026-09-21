@@ -1,0 +1,268 @@
+{
+  "schemaVersion": 1,
+  "benchmark": "P4-21 T61 topic-matched distinct-source autumn-leaf negatives",
+  "sourceManifest": "source-manifest.json",
+  "sourceManifestSha256": "690232fd2ad8f04b8f49317d7b40e0ff29573b182fc7885fca575d91b2dc2049",
+  "generator": {
+    "script": "packages/engine/bench/escalation/t60-t61/prepare-topic-negatives.mjs",
+    "scriptSha256": "8b0667e467986c5563ee2129598189d2e03b30b5f8c7e6fc045e2b0ceb405f85",
+    "node": "v22.22.0",
+    "normalizedDimensions": {
+      "width": 128,
+      "height": 128
+    },
+    "normalization": "Center square crop of each 960x640 CC0 thumbnail, then engine Lanczos3 resize to 128x128.",
+    "transforms": [
+      {
+        "id": "reference",
+        "label": "Normalized CC0 reference",
+        "parameters": {
+          "operation": "center-square crop, then Lanczos3 resize to 128x128"
+        }
+      },
+      {
+        "id": "exact-copy",
+        "label": "Exact pixel duplicate",
+        "parameters": {
+          "operation": "copy normalized reference pixels without edits"
+        }
+      },
+      {
+        "id": "jpeg-q90",
+        "label": "Same-source JPEG re-encode, quality 90",
+        "parameters": {
+          "operation": "MozJPEG encode/decode",
+          "quality": 90
+        }
+      },
+      {
+        "id": "jpeg-q45",
+        "label": "Same-source JPEG re-encode, quality 45",
+        "parameters": {
+          "operation": "MozJPEG encode/decode",
+          "quality": 45
+        }
+      },
+      {
+        "id": "center-crop-90",
+        "label": "Same-source centered 90% crop, restored to 128x128",
+        "parameters": {
+          "operation": "center crop 90% width/height, then Lanczos3 resize to 128x128",
+          "retainedPercent": 90
+        }
+      },
+      {
+        "id": "brightness-plus-12",
+        "label": "Same-source RGB brightness shift",
+        "parameters": {
+          "operation": "add 12 to each RGB channel with 255 clamp",
+          "amount": 12
+        }
+      }
+    ],
+    "semanticNegativeDefinition": "The two distinct source photos share an autumn-leaf subject but have different composition and texture; cross-source pairs are topic-matched negatives. This does not claim they are near-identical visual hard negatives."
+  },
+  "fixtureCount": 12,
+  "fixtures": [
+    {
+      "id": "autumn-leaves-rascanu-reference",
+      "sourceAssetId": "autumn-leaves-rascanu",
+      "sourceSha256": "c322b5e0bc7e7c55e5ef070ed3f6d96e6bc2d48fa61b2d12a5d3ddcabebe10b4",
+      "relation": "reference",
+      "label": "Normalized CC0 reference",
+      "transformation": {
+        "operation": "center-square crop, then Lanczos3 resize to 128x128"
+      },
+      "fileName": "autumn-leaves-rascanu-reference.png",
+      "width": 128,
+      "height": 128,
+      "sizeBytes": 56781,
+      "pngSha256": "70fe6240da732f951c17c98f995e87e3240cb4afd0d8d30042621cb969bdb334",
+      "rgbaSha256": "cc599549ddc524009ba03c296368d95d2fcfd5b69c8da02f130598a62ce534a9"
+    },
+    {
+      "id": "autumn-leaves-rascanu-exact-copy",
+      "sourceAssetId": "autumn-leaves-rascanu",
+      "sourceSha256": "c322b5e0bc7e7c55e5ef070ed3f6d96e6bc2d48fa61b2d12a5d3ddcabebe10b4",
+      "relation": "same-source-positive",
+      "label": "Exact pixel duplicate",
+      "transformation": {
+        "operation": "copy normalized reference pixels without edits"
+      },
+      "fileName": "autumn-leaves-rascanu-exact-copy.png",
+      "width": 128,
+      "height": 128,
+      "sizeBytes": 56781,
+      "pngSha256": "70fe6240da732f951c17c98f995e87e3240cb4afd0d8d30042621cb969bdb334",
+      "rgbaSha256": "cc599549ddc524009ba03c296368d95d2fcfd5b69c8da02f130598a62ce534a9"
+    },
+    {
+      "id": "autumn-leaves-rascanu-jpeg-q90",
+      "sourceAssetId": "autumn-leaves-rascanu",
+      "sourceSha256": "c322b5e0bc7e7c55e5ef070ed3f6d96e6bc2d48fa61b2d12a5d3ddcabebe10b4",
+      "relation": "same-source-positive",
+      "label": "Same-source JPEG re-encode, quality 90",
+      "transformation": {
+        "operation": "MozJPEG encode/decode",
+        "quality": 90
+      },
+      "fileName": "autumn-leaves-rascanu-jpeg-q90.png",
+      "width": 128,
+      "height": 128,
+      "sizeBytes": 56714,
+      "pngSha256": "ea7038def89d42f7af6db0554fd5645d1b279276ddb59e6509fea396633ff318",
+      "rgbaSha256": "fc2c8159654da43fab6381ac73052a552a387779ce009f0570cb228e6c0b3313"
+    },
+    {
+      "id": "autumn-leaves-rascanu-jpeg-q45",
+      "sourceAssetId": "autumn-leaves-rascanu",
+      "sourceSha256": "c322b5e0bc7e7c55e5ef070ed3f6d96e6bc2d48fa61b2d12a5d3ddcabebe10b4",
+      "relation": "same-source-positive",
+      "label": "Same-source JPEG re-encode, quality 45",
+      "transformation": {
+        "operation": "MozJPEG encode/decode",
+        "quality": 45
+      },
+      "fileName": "autumn-leaves-rascanu-jpeg-q45.png",
+      "width": 128,
+      "height": 128,
+      "sizeBytes": 54203,
+      "pngSha256": "9ee5b74e0bddef286b38e632bc0b1976bc43d8abd8de300abdbd1f6c8229cdc2",
+      "rgbaSha256": "3fe1de744a30d38d022620563fbae4bec53be0734c17d8aa161460bdd2d32f88"
+    },
+    {
+      "id": "autumn-leaves-rascanu-center-crop-90",
+      "sourceAssetId": "autumn-leaves-rascanu",
+      "sourceSha256": "c322b5e0bc7e7c55e5ef070ed3f6d96e6bc2d48fa61b2d12a5d3ddcabebe10b4",
+      "relation": "same-source-positive",
+      "label": "Same-source centered 90% crop, restored to 128x128",
+      "transformation": {
+        "operation": "center crop 90% width/height, then Lanczos3 resize to 128x128",
+        "retainedPercent": 90
+      },
+      "fileName": "autumn-leaves-rascanu-center-crop-90.png",
+      "width": 128,
+      "height": 128,
+      "sizeBytes": 55695,
+      "pngSha256": "cb3a06bf89770d5c9b43d5cb22bc9a4dee995fea22b41d228cfc75817e1c224f",
+      "rgbaSha256": "2b5776aea51bf5232c22e442c39f54d2e249f4171db9cd9ed0699b794a5a796d"
+    },
+    {
+      "id": "autumn-leaves-rascanu-brightness-plus-12",
+      "sourceAssetId": "autumn-leaves-rascanu",
+      "sourceSha256": "c322b5e0bc7e7c55e5ef070ed3f6d96e6bc2d48fa61b2d12a5d3ddcabebe10b4",
+      "relation": "same-source-positive",
+      "label": "Same-source RGB brightness shift",
+      "transformation": {
+        "operation": "add 12 to each RGB channel with 255 clamp",
+        "amount": 12
+      },
+      "fileName": "autumn-leaves-rascanu-brightness-plus-12.png",
+      "width": 128,
+      "height": 128,
+      "sizeBytes": 56646,
+      "pngSha256": "072e5f8b3fbe80b3aba78625e85f25ce9c550b7dd9f8203abb2ecbdd67406ba8",
+      "rgbaSha256": "5283aa81ff67d7709850c1139857b09510f211fc7cf6c5570c8cd0f8686844ae"
+    },
+    {
+      "id": "autumn-leaves-valea-morilor-reference",
+      "sourceAssetId": "autumn-leaves-valea-morilor",
+      "sourceSha256": "8d892463a16c013f3cd2489106b3d337438bfc33422b129730645adb7ae14ac8",
+      "relation": "reference",
+      "label": "Normalized CC0 reference",
+      "transformation": {
+        "operation": "center-square crop, then Lanczos3 resize to 128x128"
+      },
+      "fileName": "autumn-leaves-valea-morilor-reference.png",
+      "width": 128,
+      "height": 128,
+      "sizeBytes": 59828,
+      "pngSha256": "bc85dcd9d2c7cdbb23bbff254ab86897845dd65a18aacca928f64969a0e38d3c",
+      "rgbaSha256": "441138f9e5762ec6760f456c2730746bbd97581b4cee808f15accd5c6ed6ae2a"
+    },
+    {
+      "id": "autumn-leaves-valea-morilor-exact-copy",
+      "sourceAssetId": "autumn-leaves-valea-morilor",
+      "sourceSha256": "8d892463a16c013f3cd2489106b3d337438bfc33422b129730645adb7ae14ac8",
+      "relation": "same-source-positive",
+      "label": "Exact pixel duplicate",
+      "transformation": {
+        "operation": "copy normalized reference pixels without edits"
+      },
+      "fileName": "autumn-leaves-valea-morilor-exact-copy.png",
+      "width": 128,
+      "height": 128,
+      "sizeBytes": 59828,
+      "pngSha256": "bc85dcd9d2c7cdbb23bbff254ab86897845dd65a18aacca928f64969a0e38d3c",
+      "rgbaSha256": "441138f9e5762ec6760f456c2730746bbd97581b4cee808f15accd5c6ed6ae2a"
+    },
+    {
+      "id": "autumn-leaves-valea-morilor-jpeg-q90",
+      "sourceAssetId": "autumn-leaves-valea-morilor",
+      "sourceSha256": "8d892463a16c013f3cd2489106b3d337438bfc33422b129730645adb7ae14ac8",
+      "relation": "same-source-positive",
+      "label": "Same-source JPEG re-encode, quality 90",
+      "transformation": {
+        "operation": "MozJPEG encode/decode",
+        "quality": 90
+      },
+      "fileName": "autumn-leaves-valea-morilor-jpeg-q90.png",
+      "width": 128,
+      "height": 128,
+      "sizeBytes": 59564,
+      "pngSha256": "e4a2c236bf8ee7ac2e0152ea035aed89c33911852d6b9837b3e36ece3a69bf3e",
+      "rgbaSha256": "b37939d10558cc1d40c9478dc4552e3e6c5de128235745f293ce4ec08d09bb7d"
+    },
+    {
+      "id": "autumn-leaves-valea-morilor-jpeg-q45",
+      "sourceAssetId": "autumn-leaves-valea-morilor",
+      "sourceSha256": "8d892463a16c013f3cd2489106b3d337438bfc33422b129730645adb7ae14ac8",
+      "relation": "same-source-positive",
+      "label": "Same-source JPEG re-encode, quality 45",
+      "transformation": {
+        "operation": "MozJPEG encode/decode",
+        "quality": 45
+      },
+      "fileName": "autumn-leaves-valea-morilor-jpeg-q45.png",
+      "width": 128,
+      "height": 128,
+      "sizeBytes": 55461,
+      "pngSha256": "63e98f36a662d313af2278c4fcaa31a588920f412e608492b9000b33673f33bb",
+      "rgbaSha256": "b80bf779677e965f6439ab7a8a309f4e83a469063ad422ab26cfc47687445ca5"
+    },
+    {
+      "id": "autumn-leaves-valea-morilor-center-crop-90",
+      "sourceAssetId": "autumn-leaves-valea-morilor",
+      "sourceSha256": "8d892463a16c013f3cd2489106b3d337438bfc33422b129730645adb7ae14ac8",
+      "relation": "same-source-positive",
+      "label": "Same-source centered 90% crop, restored to 128x128",
+      "transformation": {
+        "operation": "center crop 90% width/height, then Lanczos3 resize to 128x128",
+        "retainedPercent": 90
+      },
+      "fileName": "autumn-leaves-valea-morilor-center-crop-90.png",
+      "width": 128,
+      "height": 128,
+      "sizeBytes": 57959,
+      "pngSha256": "8decc24cb0073781539c0d9472ee496f5c2e2fafd5b75b8c76d6e26d865a164b",
+      "rgbaSha256": "843dc405b5c5cac03341c8da28cda03b121ebe5d032953de90a44eb1fe1a3b6d"
+    },
+    {
+      "id": "autumn-leaves-valea-morilor-brightness-plus-12",
+      "sourceAssetId": "autumn-leaves-valea-morilor",
+      "sourceSha256": "8d892463a16c013f3cd2489106b3d337438bfc33422b129730645adb7ae14ac8",
+      "relation": "same-source-positive",
+      "label": "Same-source RGB brightness shift",
+      "transformation": {
+        "operation": "add 12 to each RGB channel with 255 clamp",
+        "amount": 12
+      },
+      "fileName": "autumn-leaves-valea-morilor-brightness-plus-12.png",
+      "width": 128,
+      "height": 128,
+      "sizeBytes": 59606,
+      "pngSha256": "bdf953a9f819e2b30bca5cb9141c41f8c60594e05d33ec4d5b2d380c8d4f1d81",
+      "rgbaSha256": "1edbb0ddf81696af8d5593c1328638e273586d7b572add8b8a5f6bb01797bfcb"
+    }
+  ]
+}
