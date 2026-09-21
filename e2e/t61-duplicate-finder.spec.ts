@@ -39,6 +39,25 @@ async function generatedPng(
   return Buffer.from(base64, 'base64');
 }
 
+async function setMockFiles(
+  page: import('@playwright/test').Page,
+  files: readonly { name: string; type: string; size?: number }[],
+) {
+  await page.getByTestId('t61-input').evaluate((element, selected) => {
+    const transfer = new DataTransfer();
+    for (const item of selected) {
+      const file = new File([new Uint8Array([1])], item.name, { type: item.type });
+      if (item.size !== undefined) {
+        Object.defineProperty(file, 'size', { configurable: true, value: item.size });
+      }
+      transfer.items.add(file);
+    }
+    const input = element as HTMLInputElement;
+    input.files = transfer.files;
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+  }, files);
+}
+
 test('T61 default route is prerendered with local-only upload copy and SEO metadata', async ({
   browser,
 }) => {
@@ -128,6 +147,83 @@ test('T61 reports bounded-input and decode errors with actionable remedies', asy
   await page.getByTestId('t61-scan').click();
   await expect(page.getByTestId('t61-error')).toContainText('The browser could not read one');
   await expect(page.getByTestId('t61-error')).toContainText('Remedy: Re-export that file');
+});
+
+test('T61 rejects per-file and batch sizes above the advertised limits', async ({ page }) => {
+  await page.goto('/find-duplicates');
+  const error = page.getByTestId('t61-error');
+
+  await setMockFiles(page, [
+    { name: 'over-file-limit.png', type: 'image/png', size: 20 * 1024 * 1024 + 1 },
+  ]);
+  await expect(error).toHaveAttribute('data-error-kind', 'too-large');
+  await expect(error).toContainText('Each image must be at most 20 MiB');
+
+  await setMockFiles(
+    page,
+    Array.from({ length: 5 }, (_, index) => ({
+      name: `batch-${index}.png`,
+      type: 'image/png',
+      size: 16 * 1024 * 1024 + 1,
+    })),
+  );
+  await expect(error).toHaveAttribute('data-error-kind', 'too-large');
+  await expect(error).toContainText('selection at most 80 MiB');
+});
+
+test('T61 rejects unsupported MIME types with a supported-format remedy', async ({ page }) => {
+  await page.goto('/find-duplicates');
+  await page.getByTestId('t61-input').setInputFiles({
+    name: 'vector.svg',
+    mimeType: 'image/svg+xml',
+    buffer: Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"/>'),
+  });
+
+  const error = page.getByTestId('t61-error');
+  await expect(error).toHaveAttribute('data-error-kind', 'unsupported');
+  await expect(error).toContainText('Choose PNG, JPEG, WebP, or GIF files');
+});
+
+test('T61 rejects decoded images above 24 megapixels with a resize remedy', async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(window, 'createImageBitmap', {
+      configurable: true,
+      value: async () => ({ width: 5_000, height: 5_000, close() {} }),
+    });
+  });
+  await page.goto('/find-duplicates');
+  const png = await generatedPng(page);
+  await page.getByTestId('t61-input').setInputFiles([
+    { name: 'large-a.png', mimeType: 'image/png', buffer: png },
+    { name: 'large-b.png', mimeType: 'image/png', buffer: png },
+  ]);
+  await page.getByTestId('t61-scan').click();
+
+  const error = page.getByTestId('t61-error');
+  await expect(error).toHaveAttribute('data-error-kind', 'pixels');
+  await expect(error).toContainText('Resize that image or remove it');
+});
+
+test('T61 reports secure-hash failures with the secure-context remedy', async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(crypto.subtle, 'digest', {
+      configurable: true,
+      value: async () => {
+        throw new Error('simulated digest failure');
+      },
+    });
+  });
+  await page.goto('/find-duplicates');
+  const png = await generatedPng(page);
+  await page.getByTestId('t61-input').setInputFiles([
+    { name: 'hash-a.png', mimeType: 'image/png', buffer: png },
+    { name: 'hash-b.png', mimeType: 'image/png', buffer: png },
+  ]);
+  await page.getByTestId('t61-scan').click();
+
+  const error = page.getByTestId('t61-error');
+  await expect(error).toHaveAttribute('data-error-kind', 'hashing');
+  await expect(error).toContainText('Use a current browser in a secure context');
 });
 
 test('T61 supports keyboard operation and cancellation without uploading inputs', async ({
