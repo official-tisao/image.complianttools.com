@@ -22,7 +22,7 @@
       "sourcePageUrl": "https://commons.wikimedia.org/wiki/File:Landscape_Dordogne_Ch%C3%A2teau_de_Hautefort_18.jpg",
       "metadataApiUrl": "https://commons.wikimedia.org/w/api.php?action=query&format=json&titles=File:Landscape_Dordogne_Ch%C3%A2teau_de_Hautefort_18.jpg&prop=imageinfo&iiprop=url%7Csize%7Cextmetadata",
       "metadataSnapshot": "landscape-dordogne.metadata.json",
-      "metadataSnapshotSha256": "a00d556a2800aa055d7cea0b052b4166e5e42d9c1f7b4a29a3ab6034aa6d676e",
+      "metadataSnapshotSha256": "45208d884468ad7395ba85f19e1543a28c9d6077b8a0c99a223c9512cddb677c",
       "license": "CC0-1.0",
       "licenseEvidence": "Commons imageinfo extmetadata: LicenseShortName=CC0; LicenseUrl=https://creativecommons.org/publicdomain/zero/1.0/"
     },
@@ -38,7 +38,7 @@
       "sourcePageUrl": "https://commons.wikimedia.org/wiki/File:New_oak_leaves_with_female_flowers.jpg",
       "metadataApiUrl": "https://commons.wikimedia.org/w/api.php?action=query&format=json&titles=File:New_oak_leaves_with_female_flowers.jpg&prop=imageinfo&iiprop=url%7Csize%7Cextmetadata",
       "metadataSnapshot": "oak-leaves.metadata.json",
-      "metadataSnapshotSha256": "68de096c7215cedd551c66b4c77b281eb48d478105fba0254394bd83c880b2cb",
+      "metadataSnapshotSha256": "d59244d5ce8cc4c1e070f0bdd9d8c2d13b1bf7e9f148051495b60458e2c8f7d9",
       "license": "CC0-1.0",
       "licenseEvidence": "Commons imageinfo extmetadata: LicenseShortName=CC0; LicenseUrl=https://creativecommons.org/publicdomain/zero/1.0/",
       "fixtureNote": "The source describes this as focus-stacked from two handheld photographs; use for texture and segmentation, not restoration ground truth."
@@ -55,7 +55,7 @@
       "sourcePageUrl": "https://clevelandart.org/art/1969.265",
       "metadataApiUrl": "https://openaccess-api.clevelandart.org/api/artworks/1969.265?indent=1",
       "metadataSnapshot": "gold-weight.metadata.json",
-      "metadataSnapshotSha256": "a7a15d396f58877f0fa73f5feb705b790710fe81c1ea63b94c1a120ecb70928e",
+      "metadataSnapshotSha256": "0ea17190a372837c33471bb14b428a3f25705edd900d302d8aa928fd3878adf3",
       "license": "CC0-1.0",
       "licenseEvidence": "Cleveland Museum of Art Open Access API: share_license_status=CC0"
     },
@@ -71,7 +71,7 @@
       "sourcePageUrl": "https://clevelandart.org/art/2020.276.15",
       "metadataApiUrl": "https://openaccess-api.clevelandart.org/api/artworks/2020.276.15?indent=1",
       "metadataSnapshot": "rome-map.metadata.json",
-      "metadataSnapshotSha256": "d3c8ec700a20ab96be384047944ff1d67115c636c9fc9bf96be76fe3e06daf08",
+      "metadataSnapshotSha256": "72a99f9dc3e273ff94a8282306cacf311858e19e8c44fc5e77a4d0454790a31e",
       "license": "CC0-1.0",
       "licenseEvidence": "Cleveland Museum of Art Open Access API: share_license_status=CC0",
       "fixtureNote": "Fine-line map artwork; use for line-detail and layout image operations, not modern-language OCR accuracy."

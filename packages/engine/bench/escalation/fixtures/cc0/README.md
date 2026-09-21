@@ -2,6 +2,8 @@
 
 The `manifest.json` file is the item-by-item register for the CC0 images in this directory. It stores each exact source image URL, source page, source metadata API URL and snapshot, source-reported dimensions, local byte size, SHA-256, and license evidence. The OCR entry also records the English ground truth and exact crop recipe used by T62. Run `node scripts/verify-p4-21-cc0-fixtures.mjs` from the repository root to verify the local bytes and metadata evidence.
 
+Metadata snapshot hashes cover the exact committed bytes. Keep these `.metadata.json` files normalized to LF, as required by the repository `.gitattributes`, so the verification is identical on Windows and Linux.
+
 ## Finding more samples
 
 1. **Cleveland Museum of Art:** search the [Open Access API](https://openaccess-api.clevelandart.org/) with `cc0` and `has_image=1`. Keep an item only when its individual response says `share_license_status: "CC0"` and contains the chosen image rendition URL. The API documentation distinguishes CC0 image records from records whose metadata is CC0 but whose images are restricted.
