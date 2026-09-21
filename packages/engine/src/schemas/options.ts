@@ -8,6 +8,16 @@ export const SmartCropOptionsSchema = z.object({
 });
 export type SmartCropOptions = z.infer<typeof SmartCropOptionsSchema>;
 
+export const T63AltTextReviewOptionsSchema = z.object({
+  decorative: z.boolean().default(false),
+  purposeReviewed: z.boolean().default(false),
+  redundancyReviewed: z.boolean().default(false),
+  essentialDetailReviewed: z.boolean().default(false),
+});
+export type T63AltTextReviewOptions = z.infer<typeof T63AltTextReviewOptionsSchema>;
+export const T63_ALT_TEXT_MAX_LENGTH = 125;
+export const T63AltTextDraftSchema = z.string().max(T63_ALT_TEXT_MAX_LENGTH);
+
 export const TextOptionsSchema = z.object({
   enabled: z.boolean().default(false),
   content: z.string().min(1).default('Text'),
@@ -880,6 +890,41 @@ export interface OptionDescription {
   pattern?: string;
   defaultValue: unknown;
 }
+
+export const t63AltTextReviewOptionDescriptions: Readonly<Record<string, OptionDescription>> = {
+  't63.decorative': {
+    label: 'Mark image as decorative',
+    help: 'Use only when the image adds no information beyond nearby text or layout.',
+    control: 'toggle',
+    group: 'Alt text',
+    advanced: false,
+    defaultValue: false,
+  },
+  't63.purposeReviewed': {
+    label: 'I described the image’s purpose in this page context',
+    help: 'Describe the information or function this image adds here.',
+    control: 'toggle',
+    group: 'Human review checklist',
+    advanced: false,
+    defaultValue: false,
+  },
+  't63.redundancyReviewed': {
+    label: 'I checked nearby text for repetition',
+    help: 'Avoid repeating captions, headings, or adjacent link text.',
+    control: 'toggle',
+    group: 'Human review checklist',
+    advanced: false,
+    defaultValue: false,
+  },
+  't63.essentialDetailReviewed': {
+    label: 'I kept only essential details',
+    help: 'Remove details that do not help a reader understand the page.',
+    control: 'toggle',
+    group: 'Human review checklist',
+    advanced: false,
+    defaultValue: false,
+  },
+};
 
 export const smartCropToolOptionDescriptions: Readonly<Record<string, OptionDescription>> = {
   't27.ratio': {

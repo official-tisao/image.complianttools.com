@@ -16,6 +16,10 @@
       "types": "./dist/ops/smart-crop.d.ts",
       "default": "./dist/ops/smart-crop.js"
     },
+    "./ops/alt-text-review": {
+      "types": "./dist/ops/alt-text-review.d.ts",
+      "default": "./dist/ops/alt-text-review.js"
+    },
     "./codecs/encode": {
       "types": "./dist/codecs/encode.d.ts",
       "default": "./dist/codecs/encode.js"

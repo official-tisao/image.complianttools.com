@@ -2986,6 +2986,7 @@ pages that matter most.
 | Encode WebP q80, 12 MP | | ≤ 900 ms |
 | Encode AVIF speed 6, 12 MP | | ≤ 4 s (and the UI says AVIF is slow, with the reason) |
 | T27 square-crop preview + PNG output | 12 MP still PNG | ≤ 3 s (click to visible preview; Chromium gate) |
+| T63 image selection + decoded preview | 6 MP still image | ≤ 3 s (selection to visible preview; route E2E gate) |
 | Predicted-size update after an option change | | ≤ 250 ms |
 | Target-size search, 8 iterations | 12 MP | ≤ 4 s, with per-iteration progress |
 | Metadata read | any | ≤ 40 ms |
