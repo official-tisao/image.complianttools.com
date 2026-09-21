@@ -1,6 +1,6 @@
 # P4-21 corpus index
 
-**Status date:** 2026-09-20
+**Status date:** 2026-09-21
 **Source of truth:** [`PLAN.md`](../../../../PLAN.md) P4-21 and [`README.md`](../../../../README.md) §13.1.3 / §26 Phase 4 exit.
 
 P4-21 requires measured, reviewable evidence for each applicable capability in the AI Justification Register. A present feature, model, or fixture does not count as a comparison by itself. `MEASURED` names the tested tier and limits; `PARTIAL` means some evidence exists but the required comparison or representative corpus is missing; `BLOCKED` names an unavailable implementation or model; `NOT APPLICABLE` follows an AI-only design or a documented absence of a model gap.

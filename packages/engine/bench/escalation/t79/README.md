@@ -17,11 +17,11 @@ The runner performs one warm-up and seven measured calls for each of 15 fixed op
 
 | Operation | Sizes | Median latency (ms) | Pooled p95 (ms) | Repeated RGBA output |
 | --- | --- | ---: | ---: | --- |
-| Value noise | 128, 256, 512 | 23.8223 | 118.0965 | Deterministic in all 3 cases |
-| fBm | 128, 256, 512 | 22.7495 | 118.8603 | Deterministic in all 3 cases |
-| Worley noise | 128, 256, 512 | 6.3155 | 34.0056 | Deterministic in all 3 cases |
-| Linear gradient | 128, 256, 512 | 1.0877 | 3.6604 | Deterministic in all 3 cases |
-| Radial gradient | 128, 256, 512 | 1.2393 | 7.5018 | Deterministic in all 3 cases |
+| Value noise | 128, 256, 512 | 42.3808 | 140.4471 | Deterministic in all 3 cases |
+| fBm | 128, 256, 512 | 40.9802 | 167.8039 | Deterministic in all 3 cases |
+| Worley noise | 128, 256, 512 | 10.4063 | 39.5785 | Deterministic in all 3 cases |
+| Linear gradient | 128, 256, 512 | 1.3975 | 4.9906 | Deterministic in all 3 cases |
+| Radial gradient | 128, 256, 512 | 1.8111 | 6.4302 | Deterministic in all 3 cases |
 
 Percentiles use all 21 measured samples per operation (three sizes × seven runs). This is a pooled summary, not a per-size browser performance result.
 
