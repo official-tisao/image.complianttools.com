@@ -220,3 +220,93 @@ test('T80 rejects unsupported, oversized, and animated PNG inputs with typed rec
   await expect(page.getByRole('alert')).toHaveAttribute('data-error-kind', 'image-too-large');
   await expect(page.getByRole('alert')).toContainText('6 megapixels');
 });
+
+test('T80 reports decode and worker failures with typed remedies', async ({ page }) => {
+  await page.goto('/color-match');
+  const { source, reference } = await generatedPair(page);
+  await page
+    .getByTestId('t80-source-input')
+    .setInputFiles({ name: 'source.png', mimeType: 'image/png', buffer: source });
+  await page
+    .getByTestId('t80-reference-input')
+    .setInputFiles({ name: 'reference.png', mimeType: 'image/png', buffer: reference });
+
+  await page.evaluate(() => {
+    Object.defineProperty(window, 'createImageBitmap', {
+      configurable: true,
+      value: async () => {
+        throw new Error('simulated decode failure');
+      },
+    });
+  });
+  await page.getByTestId('t80-run').click();
+  await expect(page.getByRole('alert')).toHaveAttribute('data-error-kind', 'decode-failed');
+  await expect(page.getByRole('alert')).toContainText('Export a valid, non-animated PNG');
+
+  await page.reload();
+  await page
+    .getByTestId('t80-source-input')
+    .setInputFiles({ name: 'source.png', mimeType: 'image/png', buffer: source });
+  await page
+    .getByTestId('t80-reference-input')
+    .setInputFiles({ name: 'reference.png', mimeType: 'image/png', buffer: reference });
+  await page.evaluate(() => {
+    Object.defineProperty(window, 'Worker', {
+      configurable: true,
+      value: class {
+        constructor() {
+          throw new Error('simulated worker construction failure');
+        }
+      },
+    });
+  });
+  await page.getByTestId('t80-run').click();
+  await expect(page.getByRole('alert')).toHaveAttribute('data-error-kind', 'processing-failed');
+  await expect(page.getByRole('alert')).toContainText('Try smaller images');
+});
+
+test('T80 cancellation terminates the active worker and reports recovery steps', async ({
+  page,
+}) => {
+  await page.goto('/color-match');
+  const { source, reference } = await generatedPair(page);
+  await page
+    .getByTestId('t80-source-input')
+    .setInputFiles({ name: 'source.png', mimeType: 'image/png', buffer: source });
+  await page
+    .getByTestId('t80-reference-input')
+    .setInputFiles({ name: 'reference.png', mimeType: 'image/png', buffer: reference });
+
+  await page.evaluate(() => {
+    (window as Window & { __t80WorkerTerminated?: boolean }).__t80WorkerTerminated = false;
+    Object.defineProperty(window, 'Worker', {
+      configurable: true,
+      value: class {
+        onmessage: ((event: MessageEvent) => void) | null = null;
+        onerror: ((event: ErrorEvent) => void) | null = null;
+
+        postMessage() {}
+
+        terminate() {
+          (window as Window & { __t80WorkerTerminated?: boolean }).__t80WorkerTerminated = true;
+        }
+      },
+    });
+  });
+
+  await page.getByTestId('t80-run').click();
+  const cancel = page.getByTestId('t80-cancel');
+  await expect(cancel).toBeVisible();
+  await cancel.click();
+  await expect(page.getByRole('alert')).toHaveAttribute('data-error-kind', 'cancelled');
+  await expect(page.getByRole('alert')).toContainText(
+    'Choose both images and start matching again',
+  );
+  await expect(cancel).toHaveCount(0);
+  await expect(page.getByTestId('t80-run')).toBeEnabled();
+  expect(
+    await page.evaluate(
+      () => (window as Window & { __t80WorkerTerminated?: boolean }).__t80WorkerTerminated,
+    ),
+  ).toBe(true);
+});
