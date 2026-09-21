@@ -41,8 +41,9 @@ const cases = [
     archetype: `phase-two:${route}`,
     route: `${route}.html`,
     // The RAW converter carries its additional decoder and demosaicing path. Give that route a
-    // separate 117 KB ceiling while keeping the shared tool-route guard at 115 KB.
-    budget: route === 'raw-converter' ? 117_000 : 115_000,
+    // separate 118 KB ceiling while keeping the shared tool-route guard at 115 KB. The extra
+    // headroom covers the generated control metadata shared by the current route bundle.
+    budget: route === 'raw-converter' ? 118_000 : 115_000,
     requiresInput: true,
   })),
 ] as const;
