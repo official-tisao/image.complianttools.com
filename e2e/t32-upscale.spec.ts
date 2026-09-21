@@ -51,48 +51,56 @@ interface RegisteredT32Model {
   readonly bytes: Buffer;
 }
 
-let registeredX2ModelPromise: Promise<RegisteredT32Model> | undefined;
+type T32Variant = 'x2plus' | 'x4plus';
+const registeredT32ModelPromises = new Map<T32Variant, Promise<RegisteredT32Model>>();
 
-async function registeredX2Model(): Promise<RegisteredT32Model> {
-  registeredX2ModelPromise ??= (async () => {
-    const registry = JSON.parse(
-      await readFile(new URL('../docs/model-assets.json', import.meta.url), 'utf8'),
-    ) as {
-      assets: Array<{
-        onnxConversion?: {
-          filename: string;
-          sizeBytes: number;
-          sha256: string;
-          sourceUrl?: string;
-        };
-      }>;
-    };
-    const conversion = registry.assets.find(
-      (asset) => asset.onnxConversion?.filename === 'RealESRGAN_x2plus.onnx',
-    )?.onnxConversion;
-    if (!conversion?.sourceUrl) throw new Error('The registered T32 x2 source URL is missing.');
+async function registeredT32Model(variant: T32Variant): Promise<RegisteredT32Model> {
+  let modelPromise = registeredT32ModelPromises.get(variant);
+  if (!modelPromise) {
+    modelPromise = (async () => {
+      const filename = `RealESRGAN_${variant}.onnx`;
+      const registry = JSON.parse(
+        await readFile(new URL('../docs/model-assets.json', import.meta.url), 'utf8'),
+      ) as {
+        assets: Array<{
+          onnxConversion?: {
+            filename: string;
+            sizeBytes: number;
+            sha256: string;
+            sourceUrl?: string;
+          };
+        }>;
+      };
+      const conversion = registry.assets.find(
+        (asset) => asset.onnxConversion?.filename === filename,
+      )?.onnxConversion;
+      if (!conversion?.sourceUrl)
+        throw new Error(`The registered T32 ${variant} source URL is missing.`);
 
-    const response = await fetch(conversion.sourceUrl);
-    if (!response.ok) {
-      throw new Error(
-        `Could not obtain the registered T32 x2 E2E bytes (HTTP ${response.status}).`,
-      );
-    }
-    const bytes = Buffer.from(await response.arrayBuffer());
-    const sha256 = createHash('sha256').update(bytes).digest('hex');
-    if (bytes.byteLength !== conversion.sizeBytes || sha256 !== conversion.sha256) {
-      throw new Error('The T32 E2E source did not match the registered size and SHA-256.');
-    }
-    return {
-      sizeBytes: conversion.sizeBytes,
-      sha256: conversion.sha256,
-      bytes,
-    };
-  })();
-  return registeredX2ModelPromise;
+      const response = await fetch(conversion.sourceUrl);
+      if (!response.ok) {
+        throw new Error(
+          `Could not obtain the registered T32 ${variant} E2E bytes (HTTP ${response.status}).`,
+        );
+      }
+      const bytes = Buffer.from(await response.arrayBuffer());
+      const sha256 = createHash('sha256').update(bytes).digest('hex');
+      if (bytes.byteLength !== conversion.sizeBytes || sha256 !== conversion.sha256) {
+        throw new Error('The T32 E2E source did not match the registered size and SHA-256.');
+      }
+      return {
+        sizeBytes: conversion.sizeBytes,
+        sha256: conversion.sha256,
+        bytes,
+      };
+    })();
+    registeredT32ModelPromises.set(variant, modelPromise);
+  }
+  return modelPromise;
 }
 
 interface T32Tier2HarnessOptions {
+  readonly variant?: T32Variant;
   readonly holdAfterFirstChunk?: boolean;
   readonly corruptFirstByte?: boolean;
   readonly chunkDelayMs?: number;
@@ -104,8 +112,10 @@ async function installT32Tier2Harness(
   model: RegisteredT32Model,
   options: T32Tier2HarnessOptions = {},
 ) {
-  const primaryUrl = 'https://t32-primary.invalid/RealESRGAN_x2plus.onnx';
-  const fallbackUrl = 'https://t32-fallback.invalid/RealESRGAN_x2plus.onnx';
+  const variant = options.variant ?? 'x2plus';
+  const filename = `RealESRGAN_${variant}.onnx`;
+  const primaryUrl = `https://t32-primary.invalid/${filename}`;
+  const fallbackUrl = `https://t32-fallback.invalid/${filename}`;
   const fixturePath = '/__playwright_t32_x2_fixture';
   const chunkBytes = 1024 * 1024;
   const chunkDelayMs = options.chunkDelayMs ?? 0;
@@ -117,11 +127,20 @@ async function installT32Tier2Harness(
       body: JSON.stringify({
         schemaVersion: 1,
         tier2: {
-          x2: {
-            primaryUrlBase64: Buffer.from(primaryUrl).toString('base64'),
-            fallbackUrlBase64: Buffer.from(fallbackUrl).toString('base64'),
-          },
-          x4: { primaryUrlBase64: '', fallbackUrlBase64: '' },
+          x2:
+            variant === 'x2plus'
+              ? {
+                  primaryUrlBase64: Buffer.from(primaryUrl).toString('base64'),
+                  fallbackUrlBase64: Buffer.from(fallbackUrl).toString('base64'),
+                }
+              : { primaryUrlBase64: '', fallbackUrlBase64: '' },
+          x4:
+            variant === 'x4plus'
+              ? {
+                  primaryUrlBase64: Buffer.from(primaryUrl).toString('base64'),
+                  fallbackUrlBase64: Buffer.from(fallbackUrl).toString('base64'),
+                }
+              : { primaryUrlBase64: '', fallbackUrlBase64: '' },
         },
       }),
     }),
@@ -653,7 +672,7 @@ test('T32 streams the registered x2 bytes, runs the model, and reuses IndexedDB 
   );
   test.setTimeout(180_000);
 
-  const model = await registeredX2Model();
+  const model = await registeredT32Model('x2plus');
   const harness = await installT32Tier2Harness(page, context, model, { chunkDelayMs: 10 });
   await page.goto('/upscale');
   await page.getByTestId('t32-file-input').setInputFiles({
@@ -710,6 +729,42 @@ test('T32 streams the registered x2 bytes, runs the model, and reuses IndexedDB 
   });
 });
 
+test('T32 runs the registered x4 model on odd dimensions and crops to the requested output size', async ({
+  page,
+  context,
+  browserName,
+}) => {
+  test.skip(browserName !== 'chromium', 'The registered T32 model runtime smoke is Chromium/WASM.');
+  test.setTimeout(180_000);
+
+  const model = await registeredT32Model('x4plus');
+  const harness = await installT32Tier2Harness(page, context, model, {
+    variant: 'x4plus',
+    chunkDelayMs: 10,
+  });
+  await page.goto('/upscale');
+  await page.getByTestId('t32-file-input').setInputFiles({
+    name: 'tier2-x4-odd-dimensions.png',
+    mimeType: 'image/png',
+    buffer: await generatedPng(page),
+  });
+  await page.getByTestId('t32-factor').selectOption('4');
+  const download = page.getByTestId('t32-tier2-download');
+  await expect(download).toBeVisible();
+  await expect(download).toContainText('65 MiB');
+  expect(harness.counters.fixtureRequests).toBe(0);
+
+  await download.click();
+  await expect(page.getByTestId('t32-tier2-ready')).toBeVisible({ timeout: 90_000 });
+  expect(harness.counters.fallbackRequests).toBe(0);
+  await page.getByTestId('t32-tier2-run').click();
+  await expect(page.getByTestId('t32-output-dimensions')).toContainText('12 × 8', {
+    timeout: 90_000,
+  });
+  await expect(page.getByTestId('t32-status')).toContainText('Experimental AI output');
+  expect(harness.counters.fixtureRequests).toBeGreaterThan(1);
+});
+
 test('T32 rejects a same-size SHA mismatch without trying the fallback host', async ({
   page,
   context,
@@ -718,7 +773,7 @@ test('T32 rejects a same-size SHA mismatch without trying the fallback host', as
   test.skip(browserName !== 'chromium', 'The registered T32 model delivery E2E runs in Chromium.');
   test.setTimeout(180_000);
 
-  const model = await registeredX2Model();
+  const model = await registeredT32Model('x2plus');
   const harness = await installT32Tier2Harness(page, context, model, {
     chunkDelayMs: 5,
     corruptFirstByte: true,
@@ -747,7 +802,7 @@ test('T32 cancels a partial model transfer and does not cache its incomplete byt
   test.skip(browserName !== 'chromium', 'The registered T32 model delivery E2E runs in Chromium.');
   test.setTimeout(120_000);
 
-  const model = await registeredX2Model();
+  const model = await registeredT32Model('x2plus');
   const harness = await installT32Tier2Harness(page, context, model, {
     holdAfterFirstChunk: true,
     chunkDelayMs: 10,

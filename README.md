@@ -1795,7 +1795,7 @@ fixture is.
 #### 13.1.4 What this means for the product
 
 The current implementation evidence is narrower than the target product design. T64, T65, and T71
-remain AI-only by design. T32 has a local DCCI/NEDI Tier 1 route plus a user-started Real-ESRGAN Tier 2 download that verifies, caches, and smoke-tests its registered model. Full route STCC, deployed-origin availability, and real degraded-photo quality evidence remain open. The project-owner BSD-3 label acceptance applies to the two exact `.pth` checkpoints, not as an upstream per-file statement; the ONNX exports carry a separate publisher-declared BSD-3 model-card label.
+remain AI-only by design. T32 has a local DCCI/NEDI Tier 1 route plus a user-started Real-ESRGAN Tier 2 download that verifies, caches, and smoke-tests its registered model. Focused Chromium E2E verifies registered x2 delivery and host-unavailable IndexedDB reuse, registered x2 and x4 inference on odd-sized images, and fail-closed hash-mismatch/cancellation behavior. A full browser-offline app-shell/worker start, deployed-origin availability, real degraded-photo quality, and full route STCC remain open. The project-owner BSD-3 label acceptance applies to the two exact `.pth` checkpoints, not as an upstream per-file statement; the ONNX exports carry a separate publisher-declared BSD-3 model-card label.
 T62 has a local Tesseract path; T66 has local inpainting primitives. T67 remains an
 expand-image stub, T68 requires a user trimap and has no cleared model path, and T69's model need is
 not measured. Route wiring and STCC acceptance are tracked separately in `feature-audit.csv` and
