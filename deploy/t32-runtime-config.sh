@@ -6,6 +6,7 @@ x2_primary=${T32_ESRGAN_X2_URL:-https://huggingface.co/fernandotonon/QtMeshEdito
 x2_fallback=${T32_ESRGAN_X2_FALLBACK_URL:-}
 x4_primary=${T32_ESRGAN_X4_URL:-https://huggingface.co/fernandotonon/QtMeshEditor-models/resolve/d14119a40dfeef208e4e724dfaceb2640d2df95b/RealESRGAN_x4plus.onnx}
 x4_fallback=${T32_ESRGAN_X4_FALLBACK_URL:-}
+yunet_model_url=${T57_YUNET_MODEL_URL:-https://media.githubusercontent.com/media/opencv/opencv_zoo/47534e27c9851bb1128ccc0102f1145e27f23f98/models/face_detection_yunet/face_detection_yunet_2023mar.onnx}
 
 encode_base64() {
   printf '%s' "$1" | base64 | tr -d '\r\n'
@@ -29,6 +30,9 @@ cat > "$temporary_path" <<EOF
       "primaryUrlBase64": "$(encode_base64 "$x4_primary")",
       "fallbackUrlBase64": "$(encode_base64 "$x4_fallback")"
     }
+  },
+  "faceDetection": {
+    "yunetUrlBase64": "$(encode_base64 "$yunet_model_url")"
   }
 }
 EOF

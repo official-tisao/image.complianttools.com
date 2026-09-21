@@ -46,18 +46,8 @@
         "browserSmoke": {
           "browser": "Chromium 151.0.7922.34",
           "provider": "wasm",
-          "inputShape": [
-            1,
-            3,
-            8,
-            12
-          ],
-          "outputShape": [
-            1,
-            3,
-            32,
-            48
-          ],
+          "inputShape": [1, 3, 8, 12],
+          "outputShape": [1, 3, 32, 48],
           "finiteValues": 4608,
           "inferenceMs": 3122.095,
           "modelBytes": 67132609,
@@ -73,18 +63,8 @@
           "provider": "wasm",
           "fixture": "packages/engine/bench/escalation/t32/x4-degraded/artifacts/landscape-dordogne-blur-grain-jpeg-q45-x4-input.png",
           "inputSha256": "898fe8b2f32bdf750353ab0f96e7d4b335ff6934fc98ebeb0fa4ce0885c52bdb",
-          "inputShape": [
-            1,
-            3,
-            42,
-            64
-          ],
-          "outputShape": [
-            1,
-            3,
-            168,
-            256
-          ],
+          "inputShape": [1, 3, 42, 64],
+          "outputShape": [1, 3, 168, 256],
           "finiteValues": 129024,
           "startupAndFirstInferenceMs": 9438,
           "modelBytes": 67132609,
@@ -159,18 +139,8 @@
         "browserSmoke": {
           "browser": "Chromium 151.0.7922.34",
           "provider": "wasm",
-          "inputShape": [
-            1,
-            3,
-            8,
-            12
-          ],
-          "outputShape": [
-            1,
-            3,
-            16,
-            24
-          ],
+          "inputShape": [1, 3, 8, 12],
+          "outputShape": [1, 3, 16, 24],
           "finiteValues": 1152,
           "inferenceMs": 3129.66,
           "modelBytes": 67156218,
@@ -242,12 +212,8 @@
         "repositoryRevision": "9b3baf051f6708d0b697580489e4415b64c7378e",
         "conversionMethod": "Automatically converted and uploaded according to the publisher's model card.",
         "baseModel": "caidas/swin2SR-realworld-sr-x4-64-bsrgan-psnr",
-        "inputs": [
-          "pixel_values"
-        ],
-        "outputs": [
-          "reconstruction"
-        ],
+        "inputs": ["pixel_values"],
+        "outputs": ["reconstruction"],
         "scaleFactor": 4,
         "requiredInputWindowMultiple": 8,
         "qualityBenchmark": {
@@ -269,18 +235,8 @@
           "provider": "wasm",
           "fixture": "packages/engine/bench/escalation/t32/x4-degraded/artifacts/swin2sr-q4f16/landscape-dordogne-clean-x4-swin2sr-padded-input.png",
           "fixtureSha256": "dfd0b428688f40cad8e49ea70fc236019867cdedfe684e7887369b3e45092d1a",
-          "inputShape": [
-            1,
-            3,
-            48,
-            64
-          ],
-          "outputShape": [
-            1,
-            3,
-            192,
-            256
-          ],
+          "inputShape": [1, 3, 48, 64],
+          "outputShape": [1, 3, 192, 256],
           "finiteValues": 147456,
           "startupAndFirstInferenceMs": 13046,
           "modelAndWasmSameOrigin": true,
@@ -290,6 +246,20 @@
         }
       },
       "conversionStatus": "Exact q4f16 ONNX size/hash verified; same-fixture 16-case benchmark and Chromium WASM fixture smoke passed; aggregate PSNR/SSIM improved modestly with mixed per-class PSNR and slow runtime; remains evaluation-only pending exact asset review and representative photo evidence."
+    },
+    {
+      "id": "opencv-zoo-yunet-face-detection-2023mar",
+      "filename": "face_detection_yunet_2023mar.onnx",
+      "purpose": "Optional in-browser face-region suggestions for T57; manual region marking remains available.",
+      "sourceRepositoryUrl": "https://github.com/opencv/opencv_zoo",
+      "sourceRevision": "47534e27c9851bb1128ccc0102f1145e27f23f98",
+      "sourceUrl": "https://media.githubusercontent.com/media/opencv/opencv_zoo/47534e27c9851bb1128ccc0102f1145e27f23f98/models/face_detection_yunet/face_detection_yunet_2023mar.onnx",
+      "license": "MIT (the upstream YuNet model directory states all files in that directory are MIT licensed)",
+      "licenseEvidenceUrl": "https://github.com/opencv/opencv_zoo/blob/47534e27c9851bb1128ccc0102f1145e27f23f98/models/face_detection_yunet/README.md",
+      "sizeBytes": 232589,
+      "sha256": "8f2383e4dd3cfbb4553ea8718107fc0423210dc964f9f4280604804ed2552fa4",
+      "inAppBundle": false,
+      "deliveryStatus": "Pinned Git LFS media URL returned HTTP 200 with CORS wildcard and exactly 232589 bytes matching SHA-256. Browser-side download is lazy and user-initiated; Docker runtime may replace only the URL, while the browser still enforces the registered size and hash."
     }
   ]
 }

@@ -1,7 +1,24 @@
 import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
 
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
+
+interface T57Fixture {
+  readonly id: string;
+  readonly path: string;
+  readonly dimensions: { readonly width: number; readonly height: number };
+  readonly groundTruthFaceBoxes: readonly {
+    readonly x: number;
+    readonly y: number;
+    readonly width: number;
+    readonly height: number;
+  }[];
+}
+
+const t57FixtureManifest = JSON.parse(
+  await readFile('packages/engine/bench/escalation/t57/fixtures/manifest.json', 'utf8'),
+) as { readonly license: string; readonly fixtures: readonly T57Fixture[] };
 
 async function generatedPng(page: import('@playwright/test').Page, width = 64, height = 64) {
   const base64 = await page.evaluate(
@@ -119,9 +136,121 @@ test('T57 static Arabic page explains manual review without JavaScript', async (
   const page = await context.newPage();
   await page.goto('/ar/blur-face');
   await expect(page.locator('h1')).toHaveText(/تمويه الوجوه/u);
-  await expect(page.getByTestId('t57-manual-warning')).toContainText(/لا تكتشف/u);
+  await expect(page.getByTestId('t57-manual-warning')).toContainText(/قد لا يقترح النموذج/u);
   await expect(page.getByText(/اختر صورة PNG ثابتة/u)).toBeVisible();
   await context.close();
+});
+
+test('T57 CC0 generated face corpus preserves exact annotated boxes in manual regions', async ({
+  page,
+}) => {
+  expect(t57FixtureManifest.license).toBe('CC0-1.0');
+  expect(t57FixtureManifest.fixtures).toHaveLength(3);
+  await page.goto('/blur-face');
+  await waitForHydration(page);
+
+  for (const fixture of t57FixtureManifest.fixtures) {
+    const source = await readFile(join('packages/engine/bench/escalation/t57', fixture.path));
+    await page.getByTestId('t57-input').setInputFiles({
+      name: `${fixture.id}.png`,
+      mimeType: 'image/png',
+      buffer: source,
+    });
+    await expect(page.getByTestId('t57-file-info')).toContainText(
+      `${fixture.dimensions.width} × ${fixture.dimensions.height} pixels`,
+    );
+    for (let index = 0; index < fixture.groundTruthFaceBoxes.length; index += 1) {
+      const box = fixture.groundTruthFaceBoxes[index]!;
+      for (const [testId, value] of [
+        ['t57-region-x', box.x],
+        ['t57-region-y', box.y],
+        ['t57-region-width', box.width],
+        ['t57-region-height', box.height],
+      ] as const) {
+        await page.getByTestId(testId).fill(String(value));
+      }
+      const addCoordinates = page.getByTestId('t57-add-coordinates');
+      await addCoordinates.scrollIntoViewIfNeeded();
+      await addCoordinates.click();
+      const row = page.locator('.region-list li').nth(index);
+      await expect(row).toContainText(`${box.x}, ${box.y}, ${box.width} × ${box.height}`);
+    }
+    await expect(page.locator('.region-list li')).toHaveCount(fixture.groundTruthFaceBoxes.length);
+    await page.getByRole('button', { name: /Clear all areas/u }).click();
+    await page.getByRole('button', { name: /Remove image/u }).click();
+  }
+});
+
+test('T57 fetches the registered YuNet model only after the user asks and rejects bad bytes', async ({
+  page,
+}) => {
+  const requests: string[] = [];
+  page.on('request', (request) => {
+    if (request.url().includes('face_detection_yunet_2023mar.onnx')) requests.push(request.url());
+  });
+  await page.route(
+    'https://media.githubusercontent.com/**/face_detection_yunet_2023mar.onnx',
+    (route) =>
+      route.fulfill({
+        status: 200,
+        body: Buffer.alloc(232_589, 0),
+        headers: { 'access-control-allow-origin': '*' },
+      }),
+  );
+  await page.goto('/blur-face');
+  await waitForHydration(page);
+  await page.getByTestId('t57-input').setInputFiles({
+    name: 'single-centered.png',
+    mimeType: 'image/png',
+    buffer: await readFile('packages/engine/bench/escalation/t57/fixtures/single-centered.png'),
+  });
+  expect(requests).toEqual([]);
+  await page.getByTestId('t57-suggest-faces').click();
+  await expect(page.getByTestId('t57-notice')).toContainText(
+    'Could not load or verify the face model',
+  );
+  expect(requests).toHaveLength(1);
+  await expect(page.getByTestId('t57-suggest-faces')).toBeVisible();
+
+  // A failed model fetch leaves the local manual path available.
+  await page.getByTestId('t57-region-x').fill('50');
+  await page.getByTestId('t57-region-y').fill('28');
+  await page.getByTestId('t57-region-width').fill('60');
+  await page.getByTestId('t57-region-height').fill('76');
+  await page.getByTestId('t57-add-coordinates').click();
+  await expect(page.locator('.region-list li')).toContainText('50, 28, 60 × 76');
+});
+
+test('T57 keeps manual blur and PNG export usable offline after a local image is ready', async ({
+  page,
+}) => {
+  const externalRequests: string[] = [];
+  let appOrigin = '';
+  page.on('request', (request) => {
+    if (appOrigin && new URL(request.url()).origin !== appOrigin) {
+      externalRequests.push(request.url());
+    }
+  });
+  await page.goto('/blur-face');
+  await waitForHydration(page);
+  appOrigin = new URL(page.url()).origin;
+  await page.getByTestId('t57-input').setInputFiles({
+    name: 'offline-manual.png',
+    mimeType: 'image/png',
+    buffer: await readFile('packages/engine/bench/escalation/t57/fixtures/single-centered.png'),
+  });
+  await expect(page.getByTestId('t57-file-info')).toBeVisible();
+  await page.context().setOffline(true);
+  await page.getByTestId('t57-region-x').fill('50');
+  await page.getByTestId('t57-region-y').fill('28');
+  await page.getByTestId('t57-region-width').fill('60');
+  await page.getByTestId('t57-region-height').fill('76');
+  await page.getByTestId('t57-add-coordinates').click();
+  await expect(page.getByTestId('t57-status')).toContainText('1 area will be blurred');
+  const downloadEvent = page.waitForEvent('download');
+  await page.getByTestId('t57-download').click();
+  expect((await downloadEvent).suggestedFilename()).toBe('offline-manual-blurred.png');
+  expect(externalRequests).toEqual([]);
 });
 
 test('T57 is a no-op until a region is marked, then keyboard edits, preview and PNG export work without off-origin requests', async ({
@@ -225,6 +354,7 @@ test('T57 draws a pointer-selected region, removes regions, and enforces region 
     buffer: await generatedPng(page),
   });
   const canvas = page.getByTestId('t57-preview');
+  await canvas.scrollIntoViewIfNeeded();
   const bounds = await canvas.boundingBox();
   if (!bounds) throw new Error('T57 preview has no layout box.');
   await canvas.evaluate((element) => {
