@@ -55,7 +55,23 @@ describe('T27 smart-crop geometry', () => {
 
   it('rejects invalid dimensions and ratios', () => {
     expect(() => centerCropRect(0, 10, 1)).toThrow(RangeError);
+    expect(() => centerCropRect(10, 0, 1)).toThrow(RangeError);
+    expect(() => centerCropRect(10, 10, 0)).toThrow(RangeError);
     expect(() => centerCropRect(10, 10, Number.NaN)).toThrow(RangeError);
+  });
+
+  it('rejects every invalid rule-of-thirds input field', () => {
+    const crop = { x: 0, y: 0, width: 1, height: 1 };
+    expect(() => ruleOfThirdsCropRect(0, 10, crop)).toThrow('imageWidth');
+    expect(() => ruleOfThirdsCropRect(10, 0, crop)).toThrow('imageHeight');
+    expect(() => ruleOfThirdsCropRect(10, 10, { ...crop, width: 0 })).toThrow('crop.width');
+    expect(() => ruleOfThirdsCropRect(10, 10, { ...crop, height: 0 })).toThrow('crop.height');
+    expect(() => ruleOfThirdsCropRect(10, 10, { ...crop, x: Number.NaN })).toThrow(
+      'Crop offsets must be finite',
+    );
+    expect(() => ruleOfThirdsCropRect(10, 10, { ...crop, y: Number.POSITIVE_INFINITY })).toThrow(
+      'Crop offsets must be finite',
+    );
   });
 });
 
@@ -67,6 +83,11 @@ describe('T27 smart-crop analysis', () => {
       scale: 256 / 1200,
     });
     expect(smartCropAnalysisSize(80, 40)).toEqual({ width: 80, height: 40, scale: 1 });
+  });
+
+  it('rejects invalid analysis dimensions', () => {
+    expect(() => smartCropAnalysisSize(0, 10)).toThrow('imageWidth');
+    expect(() => smartCropAnalysisSize(10, Number.NaN)).toThrow('imageHeight');
   });
 
   it('moves a crop toward an isolated high-contrast feature', () => {
@@ -98,5 +119,45 @@ describe('T27 smart-crop analysis', () => {
         1,
       ),
     ).toThrow(RangeError);
+  });
+
+  it('rejects every invalid saliency input field', () => {
+    const crop = { x: 0, y: 0, width: 1, height: 1 };
+    const pixels = rgbaImage(2, 2, () => [0, 0, 0, 255]);
+    expect(() => approximateSaliencyCropRect(crop, { ...pixels, width: 0 }, 1)).toThrow(
+      'image.width',
+    );
+    expect(() => approximateSaliencyCropRect(crop, { ...pixels, height: 0 }, 1)).toThrow(
+      'image.height',
+    );
+    expect(() => approximateSaliencyCropRect(crop, pixels, 0)).toThrow('scale');
+    expect(() => approximateSaliencyCropRect({ ...crop, width: 0 }, pixels, 1)).toThrow(
+      'baseCrop.width',
+    );
+    expect(() => approximateSaliencyCropRect({ ...crop, height: 0 }, pixels, 1)).toThrow(
+      'baseCrop.height',
+    );
+    expect(() => approximateSaliencyCropRect(crop, { ...pixels, width: 1.5 }, 1)).toThrow(
+      'positive integers',
+    );
+    expect(() => approximateSaliencyCropRect(crop, { ...pixels, height: 1.5 }, 1)).toThrow(
+      'positive integers',
+    );
+    expect(() => approximateSaliencyCropRect({ ...crop, x: Number.NaN }, pixels, 1)).toThrow(
+      'Crop offsets must be finite',
+    );
+    expect(() =>
+      approximateSaliencyCropRect({ ...crop, y: Number.POSITIVE_INFINITY }, pixels, 1),
+    ).toThrow('Crop offsets must be finite');
+  });
+
+  it('returns the whole-image crop without scoring when no movement is possible', () => {
+    const pixels = rgbaImage(2, 2, () => [10, 20, 30, 255]);
+    expect(approximateSaliencyCropRect({ x: 0, y: 0, width: 2, height: 2 }, pixels, 1)).toEqual({
+      x: 0,
+      y: 0,
+      width: 2,
+      height: 2,
+    });
   });
 });

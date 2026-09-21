@@ -117,6 +117,7 @@
     } satisfies Record<ErrorKind, string>,
   } as const;
 
+  // Translators: preserve PNG, JPEG, MiB, pixel counts, and ratio numerals in Arabic copy.
   const ar = {
     title: 'اقتصاص ذكي',
     description:
@@ -385,7 +386,11 @@
     clearOutput();
     let bitmap: ImageBitmap | undefined;
     try {
-      bitmap = await createImageBitmap(sourceFile);
+      try {
+        bitmap = await createImageBitmap(sourceFile);
+      } catch {
+        throw new Error('decode-failed');
+      }
       if (bitmap.width !== sourceDimensions.width || bitmap.height !== sourceDimensions.height)
         throw new Error('decode-failed');
       const targetRatio =

@@ -315,7 +315,7 @@ include an AI step if the user has configured one, but they issue no request of 
 | T24 | Image Resizer | `/resize` | Local | 5 modes (§6.2) |
 | T25 | Bulk Resize | `/bulk-resize` | Local | Preset packs: social, print, app icons, favicons, email |
 | T26 | Crop Image | `/crop` | Local | Visual handles + numeric + edge-offsets + aspect presets + rule-of-thirds/golden overlays |
-| T27 | Smart Crop | `/smart-crop` | Local | Center, rule-of-thirds, and approximate visual-saliency placements for a chosen aspect ratio; original ratio + center is the no-op default. Options come from a Zod schema and the shared generated-control renderer. The saliency mode is a low-resolution edge-energy and colour-variation heuristic; it does not detect faces or recognize subjects. On 12 square-crop cases from four individually registered CC0 images, mean manually annotated target-box retention was 89.82% for center, 76.70% for thirds, and 71.97% for approximate saliency. These four subjective boxes do not establish crop quality or user preference. See [T27 measurements](packages/engine/bench/escalation/p4-21-t27-smart-crop.md) |
+| T27 | Smart Crop | `/smart-crop` | Local | Center, rule-of-thirds, and approximate visual-saliency placements for a chosen aspect ratio; original ratio + center is the no-op default. Options come from a Zod schema and the shared generated-control renderer. The saliency mode is a low-resolution edge-energy and colour-variation heuristic; it does not detect faces or recognize subjects. On 12 square-crop cases from four individually registered CC0 images, mean manually annotated target-box retention was 89.82% for center, 76.70% for thirds, and 71.97% for approximate saliency. A generated 12 MP PNG square-crop preview measured 1.428 s median over five local Chromium runs; the §19.2 budget is 3 s and CI asserts it. These measurements do not establish crop quality or user preference. See [T27 measurements](packages/engine/bench/escalation/p4-21-t27-smart-crop.md) |
 | T28 | Rotate & Straighten | `/rotate` | Local | 90° steps, arbitrary angle, auto-deskew, EXIF-orientation normalize |
 | T29 | Flip / Mirror | `/flip` | Local | Horizontal, vertical, both |
 | T30 | Canvas Resize / Pad | `/canvas-resize` | Local | Anchor 3×3, pad colour or transparent, extend to aspect ratio |
@@ -2985,6 +2985,7 @@ pages that matter most.
 | Encode JPEG q82, 12 MP | | ≤ 700 ms |
 | Encode WebP q80, 12 MP | | ≤ 900 ms |
 | Encode AVIF speed 6, 12 MP | | ≤ 4 s (and the UI says AVIF is slow, with the reason) |
+| T27 square-crop preview + PNG output | 12 MP still PNG | ≤ 3 s (click to visible preview; Chromium gate) |
 | Predicted-size update after an option change | | ≤ 250 ms |
 | Target-size search, 8 iterations | 12 MP | ≤ 4 s, with per-iteration progress |
 | Metadata read | any | ≤ 40 ms |

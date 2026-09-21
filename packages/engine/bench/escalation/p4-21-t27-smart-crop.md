@@ -78,3 +78,9 @@ For these four selected boxes and this square crop, center placement retained th
 - This measures one 1:1 target ratio. Other target ratios, content types, and user-selected focal points are unmeasured.
 - The route's browser canvas sampling and its float-rectangle canvas resampling differ from the headless Lanczos3 preview and integer `cropRaster` output used for reproducible hashes. Crop-rectangle calculations use the same production engine functions as the route.
 - No face-aware behavior, Tier 2 model comparison, or Tier 3 gap is established by this benchmark.
+
+## Browser route latency
+
+The Playwright route check in [`e2e/t27-smart-crop.spec.ts`](../../../../e2e/t27-smart-crop.spec.ts) generates a 4000×3000 (12 MP) PNG with a solid background and a single rectangle, selects a square crop, and measures from clicking **Preview crop** until the preview image is visible. This includes local `ImageBitmap` decode, crop selection, canvas rendering, and PNG encoding; fixture generation and file selection are outside the timed interval.
+
+On 2026-09-21, five local Playwright Chromium runs measured 1416.8, 1417.4, 1427.8, 1430.1, and 1467.1 ms (median 1427.8 ms; range 1416.8–1467.1 ms). This is a local Windows-host measurement using Playwright 1.62.1, not a pinned-runner baseline or a representative photographic corpus. The route budget is ≤3000 ms for this input, and the E2E asserts that bound in CI. PNG complexity and device performance can change the result.
