@@ -20,6 +20,10 @@ services:
       PUBLIC_URL: ${PUBLIC_URL:-http://localhost:8080}
       LOG_LEVEL: ${LOG_LEVEL:-warn}
       TZ: ${TZ:-UTC}
+      T32_ESRGAN_X2_URL: ${T32_ESRGAN_X2_URL:-https://huggingface.co/fernandotonon/QtMeshEditor-models/resolve/d14119a40dfeef208e4e724dfaceb2640d2df95b/RealESRGAN_x2plus.onnx}
+      T32_ESRGAN_X2_FALLBACK_URL: ${T32_ESRGAN_X2_FALLBACK_URL:-}
+      T32_ESRGAN_X4_URL: ${T32_ESRGAN_X4_URL:-https://huggingface.co/fernandotonon/QtMeshEditor-models/resolve/d14119a40dfeef208e4e724dfaceb2640d2df95b/RealESRGAN_x4plus.onnx}
+      T32_ESRGAN_X4_FALLBACK_URL: ${T32_ESRGAN_X4_FALLBACK_URL:-}
     # Cap to the smallest footprint that still serves 2 concurrent requests.
     # nginx:alpine idle RAM is ~5-10 MB; a 128 MB ceiling leaves headroom for
     # worker connections, gzip buffers, and the wasm asset range requests.

@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "tier2": {
+    "x2": {
+      "primaryUrlBase64": "aHR0cHM6Ly9odWdnaW5nZmFjZS5jby9mZXJuYW5kb3Rvbm9uL1F0TWVzaEVkaXRvci1tb2RlbHMvcmVzb2x2ZS9kMTQxMTlhNDBkZmVlZjIwOGU0ZTcyNGRmYWNlYjI2NDBkMmRmOTViL1JlYWxFU1JHQU5feDJwbHVzLm9ubng=",
+      "fallbackUrlBase64": ""
+    },
+    "x4": {
+      "primaryUrlBase64": "aHR0cHM6Ly9odWdnaW5nZmFjZS5jby9mZXJuYW5kb3Rvbm9uL1F0TWVzaEVkaXRvci1tb2RlbHMvcmVzb2x2ZS9kMTQxMTlhNDBkZmVlZjIwOGU0ZTcyNGRmYWNlYjI2NDBkMmRmOTViL1JlYWxFU1JHQU5feDRwbHVzLm9ubng=",
+      "fallbackUrlBase64": ""
+    }
+  }
+}

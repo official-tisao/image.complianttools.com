@@ -18,6 +18,9 @@
   import RawConverter from '$lib/RawConverter.svelte';
   import EmbeddedConverter from '$lib/EmbeddedConverter.svelte';
   import LosslessOptimizer from '$lib/LosslessOptimizer.svelte';
+  import PixelArtUpscaler from '$lib/PixelArtUpscaler.svelte';
+  import T32Upscale from '$lib/T32Upscale.svelte';
+  import OcrTool from '$lib/OcrTool.svelte';
   import FormatToolCompletion from '$lib/FormatToolCompletion.svelte';
   import { toolCopy } from '$lib/i18n';
   import type { PageData } from './$types';
@@ -90,6 +93,12 @@
   <EmbeddedConverter locale={data.locale} />
 {:else if data.tool === 'lossless-optimize'}
   <LosslessOptimizer locale={data.locale} />
+{:else if data.tool === 'ocr'}
+  <OcrTool locale={data.locale} />
+{:else if data.tool === 'pixel-art-upscaler'}
+  <PixelArtUpscaler locale={data.locale} />
+{:else if data.tool === 'upscale'}
+  <T32Upscale locale={data.locale} />
 {:else}
   <FaviconGenerator locale={data.locale} />
 {/if}

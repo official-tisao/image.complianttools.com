@@ -3,6 +3,8 @@
 !pnpm-lock.yaml
 !pnpm-workspace.yaml
 !.nvmrc
+!patches
+!patches/onnxruntime-web@1.30.0.patch
 !apps
 !apps/*
 !apps/*/package.json

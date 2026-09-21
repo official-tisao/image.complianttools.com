@@ -21,9 +21,19 @@
 </script>
 
 {#snippet control(path: string, description: OptionDescription)}
-  <div class="generated-control" data-testid={`option-${path.replaceAll('.', '-')}`}>
+  {@const segmented =
+    description.control === 'segmented' && (description.options?.length ?? 0) <= 4}
+  {@const labelId = `control-label-${path}`}
+  {@const helpId = `control-help-${path}`}
+  <div
+    class="generated-control"
+    data-testid={`option-${path.replaceAll('.', '-')}`}
+    role={segmented ? 'group' : undefined}
+    aria-labelledby={segmented ? labelId : undefined}
+  >
     <div class="control-heading">
-      <label for={`control-${path}`}>{description.label}</label><button
+      {#if segmented}<span class="control-label" id={labelId}>{description.label}</span>
+      {:else}<label for={`control-${path}`}>{description.label}</label>{/if}<button
         class:reset-hidden={current(path, description) === description.defaultValue}
         class="reset"
         type="button"
@@ -33,11 +43,12 @@
         >{translate(locale, 'control.reset', 'Reset')}</button
       >
     </div>
-    {#if description.help}<p>{description.help}</p>{/if}
+    {#if description.help}<p id={helpId}>{description.help}</p>{/if}
     {#if description.control === 'toggle'}
       <input
         id={`control-${path}`}
         type="checkbox"
+        aria-describedby={description.help ? helpId : undefined}
         checked={Boolean(current(path, description))}
         onchange={(event) => onChange(path, event.currentTarget.checked)}
       />
@@ -46,6 +57,7 @@
         <input
           id={`control-${path}`}
           type="range"
+          aria-describedby={description.help ? helpId : undefined}
           min={description.min}
           max={description.max}
           step={description.step}
@@ -54,6 +66,7 @@
         /><input
           aria-label={`${description.label} value`}
           type="number"
+          aria-describedby={description.help ? helpId : undefined}
           min={description.min}
           max={description.max}
           step={description.step}
@@ -66,6 +79,7 @@
         <input
           id={`control-${path}`}
           type="number"
+          aria-describedby={description.help ? helpId : undefined}
           min={description.min}
           max={description.max}
           step={description.step}
@@ -73,11 +87,12 @@
           oninput={(event) => onChange(path, Number(event.currentTarget.value))}
         /><span>{description.unit}</span>
       </div>
-    {:else if description.control === 'segmented' && (description.options?.length ?? 0) <= 4}
+    {:else if segmented}
       <div class="segments">
         {#each description.options ?? [] as option (option)}<button
             type="button"
             aria-pressed={current(path, description) === option}
+            aria-describedby={description.help ? helpId : undefined}
             onclick={() => onChange(path, option)}
             >{description.optionLabels?.[option] ?? option}</button
           >{/each}
@@ -86,6 +101,7 @@
       <select
         id={`control-${path}`}
         value={String(current(path, description))}
+        aria-describedby={description.help ? helpId : undefined}
         oninput={(event) => onChange(path, event.currentTarget.value)}
         >{#each description.options ?? [] as option (option)}<option value={option}
             >{description.optionLabels?.[option] ?? option}</option
@@ -95,6 +111,7 @@
       <input
         id={`control-${path}`}
         type={description.control === 'color' ? 'color' : 'text'}
+        aria-describedby={description.help ? helpId : undefined}
         pattern={description.pattern}
         value={String(current(path, description))}
         oninput={(event) => onChange(path, event.currentTarget.value)}

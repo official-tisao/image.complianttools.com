@@ -1,0 +1,26 @@
+[project]
+name = "complianttools-t32-conversion"
+version = "0.1.0"
+description = "Reproducible offline Real-ESRGAN .pth to ONNX conversion and CPU parity check"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "torch==2.5.1+cpu",
+  "torchvision==0.20.1+cpu",
+  "onnx==1.17.0",
+  "onnxruntime==1.20.1",
+  "numpy==2.5.3",
+  "pillow==12.3.0",
+  "basicsr @ git+https://github.com/XPixelGroup/BasicSR.git@651835a1b9d38dbbdaf45750f56906be2364f01a",
+]
+
+[tool.uv]
+package = false
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
+torchvision = { index = "pytorch-cpu" }

@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 
 import { expect, test, type Page } from '@playwright/test';
-import { allowAllNetwork, denyAllNetwork } from './support/network.js';
+import { allowAllNetwork, denyAllNetwork, LOCAL_ORIGIN } from './support/network.js';
 
 const waitForHydration = (page: Page) => page.locator('html[data-hydrated="true"]').waitFor();
 
@@ -11,7 +11,7 @@ test('encodes bytes with HTML and CSS snippets on the canonical local page', asy
 }) => {
   const crossOrigin: string[] = [];
   page.on('request', (request) => {
-    if (new URL(request.url()).origin !== 'http://127.0.0.1:4173') crossOrigin.push(request.url());
+    if (new URL(request.url()).origin !== LOCAL_ORIGIN) crossOrigin.push(request.url());
   });
   await page.goto('/base64-image');
   await waitForHydration(page);

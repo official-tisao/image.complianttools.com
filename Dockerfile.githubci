@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && npm install --global pnpm@9.15.5
 WORKDIR /work
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .nvmrc ./
+COPY patches/onnxruntime-web@1.30.0.patch patches/
 COPY apps/web/package.json apps/web/package.json
 COPY apps/relay/package.json apps/relay/package.json
 COPY packages/engine/package.json packages/engine/package.json

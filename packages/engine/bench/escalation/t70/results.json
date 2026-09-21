@@ -1,0 +1,2253 @@
+{
+  "schemaVersion": 1,
+  "benchmark": "P4-21 T70 pixel-art scaling",
+  "generatedAt": "2026-09-20T08:35:20.682Z",
+  "environment": {
+    "node": "v22.22.0",
+    "platform": "win32 x64",
+    "release": "10.0.26100",
+    "cpu": "Intel(R) Core(TM) i7-10750H CPU @ 2.60GHz",
+    "cpuLogicalCores": 12
+  },
+  "fixtureManifest": "fixtures/manifest.json",
+  "fixtureCount": 4,
+  "scaleFactors": [
+    2,
+    3,
+    4
+  ],
+  "measurementProtocol": {
+    "warmupsPerFixtureAndMethod": 10,
+    "timedRunsPerFixtureAndMethod": 100,
+    "latencyBoundary": "Synchronous in-memory scaler invocation; excludes fixture creation, encoding, and metrics.",
+    "qualityBaseline": "Independent nearest-neighbour block replication of the same generated RGBA pixels at integer scale.",
+    "preGuardComparison": "A separate benchmark function reproduces the prior implementation exactly: average all opaque 3×3 neighbours whenever any exist. It is retained only to quantify the guard fix.",
+    "colorMetrics": "Compares candidate output to source-derived RGB/RGBA palettes and to the nearest-neighbour RGBA output; transparent RGB bytes are included in exact comparisons."
+  },
+  "aggregateByFactor": [
+    {
+      "factor": 2,
+      "fixtureCount": 4,
+      "outputPixels": 2120,
+      "changedFromNearestPixels": 112,
+      "changedFromNearestPercent": 5.283,
+      "introducedRgbPixels": 0,
+      "preGuardIntroducedRgbPixels": 5,
+      "intermediateAlphaPixels": 112,
+      "medianNearestNeighborMs": 0.0056,
+      "medianPixelArtScaleMs": 0.0213
+    },
+    {
+      "factor": 3,
+      "fixtureCount": 4,
+      "outputPixels": 4770,
+      "changedFromNearestPixels": 172,
+      "changedFromNearestPercent": 3.6059,
+      "introducedRgbPixels": 0,
+      "preGuardIntroducedRgbPixels": 5,
+      "intermediateAlphaPixels": 172,
+      "medianNearestNeighborMs": 0.0118,
+      "medianPixelArtScaleMs": 0.036
+    },
+    {
+      "factor": 4,
+      "fixtureCount": 4,
+      "outputPixels": 8480,
+      "changedFromNearestPixels": 232,
+      "changedFromNearestPercent": 2.7358,
+      "introducedRgbPixels": 0,
+      "preGuardIntroducedRgbPixels": 5,
+      "intermediateAlphaPixels": 232,
+      "medianNearestNeighborMs": 0.0198,
+      "medianPixelArtScaleMs": 0.0201
+    }
+  ],
+  "measurements": [
+    {
+      "fixtureId": "opaque-staircase-palette",
+      "factor": 2,
+      "source": {
+        "width": 16,
+        "height": 16,
+        "rgbaSha256": "9e00b9e623fd9d67dcc35a3f73ff9e8035a7350d2dc1f781d6929eb158788c8c",
+        "pngArtifact": {
+          "path": "artifacts/opaque-staircase-palette-source.png",
+          "width": 16,
+          "height": 16,
+          "pngBytes": 671,
+          "pngSha256": "b70330524ab33f09e80759e0401d47cb47635d3c794324509d07d585125d4707",
+          "rgbaSha256": "9e00b9e623fd9d67dcc35a3f73ff9e8035a7350d2dc1f781d6929eb158788c8c"
+        }
+      },
+      "output": {
+        "width": 32,
+        "height": 32,
+        "rgbaSha256": "a163230a44d274c9697dead03a510402f00d9e65093b8542ccffc30afb7a04c5",
+        "pngArtifact": {
+          "path": "artifacts/opaque-staircase-palette-x2-pixel-art.png",
+          "width": 32,
+          "height": 32,
+          "pngBytes": 1212,
+          "pngSha256": "76fa547bac346eaca850dbeb4e52c6e98ea6ce63ee79267959e593f2e5a51b75",
+          "rgbaSha256": "a163230a44d274c9697dead03a510402f00d9e65093b8542ccffc30afb7a04c5"
+        }
+      },
+      "baseline": {
+        "method": "independent integer block replication",
+        "width": 32,
+        "height": 32,
+        "rgbaSha256": "a163230a44d274c9697dead03a510402f00d9e65093b8542ccffc30afb7a04c5",
+        "pngArtifact": {
+          "path": "artifacts/opaque-staircase-palette-x2-nearest-neighbor.png",
+          "width": 32,
+          "height": 32,
+          "pngBytes": 1212,
+          "pngSha256": "76fa547bac346eaca850dbeb4e52c6e98ea6ce63ee79267959e593f2e5a51b75",
+          "rgbaSha256": "a163230a44d274c9697dead03a510402f00d9e65093b8542ccffc30afb7a04c5"
+        }
+      },
+      "preGuardAverage": {
+        "description": "Benchmark copy of the pre-fix rule that averages all opaque 3×3 neighbours.",
+        "metrics": {
+          "comparisonToNearestNeighbor": {
+            "changedPixels": 0,
+            "changedPixelPercent": 0,
+            "meanAbsoluteErrorRgba": 0,
+            "psnrRgbaDb": null,
+            "exactRgbaMatch": true
+          },
+          "sourcePaletteRgbaCount": 5,
+          "outputPaletteRgbaCount": 5,
+          "introducedRgbColors": [],
+          "introducedRgbPixels": 0,
+          "introducedRgbaColors": [],
+          "introducedRgbaPixels": 0,
+          "introducedAlphaPixels": 0,
+          "intermediateAlphaPixels": 0,
+          "alphaDifferencePixels": 0,
+          "focusBlock": null
+        },
+        "rgbaSha256": "a163230a44d274c9697dead03a510402f00d9e65093b8542ccffc30afb7a04c5",
+        "pngArtifact": {
+          "path": "artifacts/opaque-staircase-palette-x2-pre-guard-average.png",
+          "width": 32,
+          "height": 32,
+          "pngBytes": 1212,
+          "pngSha256": "76fa547bac346eaca850dbeb4e52c6e98ea6ce63ee79267959e593f2e5a51b75",
+          "rgbaSha256": "a163230a44d274c9697dead03a510402f00d9e65093b8542ccffc30afb7a04c5"
+        }
+      },
+      "metrics": {
+        "comparisonToNearestNeighbor": {
+          "changedPixels": 0,
+          "changedPixelPercent": 0,
+          "meanAbsoluteErrorRgba": 0,
+          "psnrRgbaDb": null,
+          "exactRgbaMatch": true
+        },
+        "sourcePaletteRgbaCount": 5,
+        "outputPaletteRgbaCount": 5,
+        "introducedRgbColors": [],
+        "introducedRgbPixels": 0,
+        "introducedRgbaColors": [],
+        "introducedRgbaPixels": 0,
+        "introducedAlphaPixels": 0,
+        "intermediateAlphaPixels": 0,
+        "alphaDifferencePixels": 0,
+        "focusBlock": null
+      },
+      "latency": {
+        "nearestNeighbor": {
+          "warmups": 10,
+          "runs": 100,
+          "medianMs": 0.1278,
+          "p95Ms": 0.3206
+        },
+        "pixelArtScale": {
+          "warmups": 10,
+          "runs": 100,
+          "medianMs": 0.0266,
+          "p95Ms": 0.3238
+        }
+      }
+    },
+    {
+      "fixtureId": "opaque-staircase-palette",
+      "factor": 3,
+      "source": {
+        "width": 16,
+        "height": 16,
+        "rgbaSha256": "9e00b9e623fd9d67dcc35a3f73ff9e8035a7350d2dc1f781d6929eb158788c8c",
+        "pngArtifact": {
+          "path": "artifacts/opaque-staircase-palette-source.png",
+          "width": 16,
+          "height": 16,
+          "pngBytes": 671,
+          "pngSha256": "b70330524ab33f09e80759e0401d47cb47635d3c794324509d07d585125d4707",
+          "rgbaSha256": "9e00b9e623fd9d67dcc35a3f73ff9e8035a7350d2dc1f781d6929eb158788c8c"
+        }
+      },
+      "output": {
+        "width": 48,
+        "height": 48,
+        "rgbaSha256": "e299bb1c3be7267bb3de5b4485b152c491ce62dc23a43397677c64871f07064c",
+        "pngArtifact": {
+          "path": "artifacts/opaque-staircase-palette-x3-pixel-art.png",
+          "width": 48,
+          "height": 48,
+          "pngBytes": 1772,
+          "pngSha256": "472cb77565ddfc0ba83d6edc160b7be0964dd0a98ef3665f95a3cdf2fd68c7e0",
+          "rgbaSha256": "e299bb1c3be7267bb3de5b4485b152c491ce62dc23a43397677c64871f07064c"
+        }
+      },
+      "baseline": {
+        "method": "independent integer block replication",
+        "width": 48,
+        "height": 48,
+        "rgbaSha256": "e299bb1c3be7267bb3de5b4485b152c491ce62dc23a43397677c64871f07064c",
+        "pngArtifact": {
+          "path": "artifacts/opaque-staircase-palette-x3-nearest-neighbor.png",
+          "width": 48,
+          "height": 48,
+          "pngBytes": 1772,
+          "pngSha256": "472cb77565ddfc0ba83d6edc160b7be0964dd0a98ef3665f95a3cdf2fd68c7e0",
+          "rgbaSha256": "e299bb1c3be7267bb3de5b4485b152c491ce62dc23a43397677c64871f07064c"
+        }
+      },
+      "preGuardAverage": {
+        "description": "Benchmark copy of the pre-fix rule that averages all opaque 3×3 neighbours.",
+        "metrics": {
+          "comparisonToNearestNeighbor": {
+            "changedPixels": 0,
+            "changedPixelPercent": 0,
+            "meanAbsoluteErrorRgba": 0,
+            "psnrRgbaDb": null,
+            "exactRgbaMatch": true
+          },
+          "sourcePaletteRgbaCount": 5,
+          "outputPaletteRgbaCount": 5,
+          "introducedRgbColors": [],
+          "introducedRgbPixels": 0,
+          "introducedRgbaColors": [],
+          "introducedRgbaPixels": 0,
+          "introducedAlphaPixels": 0,
+          "intermediateAlphaPixels": 0,
+          "alphaDifferencePixels": 0,
+          "focusBlock": null
+        },
+        "rgbaSha256": "e299bb1c3be7267bb3de5b4485b152c491ce62dc23a43397677c64871f07064c",
+        "pngArtifact": {
+          "path": "artifacts/opaque-staircase-palette-x3-pre-guard-average.png",
+          "width": 48,
+          "height": 48,
+          "pngBytes": 1772,
+          "pngSha256": "472cb77565ddfc0ba83d6edc160b7be0964dd0a98ef3665f95a3cdf2fd68c7e0",
+          "rgbaSha256": "e299bb1c3be7267bb3de5b4485b152c491ce62dc23a43397677c64871f07064c"
+        }
+      },
+      "metrics": {
+        "comparisonToNearestNeighbor": {
+          "changedPixels": 0,
+          "changedPixelPercent": 0,
+          "meanAbsoluteErrorRgba": 0,
+          "psnrRgbaDb": null,
+          "exactRgbaMatch": true
+        },
+        "sourcePaletteRgbaCount": 5,
+        "outputPaletteRgbaCount": 5,
+        "introducedRgbColors": [],
+        "introducedRgbPixels": 0,
+        "introducedRgbaColors": [],
+        "introducedRgbaPixels": 0,
+        "introducedAlphaPixels": 0,
+        "intermediateAlphaPixels": 0,
+        "alphaDifferencePixels": 0,
+        "focusBlock": null
+      },
+      "latency": {
+        "nearestNeighbor": {
+          "warmups": 10,
+          "runs": 100,
+          "medianMs": 0.1849,
+          "p95Ms": 0.3629
+        },
+        "pixelArtScale": {
+          "warmups": 10,
+          "runs": 100,
+          "medianMs": 0.0651,
+          "p95Ms": 0.1254
+        }
+      }
+    },
+    {
+      "fixtureId": "opaque-staircase-palette",
+      "factor": 4,
+      "source": {
+        "width": 16,
+        "height": 16,
+        "rgbaSha256": "9e00b9e623fd9d67dcc35a3f73ff9e8035a7350d2dc1f781d6929eb158788c8c",
+        "pngArtifact": {
+          "path": "artifacts/opaque-staircase-palette-source.png",
+          "width": 16,
+          "height": 16,
+          "pngBytes": 671,
+          "pngSha256": "b70330524ab33f09e80759e0401d47cb47635d3c794324509d07d585125d4707",
+          "rgbaSha256": "9e00b9e623fd9d67dcc35a3f73ff9e8035a7350d2dc1f781d6929eb158788c8c"
+        }
+      },
+      "output": {
+        "width": 64,
+        "height": 64,
+        "rgbaSha256": "d0b36621502ee3d293fcd823ec11225bcbad17b738fe1b61df7eadbb01aed93e",
+        "pngArtifact": {
+          "path": "artifacts/opaque-staircase-palette-x4-pixel-art.png",
+          "width": 64,
+          "height": 64,
+          "pngBytes": 2302,
+          "pngSha256": "aab8f81ecdf2053bef03e88f42eaec0b47cd95ecb98b5ad4ba33b4db11960077",
+          "rgbaSha256": "d0b36621502ee3d293fcd823ec11225bcbad17b738fe1b61df7eadbb01aed93e"
+        }
+      },
+      "baseline": {
+        "method": "independent integer block replication",
+        "width": 64,
+        "height": 64,
+        "rgbaSha256": "d0b36621502ee3d293fcd823ec11225bcbad17b738fe1b61df7eadbb01aed93e",
+        "pngArtifact": {
+          "path": "artifacts/opaque-staircase-palette-x4-nearest-neighbor.png",
+          "width": 64,
+          "height": 64,
+          "pngBytes": 2302,
+          "pngSha256": "aab8f81ecdf2053bef03e88f42eaec0b47cd95ecb98b5ad4ba33b4db11960077",
+          "rgbaSha256": "d0b36621502ee3d293fcd823ec11225bcbad17b738fe1b61df7eadbb01aed93e"
+        }
+      },
+      "preGuardAverage": {
+        "description": "Benchmark copy of the pre-fix rule that averages all opaque 3×3 neighbours.",
+        "metrics": {
+          "comparisonToNearestNeighbor": {
+            "changedPixels": 0,
+            "changedPixelPercent": 0,
+            "meanAbsoluteErrorRgba": 0,
+            "psnrRgbaDb": null,
+            "exactRgbaMatch": true
+          },
+          "sourcePaletteRgbaCount": 5,
+          "outputPaletteRgbaCount": 5,
+          "introducedRgbColors": [],
+          "introducedRgbPixels": 0,
+          "introducedRgbaColors": [],
+          "introducedRgbaPixels": 0,
+          "introducedAlphaPixels": 0,
+          "intermediateAlphaPixels": 0,
+          "alphaDifferencePixels": 0,
+          "focusBlock": null
+        },
+        "rgbaSha256": "d0b36621502ee3d293fcd823ec11225bcbad17b738fe1b61df7eadbb01aed93e",
+        "pngArtifact": {
+          "path": "artifacts/opaque-staircase-palette-x4-pre-guard-average.png",
+          "width": 64,
+          "height": 64,
+          "pngBytes": 2302,
+          "pngSha256": "aab8f81ecdf2053bef03e88f42eaec0b47cd95ecb98b5ad4ba33b4db11960077",
+          "rgbaSha256": "d0b36621502ee3d293fcd823ec11225bcbad17b738fe1b61df7eadbb01aed93e"
+        }
+      },
+      "metrics": {
+        "comparisonToNearestNeighbor": {
+          "changedPixels": 0,
+          "changedPixelPercent": 0,
+          "meanAbsoluteErrorRgba": 0,
+          "psnrRgbaDb": null,
+          "exactRgbaMatch": true
+        },
+        "sourcePaletteRgbaCount": 5,
+        "outputPaletteRgbaCount": 5,
+        "introducedRgbColors": [],
+        "introducedRgbPixels": 0,
+        "introducedRgbaColors": [],
+        "introducedRgbaPixels": 0,
+        "introducedAlphaPixels": 0,
+        "intermediateAlphaPixels": 0,
+        "alphaDifferencePixels": 0,
+        "focusBlock": null
+      },
+      "latency": {
+        "nearestNeighbor": {
+          "warmups": 10,
+          "runs": 100,
+          "medianMs": 0.237,
+          "p95Ms": 0.5235
+        },
+        "pixelArtScale": {
+          "warmups": 10,
+          "runs": 100,
+          "medianMs": 0.1174,
+          "p95Ms": 0.1778
+        }
+      }
+    },
+    {
+      "fixtureId": "transparent-outline-sprite",
+      "factor": 2,
+      "source": {
+        "width": 16,
+        "height": 16,
+        "rgbaSha256": "be5b213b12830c61966bc3950e429e0b88b7bf6219bfa59613ca5efc6af1ea5c",
+        "pngArtifact": {
+          "path": "artifacts/transparent-outline-sprite-source.png",
+          "width": 16,
+          "height": 16,
+          "pngBytes": 558,
+          "pngSha256": "94f06189790065479584ff425e40e8f557e3cbfaff49afb9d74985fb3b82d324",
+          "rgbaSha256": "be5b213b12830c61966bc3950e429e0b88b7bf6219bfa59613ca5efc6af1ea5c"
+        }
+      },
+      "output": {
+        "width": 32,
+        "height": 32,
+        "rgbaSha256": "daf7d4de255374fd0271352f286757130b7e5656e52cb647f08c77604c203338",
+        "pngArtifact": {
+          "path": "artifacts/transparent-outline-sprite-x2-pixel-art.png",
+          "width": 32,
+          "height": 32,
+          "pngBytes": 1250,
+          "pngSha256": "dbc797ef7318843610aaa04bf50f118771312ac9f11acace4d72daa1aacc3bc6",
+          "rgbaSha256": "daf7d4de255374fd0271352f286757130b7e5656e52cb647f08c77604c203338"
+        }
+      },
+      "baseline": {
+        "method": "independent integer block replication",
+        "width": 32,
+        "height": 32,
+        "rgbaSha256": "4944e4da1d2ed248eed6c4c0927210efde3af4a0e3680894652c7e1c4c9c2b6b",
+        "pngArtifact": {
+          "path": "artifacts/transparent-outline-sprite-x2-nearest-neighbor.png",
+          "width": 32,
+          "height": 32,
+          "pngBytes": 963,
+          "pngSha256": "51fb0d5ea4e6de353c9af64b79001a791059ac9916ccf709515ae70ac11b50b4",
+          "rgbaSha256": "4944e4da1d2ed248eed6c4c0927210efde3af4a0e3680894652c7e1c4c9c2b6b"
+        }
+      },
+      "preGuardAverage": {
+        "description": "Benchmark copy of the pre-fix rule that averages all opaque 3×3 neighbours.",
+        "metrics": {
+          "comparisonToNearestNeighbor": {
+            "changedPixels": 108,
+            "changedPixelPercent": 10.5469,
+            "meanAbsoluteErrorRgba": 5.189453,
+            "psnrRgbaDb": 22.67795,
+            "exactRgbaMatch": false
+          },
+          "sourcePaletteRgbaCount": 4,
+          "outputPaletteRgbaCount": 7,
+          "introducedRgbColors": [],
+          "introducedRgbPixels": 0,
+          "introducedRgbaColors": [
+            [
+              28,
+              34,
+              58,
+              159
+            ],
+            [
+              28,
+              34,
+              58,
+              32
+            ],
+            [
+              28,
+              34,
+              58,
+              64
+            ]
+          ],
+          "introducedRgbaPixels": 108,
+          "introducedAlphaPixels": 108,
+          "intermediateAlphaPixels": 108,
+          "alphaDifferencePixels": 108,
+          "focusBlock": null
+        },
+        "rgbaSha256": "daf7d4de255374fd0271352f286757130b7e5656e52cb647f08c77604c203338",
+        "pngArtifact": {
+          "path": "artifacts/transparent-outline-sprite-x2-pre-guard-average.png",
+          "width": 32,
+          "height": 32,
+          "pngBytes": 1250,
+          "pngSha256": "dbc797ef7318843610aaa04bf50f118771312ac9f11acace4d72daa1aacc3bc6",
+          "rgbaSha256": "daf7d4de255374fd0271352f286757130b7e5656e52cb647f08c77604c203338"
+        }
+      },
+      "metrics": {
+        "comparisonToNearestNeighbor": {
+          "changedPixels": 108,
+          "changedPixelPercent": 10.5469,
+          "meanAbsoluteErrorRgba": 5.189453,
+          "psnrRgbaDb": 22.67795,
+          "exactRgbaMatch": false
+        },
+        "sourcePaletteRgbaCount": 4,
+        "outputPaletteRgbaCount": 7,
+        "introducedRgbColors": [],
+        "introducedRgbPixels": 0,
+        "introducedRgbaColors": [
+          [
+            28,
+            34,
+            58,
+            159
+          ],
+          [
+            28,
+            34,
+            58,
+            32
+          ],
+          [
+            28,
+            34,
+            58,
+            64
+          ]
+        ],
+        "introducedRgbaPixels": 108,
+        "introducedAlphaPixels": 108,
+        "intermediateAlphaPixels": 108,
+        "alphaDifferencePixels": 108,
+        "focusBlock": null
+      },
+      "latency": {
+        "nearestNeighbor": {
+          "warmups": 10,
+          "runs": 100,
+          "medianMs": 0.1284,
+          "p95Ms": 0.2554
+        },
+        "pixelArtScale": {
+          "warmups": 10,
+          "runs": 100,
+          "medianMs": 0.1358,
+          "p95Ms": 0.5021
+        }
+      }
+    },
+    {
+      "fixtureId": "transparent-outline-sprite",
+      "factor": 3,
+      "source": {
+        "width": 16,
+        "height": 16,
+        "rgbaSha256": "be5b213b12830c61966bc3950e429e0b88b7bf6219bfa59613ca5efc6af1ea5c",
+        "pngArtifact": {
+          "path": "artifacts/transparent-outline-sprite-source.png",
+          "width": 16,
+          "height": 16,
+          "pngBytes": 558,
+          "pngSha256": "94f06189790065479584ff425e40e8f557e3cbfaff49afb9d74985fb3b82d324",
+          "rgbaSha256": "be5b213b12830c61966bc3950e429e0b88b7bf6219bfa59613ca5efc6af1ea5c"
+        }
+      },
+      "output": {
+        "width": 48,
+        "height": 48,
+        "rgbaSha256": "e10f9219ed831332a848b7b04ca6f0003474fc2605605372f18dab550558d30c",
+        "pngArtifact": {
+          "path": "artifacts/transparent-outline-sprite-x3-pixel-art.png",
+          "width": 48,
+          "height": 48,
+          "pngBytes": 1801,
+          "pngSha256": "cad54d422547a5a0c7912164f41a231cc1fa3c57d74b47e10c4b42b37da9fda8",
+          "rgbaSha256": "e10f9219ed831332a848b7b04ca6f0003474fc2605605372f18dab550558d30c"
+        }
+      },
+      "baseline": {
+        "method": "independent integer block replication",
+        "width": 48,
+        "height": 48,
+        "rgbaSha256": "4f55dc9f647190131f59369434c02766d657b1e4b4de6b1d89a66a2cda58d497",
+        "pngArtifact": {
+          "path": "artifacts/transparent-outline-sprite-x3-nearest-neighbor.png",
+          "width": 48,
+          "height": 48,
+          "pngBytes": 1378,
+          "pngSha256": "704d93e9c33e6ab2e18fd5833b825cb0032950c43c9a979ba3c208ebc790b567",
+          "rgbaSha256": "4f55dc9f647190131f59369434c02766d657b1e4b4de6b1d89a66a2cda58d497"
+        }
+      },
+      "preGuardAverage": {
+        "description": "Benchmark copy of the pre-fix rule that averages all opaque 3×3 neighbours.",
+        "metrics": {
+          "comparisonToNearestNeighbor": {
+            "changedPixels": 160,
+            "changedPixelPercent": 6.9444,
+            "meanAbsoluteErrorRgba": 3.525174,
+            "psnrRgbaDb": 24.366507,
+            "exactRgbaMatch": false
+          },
+          "sourcePaletteRgbaCount": 4,
+          "outputPaletteRgbaCount": 8,
+          "introducedRgbColors": [],
+          "introducedRgbPixels": 0,
+          "introducedRgbaColors": [
+            [
+              28,
+              34,
+              58,
+              159
+            ],
+            [
+              28,
+              34,
+              58,
+              32
+            ],
+            [
+              28,
+              34,
+              58,
+              64
+            ],
+            [
+              28,
+              34,
+              58,
+              96
+            ]
+          ],
+          "introducedRgbaPixels": 160,
+          "introducedAlphaPixels": 160,
+          "intermediateAlphaPixels": 160,
+          "alphaDifferencePixels": 160,
+          "focusBlock": null
+        },
+        "rgbaSha256": "e10f9219ed831332a848b7b04ca6f0003474fc2605605372f18dab550558d30c",
+        "pngArtifact": {
+          "path": "artifacts/transparent-outline-sprite-x3-pre-guard-average.png",
+          "width": 48,
+          "height": 48,
+          "pngBytes": 1801,
+          "pngSha256": "cad54d422547a5a0c7912164f41a231cc1fa3c57d74b47e10c4b42b37da9fda8",
+          "rgbaSha256": "e10f9219ed831332a848b7b04ca6f0003474fc2605605372f18dab550558d30c"
+        }
+      },
+      "metrics": {
+        "comparisonToNearestNeighbor": {
+          "changedPixels": 160,
+          "changedPixelPercent": 6.9444,
+          "meanAbsoluteErrorRgba": 3.525174,
+          "psnrRgbaDb": 24.366507,
+          "exactRgbaMatch": false
+        },
+        "sourcePaletteRgbaCount": 4,
+        "outputPaletteRgbaCount": 8,
+        "introducedRgbColors": [],
+        "introducedRgbPixels": 0,
+        "introducedRgbaColors": [
+          [
+            28,
+            34,
+            58,
+            159
+          ],
+          [
+            28,
+            34,
+            58,
+            32
+          ],
+          [
+            28,
+            34,
+            58,
+            64
+          ],
+          [
+            28,
+            34,
+            58,
+            96
+          ]
+        ],
+        "introducedRgbaPixels": 160,
+        "introducedAlphaPixels": 160,
+        "intermediateAlphaPixels": 160,
+        "alphaDifferencePixels": 160,
+        "focusBlock": null
+      },
+      "latency": {
+        "nearestNeighbor": {
+          "warmups": 10,
+          "runs": 100,
+          "medianMs": 0.1426,
+          "p95Ms": 0.1995
+        },
+        "pixelArtScale": {
+          "warmups": 10,
+          "runs": 100,
+          "medianMs": 0.3039,
+          "p95Ms": 0.44
+        }
+      }
+    },
+    {
+      "fixtureId": "transparent-outline-sprite",
+      "factor": 4,
+      "source": {
+        "width": 16,
+        "height": 16,
+        "rgbaSha256": "be5b213b12830c61966bc3950e429e0b88b7bf6219bfa59613ca5efc6af1ea5c",
+        "pngArtifact": {
+          "path": "artifacts/transparent-outline-sprite-source.png",
+          "width": 16,
+          "height": 16,
+          "pngBytes": 558,
+          "pngSha256": "94f06189790065479584ff425e40e8f557e3cbfaff49afb9d74985fb3b82d324",
+          "rgbaSha256": "be5b213b12830c61966bc3950e429e0b88b7bf6219bfa59613ca5efc6af1ea5c"
+        }
+      },
+      "output": {
+        "width": 64,
+        "height": 64,
+        "rgbaSha256": "b97f4c6f6b294390ee60b5e954d55c187ec8dca9398203044fcc9c64218fbd29",
+        "pngArtifact": {
+          "path": "artifacts/transparent-outline-sprite-x4-pixel-art.png",
+          "width": 64,
+          "height": 64,
+          "pngBytes": 2303,
+          "pngSha256": "507ce52419be90ea1c54fb1dfed91c20ce8cfaa5e2c34c448a3c39b5d6fe0f24",
+          "rgbaSha256": "b97f4c6f6b294390ee60b5e954d55c187ec8dca9398203044fcc9c64218fbd29"
+        }
+      },
+      "baseline": {
+        "method": "independent integer block replication",
+        "width": 64,
+        "height": 64,
+        "rgbaSha256": "d91d706e0ed87c4a36c77e651eb7f08649f40b280a475607082909d719e28ec3",
+        "pngArtifact": {
+          "path": "artifacts/transparent-outline-sprite-x4-nearest-neighbor.png",
+          "width": 64,
+          "height": 64,
+          "pngBytes": 1779,
+          "pngSha256": "87c233be9b421159b122e5a0c205c20cb83634b0c68692ca31b443917818b5d7",
+          "rgbaSha256": "d91d706e0ed87c4a36c77e651eb7f08649f40b280a475607082909d719e28ec3"
+        }
+      },
+      "preGuardAverage": {
+        "description": "Benchmark copy of the pre-fix rule that averages all opaque 3×3 neighbours.",
+        "metrics": {
+          "comparisonToNearestNeighbor": {
+            "changedPixels": 212,
+            "changedPixelPercent": 5.1758,
+            "meanAbsoluteErrorRgba": 2.668457,
+            "psnrRgbaDb": 25.580164,
+            "exactRgbaMatch": false
+          },
+          "sourcePaletteRgbaCount": 4,
+          "outputPaletteRgbaCount": 8,
+          "introducedRgbColors": [],
+          "introducedRgbPixels": 0,
+          "introducedRgbaColors": [
+            [
+              28,
+              34,
+              58,
+              159
+            ],
+            [
+              28,
+              34,
+              58,
+              32
+            ],
+            [
+              28,
+              34,
+              58,
+              64
+            ],
+            [
+              28,
+              34,
+              58,
+              96
+            ]
+          ],
+          "introducedRgbaPixels": 212,
+          "introducedAlphaPixels": 212,
+          "intermediateAlphaPixels": 212,
+          "alphaDifferencePixels": 212,
+          "focusBlock": null
+        },
+        "rgbaSha256": "b97f4c6f6b294390ee60b5e954d55c187ec8dca9398203044fcc9c64218fbd29",
+        "pngArtifact": {
+          "path": "artifacts/transparent-outline-sprite-x4-pre-guard-average.png",
+          "width": 64,
+          "height": 64,
+          "pngBytes": 2303,
+          "pngSha256": "507ce52419be90ea1c54fb1dfed91c20ce8cfaa5e2c34c448a3c39b5d6fe0f24",
+          "rgbaSha256": "b97f4c6f6b294390ee60b5e954d55c187ec8dca9398203044fcc9c64218fbd29"
+        }
+      },
+      "metrics": {
+        "comparisonToNearestNeighbor": {
+          "changedPixels": 212,
+          "changedPixelPercent": 5.1758,
+          "meanAbsoluteErrorRgba": 2.668457,
+          "psnrRgbaDb": 25.580164,
+          "exactRgbaMatch": false
+        },
+        "sourcePaletteRgbaCount": 4,
+        "outputPaletteRgbaCount": 8,
+        "introducedRgbColors": [],
+        "introducedRgbPixels": 0,
+        "introducedRgbaColors": [
+          [
+            28,
+            34,
+            58,
+            159
+          ],
+          [
+            28,
+            34,
+            58,
+            32
+          ],
+          [
+            28,
+            34,
+            58,
+            64
+          ],
+          [
+            28,
+            34,
+            58,
+            96
+          ]
+        ],
+        "introducedRgbaPixels": 212,
+        "introducedAlphaPixels": 212,
+        "intermediateAlphaPixels": 212,
+        "alphaDifferencePixels": 212,
+        "focusBlock": null
+      },
+      "latency": {
+        "nearestNeighbor": {
+          "warmups": 10,
+          "runs": 100,
+          "medianMs": 0.4386,
+          "p95Ms": 0.5804
+        },
+        "pixelArtScale": {
+          "warmups": 10,
+          "runs": 100,
+          "medianMs": 0.6871,
+          "p95Ms": 0.8185
+        }
+      }
+    },
+    {
+      "fixtureId": "transparent-pocket-mixed-palette",
+      "factor": 2,
+      "source": {
+        "width": 3,
+        "height": 3,
+        "rgbaSha256": "dd521d3f045c519ab86d3aa5cf77386c265c7932d4c9a02f0352d9b79d708bb9",
+        "pngArtifact": {
+          "path": "artifacts/transparent-pocket-mixed-palette-source.png",
+          "width": 3,
+          "height": 3,
+          "pngBytes": 107,
+          "pngSha256": "71c39fdc0691aab1e8e248b7fb72e3ca175821a113956ad2dcad6ab0be8b660b",
+          "rgbaSha256": "dd521d3f045c519ab86d3aa5cf77386c265c7932d4c9a02f0352d9b79d708bb9"
+        }
+      },
+      "output": {
+        "width": 6,
+        "height": 6,
+        "rgbaSha256": "acee2272283493b84bd19e644852ded902f7b4694b18228d1c21e4cef7009c42",
+        "pngArtifact": {
+          "path": "artifacts/transparent-pocket-mixed-palette-x2-pixel-art.png",
+          "width": 6,
+          "height": 6,
+          "pngBytes": 218,
+          "pngSha256": "6e9d799118d674b3fc611157f5a300547803ab61f94c1495be2b7f5bd50ad628",
+          "rgbaSha256": "acee2272283493b84bd19e644852ded902f7b4694b18228d1c21e4cef7009c42"
+        }
+      },
+      "baseline": {
+        "method": "independent integer block replication",
+        "width": 6,
+        "height": 6,
+        "rgbaSha256": "acee2272283493b84bd19e644852ded902f7b4694b18228d1c21e4cef7009c42",
+        "pngArtifact": {
+          "path": "artifacts/transparent-pocket-mixed-palette-x2-nearest-neighbor.png",
+          "width": 6,
+          "height": 6,
+          "pngBytes": 218,
+          "pngSha256": "6e9d799118d674b3fc611157f5a300547803ab61f94c1495be2b7f5bd50ad628",
+          "rgbaSha256": "acee2272283493b84bd19e644852ded902f7b4694b18228d1c21e4cef7009c42"
+        }
+      },
+      "preGuardAverage": {
+        "description": "Benchmark copy of the pre-fix rule that averages all opaque 3×3 neighbours.",
+        "metrics": {
+          "comparisonToNearestNeighbor": {
+            "changedPixels": 4,
+            "changedPixelPercent": 11.1111,
+            "meanAbsoluteErrorRgba": 15.555556,
+            "psnrRgbaDb": 14.576448,
+            "exactRgbaMatch": false
+          },
+          "sourcePaletteRgbaCount": 9,
+          "outputPaletteRgbaCount": 12,
+          "introducedRgbColors": [
+            [
+              108,
+              128,
+              180
+            ],
+            [
+              112,
+              112,
+              124
+            ],
+            [
+              114,
+              182,
+              84
+            ],
+            [
+              148,
+              174,
+              138
+            ]
+          ],
+          "introducedRgbPixels": 4,
+          "introducedRgbaColors": [
+            [
+              108,
+              128,
+              180,
+              159
+            ],
+            [
+              112,
+              112,
+              124,
+              159
+            ],
+            [
+              114,
+              182,
+              84,
+              159
+            ],
+            [
+              148,
+              174,
+              138,
+              159
+            ]
+          ],
+          "introducedRgbaPixels": 4,
+          "introducedAlphaPixels": 4,
+          "intermediateAlphaPixels": 4,
+          "alphaDifferencePixels": 4,
+          "focusBlock": {
+            "sourcePixel": {
+              "x": 1,
+              "y": 1
+            },
+            "pixels": 4,
+            "changedFromNearestPixels": 4,
+            "paletteRgba": [
+              [
+                108,
+                128,
+                180,
+                159
+              ],
+              [
+                112,
+                112,
+                124,
+                159
+              ],
+              [
+                114,
+                182,
+                84,
+                159
+              ],
+              [
+                148,
+                174,
+                138,
+                159
+              ]
+            ]
+          }
+        },
+        "rgbaSha256": "21747ae83fd491d75dbfbc64d993c8ffd57421f67c4e89a5eab4e63eac2cce62",
+        "pngArtifact": {
+          "path": "artifacts/transparent-pocket-mixed-palette-x2-pre-guard-average.png",
+          "width": 6,
+          "height": 6,
+          "pngBytes": 218,
+          "pngSha256": "2daa98d3b643d81c5cf3fa9dd33754aa330d6aaf5dc8877da2799cf2f0668b59",
+          "rgbaSha256": "21747ae83fd491d75dbfbc64d993c8ffd57421f67c4e89a5eab4e63eac2cce62"
+        }
+      },
+      "metrics": {
+        "comparisonToNearestNeighbor": {
+          "changedPixels": 0,
+          "changedPixelPercent": 0,
+          "meanAbsoluteErrorRgba": 0,
+          "psnrRgbaDb": null,
+          "exactRgbaMatch": true
+        },
+        "sourcePaletteRgbaCount": 9,
+        "outputPaletteRgbaCount": 9,
+        "introducedRgbColors": [],
+        "introducedRgbPixels": 0,
+        "introducedRgbaColors": [],
+        "introducedRgbaPixels": 0,
+        "introducedAlphaPixels": 0,
+        "intermediateAlphaPixels": 0,
+        "alphaDifferencePixels": 0,
+        "focusBlock": {
+          "sourcePixel": {
+            "x": 1,
+            "y": 1
+          },
+          "pixels": 4,
+          "changedFromNearestPixels": 0,
+          "paletteRgba": [
+            [
+              0,
+              0,
+              0,
+              0
+            ]
+          ]
+        }
+      },
+      "latency": {
+        "nearestNeighbor": {
+          "warmups": 10,
+          "runs": 100,
+          "medianMs": 0.0056,
+          "p95Ms": 0.0064
+        },
+        "pixelArtScale": {
+          "warmups": 10,
+          "runs": 100,
+          "medianMs": 0.0213,
+          "p95Ms": 0.0308
+        }
+      }
+    },
+    {
+      "fixtureId": "transparent-pocket-mixed-palette",
+      "factor": 3,
+      "source": {
+        "width": 3,
+        "height": 3,
+        "rgbaSha256": "dd521d3f045c519ab86d3aa5cf77386c265c7932d4c9a02f0352d9b79d708bb9",
+        "pngArtifact": {
+          "path": "artifacts/transparent-pocket-mixed-palette-source.png",
+          "width": 3,
+          "height": 3,
+          "pngBytes": 107,
+          "pngSha256": "71c39fdc0691aab1e8e248b7fb72e3ca175821a113956ad2dcad6ab0be8b660b",
+          "rgbaSha256": "dd521d3f045c519ab86d3aa5cf77386c265c7932d4c9a02f0352d9b79d708bb9"
+        }
+      },
+      "output": {
+        "width": 9,
+        "height": 9,
+        "rgbaSha256": "b761e3c2b1785da1b6bd20c3e8eaa954e3360c5d37072af280b796afa40238c9",
+        "pngArtifact": {
+          "path": "artifacts/transparent-pocket-mixed-palette-x3-pixel-art.png",
+          "width": 9,
+          "height": 9,
+          "pngBytes": 401,
+          "pngSha256": "39c78d63b76604bfe1c09edb54e00a1bb70ae26b585e3327c1b7fad68898d4ba",
+          "rgbaSha256": "b761e3c2b1785da1b6bd20c3e8eaa954e3360c5d37072af280b796afa40238c9"
+        }
+      },
+      "baseline": {
+        "method": "independent integer block replication",
+        "width": 9,
+        "height": 9,
+        "rgbaSha256": "f84a102e0f21d0eb8db2787230ff4870068c87c05cac89b98f705d07f6e04a92",
+        "pngArtifact": {
+          "path": "artifacts/transparent-pocket-mixed-palette-x3-nearest-neighbor.png",
+          "width": 9,
+          "height": 9,
+          "pngBytes": 383,
+          "pngSha256": "f61446990fbf46867607f78f872c3579c6b2a4bb947e9e9799dc6ccbe904c302",
+          "rgbaSha256": "f84a102e0f21d0eb8db2787230ff4870068c87c05cac89b98f705d07f6e04a92"
+        }
+      },
+      "preGuardAverage": {
+        "description": "Benchmark copy of the pre-fix rule that averages all opaque 3×3 neighbours.",
+        "metrics": {
+          "comparisonToNearestNeighbor": {
+            "changedPixels": 8,
+            "changedPixelPercent": 9.8765,
+            "meanAbsoluteErrorRgba": 13.12963,
+            "psnrRgbaDb": 14.936787,
+            "exactRgbaMatch": false
+          },
+          "sourcePaletteRgbaCount": 9,
+          "outputPaletteRgbaCount": 17,
+          "introducedRgbColors": [
+            [
+              108,
+              128,
+              180
+            ],
+            [
+              112,
+              112,
+              124
+            ],
+            [
+              114,
+              182,
+              84
+            ],
+            [
+              148,
+              174,
+              138
+            ]
+          ],
+          "introducedRgbPixels": 4,
+          "introducedRgbaColors": [
+            [
+              108,
+              128,
+              180,
+              159
+            ],
+            [
+              112,
+              112,
+              124,
+              159
+            ],
+            [
+              114,
+              182,
+              84,
+              159
+            ],
+            [
+              130,
+              50,
+              220,
+              96
+            ],
+            [
+              148,
+              174,
+              138,
+              159
+            ],
+            [
+              20,
+              210,
+              220,
+              96
+            ],
+            [
+              240,
+              210,
+              20,
+              96
+            ],
+            [
+              30,
+              210,
+              70,
+              96
+            ]
+          ],
+          "introducedRgbaPixels": 8,
+          "introducedAlphaPixels": 8,
+          "intermediateAlphaPixels": 8,
+          "alphaDifferencePixels": 8,
+          "focusBlock": {
+            "sourcePixel": {
+              "x": 1,
+              "y": 1
+            },
+            "pixels": 9,
+            "changedFromNearestPixels": 8,
+            "paletteRgba": [
+              [
+                0,
+                0,
+                0,
+                0
+              ],
+              [
+                108,
+                128,
+                180,
+                159
+              ],
+              [
+                112,
+                112,
+                124,
+                159
+              ],
+              [
+                114,
+                182,
+                84,
+                159
+              ],
+              [
+                130,
+                50,
+                220,
+                96
+              ],
+              [
+                148,
+                174,
+                138,
+                159
+              ],
+              [
+                20,
+                210,
+                220,
+                96
+              ],
+              [
+                240,
+                210,
+                20,
+                96
+              ],
+              [
+                30,
+                210,
+                70,
+                96
+              ]
+            ]
+          }
+        },
+        "rgbaSha256": "076ff4cf058a7c338dd7306bc6b2b667ade7789d3007143349c09be80dfda90f",
+        "pngArtifact": {
+          "path": "artifacts/transparent-pocket-mixed-palette-x3-pre-guard-average.png",
+          "width": 9,
+          "height": 9,
+          "pngBytes": 401,
+          "pngSha256": "6d7aa4e8b7766a0dc6bed007c114c022073953419538f42008dbb5d9fd77ba29",
+          "rgbaSha256": "076ff4cf058a7c338dd7306bc6b2b667ade7789d3007143349c09be80dfda90f"
+        }
+      },
+      "metrics": {
+        "comparisonToNearestNeighbor": {
+          "changedPixels": 4,
+          "changedPixelPercent": 4.9383,
+          "meanAbsoluteErrorRgba": 6.216049,
+          "psnrRgbaDb": 17.800987,
+          "exactRgbaMatch": false
+        },
+        "sourcePaletteRgbaCount": 9,
+        "outputPaletteRgbaCount": 13,
+        "introducedRgbColors": [],
+        "introducedRgbPixels": 0,
+        "introducedRgbaColors": [
+          [
+            130,
+            50,
+            220,
+            96
+          ],
+          [
+            20,
+            210,
+            220,
+            96
+          ],
+          [
+            240,
+            210,
+            20,
+            96
+          ],
+          [
+            30,
+            210,
+            70,
+            96
+          ]
+        ],
+        "introducedRgbaPixels": 4,
+        "introducedAlphaPixels": 4,
+        "intermediateAlphaPixels": 4,
+        "alphaDifferencePixels": 4,
+        "focusBlock": {
+          "sourcePixel": {
+            "x": 1,
+            "y": 1
+          },
+          "pixels": 9,
+          "changedFromNearestPixels": 4,
+          "paletteRgba": [
+            [
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              130,
+              50,
+              220,
+              96
+            ],
+            [
+              20,
+              210,
+              220,
+              96
+            ],
+            [
+              240,
+              210,
+              20,
+              96
+            ],
+            [
+              30,
+              210,
+              70,
+              96
+            ]
+          ]
+        }
+      },
+      "latency": {
+        "nearestNeighbor": {
+          "warmups": 10,
+          "runs": 100,
+          "medianMs": 0.0114,
+          "p95Ms": 0.013
+        },
+        "pixelArtScale": {
+          "warmups": 10,
+          "runs": 100,
+          "medianMs": 0.036,
+          "p95Ms": 0.0531
+        }
+      }
+    },
+    {
+      "fixtureId": "transparent-pocket-mixed-palette",
+      "factor": 4,
+      "source": {
+        "width": 3,
+        "height": 3,
+        "rgbaSha256": "dd521d3f045c519ab86d3aa5cf77386c265c7932d4c9a02f0352d9b79d708bb9",
+        "pngArtifact": {
+          "path": "artifacts/transparent-pocket-mixed-palette-source.png",
+          "width": 3,
+          "height": 3,
+          "pngBytes": 107,
+          "pngSha256": "71c39fdc0691aab1e8e248b7fb72e3ca175821a113956ad2dcad6ab0be8b660b",
+          "rgbaSha256": "dd521d3f045c519ab86d3aa5cf77386c265c7932d4c9a02f0352d9b79d708bb9"
+        }
+      },
+      "output": {
+        "width": 12,
+        "height": 12,
+        "rgbaSha256": "e18888b4c399b3e57c09f7bb1b21d68368e7f94c3d4cf1c97e7648058ff28cda",
+        "pngArtifact": {
+          "path": "artifacts/transparent-pocket-mixed-palette-x4-pixel-art.png",
+          "width": 12,
+          "height": 12,
+          "pngBytes": 469,
+          "pngSha256": "ef6f03fb5e4fafa2cb89bb56f96df061eaa5a85207cd5c9bf342c443c312a785",
+          "rgbaSha256": "e18888b4c399b3e57c09f7bb1b21d68368e7f94c3d4cf1c97e7648058ff28cda"
+        }
+      },
+      "baseline": {
+        "method": "independent integer block replication",
+        "width": 12,
+        "height": 12,
+        "rgbaSha256": "71336622c43acdc4b065932e6b1e9b0371d6111cdc39d84f71d035634d70a7f5",
+        "pngArtifact": {
+          "path": "artifacts/transparent-pocket-mixed-palette-x4-nearest-neighbor.png",
+          "width": 12,
+          "height": 12,
+          "pngBytes": 438,
+          "pngSha256": "e864d325487ad08501321bc0fe9d57f9ac108a35dbc471d2daae9bc050d281ac",
+          "rgbaSha256": "71336622c43acdc4b065932e6b1e9b0371d6111cdc39d84f71d035634d70a7f5"
+        }
+      },
+      "preGuardAverage": {
+        "description": "Benchmark copy of the pre-fix rule that averages all opaque 3×3 neighbours.",
+        "metrics": {
+          "comparisonToNearestNeighbor": {
+            "changedPixels": 12,
+            "changedPixelPercent": 8.3333,
+            "meanAbsoluteErrorRgba": 10.881944,
+            "psnrRgbaDb": 15.625401,
+            "exactRgbaMatch": false
+          },
+          "sourcePaletteRgbaCount": 9,
+          "outputPaletteRgbaCount": 17,
+          "introducedRgbColors": [
+            [
+              108,
+              128,
+              180
+            ],
+            [
+              112,
+              112,
+              124
+            ],
+            [
+              114,
+              182,
+              84
+            ],
+            [
+              148,
+              174,
+              138
+            ]
+          ],
+          "introducedRgbPixels": 4,
+          "introducedRgbaColors": [
+            [
+              108,
+              128,
+              180,
+              159
+            ],
+            [
+              112,
+              112,
+              124,
+              159
+            ],
+            [
+              114,
+              182,
+              84,
+              159
+            ],
+            [
+              130,
+              50,
+              220,
+              96
+            ],
+            [
+              148,
+              174,
+              138,
+              159
+            ],
+            [
+              20,
+              210,
+              220,
+              96
+            ],
+            [
+              240,
+              210,
+              20,
+              96
+            ],
+            [
+              30,
+              210,
+              70,
+              96
+            ]
+          ],
+          "introducedRgbaPixels": 12,
+          "introducedAlphaPixels": 12,
+          "intermediateAlphaPixels": 12,
+          "alphaDifferencePixels": 12,
+          "focusBlock": {
+            "sourcePixel": {
+              "x": 1,
+              "y": 1
+            },
+            "pixels": 16,
+            "changedFromNearestPixels": 12,
+            "paletteRgba": [
+              [
+                0,
+                0,
+                0,
+                0
+              ],
+              [
+                108,
+                128,
+                180,
+                159
+              ],
+              [
+                112,
+                112,
+                124,
+                159
+              ],
+              [
+                114,
+                182,
+                84,
+                159
+              ],
+              [
+                130,
+                50,
+                220,
+                96
+              ],
+              [
+                148,
+                174,
+                138,
+                159
+              ],
+              [
+                20,
+                210,
+                220,
+                96
+              ],
+              [
+                240,
+                210,
+                20,
+                96
+              ],
+              [
+                30,
+                210,
+                70,
+                96
+              ]
+            ]
+          }
+        },
+        "rgbaSha256": "12a87d6ac0efb8ac93556c6ef75dcef374b0b8cb8f3b56a45a93b0d3f5e9c8f7",
+        "pngArtifact": {
+          "path": "artifacts/transparent-pocket-mixed-palette-x4-pre-guard-average.png",
+          "width": 12,
+          "height": 12,
+          "pngBytes": 475,
+          "pngSha256": "4fca5fcafdc85ded9b379e33fb699953dfb04dace0f9f82a67d8485d440cf4e7",
+          "rgbaSha256": "12a87d6ac0efb8ac93556c6ef75dcef374b0b8cb8f3b56a45a93b0d3f5e9c8f7"
+        }
+      },
+      "metrics": {
+        "comparisonToNearestNeighbor": {
+          "changedPixels": 8,
+          "changedPixelPercent": 5.5556,
+          "meanAbsoluteErrorRgba": 6.993056,
+          "psnrRgbaDb": 17.289461,
+          "exactRgbaMatch": false
+        },
+        "sourcePaletteRgbaCount": 9,
+        "outputPaletteRgbaCount": 13,
+        "introducedRgbColors": [],
+        "introducedRgbPixels": 0,
+        "introducedRgbaColors": [
+          [
+            130,
+            50,
+            220,
+            96
+          ],
+          [
+            20,
+            210,
+            220,
+            96
+          ],
+          [
+            240,
+            210,
+            20,
+            96
+          ],
+          [
+            30,
+            210,
+            70,
+            96
+          ]
+        ],
+        "introducedRgbaPixels": 8,
+        "introducedAlphaPixels": 8,
+        "intermediateAlphaPixels": 8,
+        "alphaDifferencePixels": 8,
+        "focusBlock": {
+          "sourcePixel": {
+            "x": 1,
+            "y": 1
+          },
+          "pixels": 16,
+          "changedFromNearestPixels": 8,
+          "paletteRgba": [
+            [
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              130,
+              50,
+              220,
+              96
+            ],
+            [
+              20,
+              210,
+              220,
+              96
+            ],
+            [
+              240,
+              210,
+              20,
+              96
+            ],
+            [
+              30,
+              210,
+              70,
+              96
+            ]
+          ]
+        }
+      },
+      "latency": {
+        "nearestNeighbor": {
+          "warmups": 10,
+          "runs": 100,
+          "medianMs": 0.0198,
+          "p95Ms": 0.0509
+        },
+        "pixelArtScale": {
+          "warmups": 10,
+          "runs": 100,
+          "medianMs": 0.0201,
+          "p95Ms": 0.0508
+        }
+      }
+    },
+    {
+      "fixtureId": "transparent-pocket-clear-dominance",
+      "factor": 2,
+      "source": {
+        "width": 3,
+        "height": 3,
+        "rgbaSha256": "677ed772d6cc54f043a54d1174da94e6495f622a68ae8efb5874e6e8f3684698",
+        "pngArtifact": {
+          "path": "artifacts/transparent-pocket-clear-dominance-source.png",
+          "width": 3,
+          "height": 3,
+          "pngBytes": 107,
+          "pngSha256": "3f6f7faeda90c81a8c1191d4b0d1a035102dbba926cf8009280f0725ba1ddbce",
+          "rgbaSha256": "677ed772d6cc54f043a54d1174da94e6495f622a68ae8efb5874e6e8f3684698"
+        }
+      },
+      "output": {
+        "width": 6,
+        "height": 6,
+        "rgbaSha256": "331a8c924265907f4385a863428148d0a3e5efdf9b1fa8c494543a9e5e0b6deb",
+        "pngArtifact": {
+          "path": "artifacts/transparent-pocket-clear-dominance-x2-pixel-art.png",
+          "width": 6,
+          "height": 6,
+          "pngBytes": 218,
+          "pngSha256": "46de28385fab7559b6afff3bd372c3f39b8ac11595845cf7129f3329a5803b70",
+          "rgbaSha256": "331a8c924265907f4385a863428148d0a3e5efdf9b1fa8c494543a9e5e0b6deb"
+        }
+      },
+      "baseline": {
+        "method": "independent integer block replication",
+        "width": 6,
+        "height": 6,
+        "rgbaSha256": "845906f223b26ec8159966db7ba66fee2e179f748dc7ad9872dd03557867eca3",
+        "pngArtifact": {
+          "path": "artifacts/transparent-pocket-clear-dominance-x2-nearest-neighbor.png",
+          "width": 6,
+          "height": 6,
+          "pngBytes": 218,
+          "pngSha256": "841441c0f0f4e03a72835f7ef8ca29b89d54d1571f19f8db09f7733eeadb0f2b",
+          "rgbaSha256": "845906f223b26ec8159966db7ba66fee2e179f748dc7ad9872dd03557867eca3"
+        }
+      },
+      "preGuardAverage": {
+        "description": "Benchmark copy of the pre-fix rule that averages all opaque 3×3 neighbours.",
+        "metrics": {
+          "comparisonToNearestNeighbor": {
+            "changedPixels": 4,
+            "changedPixelPercent": 11.1111,
+            "meanAbsoluteErrorRgba": 13.597222,
+            "psnrRgbaDb": 14.804736,
+            "exactRgbaMatch": false
+          },
+          "sourcePaletteRgbaCount": 3,
+          "outputPaletteRgbaCount": 4,
+          "introducedRgbColors": [
+            [
+              182,
+              56,
+              94
+            ]
+          ],
+          "introducedRgbPixels": 1,
+          "introducedRgbaColors": [
+            [
+              182,
+              56,
+              94,
+              159
+            ],
+            [
+              220,
+              50,
+              60,
+              159
+            ]
+          ],
+          "introducedRgbaPixels": 4,
+          "introducedAlphaPixels": 4,
+          "intermediateAlphaPixels": 4,
+          "alphaDifferencePixels": 4,
+          "focusBlock": {
+            "sourcePixel": {
+              "x": 1,
+              "y": 1
+            },
+            "pixels": 4,
+            "changedFromNearestPixels": 4,
+            "paletteRgba": [
+              [
+                182,
+                56,
+                94,
+                159
+              ],
+              [
+                220,
+                50,
+                60,
+                159
+              ]
+            ]
+          }
+        },
+        "rgbaSha256": "79386b9cb6beccb89eb70dd5177a811cdd677ba5a78c4f5fa020a9fc3c3649c1",
+        "pngArtifact": {
+          "path": "artifacts/transparent-pocket-clear-dominance-x2-pre-guard-average.png",
+          "width": 6,
+          "height": 6,
+          "pngBytes": 218,
+          "pngSha256": "656be8f9e9c8006bbbc4c80a86c3e97ad1a6894987f90f0f2f9da0a4e2f73ab2",
+          "rgbaSha256": "79386b9cb6beccb89eb70dd5177a811cdd677ba5a78c4f5fa020a9fc3c3649c1"
+        }
+      },
+      "metrics": {
+        "comparisonToNearestNeighbor": {
+          "changedPixels": 4,
+          "changedPixelPercent": 11.1111,
+          "meanAbsoluteErrorRgba": 13.583333,
+          "psnrRgbaDb": 14.674834,
+          "exactRgbaMatch": false
+        },
+        "sourcePaletteRgbaCount": 3,
+        "outputPaletteRgbaCount": 3,
+        "introducedRgbColors": [],
+        "introducedRgbPixels": 0,
+        "introducedRgbaColors": [
+          [
+            220,
+            50,
+            60,
+            159
+          ]
+        ],
+        "introducedRgbaPixels": 4,
+        "introducedAlphaPixels": 4,
+        "intermediateAlphaPixels": 4,
+        "alphaDifferencePixels": 4,
+        "focusBlock": {
+          "sourcePixel": {
+            "x": 1,
+            "y": 1
+          },
+          "pixels": 4,
+          "changedFromNearestPixels": 4,
+          "paletteRgba": [
+            [
+              220,
+              50,
+              60,
+              159
+            ]
+          ]
+        }
+      },
+      "latency": {
+        "nearestNeighbor": {
+          "warmups": 10,
+          "runs": 100,
+          "medianMs": 0.0056,
+          "p95Ms": 0.0066
+        },
+        "pixelArtScale": {
+          "warmups": 10,
+          "runs": 100,
+          "medianMs": 0.0088,
+          "p95Ms": 0.0206
+        }
+      }
+    },
+    {
+      "fixtureId": "transparent-pocket-clear-dominance",
+      "factor": 3,
+      "source": {
+        "width": 3,
+        "height": 3,
+        "rgbaSha256": "677ed772d6cc54f043a54d1174da94e6495f622a68ae8efb5874e6e8f3684698",
+        "pngArtifact": {
+          "path": "artifacts/transparent-pocket-clear-dominance-source.png",
+          "width": 3,
+          "height": 3,
+          "pngBytes": 107,
+          "pngSha256": "3f6f7faeda90c81a8c1191d4b0d1a035102dbba926cf8009280f0725ba1ddbce",
+          "rgbaSha256": "677ed772d6cc54f043a54d1174da94e6495f622a68ae8efb5874e6e8f3684698"
+        }
+      },
+      "output": {
+        "width": 9,
+        "height": 9,
+        "rgbaSha256": "1520a807029c87f219496dcd72dd5699cca92dc0e7a164a7f11f59666e5b79d7",
+        "pngArtifact": {
+          "path": "artifacts/transparent-pocket-clear-dominance-x3-pixel-art.png",
+          "width": 9,
+          "height": 9,
+          "pngBytes": 342,
+          "pngSha256": "36c25552c22c1ff79a37afa22ea8ddb6df374f891b5d0455a5e0b3fed2f50aae",
+          "rgbaSha256": "1520a807029c87f219496dcd72dd5699cca92dc0e7a164a7f11f59666e5b79d7"
+        }
+      },
+      "baseline": {
+        "method": "independent integer block replication",
+        "width": 9,
+        "height": 9,
+        "rgbaSha256": "0e8a3000cb8483ff0782ba6e5a6860b3a6252a0ddf2229dfddb4cef3737dc25f",
+        "pngArtifact": {
+          "path": "artifacts/transparent-pocket-clear-dominance-x3-nearest-neighbor.png",
+          "width": 9,
+          "height": 9,
+          "pngBytes": 344,
+          "pngSha256": "d16de43421a74d83fcff1698bbfb8b24f3d811ffef12606baa5c939da7765c2a",
+          "rgbaSha256": "0e8a3000cb8483ff0782ba6e5a6860b3a6252a0ddf2229dfddb4cef3737dc25f"
+        }
+      },
+      "preGuardAverage": {
+        "description": "Benchmark copy of the pre-fix rule that averages all opaque 3×3 neighbours.",
+        "metrics": {
+          "comparisonToNearestNeighbor": {
+            "changedPixels": 8,
+            "changedPixelPercent": 9.8765,
+            "meanAbsoluteErrorRgba": 11.302469,
+            "psnrRgbaDb": 15.718968,
+            "exactRgbaMatch": false
+          },
+          "sourcePaletteRgbaCount": 3,
+          "outputPaletteRgbaCount": 6,
+          "introducedRgbColors": [
+            [
+              182,
+              56,
+              94
+            ]
+          ],
+          "introducedRgbPixels": 1,
+          "introducedRgbaColors": [
+            [
+              182,
+              56,
+              94,
+              159
+            ],
+            [
+              220,
+              50,
+              60,
+              159
+            ],
+            [
+              220,
+              50,
+              60,
+              96
+            ]
+          ],
+          "introducedRgbaPixels": 8,
+          "introducedAlphaPixels": 8,
+          "intermediateAlphaPixels": 8,
+          "alphaDifferencePixels": 8,
+          "focusBlock": {
+            "sourcePixel": {
+              "x": 1,
+              "y": 1
+            },
+            "pixels": 9,
+            "changedFromNearestPixels": 8,
+            "paletteRgba": [
+              [
+                0,
+                0,
+                0,
+                0
+              ],
+              [
+                182,
+                56,
+                94,
+                159
+              ],
+              [
+                220,
+                50,
+                60,
+                159
+              ],
+              [
+                220,
+                50,
+                60,
+                96
+              ]
+            ]
+          }
+        },
+        "rgbaSha256": "c2c08826f6f3b512599f3edfbd063446e7e481196a5972ecdefe3fd941a0d55e",
+        "pngArtifact": {
+          "path": "artifacts/transparent-pocket-clear-dominance-x3-pre-guard-average.png",
+          "width": 9,
+          "height": 9,
+          "pngBytes": 348,
+          "pngSha256": "ef9a0d03f334ebf59948d897c494cc6c3bffd45491579ba05a1bcd3058f27558",
+          "rgbaSha256": "c2c08826f6f3b512599f3edfbd063446e7e481196a5972ecdefe3fd941a0d55e"
+        }
+      },
+      "metrics": {
+        "comparisonToNearestNeighbor": {
+          "changedPixels": 8,
+          "changedPixelPercent": 9.8765,
+          "meanAbsoluteErrorRgba": 11.296296,
+          "psnrRgbaDb": 15.647226,
+          "exactRgbaMatch": false
+        },
+        "sourcePaletteRgbaCount": 3,
+        "outputPaletteRgbaCount": 5,
+        "introducedRgbColors": [],
+        "introducedRgbPixels": 0,
+        "introducedRgbaColors": [
+          [
+            220,
+            50,
+            60,
+            159
+          ],
+          [
+            220,
+            50,
+            60,
+            96
+          ]
+        ],
+        "introducedRgbaPixels": 8,
+        "introducedAlphaPixels": 8,
+        "intermediateAlphaPixels": 8,
+        "alphaDifferencePixels": 8,
+        "focusBlock": {
+          "sourcePixel": {
+            "x": 1,
+            "y": 1
+          },
+          "pixels": 9,
+          "changedFromNearestPixels": 8,
+          "paletteRgba": [
+            [
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              220,
+              50,
+              60,
+              159
+            ],
+            [
+              220,
+              50,
+              60,
+              96
+            ]
+          ]
+        }
+      },
+      "latency": {
+        "nearestNeighbor": {
+          "warmups": 10,
+          "runs": 100,
+          "medianMs": 0.0118,
+          "p95Ms": 0.02
+        },
+        "pixelArtScale": {
+          "warmups": 10,
+          "runs": 100,
+          "medianMs": 0.0141,
+          "p95Ms": 0.0232
+        }
+      }
+    },
+    {
+      "fixtureId": "transparent-pocket-clear-dominance",
+      "factor": 4,
+      "source": {
+        "width": 3,
+        "height": 3,
+        "rgbaSha256": "677ed772d6cc54f043a54d1174da94e6495f622a68ae8efb5874e6e8f3684698",
+        "pngArtifact": {
+          "path": "artifacts/transparent-pocket-clear-dominance-source.png",
+          "width": 3,
+          "height": 3,
+          "pngBytes": 107,
+          "pngSha256": "3f6f7faeda90c81a8c1191d4b0d1a035102dbba926cf8009280f0725ba1ddbce",
+          "rgbaSha256": "677ed772d6cc54f043a54d1174da94e6495f622a68ae8efb5874e6e8f3684698"
+        }
+      },
+      "output": {
+        "width": 12,
+        "height": 12,
+        "rgbaSha256": "db22b32f20e0f798e146ad9f15bfc06861e791c59b12a7972491536643ee015b",
+        "pngArtifact": {
+          "path": "artifacts/transparent-pocket-clear-dominance-x4-pixel-art.png",
+          "width": 12,
+          "height": 12,
+          "pngBytes": 388,
+          "pngSha256": "4369825df6ff116bfea78757ef6ff58ce597caf853aa3d7ec9b0350339634fc4",
+          "rgbaSha256": "db22b32f20e0f798e146ad9f15bfc06861e791c59b12a7972491536643ee015b"
+        }
+      },
+      "baseline": {
+        "method": "independent integer block replication",
+        "width": 12,
+        "height": 12,
+        "rgbaSha256": "8ae2c06878b2727e94fba47031eafb5407f1b22d51e370eb04956dd46c0d79c5",
+        "pngArtifact": {
+          "path": "artifacts/transparent-pocket-clear-dominance-x4-nearest-neighbor.png",
+          "width": 12,
+          "height": 12,
+          "pngBytes": 382,
+          "pngSha256": "120f02f0ab1f1e1999d59c8005b6ced16aafe7b37a7336f0eab5f79ac05a5629",
+          "rgbaSha256": "8ae2c06878b2727e94fba47031eafb5407f1b22d51e370eb04956dd46c0d79c5"
+        }
+      },
+      "preGuardAverage": {
+        "description": "Benchmark copy of the pre-fix rule that averages all opaque 3×3 neighbours.",
+        "metrics": {
+          "comparisonToNearestNeighbor": {
+            "changedPixels": 12,
+            "changedPixelPercent": 8.3333,
+            "meanAbsoluteErrorRgba": 9.315972,
+            "psnrRgbaDb": 16.599814,
+            "exactRgbaMatch": false
+          },
+          "sourcePaletteRgbaCount": 3,
+          "outputPaletteRgbaCount": 6,
+          "introducedRgbColors": [
+            [
+              182,
+              56,
+              94
+            ]
+          ],
+          "introducedRgbPixels": 1,
+          "introducedRgbaColors": [
+            [
+              182,
+              56,
+              94,
+              159
+            ],
+            [
+              220,
+              50,
+              60,
+              159
+            ],
+            [
+              220,
+              50,
+              60,
+              96
+            ]
+          ],
+          "introducedRgbaPixels": 12,
+          "introducedAlphaPixels": 12,
+          "intermediateAlphaPixels": 12,
+          "alphaDifferencePixels": 12,
+          "focusBlock": {
+            "sourcePixel": {
+              "x": 1,
+              "y": 1
+            },
+            "pixels": 16,
+            "changedFromNearestPixels": 12,
+            "paletteRgba": [
+              [
+                0,
+                0,
+                0,
+                0
+              ],
+              [
+                182,
+                56,
+                94,
+                159
+              ],
+              [
+                220,
+                50,
+                60,
+                159
+              ],
+              [
+                220,
+                50,
+                60,
+                96
+              ]
+            ]
+          }
+        },
+        "rgbaSha256": "d25ac2a8cb80edd5f480075cbc566353e0fcba05e7fa4ba213861d035fb3e669",
+        "pngArtifact": {
+          "path": "artifacts/transparent-pocket-clear-dominance-x4-pre-guard-average.png",
+          "width": 12,
+          "height": 12,
+          "pngBytes": 394,
+          "pngSha256": "de16b9131993db4f3de6cd89bf112fab94932f37315fd7c45205963d1245352e",
+          "rgbaSha256": "d25ac2a8cb80edd5f480075cbc566353e0fcba05e7fa4ba213861d035fb3e669"
+        }
+      },
+      "metrics": {
+        "comparisonToNearestNeighbor": {
+          "changedPixels": 12,
+          "changedPixelPercent": 8.3333,
+          "meanAbsoluteErrorRgba": 9.3125,
+          "psnrRgbaDb": 16.550259,
+          "exactRgbaMatch": false
+        },
+        "sourcePaletteRgbaCount": 3,
+        "outputPaletteRgbaCount": 5,
+        "introducedRgbColors": [],
+        "introducedRgbPixels": 0,
+        "introducedRgbaColors": [
+          [
+            220,
+            50,
+            60,
+            159
+          ],
+          [
+            220,
+            50,
+            60,
+            96
+          ]
+        ],
+        "introducedRgbaPixels": 12,
+        "introducedAlphaPixels": 12,
+        "intermediateAlphaPixels": 12,
+        "alphaDifferencePixels": 12,
+        "focusBlock": {
+          "sourcePixel": {
+            "x": 1,
+            "y": 1
+          },
+          "pixels": 16,
+          "changedFromNearestPixels": 12,
+          "paletteRgba": [
+            [
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              220,
+              50,
+              60,
+              159
+            ],
+            [
+              220,
+              50,
+              60,
+              96
+            ]
+          ]
+        }
+      },
+      "latency": {
+        "nearestNeighbor": {
+          "warmups": 10,
+          "runs": 100,
+          "medianMs": 0.0187,
+          "p95Ms": 0.0215
+        },
+        "pixelArtScale": {
+          "warmups": 10,
+          "runs": 100,
+          "medianMs": 0.0199,
+          "p95Ms": 0.0362
+        }
+      }
+    }
+  ],
+  "limitations": [
+    "Fixtures are synthetic, self-generated pixel patterns; they are not third-party sprites or a representative art corpus.",
+    "Nearest-neighbour is the direct fidelity baseline for exact integer enlargement of these source pixels, not a claim that every artistic workflow prefers it.",
+    "This benchmark does not compare against Scale2x, HQx, Eagle, or xBRZ implementations; their licensing constraints remain outside this measurement.",
+    "Inputs are tiny (3×3 or 16×16); timings do not establish large-image latency, browser frame time, memory use, or route-level STCC performance."
+  ]
+}

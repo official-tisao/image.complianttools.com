@@ -1,23 +1,29 @@
 /**
  * P4-20 — Remaining local tools — engine-level exports and integration.
  *
- * Per PLAN.md P4-20 (line 713–715): exports primitives for the 11 remaining
- * local tools. Per README §4.1–§4.10 and §20–§22.
+ * Per PLAN.md P4-20, exports engine primitives for the remaining local tools.
+ * Per README §4.1–§4.10 and §20–§22.
  *
- * STCC evidence notes:
- * - No fixtures fabricated (§22.3; fixtures absent from repo, not fabricated).
- * - T32 Tier 2: Real-ESRGAN weights excluded (ADR §25.5, docs/ADR/ip-clearance.md line 127).
- * - T62 OCR: tesseract.js + tessdata excluded (§25.3.4). Stub preserves limitation.
- * - Routes/pages: out of scope for this engine-level integration (not removed,
- *   just not added here — spec defines them; full STCC needs them separately).
+ * Engine exports alone do not establish route-level STCC, model clearance, or
+ * product asset delivery. Current fixtures, measurements, asset decisions, and
+ * open criteria are tracked in PLAN.md, README.md, and the P4-21 corpus files.
+ * T62's pinned 163-entry catalogue includes language, script, helper, and alias
+ * rows; initLazyTessdata() exposes the eight-language minimum fixture state,
+ * not the full catalogue or a claim that those model files are bundled.
  */
 
 // T27 — Smart Crop (saliency + face + scoring primitives)
 export { spectralResidualSaliency, fineGrainedSaliency } from './cv/saliency.js';
 
-// T32 — Upscale. Tier 1: DCCI/NEDI (dcci-nedi.ts). Tier 2: BLOCKED (ADR §25.5).
+// T32 — Upscale. Tier 1: DCCI/NEDI. Tier 2: consented caller-supplied x2/x4 ONNX conversion.
 export { dcci, nedi } from './cv/dcci-nedi.js';
-export { recordUpscaleComparison } from './cv/upscale-model.js';
+export {
+  getUpscaleTier2Availability,
+  upscaleWithRealEsrgan,
+  prepareRealEsrganInput,
+  reconstructRealEsrganFrame,
+  validateRealEsrganOutput,
+} from './cv/upscale-model.js';
 
 // T70 — Pixel-Art & Line-Art Upscale (clean-room nearest-neighbour + rules)
 export { pixelArtScale, type ScaleFactor } from './cv/pixel-art.js';
@@ -71,7 +77,7 @@ export {
 
 // T61 — Duplicates (re-exports analysis-primitives for clustering use)
 // T61 — Duplicates uses the same primitives as T60 (see above). No separate export needed.
-// T62 — OCR. Tesseract excluded (§25.3.4); stub preserves honest limitation.
+// T62 — OCR. Local Tesseract.js 7 worker and registered tessdata assets.
 export {
   initLazyTessdata,
   createOcrWorker,
@@ -82,10 +88,9 @@ export {
   type OcrEngineError,
 } from './ocr.js';
 
-// T63 — Accessibility Check. No dedicated module exists; descriptive skeleton
-// requires T62 (blocked by tessdata exclusion) + EXIF + contrast + colour-blind.
-// We export what exists: descriptive skeleton components are assembled from
-// the primitives already available.
+// T63 — Accessibility Check. No dedicated module exists; its descriptive
+// skeleton still needs a full integration of OCR, EXIF, contrast, and
+// colour-vision checks. The OCR dependency is now available through T62.
 export {
   isSupportedLanguage,
   hasMinimumLanguages,

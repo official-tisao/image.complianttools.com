@@ -1,0 +1,225 @@
+{
+  "schemaVersion": 1,
+  "benchmark": "P4-21 T81 saliency-weighted adaptive-resize synthetic fixtures",
+  "generator": {
+    "script": "packages/engine/bench/escalation/t81/generate-fixtures.mjs",
+    "scriptSha256": "2d1bed676833ef3a4b1aa8000068b964f1a29196cff4ee5ee77a49b95240a6fc",
+    "node": "v22.22.0",
+    "inputDimensions": {
+      "width": 192,
+      "height": 128
+    },
+    "targetDimensions": {
+      "width": 128,
+      "height": 128
+    },
+    "scenarios": [
+      {
+        "id": "centered-subject",
+        "patternSeed": 11,
+        "objects": [
+          {
+            "id": "subject-a",
+            "x": 68,
+            "y": 24,
+            "width": 56,
+            "height": 80,
+            "palette": "magenta"
+          }
+        ]
+      },
+      {
+        "id": "left-subject",
+        "patternSeed": 23,
+        "objects": [
+          {
+            "id": "subject-a",
+            "x": 12,
+            "y": 24,
+            "width": 50,
+            "height": 80,
+            "palette": "magenta"
+          }
+        ]
+      },
+      {
+        "id": "edge-pair",
+        "patternSeed": 37,
+        "objects": [
+          {
+            "id": "subject-a",
+            "x": 10,
+            "y": 28,
+            "width": 50,
+            "height": 72,
+            "palette": "magenta"
+          },
+          {
+            "id": "subject-b",
+            "x": 132,
+            "y": 28,
+            "width": 50,
+            "height": 72,
+            "palette": "cyan"
+          }
+        ]
+      }
+    ],
+    "transformations": {
+      "saliencyRetarget": "Engine saliencyRetarget with no mask and with a binary mask marking all subject rectangles.",
+      "resizeControl": "Engine resizeRaster Lanczos3 directly to the target dimensions.",
+      "cropControl": "Centered crop to the target aspect ratio, followed by Lanczos3 resize if needed."
+    }
+  },
+  "fixtureCount": 3,
+  "fixtures": [
+    {
+      "id": "centered-subject",
+      "source": "Self-generated deterministic synthetic scene; no third-party assets.",
+      "width": 192,
+      "height": 128,
+      "target": {
+        "width": 128,
+        "height": 128
+      },
+      "patternSeed": 11,
+      "background": "Dark low-detail field with deterministic per-pixel shade variation.",
+      "subjectPattern": "High-contrast two-colour grid/checker pattern inside each annotated rectangle.",
+      "objects": [
+        {
+          "id": "subject-a",
+          "x": 68,
+          "y": 24,
+          "width": 56,
+          "height": 80,
+          "palette": "magenta",
+          "annotatedPixels": 4480,
+          "outputDetectionPredicate": "R > 120 && G < 90 && B > 70"
+        }
+      ],
+      "expectedConstraints": [
+        "Each output should be exactly 128x128.",
+        "Every annotated subject should remain detectable and inside the output frame.",
+        "Report each subject bounding-box aspect change, pixel retention, and centroid against the source annotation."
+      ],
+      "input": {
+        "fileName": "centered-subject-input.png",
+        "width": 192,
+        "height": 128,
+        "sizeBytes": 50642,
+        "pngSha256": "bc58089c89a0a46a48d5ae8ea44988930bbbfc361ddfdad2dc66a6fff99fb7dc",
+        "rgbaSha256": "ae51ac74881dd12ffefd0f607834c81f96f1d929c9d1016fc4429832a333afc6"
+      },
+      "subjectMask": {
+        "fileName": "centered-subject-mask.png",
+        "width": 192,
+        "height": 128,
+        "sizeBytes": 46544,
+        "pngSha256": "0ede67f9a4217188b260ca1fe1de27ffb76eb502b434e4dbd4d5d7dbf8e5117d",
+        "rgbaSha256": "e89909ae16435408ab98dd71fb75c44878fc05fba43a9c6fac261e9804adeb1d"
+      }
+    },
+    {
+      "id": "left-subject",
+      "source": "Self-generated deterministic synthetic scene; no third-party assets.",
+      "width": 192,
+      "height": 128,
+      "target": {
+        "width": 128,
+        "height": 128
+      },
+      "patternSeed": 23,
+      "background": "Dark low-detail field with deterministic per-pixel shade variation.",
+      "subjectPattern": "High-contrast two-colour grid/checker pattern inside each annotated rectangle.",
+      "objects": [
+        {
+          "id": "subject-a",
+          "x": 12,
+          "y": 24,
+          "width": 50,
+          "height": 80,
+          "palette": "magenta",
+          "annotatedPixels": 4000,
+          "outputDetectionPredicate": "R > 120 && G < 90 && B > 70"
+        }
+      ],
+      "expectedConstraints": [
+        "Each output should be exactly 128x128.",
+        "Every annotated subject should remain detectable and inside the output frame.",
+        "Report each subject bounding-box aspect change, pixel retention, and centroid against the source annotation."
+      ],
+      "input": {
+        "fileName": "left-subject-input.png",
+        "width": 192,
+        "height": 128,
+        "sizeBytes": 51362,
+        "pngSha256": "ebea4807bf0df62623f6860691a39175b1e9f9b26cac75b7634aea4f86c1221d",
+        "rgbaSha256": "ffa1bed1a32fba26f79c4a880b1e0d2c49fad5d472985327bb191b12dad1917d"
+      },
+      "subjectMask": {
+        "fileName": "left-subject-mask.png",
+        "width": 192,
+        "height": 128,
+        "sizeBytes": 47624,
+        "pngSha256": "26e59b673ea77c77ea7e58620f24326bcdb6c8f005699fa01beeb8539aced1de",
+        "rgbaSha256": "2500b7c699eef5dec19e9c13cc5d7afdb038ba4f64c426cb696d1f2024ae2746"
+      }
+    },
+    {
+      "id": "edge-pair",
+      "source": "Self-generated deterministic synthetic scene; no third-party assets.",
+      "width": 192,
+      "height": 128,
+      "target": {
+        "width": 128,
+        "height": 128
+      },
+      "patternSeed": 37,
+      "background": "Dark low-detail field with deterministic per-pixel shade variation.",
+      "subjectPattern": "High-contrast two-colour grid/checker pattern inside each annotated rectangle.",
+      "objects": [
+        {
+          "id": "subject-a",
+          "x": 10,
+          "y": 28,
+          "width": 50,
+          "height": 72,
+          "palette": "magenta",
+          "annotatedPixels": 3600,
+          "outputDetectionPredicate": "R > 120 && G < 90 && B > 70"
+        },
+        {
+          "id": "subject-b",
+          "x": 132,
+          "y": 28,
+          "width": 50,
+          "height": 72,
+          "palette": "cyan",
+          "annotatedPixels": 3600,
+          "outputDetectionPredicate": "R < 80 && G > 100 && B > 90"
+        }
+      ],
+      "expectedConstraints": [
+        "Each output should be exactly 128x128.",
+        "Every annotated subject should remain detectable and inside the output frame.",
+        "Report each subject bounding-box aspect change, pixel retention, and centroid against the source annotation."
+      ],
+      "input": {
+        "fileName": "edge-pair-input.png",
+        "width": 192,
+        "height": 128,
+        "sizeBytes": 47973,
+        "pngSha256": "2b14795139a2ac2776d7e46a522c1c86e24f6f22db001feb2e08fa4db0395373",
+        "rgbaSha256": "a5d48a68b3e9ba43b4e13f51cd37730c0fe8a930d4ef1308087da588939e4cf0"
+      },
+      "subjectMask": {
+        "fileName": "edge-pair-mask.png",
+        "width": 192,
+        "height": 128,
+        "sizeBytes": 41016,
+        "pngSha256": "1997e31cbd671465165e4d6fba805bb2124195c33273c4906d08ca9a730ff2a6",
+        "rgbaSha256": "389371096493651fdd35b7e7564f92e9ae9326ba598f6f76be6024492c3ecdcd"
+      }
+    }
+  ]
+}

@@ -11,15 +11,22 @@ const isolationHeaders = {
   'Permissions-Policy':
     'camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=(), browsing-topics=()',
 };
+const immutableOcrRuntimeCache = 'public, max-age=31536000, immutable';
+const versionedOcrRuntimePath = /^\/ocr-runtime\/v\d+\.\d+\.\d+\//u;
 
 export default defineConfig({
   plugins: [
     {
       name: 'preview-security-headers',
       configurePreviewServer(server) {
-        server.middlewares.use((_request, response, next) => {
+        server.middlewares.use((request, response, next) => {
           for (const [name, value] of Object.entries(isolationHeaders)) {
             response.setHeader(name, value);
+          }
+          const pathname = request.url?.split('?')[0] ?? '';
+          if (versionedOcrRuntimePath.test(pathname)) {
+            // Mirror the versioned production `_headers` rule in local preview.
+            response.setHeader('Cache-Control', immutableOcrRuntimeCache);
           }
           next();
         });

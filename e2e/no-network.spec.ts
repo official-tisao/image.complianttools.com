@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { LOCAL_ORIGIN } from './support/network.js';
 
 const fixture = {
   name: 'self-generated.png',
@@ -13,7 +14,7 @@ test('a real conversion pipeline makes zero cross-origin requests', async ({ pag
   const crossOriginRequests: string[] = [];
   page.on('request', (request) => {
     const url = new URL(request.url());
-    if (url.origin !== 'http://127.0.0.1:4173') crossOriginRequests.push(request.url());
+    if (url.origin !== LOCAL_ORIGIN) crossOriginRequests.push(request.url());
   });
   await page.goto('/convert');
   await page.waitForLoadState('networkidle');

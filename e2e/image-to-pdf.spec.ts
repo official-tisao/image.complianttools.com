@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 
 import { expect, test } from '@playwright/test';
 import pdfLib from '../packages/engine/node_modules/pdf-lib/cjs/index.js';
-import { allowAllNetwork, denyAllNetwork } from './support/network.js';
+import { allowAllNetwork, denyAllNetwork, LOCAL_ORIGIN } from './support/network.js';
 
 const { PDFDocument } = pdfLib;
 
@@ -34,8 +34,7 @@ test('creates, previews, orders, and downloads a configured local PDF', async ({
   const crossOrigin: string[] = [];
   page.on('request', (request) => {
     const url = new URL(request.url());
-    if (url.protocol === 'http:' && url.origin !== 'http://127.0.0.1:4173')
-      crossOrigin.push(url.href);
+    if (url.protocol === 'http:' && url.origin !== LOCAL_ORIGIN) crossOrigin.push(url.href);
   });
   await page.goto('/image-to-pdf');
   await page.waitForLoadState('networkidle');

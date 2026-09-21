@@ -186,6 +186,10 @@ a:focus-visible {
   font-weight: 500;
   font-size: 14px;
 }
+.generated-control .control-label {
+  font-weight: 500;
+  font-size: 14px;
+}
 .generated-control p {
   margin: 5px 0 10px;
   color: #5c5a56;
@@ -412,6 +416,13 @@ details summary {
   }
   .tool-header nav {
     display: none;
+  }
+  .file-entry {
+    flex-wrap: wrap;
+  }
+  .file-entry input {
+    flex: 1 1 100%;
+    max-width: 100%;
   }
   .workspace {
     grid-template-columns: 1fr;

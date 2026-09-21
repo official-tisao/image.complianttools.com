@@ -1,4 +1,5 @@
 import eslint from '@eslint/js';
+import globals from 'globals';
 import svelte from 'eslint-plugin-svelte';
 import tseslint from 'typescript-eslint';
 
@@ -8,12 +9,16 @@ export default tseslint.config(
   {
     ignores: [
       '**/.svelte-kit/**',
+      '**/.lvgl/**',
       '**/.turbo/**',
+      '**/.venv/**',
+      '**/venv/**',
       '**/build/**',
       '**/coverage/**',
       '**/dist/**',
       '**/node_modules/**',
       '**/playwright-report/**',
+      'apps/web/static/ocr-runtime/**',
       '**/test-results/**',
       '**/fixtures/lint/**',
       'saas-template/**',
@@ -27,8 +32,6 @@ export default tseslint.config(
     plugins: { 'compliant-tools': compliantTools },
     rules: {
       'compliant-tools/no-dangerous-dom': 'error',
-      'compliant-tools/no-engine-browser-globals': 'error',
-      'compliant-tools/no-engine-direct-fetch': 'error',
       'no-eval': 'error',
       'no-new-func': 'error',
       'svelte/no-at-html-tags': 'error',
@@ -49,61 +52,76 @@ export default tseslint.config(
     },
   },
   {
-    files: ['scripts/**/*.{js,mjs}'],
+    files: [
+      'packages/engine/src/**/*.{js,mjs,ts}',
+      'packages/engine/fixtures/lint/**/*.{js,mjs,ts}',
+    ],
+    rules: {
+      'compliant-tools/no-engine-browser-globals': 'error',
+      'compliant-tools/no-engine-direct-fetch': 'error',
+    },
+  },
+  {
+    files: [
+      'scripts/**/*.{js,mjs,cjs,ts}',
+      'packages/*/bench/**/*.{js,mjs,cjs,ts}',
+      'packages/*/test/**/*.{js,mjs,cjs,ts}',
+      'e2e/**/*.{js,mjs,cjs,ts}',
+    ],
     languageOptions: {
       globals: {
-        Buffer: 'readonly',
-        console: 'readonly',
-        process: 'readonly',
-        TextDecoder: 'readonly',
-        TextEncoder: 'readonly',
+        ...globals.node,
+        ...globals.browser,
       },
     },
+  },
+  {
+    files: [
+      'apps/web/src/**/*.{js,mjs,ts,svelte}',
+      'packages/engine/src/**/*.{js,mjs,ts}',
+      'packages/engine/fixtures/lint/**/*.{js,mjs,ts}',
+      'packages/ui/src/**/*.{js,mjs,ts,svelte}',
+    ],
+    languageOptions: { globals: globals.browser },
+  },
+  {
+    files: [
+      'apps/relay/**/*.{js,mjs,cjs,ts}',
+      'packages/cli/**/*.{js,mjs,cjs,ts}',
+      'packages/extension/**/*.{js,mjs,cjs,ts}',
+    ],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        ...globals.browser,
+        ...globals.webextensions,
+      },
+    },
+  },
+  {
+    files: [
+      '*.config.{js,mjs,cjs,ts}',
+      'apps/*/dev-server.mjs',
+      'packages/*/scripts/**/*.{js,mjs,cjs}',
+    ],
+    languageOptions: { globals: globals.node },
   },
   {
     files: ['apps/*/dev-server.mjs'],
     languageOptions: { globals: { console: 'readonly', process: 'readonly', URL: 'readonly' } },
   },
   {
-    files: ['packages/*/test/**/*.{js,mjs}'],
-    languageOptions: {
-      globals: {
-        AbortController: 'readonly',
-        performance: 'readonly',
-        queueMicrotask: 'readonly',
-        structuredClone: 'readonly',
-        TextDecoder: 'readonly',
-        TextEncoder: 'readonly',
-        URL: 'readonly',
-        WebAssembly: 'readonly',
-      },
-    },
-  },
-  {
     files: ['**/*.svelte'],
     languageOptions: {
       parserOptions: { parser: tseslint.parser },
       globals: {
-        Blob: 'readonly',
-        clearTimeout: 'readonly',
-        createImageBitmap: 'readonly',
-        document: 'readonly',
-        Event: 'readonly',
-        File: 'readonly',
-        FileList: 'readonly',
-        HTMLCanvasElement: 'readonly',
-        HTMLInputElement: 'readonly',
-        ImageData: 'readonly',
-        performance: 'readonly',
-        setTimeout: 'readonly',
-        URL: 'readonly',
-        Worker: 'readonly',
+        ...globals.browser,
       },
     },
     rules: { 'svelte/no-navigation-without-resolve': 'off' },
   },
   {
     files: ['lighthouserc.cjs'],
-    languageOptions: { globals: { module: 'readonly' } },
+    languageOptions: { globals: globals.node },
   },
 );

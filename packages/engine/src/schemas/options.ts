@@ -2,6 +2,22 @@ import { z } from 'zod';
 
 const cssColor = z.string().regex(/^#[0-9a-f]{6}(?:[0-9a-f]{2})?$/i, 'Use a hex colour.');
 
+export const SmartCropOptionsSchema = z.object({
+  ratio: z.enum(['original', 'square', 'portrait', 'landscape', 'wide']).default('original'),
+  method: z.enum(['center', 'thirds', 'saliency']).default('center'),
+});
+export type SmartCropOptions = z.infer<typeof SmartCropOptionsSchema>;
+
+export const T63AltTextReviewOptionsSchema = z.object({
+  decorative: z.boolean().default(false),
+  purposeReviewed: z.boolean().default(false),
+  redundancyReviewed: z.boolean().default(false),
+  essentialDetailReviewed: z.boolean().default(false),
+});
+export type T63AltTextReviewOptions = z.infer<typeof T63AltTextReviewOptionsSchema>;
+export const T63_ALT_TEXT_MAX_LENGTH = 125;
+export const T63AltTextDraftSchema = z.string().max(T63_ALT_TEXT_MAX_LENGTH);
+
 export const TextOptionsSchema = z.object({
   enabled: z.boolean().default(false),
   content: z.string().min(1).default('Text'),
@@ -874,6 +890,74 @@ export interface OptionDescription {
   pattern?: string;
   defaultValue: unknown;
 }
+
+export const t63AltTextReviewOptionDescriptions: Readonly<Record<string, OptionDescription>> = {
+  't63.decorative': {
+    label: 'Mark image as decorative',
+    help: 'Use only when the image adds no information beyond nearby text or layout.',
+    control: 'toggle',
+    group: 'Alt text',
+    advanced: false,
+    defaultValue: false,
+  },
+  't63.purposeReviewed': {
+    label: 'I described the image’s purpose in this page context',
+    help: 'Describe the information or function this image adds here.',
+    control: 'toggle',
+    group: 'Human review checklist',
+    advanced: false,
+    defaultValue: false,
+  },
+  't63.redundancyReviewed': {
+    label: 'I checked nearby text for repetition',
+    help: 'Avoid repeating captions, headings, or adjacent link text.',
+    control: 'toggle',
+    group: 'Human review checklist',
+    advanced: false,
+    defaultValue: false,
+  },
+  't63.essentialDetailReviewed': {
+    label: 'I kept only essential details',
+    help: 'Remove details that do not help a reader understand the page.',
+    control: 'toggle',
+    group: 'Human review checklist',
+    advanced: false,
+    defaultValue: false,
+  },
+};
+
+export const smartCropToolOptionDescriptions: Readonly<Record<string, OptionDescription>> = {
+  't27.ratio': {
+    label: 'Crop aspect ratio',
+    help: 'Original ratio keeps the whole image; other choices crop to a fixed ratio.',
+    control: 'select',
+    group: 'Smart Crop',
+    advanced: false,
+    options: ['original', 'square', 'portrait', 'landscape', 'wide'],
+    optionLabels: {
+      original: 'Original ratio',
+      square: 'Square · 1:1',
+      portrait: 'Portrait · 4:5',
+      landscape: 'Landscape · 3:2',
+      wide: 'Wide · 16:9',
+    },
+    defaultValue: 'original',
+  },
+  't27.method': {
+    label: 'Crop placement',
+    help: 'Placement changes only where the selected crop is taken from.',
+    control: 'segmented',
+    group: 'Smart Crop',
+    advanced: false,
+    options: ['center', 'thirds', 'saliency'],
+    optionLabels: {
+      center: 'Center crop',
+      thirds: 'Rule-of-thirds placement',
+      saliency: 'Visual-saliency estimate',
+    },
+    defaultValue: 'center',
+  },
+};
 
 export const phaseOneOptionDescriptions: Readonly<Record<string, OptionDescription>> = {
   'export.format': {

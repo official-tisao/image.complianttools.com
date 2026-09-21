@@ -12,6 +12,14 @@
       "types": "./dist/ops/raster.d.ts",
       "default": "./dist/ops/raster.js"
     },
+    "./ops/smart-crop": {
+      "types": "./dist/ops/smart-crop.d.ts",
+      "default": "./dist/ops/smart-crop.js"
+    },
+    "./ops/alt-text-review": {
+      "types": "./dist/ops/alt-text-review.d.ts",
+      "default": "./dist/ops/alt-text-review.js"
+    },
     "./codecs/encode": {
       "types": "./dist/codecs/encode.d.ts",
       "default": "./dist/codecs/encode.js"
@@ -94,7 +102,7 @@
     "build": "tsc -p tsconfig.json",
     "bench": "node bench/run.mjs",
     "bench:operations": "node bench/operations.mjs",
-    "test": "node test/all.test.mjs && vitest run test --exclude test/**/*.test.mjs",
+    "test": "node test/all.test.mjs && vitest run test --exclude \"**/*.test.mjs\"",
     "lint": "tsc -p tsconfig.json --noEmit",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
@@ -118,9 +126,11 @@
     "imagetracerjs": "1.2.6",
     "mediabunny": "1.25.1",
     "mp4box": "2.4.1",
+    "onnxruntime-web": "1.30.0",
     "parse-exr": "1.0.2",
     "pdf-lib": "1.17.1",
     "pdfjs-dist": "5.4.624",
+    "tesseract.js": "7.0.0",
     "utif": "3.1.0",
     "zod": "4.4.3"
   }

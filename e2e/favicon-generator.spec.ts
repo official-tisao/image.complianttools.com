@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 
 import { expect, test, type Page } from '@playwright/test';
 import fflate from '../packages/engine/node_modules/fflate/lib/node.cjs';
-import { allowAllNetwork, denyAllNetwork } from './support/network.js';
+import { allowAllNetwork, denyAllNetwork, LOCAL_ORIGIN } from './support/network.js';
 
 const { unzipSync } = fflate;
 
@@ -29,7 +29,7 @@ test('downloads the complete deterministic favicon package without network fallb
 }) => {
   const crossOrigin: string[] = [];
   page.on('request', (request) => {
-    if (new URL(request.url()).origin !== 'http://127.0.0.1:4173') crossOrigin.push(request.url());
+    if (new URL(request.url()).origin !== LOCAL_ORIGIN) crossOrigin.push(request.url());
   });
   await page.goto('/favicon-generator');
   await waitForHydration(page);
