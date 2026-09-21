@@ -1,4 +1,3 @@
-import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 
 import AxeBuilder from '@axe-core/playwright';
@@ -270,11 +269,6 @@ test('T62 fetches only the pinned OSD model when orientation is first requested'
   context,
 }) => {
   test.setTimeout(300_000);
-  const localOsdPath = 'apps/web/static/tessdata/osd.traineddata';
-  test.skip(
-    existsSync(localOsdPath),
-    'The default Playwright setup prefetches OSD; run with PLAYWRIGHT_SKIP_OCR_TESSDATA_PREFETCH=1 to verify CDN delivery.',
-  );
 
   const assetRecords = JSON.parse(await readFile('docs/static-assets.json', 'utf8')) as Array<{
     path: string;
@@ -292,6 +286,12 @@ test('T62 fetches only the pinned OSD model when orientation is first requested'
     `https://cdn.jsdelivr.net/gh/tesseract-ocr/tessdata_fast@${osdRecord.upstreamCommit}/` +
     'osd.traineddata';
   expect(osdRecord.deliveryUrl).toBe(expectedOsdUrl);
+
+  // The normal E2E setup may prepare a local OSD cache. Force the expected cache
+  // miss so this route test always verifies lazy delivery from the pinned CDN.
+  await page.route('**/tessdata/osd.traineddata', (route) =>
+    route.fulfill({ status: 404, contentType: 'text/plain', body: 'Not in the local cache.' }),
+  );
 
   const traineddataRequests: Array<{ url: string; method: string }> = [];
   context.on('request', (request) => {
@@ -331,6 +331,59 @@ test('T62 fetches only the pinned OSD model when orientation is first requested'
       : `${method} ${parsed.pathname}`;
   });
   expect(observedRequests).toEqual(['HEAD /tessdata/osd.traineddata', `GET ${expectedOsdUrl}`]);
+});
+
+test('T62 equation mode runs with its selected language and lazily fetches both registered models', async ({
+  page,
+}) => {
+  test.setTimeout(300_000);
+  const assets = JSON.parse(await readFile('docs/static-assets.json', 'utf8')) as Array<{
+    path: string;
+    delivery?: string;
+    deliveryUrl?: string;
+  }>;
+  const modelIds = ['eng', 'equ'] as const;
+  const expectedUrls = modelIds.map((modelId) => {
+    const record = assets.find(
+      ({ path }) => path === `apps/web/static/tessdata/${modelId}.traineddata`,
+    );
+    if (!record || record.delivery !== 'lazy-cdn' || !record.deliveryUrl) {
+      throw new Error(`The ${modelId} model must have a pinned lazy-CDN register entry.`);
+    }
+    return record.deliveryUrl;
+  });
+  const modelRequests: string[] = [];
+  for (const modelId of modelIds) {
+    await page.route(`**/tessdata/${modelId}.traineddata`, (route) =>
+      route.fulfill({ status: 404, contentType: 'text/plain', body: 'Not in the local cache.' }),
+    );
+  }
+  page.on('request', (request) => {
+    const url = new URL(request.url());
+    if (url.hostname === 'cdn.jsdelivr.net' && url.pathname.endsWith('.traineddata')) {
+      modelRequests.push(url.href);
+    }
+  });
+
+  await page.goto('/ocr');
+  await expect(page.locator('html')).toHaveAttribute('data-hydrated', 'true');
+  const equationMode = page.getByRole('button', { name: 'Equation recognition', exact: true });
+  await equationMode.click();
+  await expect(equationMode).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByLabel('Base language')).toHaveValue('eng');
+  expect(modelRequests).toEqual([]);
+  await page.getByLabel('Choose a raster image').setInputFiles({
+    name: 'equation-helper-fixture.png',
+    mimeType: 'image/png',
+    buffer: await generatedTextPng(page),
+  });
+  expect(modelRequests).toEqual([]);
+
+  await page.getByRole('button', { name: 'Recognize text' }).click();
+  const output = page.getByTestId('ocr-output');
+  await expect(output).not.toHaveText(/^\s*$/u, { timeout: 240_000 });
+  await expect(page.getByTestId('ocr-result')).toContainText('Model used: eng+equ');
+  expect([...modelRequests].sort()).toEqual([...expectedUrls].sort());
 });
 
 test('T62 recognizes with a cached or pinned model and keeps the runtime same-origin', async ({
@@ -548,4 +601,57 @@ test('T62 supports keyboard-only file selection, recognition, and result downloa
   const downloadPath = await download.path();
   expect(downloadPath).not.toBeNull();
   expect(await readFile(downloadPath!, 'utf8')).toBe(await output.innerText());
+});
+
+test('T62 equation recognition loads the selected language and equation helper on demand', async ({
+  page,
+}) => {
+  test.setTimeout(300_000);
+  const assets = JSON.parse(await readFile('docs/static-assets.json', 'utf8')) as Array<{
+    path: string;
+    delivery?: string;
+    deliveryUrl?: string;
+  }>;
+  const expectedUrls = ['eng', 'equ'].map((modelId) => {
+    const record = assets.find(
+      ({ path }) => path === `apps/web/static/tessdata/${modelId}.traineddata`,
+    );
+    if (!record || record.delivery !== 'lazy-cdn' || !record.deliveryUrl) {
+      throw new Error(`The ${modelId} model must have a pinned lazy-CDN register entry.`);
+    }
+    return record.deliveryUrl;
+  });
+  const modelRequests: string[] = [];
+  for (const modelId of ['eng', 'equ']) {
+    // Force the CDN path even if a prior local E2E left an ignored model cache.
+    await page.route(`**/tessdata/${modelId}.traineddata`, (route) =>
+      route.fulfill({ status: 404, contentType: 'text/plain', body: 'Not in the local cache.' }),
+    );
+  }
+  page.on('request', (request) => {
+    const url = new URL(request.url());
+    if (url.hostname === 'cdn.jsdelivr.net' && url.pathname.endsWith('.traineddata')) {
+      modelRequests.push(url.href);
+    }
+  });
+
+  await page.goto('/ocr');
+  await expect(page.locator('html')).toHaveAttribute('data-hydrated', 'true');
+  const equationMode = page.getByRole('button', { name: 'Equation recognition', exact: true });
+  await equationMode.click();
+  await expect(equationMode).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByLabel('Base language')).toHaveValue('eng');
+  expect(modelRequests).toEqual([]);
+  await page.getByLabel('Choose a raster image').setInputFiles({
+    name: 'equation-helper-fixture.png',
+    mimeType: 'image/png',
+    buffer: await generatedTextPng(page),
+  });
+  expect(modelRequests).toEqual([]);
+
+  await page.getByRole('button', { name: 'Recognize text' }).click();
+  const output = page.getByTestId('ocr-output');
+  await expect(output).not.toHaveText(/^\s*$/u, { timeout: 240_000 });
+  await expect(page.getByTestId('ocr-result')).toContainText('Model used: eng+equ');
+  expect([...modelRequests].sort()).toEqual([...expectedUrls].sort());
 });
