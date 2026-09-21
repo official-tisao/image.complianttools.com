@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-09-19",
+  "checkedAt": "2026-09-21",
   "license": "CC0-1.0",
   "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
   "notes": [
     "Each image is individually registered with its image-level CC0 source evidence, local SHA-256, and a preserved metadata response.",
     "The Commons rows were checked through the file metadata API for LicenseShortName=CC0 and the CC0 deed URL. Cleveland Museum of Art rows were checked for share_license_status=CC0.",
-    "These four initial samples contain landscapes, foliage, an object, and a fine-line map. They are suitable for image-operation fixtures, not multilingual OCR ground truth.",
+    "These five individually registered samples include landscapes, foliage, an object, a fine-line map, and one text-heavy OCR test page. The OCR measurement uses one declared English crop and does not establish multilingual accuracy.",
     "CC0 addresses copyright and related rights identified by the source; it does not warrant privacy, publicity, trademark, or other independent rights. These initial samples avoid identifiable living people."
   ],
   "assets": [
@@ -75,6 +75,30 @@
       "license": "CC0-1.0",
       "licenseEvidence": "Cleveland Museum of Art Open Access API: share_license_status=CC0",
       "fixtureNote": "Fine-line map artwork; use for line-detail and layout image operations, not modern-language OCR accuracy."
+    },
+    {
+      "id": "test-ocr-document",
+      "path": "test-ocr-document.jpg",
+      "title": "Test OCR document",
+      "creator": "Kaldari",
+      "dimensions": { "width": 2550, "height": 3300 },
+      "sizeBytes": 583690,
+      "sourceSha1": "f00cba5fc4882a570170246d44febfdb746e22ac",
+      "sha256": "3b06e74ec9ddcdd647357cbda13ab264fa28ed1ce9a41ec16d116786f7b97f0b",
+      "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/7/75/Test_OCR_document.jpg",
+      "sourcePageUrl": "https://commons.wikimedia.org/wiki/File:Test_OCR_document.jpg",
+      "metadataApiUrl": "https://commons.wikimedia.org/w/api.php?action=query&format=json&titles=File%3ATest_OCR_document.jpg&prop=imageinfo&iiprop=url%7Csize%7Csha1%7Ctimestamp%7Cextmetadata",
+      "metadataSnapshot": "test-ocr-document.metadata.json",
+      "metadataSnapshotSha256": "bb34d6646d3eb3fad1adffcb6594706b7da74d584d3d8f351c699e912fe77892",
+      "license": "CC0-1.0",
+      "licenseEvidence": "Commons imageinfo extmetadata: LicenseShortName=CC0; LicenseUrl=http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "fixtureNote": "The source page includes English and French text. The T62 measurement uses only the registered English first-paragraph crop below.",
+      "ocrSample": {
+        "language": "eng",
+        "groundTruth": "Alice was beginning to get very tired of sitting by her sister in the café, and of having nothing to do: once or twice she had peeped into the book her sister was reading, but it had no pictures or conversations in it, “and what is the use of a book,” thought Alice, “without pictures or conversations?”",
+        "crop": { "x": 270, "y": 430, "width": 1000, "height": 540 },
+        "cropMethod": "Decode the registered JPEG at its native dimensions in Chromium Canvas 2D; copy this rectangle to ImageData without rescaling."
+      }
     }
   ]
 }

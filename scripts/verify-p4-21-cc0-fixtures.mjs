@@ -29,7 +29,31 @@ for (const asset of manifest.assets) {
       throw new Error(`${asset.id}: missing ${field} provenance.`);
     }
   }
-  if (path.basename(asset.path) !== asset.path || path.basename(asset.metadataSnapshot) !== asset.metadataSnapshot) {
+  if (asset.ocrSample) {
+    const { language, groundTruth, crop } = asset.ocrSample;
+    if (typeof language !== 'string' || !/^[a-z][a-z0-9_]*$/.test(language)) {
+      throw new Error(`${asset.id}: OCR sample has an invalid language code.`);
+    }
+    if (typeof groundTruth !== 'string' || groundTruth.trim().length === 0) {
+      throw new Error(`${asset.id}: OCR sample is missing its ground truth.`);
+    }
+    if (
+      !crop ||
+      !['x', 'y', 'width', 'height'].every((key) => Number.isInteger(crop[key])) ||
+      crop.x < 0 ||
+      crop.y < 0 ||
+      crop.width <= 0 ||
+      crop.height <= 0 ||
+      crop.x + crop.width > asset.dimensions.width ||
+      crop.y + crop.height > asset.dimensions.height
+    ) {
+      throw new Error(`${asset.id}: OCR crop must be an in-bounds integer rectangle.`);
+    }
+  }
+  if (
+    path.basename(asset.path) !== asset.path ||
+    path.basename(asset.metadataSnapshot) !== asset.metadataSnapshot
+  ) {
     throw new Error(`${asset.id}: fixture path must stay in the registered corpus directory.`);
   }
 
@@ -57,8 +81,24 @@ for (const asset of manifest.assets) {
     ) {
       throw new Error(`${asset.id}: Commons metadata does not prove CC0.`);
     }
-    if (imageInfo.width !== asset.dimensions.width || imageInfo.height !== asset.dimensions.height) {
+    if (
+      imageInfo.width !== asset.dimensions.width ||
+      imageInfo.height !== asset.dimensions.height
+    ) {
       throw new Error(`${asset.id}: dimensions do not match Commons metadata.`);
+    }
+    if (asset.sourceSha1) {
+      const sourceSha1 = createHash('sha1').update(image).digest('hex');
+      if (
+        sourceSha1 !== asset.sourceSha1 ||
+        String(imageInfo.sha1 ?? '').toLowerCase() !== asset.sourceSha1 ||
+        Number(imageInfo.size) !== asset.sizeBytes ||
+        new URL(imageInfo.url).pathname !== new URL(asset.sourceUrl).pathname
+      ) {
+        throw new Error(
+          `${asset.id}: source SHA-1, byte size, or Commons rendition does not match.`,
+        );
+      }
     }
   } else if (asset.metadataApiUrl.includes('openaccess-api.clevelandart.org')) {
     const record = metadata.data;
@@ -72,10 +112,13 @@ for (const asset of manifest.assets) {
         Number(imageRecord.height) === asset.dimensions.height &&
         imageRecord.url === asset.sourceUrl,
     );
-    if (!matchingImage) throw new Error(`${asset.id}: selected rendition does not match API metadata.`);
+    if (!matchingImage)
+      throw new Error(`${asset.id}: selected rendition does not match API metadata.`);
   } else {
     throw new Error(`${asset.id}: unrecognized metadata source.`);
   }
 }
 
-console.log(`CC0_FIXTURES_OK ${manifest.assets.length} assets: content, hashes, dimensions, and item-level CC0 metadata verified.`);
+console.log(
+  `CC0_FIXTURES_OK ${manifest.assets.length} assets: content, hashes, dimensions, and item-level CC0 metadata verified.`,
+);

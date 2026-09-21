@@ -73,6 +73,27 @@ function normalized(text) {
   return text.normalize('NFC').replace(/\s+/gu, ' ').trim();
 }
 
+function reportRequestUrl(value, localOrigin) {
+  const requestUrl = new URL(value);
+  if (requestUrl.origin !== localOrigin) return value;
+  if (requestUrl.pathname.startsWith('/@fs/')) {
+    const filesystemPath = decodeURIComponent(requestUrl.pathname.slice('/@fs/'.length)).replaceAll(
+      '\\',
+      '/',
+    );
+    const repositoryPath = repositoryDirectory.replaceAll('\\', '/');
+    const rootIndex = filesystemPath.toLowerCase().indexOf(repositoryPath.toLowerCase());
+    if (rootIndex >= 0) {
+      const relativePath = filesystemPath
+        .slice(rootIndex + repositoryPath.length)
+        .replace(/^\/+/, '');
+      return `/@fs/<workspace>/${relativePath}${requestUrl.search}`;
+    }
+    return `/@fs/<external>${requestUrl.search}`;
+  }
+  return `${requestUrl.pathname}${requestUrl.search}`;
+}
+
 function characterErrorRate(expected, actual) {
   const left = Array.from(normalized(expected));
   const right = Array.from(normalized(actual));
@@ -369,8 +390,7 @@ try {
     generatedAt: new Date().toISOString(),
     environment: {
       browser: browser.version(),
-      userAgent: await page.evaluate(() => navigator.userAgent),
-      origin,
+      server: 'Local Vite test server',
       fixtureMethod:
         'Decode the exact checked-in self-generated PNG fixtures; no scanned or third-party samples.',
       fixtureManifest: {
@@ -378,7 +398,10 @@ try {
         sha256: fixtureManifestSha256,
         renderer: fixtureManifest.renderer,
       },
-      runtimeRequests,
+      runtimeRequests: runtimeRequests.map(({ url, method }) => ({
+        url: reportRequestUrl(url, new URL(origin).origin),
+        method,
+      })),
       runtimeExternalOrigins: [...runtimeExternalOrigins],
       pageErrors,
     },
