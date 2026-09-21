@@ -360,7 +360,7 @@ include an AI step if the user has configured one, but they issue no request of 
 | T54 | Metadata Viewer | `/exif-viewer` | Local | EXIF, IPTC, XMP, ICC, MakerNotes, GPS map (offline tiles absent → coords + copy button), C2PA/CAI read |
 | T55 | Metadata Remover / Editor | `/remove-exif` | Local | Strip all / strip GPS only / keep copyright+orientation / edit any field |
 | T56 | Blur / Pixelate Region | `/blur-image` | Local | Rect, ellipse, freehand; Gaussian, pixelate, solid, noise |
-| T57 | Blur Faces & Plates | `/blur-face` | Local | Manually mark up to 12 rectangular regions, review the local still-PNG preview, and download the blurred copy. There is no automatic face or plate detection; review the whole image because unmarked regions remain visible |
+| T57 | Blur Faces & Plates | `/blur-face` | Local | Manually mark up to 12 rectangular regions, review the local still-PNG preview, and download the blurred copy. There is no automatic face or plate detection; review the whole image because unmarked regions remain visible. The focused route suite passes 40/42 checks across Chromium, Firefox, and WebKit (the two non-Chromium latency checks are skipped). A generated 6 MP PNG reached a one-region blur preview in a 229.5 ms median across five Chromium runs (217.8–336.8 ms); this synthetic timing does not establish broad-device speed or detection accuracy (§19.2) |
 | T58 | Redact | `/redact` | Local | Irreversible destructive redaction (pixels replaced, not overlaid) with verification pass |
 
 ### 4.7 Analyze
@@ -2985,6 +2985,7 @@ pages that matter most.
 | Encode WebP q80, 12 MP | | ≤ 900 ms |
 | Encode AVIF speed 6, 12 MP | | ≤ 4 s (and the UI says AVIF is slow, with the reason) |
 | T27 square-crop preview + PNG output | 12 MP still PNG | ≤ 3 s (click to visible preview; Chromium gate) |
+| T57 one-region blur preview | 6 MP still PNG | ≤ 3 s (manual selection to visible preview; Chromium route E2E gate) |
 | T63 image selection + decoded preview | 6 MP still image | ≤ 3 s (selection to visible preview; route E2E gate) |
 | Predicted-size update after an option change | | ≤ 250 ms |
 | Target-size search, 8 iterations | 12 MP | ≤ 4 s, with per-iteration progress |
