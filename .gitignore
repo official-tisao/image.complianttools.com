@@ -9,6 +9,8 @@ playwright-report/
 test-results/
 .lighthouseci/
 .cache/
+/.lvgl/
+/.generated/lvgl/
 *.tsbuildinfo
 .env
 .env.*

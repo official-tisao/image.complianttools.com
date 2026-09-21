@@ -20,6 +20,8 @@ export default defineConfig({
   testDir: './e2e',
   forbidOnly: true,
   retries: process.env.CI ? 2 : 0,
+  // Keep the multi-browser suite within the resource envelope of hosted CI runners.
+  workers: process.env.CI ? 2 : undefined,
   reporter: process.env.CI ? [['line'], ['html', { open: 'never' }]] : 'line',
   webServer: {
     command: `${tessdataPrefetch}node node_modules/typescript/bin/tsc -p packages/engine/tsconfig.json && cd apps/web && node node_modules/@sveltejs/kit/svelte-kit.js sync && node node_modules/vite/bin/vite.js build && node node_modules/vite/bin/vite.js preview --host 127.0.0.1 --port ${webPort}`,

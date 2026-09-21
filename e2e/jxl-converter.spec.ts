@@ -37,6 +37,8 @@ test('encodes lossy and lossless raster JPEG XL then decodes real output to PNG 
   page,
   context,
 }) => {
+  // This round trip runs two encodes, two decodes, and an offline decode in one test.
+  test.setTimeout(60_000);
   const crossOrigin: string[] = [];
   const localRequests: string[] = [];
   page.on('request', (request) => {

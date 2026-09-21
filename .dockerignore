@@ -15,6 +15,7 @@
 **/.turbo
 .cache
 apps/web/build
+**/.lvgl
 
 # OCR language/script/helper files are fetched directly by the browser from the
 # pinned upstream CDN and cached by the browser. Exclude local caches, retaining
