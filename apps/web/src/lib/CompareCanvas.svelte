@@ -44,7 +44,7 @@
       <!-- svelte-ignore a11y_no_redundant_roles --><input
         class="split-control"
         aria-label={translate(locale, 'compare.split', 'Before and after split')}
-        aria-valuetext={`${split}% after`}
+        aria-valuetext={`${split}% ${translate(locale, 'compare.after', 'after')}`}
         role="slider"
         type="range"
         min="0"
@@ -55,9 +55,9 @@
   <div class="canvas-tools">
     <button type="button" onclick={() => (zoom = 0)}
       >0 {translate(locale, 'compare.fit', 'Fit')}</button
-    ><button type="button" onclick={() => (zoom = 1)}>1 100%</button><button
-      type="button"
-      onclick={() => (zoom = Math.min(8, Math.max(1, zoom + 1)))}
+    ><button type="button" onclick={() => (zoom = 1)}
+      >1 {translate(locale, 'compare.percent', '100%')}</button
+    ><button type="button" onclick={() => (zoom = Math.min(8, Math.max(1, zoom + 1)))}
       >{translate(locale, 'compare.zoom', 'Zoom')} +</button
     ><button
       type="button"
@@ -76,9 +76,11 @@
       aria-label={translate(locale, 'compare.panRight', 'Pan image right')}
       onclick={() => pan(32, 0)}>→</button
     >{#if mode === 'onion'}<label
-        >Opacity <input type="range" min="0" max="100" bind:value={opacity} /></label
+        >{translate(locale, 'compare.opacity', 'Opacity')}
+        <input type="range" min="0" max="100" bind:value={opacity} /></label
       >{/if}{#if mode === 'difference'}<label
-        >Gain <input type="range" min="1" max="20" bind:value={gain} /></label
+        >{translate(locale, 'compare.gain', 'Gain')}
+        <input type="range" min="1" max="20" bind:value={gain} /></label
       >{/if}
   </div>
 </section>

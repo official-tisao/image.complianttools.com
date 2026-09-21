@@ -162,6 +162,7 @@ test('T70 reports unsupported input as a typed error with a recovery remedy', as
 test('T70 rejects files above the 32 MiB input limit with a typed remedy', async ({ page }) => {
   test.setTimeout(60_000);
   await page.goto('/pixel-art-upscaler');
+  await page.locator('html[data-hydrated="true"]').waitFor();
   await page.getByTestId('t70-file-input').evaluate((element) => {
     const file = new File([new Uint8Array([0])], 'oversized.png', { type: 'image/png' });
     Object.defineProperty(file, 'size', {
