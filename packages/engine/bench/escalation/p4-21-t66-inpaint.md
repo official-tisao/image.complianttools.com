@@ -1,6 +1,6 @@
 # P4-21 benchmark: T66 inpaint / object removal
 
-**Status:** Initial self-generated comparison measured for five local methods on three small synthetic scenes. Real-image quality, larger or irregular masks, and structural reconstruction remain unmeasured.
+**Status:** Two narrow synthetic comparisons are measured for five local methods. They include three generated scenes and an eight-case CC0-derived synthetic-occlusion proxy. Real-image quality, larger natural-scale removals, and plausible structural reconstruction remain unmeasured.
 
 ## Method comparison
 
@@ -36,6 +36,32 @@ Each artifact below is one of the exact lossless PNGs whose dimensions and PNG/R
 | Crossing bands | ![Crossing-bands target](t66/artifacts/crossing-bands-reference.png) | ![Crossing-bands masked input](t66/artifacts/crossing-bands-masked-input.png) | ![Crossing-bands Telea result](t66/artifacts/crossing-bands-telea.png) | ![Crossing-bands Efros–Leung result](t66/artifacts/crossing-bands-efros-leung.png) |
 | Seeded cloud   | ![Seeded-cloud target](t66/artifacts/seeded-cloud-reference.png)     | ![Seeded-cloud masked input](t66/artifacts/seeded-cloud-masked-input.png)     | ![Seeded-cloud Telea result](t66/artifacts/seeded-cloud-telea.png)     | ![Seeded-cloud Efros–Leung result](t66/artifacts/seeded-cloud-efros-leung.png)     |
 
+## CC0-derived synthetic-occlusion proxy
+
+An additive benchmark at [`t66/cc0-run.mjs`](t66/cc0-run.mjs) supplements the generated-texture comparison above without replacing it. It uses four individually registered CC0 source images from [`fixtures/cc0/manifest.json`](fixtures/cc0/manifest.json). Before generating outputs, the runner verifies the source bytes and item-level metadata hashes. For each source, it creates two fixed 256×256 source crops, resamples them with Lanczos3 to 32×32, then applies a known synthetic occlusion: one 6×6 interior rectangle and one irregular stepped mask touching the left crop boundary. The pre-occlusion pixels are the reference by construction.
+
+[`t66/cc0-results.json`](t66/cc0-results.json) records all eight cases, per-case measurements, runtime samples, and dimensions plus PNG and decoded-RGBA hashes for 64 artifacts (reference, masked input, mask, and five method outputs per case) under [`t66/cc0-artifacts/`](t66/cc0-artifacts/). Across the eight cases, the method means and latency summaries are:
+
+| Method              | Mean masked-region PSNR (RGB) | Mean masked-region SSIM | Median / p95 latency (ms) |
+| ------------------- | ----------------------------: | ----------------------: | ------------------------: |
+| Telea               |                    25.3583 dB |                0.610996 |             0.900 / 3.091 |
+| Navier–Stokes       |                    13.1290 dB |                0.208173 |             0.320 / 3.882 |
+| Confidence-priority |                     5.8823 dB |                0.253917 |             2.721 / 9.328 |
+| Efros–Leung         |                    22.1028 dB |                0.437460 |           13.425 / 22.323 |
+| Quilting            |                    19.5491 dB |                0.390240 |           10.930 / 18.912 |
+
+Telea led the aggregate masked-region PSNR and SSIM on this proxy set; Navier–Stokes had the lowest median latency. Each output is required to preserve all unmasked RGBA pixels and the 32×32 dimensions. The run used one warmup and three timed calls per case/method; p95 is nearest-rank over 24 calls per method. Timing measures the synchronous `removeObject` operation in Node, excluding decode, crop/resampling, PNG output, and scoring.
+
+Reproduce from the repository root after building the engine and verifying the registered CC0 sources:
+
+```sh
+pnpm --filter @complianttools/image-engine build
+node scripts/verify-p4-21-cc0-fixtures.mjs
+node packages/engine/bench/escalation/t66/cc0-run.mjs
+```
+
+This set is a synthetic-occlusion proxy over downsampled photographs, not a benchmark of genuine object removal: no object was removed and no plausible replacement scene was annotated. Its 32×32 inputs, eight masks, known hidden pixels, and Node CPU timings do not establish quality for larger fills, real objects, structured scenes, natural-scale images, or user preference. Treat these measurements separately from the three generated-texture cases above.
+
 ## Shortfall
 
-This is a narrow functional comparison: three 48×48 generated textures, one centered rectangular 8×8 mask, and no photographs, edge-touching masks, varied object shapes, or large fills. It cannot establish removal quality on real images or determine whether any method can reconstruct missing structure. The next useful evidence is a broader compliant corpus with varied masks and target classes, then a separate evaluation of larger structural gaps. Keep model-dependent comparisons open until their exact assets are approved and run through the intended runtime on the same fixtures.
+Across both local comparisons, evidence remains narrow: three generated 48×48 textures and eight CC0-derived 32×32 synthetic occlusions. The latter adds an irregular edge-touching mask but still does not measure real object removal or plausible structural reconstruction. Larger fills, varied real-object masks, natural-scale processing, and user judgments remain open. A broader compliant corpus with annotated real removals would be needed to measure those gaps. Keep model-dependent comparisons open until their exact assets are approved and run through the intended runtime on the same fixtures.
