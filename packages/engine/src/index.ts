@@ -111,6 +111,7 @@ export * from './schemas/procedural-generator.js';
 export * from './schemas/t60-compare-options.js';
 export * from './schemas/t61-duplicate-options.js';
 export * from './schemas/t80-color-match-options.js';
+export * from './schemas/t81-adaptive-resize-options.js';
 export * from './scheduler/memory-governor.js';
 export * from './security/redaction.js';
 export * from './scheduler/worker-pool.js';

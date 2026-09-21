@@ -73,6 +73,11 @@ const arabic: Readonly<Record<string, string>> = {
     'اختر الطريقة الإحصائية المحلية لمطابقة توزيع المصدر مع الصورة المرجعية.',
   'option.t80.method.option.reinhard': 'النقل الإحصائي بطريقة رينهارد',
   'option.t80.method.option.histogram': 'مطابقة المدرج التكراري لكل قناة',
+  'option.t81.width.label': 'عرض الإخراج',
+  'option.t81.height.label': 'ارتفاع الإخراج',
+  'option.t81.protectEnabled.label': 'استخدم قناع حماية تقريبي',
+  'option.t81.protectEnabled.help':
+    'عند التفعيل، ارسم منطقة لتوجيه أخذ العينات حول صفوفها وأعمدتها. لا يقفل القناع البكسلات في مكانها.',
   // Translators: Preserve the meaning of each comparison view and keep percentage ranges intact.
   'compare.mode.help': 'اختر طريقة عرض الصورتين في عارض المقارنة.',
   'compare.after': 'بعد',

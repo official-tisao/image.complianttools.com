@@ -92,9 +92,9 @@ test('T81 retargets a generated PNG, paints an approximate mask, and downloads t
     .getByTestId('t81-input')
     .setInputFiles({ name: 'fixture.png', mimeType: 'image/png', buffer: png });
   await expect(page.getByTestId('t81-run')).toBeEnabled();
-  await page.getByTestId('t81-width').fill('38');
-  await page.getByTestId('t81-height').fill('30');
-  await page.getByTestId('t81-mask-toggle').check();
+  await page.getByTestId('option-t81-width').locator('input[type="number"]').fill('38');
+  await page.getByTestId('option-t81-height').locator('input[type="number"]').fill('30');
+  await page.getByTestId('option-t81-protectEnabled').locator('input[type="checkbox"]').check();
 
   const canvas = page.getByTestId('t81-mask-canvas');
   await expect(canvas).toHaveAttribute('width', '48');
@@ -144,8 +144,8 @@ test('T81 reports the unchanged-image fallback for a uniform saliency profile', 
   await page
     .getByTestId('t81-input')
     .setInputFiles({ name: 'uniform.png', mimeType: 'image/png', buffer: png });
-  await page.getByTestId('t81-width').fill('24');
-  await page.getByTestId('t81-height').fill('18');
+  await page.getByTestId('option-t81-width').locator('input[type="number"]').fill('24');
+  await page.getByTestId('option-t81-height').locator('input[type="number"]').fill('18');
   await page.getByTestId('t81-run').click();
   await expect(page.getByRole('status')).toContainText(
     'engine returned the original image unchanged',
@@ -162,14 +162,14 @@ test('T81 rejects invalid dimensions and an over-constrained painted mask with r
   await page
     .getByTestId('t81-input')
     .setInputFiles({ name: 'fixture.png', mimeType: 'image/png', buffer: png });
-  await page.getByTestId('t81-width').fill('0');
+  await page.getByTestId('option-t81-width').locator('input[type="number"]').fill('0');
   await page.getByTestId('t81-run').click();
   await expect(page.getByRole('alert')).toHaveAttribute('data-error-kind', 'invalid-dimensions');
   await expect(page.getByRole('alert')).toContainText('Set both target dimensions');
 
-  await page.getByTestId('t81-width').fill('1');
-  await page.getByTestId('t81-height').fill('1');
-  await page.getByTestId('t81-mask-toggle').check();
+  await page.getByTestId('option-t81-width').locator('input[type="number"]').fill('1');
+  await page.getByTestId('option-t81-height').locator('input[type="number"]').fill('1');
+  await page.getByTestId('option-t81-protectEnabled').locator('input[type="checkbox"]').check();
   const canvas = page.getByTestId('t81-mask-canvas');
   const bounds = await canvas.boundingBox();
   if (!bounds) throw new Error('The protection mask canvas is not visible.');
