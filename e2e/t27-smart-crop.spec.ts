@@ -68,18 +68,30 @@ test('T27 uses local center, thirds, and approximate saliency crops and the PNG 
     buffer: await generatedPng(page),
   });
   await expect(page.getByTestId('t27-selected')).toContainText('4 × 2');
+  await expect(page.getByLabel('Crop aspect ratio')).toHaveValue('original');
 
+  await page.getByTestId('t27-run').click();
+  await expect(page.getByTestId('t27-output-dimensions')).toContainText('4 × 2');
+  await expect(page.getByTestId('t27-crop-box')).toHaveAttribute('data-x', '0');
+  await expect(page.getByTestId('t27-output')).toHaveJSProperty('naturalWidth', 4);
+
+  await page.getByLabel('Crop aspect ratio').selectOption('square');
   await page.getByTestId('t27-run').click();
   await expect(page.getByTestId('t27-output-dimensions')).toContainText('2 × 2');
   await expect(page.getByTestId('t27-crop-box')).toHaveAttribute('data-x', '1');
   await expect(page.getByTestId('t27-output')).toHaveJSProperty('naturalWidth', 2);
 
-  for (const method of ['thirds', 'saliency'] as const) {
-    await page
-      .getByRole('radio', {
-        name: new RegExp(method === 'thirds' ? 'Rule-of-thirds' : 'Visual-saliency', 'u'),
-      })
-      .check();
+  for (const [index, method] of ['thirds', 'saliency'].entries()) {
+    const option = page.getByRole('button', {
+      name: new RegExp(method === 'thirds' ? 'Rule-of-thirds' : 'Visual-saliency', 'u'),
+    });
+    if (index === 0) {
+      await option.focus();
+      await page.keyboard.press('Enter');
+    } else {
+      await option.click();
+    }
+    await expect(option).toHaveAttribute('aria-pressed', 'true');
     await page.getByTestId('t27-run').click();
     await expect(page.getByTestId('t27-output')).toBeVisible();
     await expect(page.getByTestId('t27-crop-box')).toBeVisible();

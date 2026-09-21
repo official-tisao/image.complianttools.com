@@ -1,15 +1,24 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
+  import type {
+    OptionDescription,
+    SmartCropOptions,
+  } from '@complianttools/image-engine/schemas/options';
+  import {
+    SmartCropOptionsSchema,
+    smartCropToolOptionDescriptions,
+  } from '@complianttools/image-engine/schemas/options';
   import {
     approximateSaliencyCropRect,
     centerCropRect,
     ruleOfThirdsCropRect,
     smartCropAnalysisSize,
   } from '@complianttools/image-engine/ops/smart-crop';
+  import GeneratedControls from '$lib/GeneratedControls.svelte';
 
   type Locale = 'en' | 'en-XA' | 'ar';
-  type Method = 'center' | 'thirds' | 'saliency';
-  type RatioId = 'square' | 'portrait' | 'landscape' | 'wide';
+  type Method = SmartCropOptions['method'];
+  type RatioId = SmartCropOptions['ratio'];
   type Dimensions = { readonly width: number; readonly height: number };
   type Crop = {
     readonly x: number;
@@ -32,13 +41,14 @@
   const MAX_PIXELS = 12_000_000;
   const MAX_OUTPUT_BYTES = 24 * 1024 * 1024;
   const ORIGIN = 'https://image.complianttools.com';
-  const RATIOS: Readonly<Record<RatioId, number>> = {
+  const RATIOS: Readonly<Record<Exclude<RatioId, 'original'>, number>> = {
     square: 1,
     portrait: 4 / 5,
     landscape: 3 / 2,
     wide: 16 / 9,
   };
 
+  // Translators: keep PNG, JPEG, MiB, pixel counts, and aspect-ratio numerals unchanged.
   const en = {
     title: 'Smart Crop',
     description:
@@ -50,11 +60,14 @@
     chooseImage: 'Choose a still PNG or JPEG',
     inputHelp: 'Still PNG or JPEG, up to 20 MiB and 12 megapixels.',
     aspect: 'Crop aspect ratio',
+    original: 'Original ratio',
+    ratioHelp: 'Original ratio keeps the whole image; other choices crop to a fixed ratio.',
     square: 'Square · 1:1',
     portrait: 'Portrait · 4:5',
     landscape: 'Landscape · 3:2',
     wide: 'Wide · 16:9',
     placement: 'Crop placement',
+    methodHelp: 'Placement changes only where the selected crop is taken from.',
     center: 'Center crop',
     thirds: 'Rule-of-thirds placement',
     saliency: 'Visual-saliency estimate',
@@ -115,11 +128,14 @@
     chooseImage: 'اختر صورة PNG أو JPEG ثابتة',
     inputHelp: 'صورة PNG أو JPEG ثابتة، حتى 20 ميبيبايت و12 ميغابكسل.',
     aspect: 'نسبة أبعاد الاقتصاص',
+    original: 'النسبة الأصلية',
+    ratioHelp: 'تحافظ النسبة الأصلية على الصورة كاملة؛ أما الخيارات الأخرى فتقصها إلى نسبة ثابتة.',
     square: 'مربع · 1:1',
     portrait: 'عمودي · 4:5',
     landscape: 'أفقي · 3:2',
     wide: 'عريض · 16:9',
     placement: 'موضع الاقتصاص',
+    methodHelp: 'يغيّر الموضع مكان الاقتصاص المحدد فقط.',
     center: 'اقتصاص من الوسط',
     thirds: 'موضع وفق قاعدة الأثلاث',
     saliency: 'تقدير البروز البصري',
@@ -175,8 +191,7 @@
   let sourceDimensions = $state<Dimensions>();
   let outputDimensions = $state<Dimensions>();
   let cropBox = $state<Crop>();
-  let ratio = $state<RatioId>('square');
-  let method = $state<Method>('center');
+  let options = $state<SmartCropOptions>(SmartCropOptionsSchema.parse({}));
   let busy = $state(false);
   let status = $state('');
   let error = $state<ErrorKind>();
@@ -188,6 +203,34 @@
     const value = locale === 'ar' ? ar[key] : en[key];
     return locale === 'en-XA' ? pseudo(value) : value;
   };
+  const optionValues = $derived({
+    't27.ratio': options.ratio,
+    't27.method': options.method,
+  });
+  const optionDescriptions = $derived<Record<string, OptionDescription>>({
+    't27.ratio': {
+      ...smartCropToolOptionDescriptions['t27.ratio']!,
+      label: t('aspect'),
+      help: t('ratioHelp'),
+      optionLabels: {
+        original: t('original'),
+        square: t('square'),
+        portrait: t('portrait'),
+        landscape: t('landscape'),
+        wide: t('wide'),
+      },
+    },
+    't27.method': {
+      ...smartCropToolOptionDescriptions['t27.method']!,
+      label: t('placement'),
+      help: t('methodHelp'),
+      optionLabels: {
+        center: t('center'),
+        thirds: t('thirds'),
+        saliency: t('saliency'),
+      },
+    },
+  });
   const path = $derived(locale === 'en' ? '/smart-crop' : `/${locale}/smart-crop`);
   const title = $derived(t('title'));
   const description = $derived(t('metaDescription'));
@@ -345,7 +388,11 @@
       bitmap = await createImageBitmap(sourceFile);
       if (bitmap.width !== sourceDimensions.width || bitmap.height !== sourceDimensions.height)
         throw new Error('decode-failed');
-      const crop = placementCrop(bitmap, RATIOS[ratio], method);
+      const targetRatio =
+        options.ratio === 'original'
+          ? sourceDimensions.width / sourceDimensions.height
+          : RATIOS[options.ratio];
+      const crop = placementCrop(bitmap, targetRatio, options.method);
       const width = Math.max(1, Math.round(crop.width));
       const height = Math.max(1, Math.round(crop.height));
       if (!width || !height || width * height > MAX_PIXELS) throw new Error('image-too-large');
@@ -379,15 +426,17 @@
     }
   }
 
-  function updateRatio(event: Event) {
-    ratio = (event.currentTarget as HTMLSelectElement).value as RatioId;
-    clearOutput();
-    status = '';
-    error = undefined;
-  }
-
-  function updateMethod(next: Method) {
-    method = next;
+  function updateOption(path: string, value: unknown) {
+    const candidate =
+      path === 't27.ratio'
+        ? { ...options, ratio: value }
+        : path === 't27.method'
+          ? { ...options, method: value }
+          : undefined;
+    if (!candidate) return;
+    const parsed = SmartCropOptionsSchema.safeParse(candidate);
+    if (!parsed.success) return;
+    options = parsed.data;
     clearOutput();
     status = '';
     error = undefined;
@@ -480,48 +529,12 @@
     </label>
     <p class="t27-help">{t('inputHelp')}</p>
 
-    <div class="t27-select-grid">
-      <label
-        >{t('aspect')}
-        <select data-testid="t27-ratio" value={ratio} onchange={updateRatio}>
-          <option value="square">{t('square')}</option>
-          <option value="portrait">{t('portrait')}</option>
-          <option value="landscape">{t('landscape')}</option>
-          <option value="wide">{t('wide')}</option>
-        </select>
-      </label>
-    </div>
-
-    <fieldset class="t27-methods">
-      <legend>{t('placement')}</legend>
-      <label
-        ><input
-          type="radio"
-          name="t27-method"
-          value="center"
-          checked={method === 'center'}
-          onchange={() => updateMethod('center')}
-        /><span><strong>{t('center')}</strong><small>{t('centerHelp')}</small></span></label
-      >
-      <label
-        ><input
-          type="radio"
-          name="t27-method"
-          value="thirds"
-          checked={method === 'thirds'}
-          onchange={() => updateMethod('thirds')}
-        /><span><strong>{t('thirds')}</strong><small>{t('thirdsHelp')}</small></span></label
-      >
-      <label
-        ><input
-          type="radio"
-          name="t27-method"
-          value="saliency"
-          checked={method === 'saliency'}
-          onchange={() => updateMethod('saliency')}
-        /><span><strong>{t('saliency')}</strong><small>{t('saliencyHelp')}</small></span></label
-      >
-    </fieldset>
+    <GeneratedControls
+      descriptions={optionDescriptions}
+      values={optionValues}
+      onChange={updateOption}
+      {locale}
+    />
 
     <button
       class="button primary"
@@ -618,52 +631,17 @@
     font-weight: 400;
   }
   .t27-upload small,
-  .t27-help,
-  .t27-methods small {
+  .t27-help {
     color: #5c5a56;
     font-size: 13px;
     line-height: 1.5;
     overflow-wrap: anywhere;
   }
-  .t27-select-grid {
-    display: grid;
-    grid-template-columns: minmax(180px, 320px);
-    gap: 16px;
-    margin-block: 20px;
+  .t27-controls :global(.generated-control) {
+    margin-block: 12px;
   }
-  .t27-select-grid label {
-    display: grid;
-    gap: 8px;
-    font-weight: 600;
-  }
-  .t27-select-grid select {
+  .t27-controls :global(.generated-control select) {
     min-height: 42px;
-    padding: 6px 10px;
-    border: 1px solid #6a6863;
-    border-radius: 6px;
-    color: inherit;
-    background: white;
-  }
-  .t27-methods {
-    display: grid;
-    gap: 12px;
-    margin: 20px 0;
-    padding: 16px;
-    border: 1px solid #1c1a1720;
-    border-radius: 8px;
-  }
-  .t27-methods label {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    cursor: pointer;
-  }
-  .t27-methods label span {
-    display: grid;
-    gap: 4px;
-  }
-  .t27-methods label input {
-    margin-block-start: 4px;
   }
   .t27-previews {
     display: grid;

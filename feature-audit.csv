@@ -25,7 +25,7 @@ FEATURE,T23,Lossless Optimizer /lossless-optimize,Optimize,2,Partial,Yes,Pass,"o
 FEATURE,T24,Image Resizer /resize,Transform,1,Complete,Yes,Pass,"STCC complete. 5 modes + 9 algorithms. e2e passes"
 FEATURE,T25,Bulk Resize /bulk-resize,Transform,3,Not started,No,N/A,"Phase 3"
 FEATURE,T26,Crop Image /crop,Transform,3,Not started,No,N/A,"Phase 3"
-FEATURE,T27,Smart Crop /smart-crop,Transform,4,Partial,Yes,N/A,"The route offers center, rule-of-thirds, and approximate edge-energy/colour-variation saliency placements. P4-21 has a reproducible 12-case benchmark on four individually registered CC0 images against subjective manual target boxes: mean retention 89.82%, 76.70%, and 71.97% respectively. The heuristic does not recognize subjects or faces; visual quality, user preference, broader annotations, and route-level STCC remain open"
+FEATURE,T27,Smart Crop /smart-crop,Transform,4,Partial,Yes,N/A,"The route offers center, rule-of-thirds, and approximate edge-energy/colour-variation saliency placements. Ratio and placement options use a Zod schema and shared generated-control renderer; original-ratio/center is the no-op default and keyboard selection is covered in route E2E. P4-21 has a reproducible 12-case benchmark on four individually registered CC0 images against subjective manual target boxes: mean retention 89.82%, 76.70%, and 71.97% respectively. The heuristic does not recognize subjects or faces; visual quality, user preference, broader annotations, latency evidence, and route-level STCC remain open"
 FEATURE,T28,Rotate & Straighten /rotate,Transform,3,Not started,No,N/A,"Phase 3"
 FEATURE,T29,Flip / Mirror /flip,Transform,3,Not started,No,N/A,"Phase 3"
 FEATURE,T30,Canvas Resize /canvas-resize,Transform,3,Not started,No,N/A,"Phase 3"

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { SmartCropOptionsSchema } from '../src/schemas/options.js';
 import {
   approximateSaliencyCropRect,
   centerCropRect,
@@ -18,6 +19,20 @@ function rgbaImage(width: number, height: number, pixel: (x: number, y: number) 
 }
 
 describe('T27 smart-crop geometry', () => {
+  it('defaults to original ratio and centered placement, preserving the full source', () => {
+    expect(SmartCropOptionsSchema.parse({})).toEqual({ ratio: 'original', method: 'center' });
+    expect(centerCropRect(400, 200, 400 / 200)).toEqual({
+      x: 0,
+      y: 0,
+      width: 400,
+      height: 200,
+    });
+  });
+
+  it('rejects option values outside its declared schema', () => {
+    expect(() => SmartCropOptionsSchema.parse({ ratio: 'cinema', method: 'face' })).toThrow();
+  });
+
   it('centres the largest matching crop for wide and tall images', () => {
     expect(centerCropRect(400, 200, 1)).toEqual({ x: 100, y: 0, width: 200, height: 200 });
     expect(centerCropRect(200, 400, 1)).toEqual({ x: 0, y: 100, width: 200, height: 200 });
