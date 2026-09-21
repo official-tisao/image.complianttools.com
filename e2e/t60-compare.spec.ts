@@ -113,3 +113,162 @@ test('T60 withholds pixel metrics for different source dimensions but keeps the 
   await expect(page.getByTestId('t60-results')).toHaveCount(0);
   await expect(page.getByTestId('compare-canvas')).toBeVisible();
 });
+
+test('T60 reports an unsupported file with a typed remedy', async ({ page }) => {
+  await page.goto('/compare');
+  await page.getByTestId('t60-before-input').setInputFiles({
+    name: 'notes.txt',
+    mimeType: 'text/plain',
+    buffer: Buffer.from('not an image'),
+  });
+
+  await expect(page.getByTestId('t60-error')).toHaveAttribute(
+    'data-error-kind',
+    'unsupported-file',
+  );
+  await expect(page.getByTestId('t60-error')).toContainText('Choose a PNG, JPEG, or WebP image.');
+});
+
+test('T60 rejects an oversized file before decoding it', async ({ page }) => {
+  await page.goto('/compare');
+  await page.getByTestId('t60-before-input').setInputFiles({
+    name: 'oversized.png',
+    mimeType: 'image/png',
+    buffer: Buffer.alloc(32 * 1024 * 1024 + 1),
+  });
+
+  await expect(page.getByTestId('t60-error')).toHaveAttribute('data-error-kind', 'file-too-large');
+  await expect(page.getByTestId('t60-error')).toContainText('smaller than 32 MiB');
+});
+
+test('T60 reports a typed decode error for corrupt image bytes', async ({ page }) => {
+  await page.goto('/compare');
+  await page.getByTestId('t60-before-input').setInputFiles({
+    name: 'reference.png',
+    mimeType: 'image/png',
+    buffer: await generatedPng(page),
+  });
+  await page.getByTestId('t60-after-input').setInputFiles({
+    name: 'corrupt.png',
+    mimeType: 'image/png',
+    buffer: Buffer.from('not a PNG'),
+  });
+
+  await expect(page.getByTestId('t60-error')).toHaveAttribute('data-error-kind', 'decode-failed');
+  await expect(page.getByTestId('t60-error')).toContainText(
+    'The browser could not decode this image.',
+  );
+});
+
+test('T60 reports a typed worker error when comparison workers cannot start', async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(window, 'Worker', {
+      configurable: true,
+      value: class {
+        constructor() {
+          throw new Error('worker unavailable');
+        }
+      },
+    });
+  });
+  await page.goto('/compare');
+  const png = await generatedPng(page);
+  await page.getByTestId('t60-before-input').setInputFiles({
+    name: 'before.png',
+    mimeType: 'image/png',
+    buffer: png,
+  });
+  await page.getByTestId('t60-after-input').setInputFiles({
+    name: 'after.png',
+    mimeType: 'image/png',
+    buffer: png,
+  });
+
+  await expect(page.getByTestId('t60-error')).toHaveAttribute('data-error-kind', 'worker-failed');
+  await expect(page.getByTestId('t60-error')).toContainText('worker unavailable');
+});
+
+test('T60 cancellation terminates a pending worker and reports a restart remedy', async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(window, 'Worker', {
+      configurable: true,
+      value: class {
+        onmessage: ((event: MessageEvent) => void) | null = null;
+        onerror: ((event: ErrorEvent) => void) | null = null;
+        postMessage() {
+          (window as Window & { __t60WorkerPosted?: boolean }).__t60WorkerPosted = true;
+        }
+        terminate() {
+          (window as Window & { __t60WorkerTerminated?: boolean }).__t60WorkerTerminated = true;
+        }
+      },
+    });
+  });
+  await page.goto('/compare');
+  const png = await generatedPng(page);
+  await page.getByTestId('t60-before-input').setInputFiles({
+    name: 'before.png',
+    mimeType: 'image/png',
+    buffer: png,
+  });
+  await page.getByTestId('t60-after-input').setInputFiles({
+    name: 'after.png',
+    mimeType: 'image/png',
+    buffer: png,
+  });
+  await page.waitForFunction(
+    () => (window as Window & { __t60WorkerPosted?: boolean }).__t60WorkerPosted === true,
+  );
+
+  await page.getByTestId('t60-cancel').click();
+  await expect(page.getByTestId('t60-error')).toHaveAttribute('data-error-kind', 'cancelled');
+  await expect(page.getByTestId('t60-error')).toContainText('Choose either image again');
+  expect(
+    await page.evaluate(
+      () => (window as Window & { __t60WorkerTerminated?: boolean }).__t60WorkerTerminated,
+    ),
+  ).toBe(true);
+});
+
+test('T60 comparison modes and split control work with the keyboard', async ({ page }) => {
+  await page.goto('/compare');
+  const png = await generatedPng(page);
+  await page.getByTestId('t60-before-input').setInputFiles({
+    name: 'before.png',
+    mimeType: 'image/png',
+    buffer: png,
+  });
+  await page.getByTestId('t60-after-input').setInputFiles({
+    name: 'after.png',
+    mimeType: 'image/png',
+    buffer: png,
+  });
+  await expect(page.getByTestId('t60-results')).toBeVisible();
+
+  const splitMode = page.getByRole('button', { name: 'split', exact: true });
+  const side = page.getByRole('button', { name: 'side', exact: true });
+  const onion = page.getByRole('button', { name: 'onion', exact: true });
+  await page.getByTestId('t60-after-input').press('Tab');
+  await expect(splitMode).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(side).toBeFocused();
+  await page.keyboard.press('Space');
+  await expect(page.locator('.compare-stage')).toHaveAttribute('data-mode', 'side');
+  await page.keyboard.press('Tab');
+  await expect(onion).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('.compare-stage')).toHaveAttribute('data-mode', 'onion');
+  await page.keyboard.press('Shift+Tab');
+  await page.keyboard.press('Shift+Tab');
+  await expect(splitMode).toBeFocused();
+  await page.keyboard.press('Enter');
+  const split = page.locator(
+    '[data-testid="compare-canvas"] input[aria-label="Before and after split"]',
+  );
+  for (let step = 0; step < 5; step += 1) await page.keyboard.press('Tab');
+  await expect(split).toBeFocused();
+  await page.keyboard.press('ArrowRight');
+  await expect(split).toHaveValue('51');
+});

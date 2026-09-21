@@ -1514,17 +1514,16 @@ These are not polish; they are the reasons people come back.
 | **Zero-flash theme** | Theme resolved before first paint from a tiny inline script; respects `prefers-color-scheme` and a stored override |
 | **Offline badge** | When offline, a small badge reads "Offline — all local tools still work." AI tools grey out with that reason |
 
-### 11.6 Comparison surface detail (T60 and every preview)
+### 11.6 Comparison surface detail (T60)
 
-The compare component is shared by all tools and is a differentiator:
+The `/compare` route provides split, side-by-side, onion, difference, and output views. The split
+range and onion opacity controls are keyboard-operable; the difference view has an adjustable gain.
+Fit, 100% and incremented zoom, plus directional pan controls are available in the preview.
 
-- **Split slider** with a draggable handle; hold `Alt` to temporarily show 100 % after.
-- **Onion skin** with an opacity slider, keyboard-steppable.
-- **Difference** blend with a gain multiplier (1×–20×) so 1-bit differences are visible.
-- **Metrics strip:** dimensions, bytes, PSNR, SSIM, butteraugli distance, and a plain-language verdict
-  ("visually identical" / "differences visible on close inspection" / "clearly degraded") derived from
-  butteraugli thresholds. The verdict is what a non-expert actually needs.
-- **Pixel loupe** on hover at ≥ 400 % zoom, showing both images' RGBA values at the cursor.
+The route calculates approximate SSIM, PSNR, average-hash, difference-hash, and pHash metrics in a
+local worker from proxies whose longest edge is at most 256 pixels. Pixel metrics require matching
+source dimensions. These scores describe selected similarity features, not human quality judgments
+or proof that two files are identical.
 
 ### 11.7 Generated option controls
 
