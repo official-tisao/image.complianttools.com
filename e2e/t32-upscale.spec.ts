@@ -1,7 +1,8 @@
 import { readFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test, type Locator, type Page } from '@playwright/test';
+import { expect, test, type BrowserContext, type Locator, type Page } from '@playwright/test';
 
 async function generatedPng(page: Page, width = 3, height = 2) {
   const base64 = await page.evaluate(
@@ -42,6 +43,227 @@ async function focusWithTab(page: Page, locator: Locator, attempts = 100) {
     await page.keyboard.press('Tab');
   }
   throw new Error('Could not reach the requested T32 control using Tab.');
+}
+
+interface RegisteredT32Model {
+  readonly sizeBytes: number;
+  readonly sha256: string;
+  readonly bytes: Buffer;
+}
+
+let registeredX2ModelPromise: Promise<RegisteredT32Model> | undefined;
+
+async function registeredX2Model(): Promise<RegisteredT32Model> {
+  registeredX2ModelPromise ??= (async () => {
+    const registry = JSON.parse(
+      await readFile(new URL('../docs/model-assets.json', import.meta.url), 'utf8'),
+    ) as {
+      assets: Array<{
+        onnxConversion?: {
+          filename: string;
+          sizeBytes: number;
+          sha256: string;
+          sourceUrl?: string;
+        };
+      }>;
+    };
+    const conversion = registry.assets.find(
+      (asset) => asset.onnxConversion?.filename === 'RealESRGAN_x2plus.onnx',
+    )?.onnxConversion;
+    if (!conversion?.sourceUrl) throw new Error('The registered T32 x2 source URL is missing.');
+
+    const response = await fetch(conversion.sourceUrl);
+    if (!response.ok) {
+      throw new Error(
+        `Could not obtain the registered T32 x2 E2E bytes (HTTP ${response.status}).`,
+      );
+    }
+    const bytes = Buffer.from(await response.arrayBuffer());
+    const sha256 = createHash('sha256').update(bytes).digest('hex');
+    if (bytes.byteLength !== conversion.sizeBytes || sha256 !== conversion.sha256) {
+      throw new Error('The T32 E2E source did not match the registered size and SHA-256.');
+    }
+    return {
+      sizeBytes: conversion.sizeBytes,
+      sha256: conversion.sha256,
+      bytes,
+    };
+  })();
+  return registeredX2ModelPromise;
+}
+
+interface T32Tier2HarnessOptions {
+  readonly holdAfterFirstChunk?: boolean;
+  readonly corruptFirstByte?: boolean;
+  readonly chunkDelayMs?: number;
+}
+
+async function installT32Tier2Harness(
+  page: Page,
+  context: BrowserContext,
+  model: RegisteredT32Model,
+  options: T32Tier2HarnessOptions = {},
+) {
+  const primaryUrl = 'https://t32-primary.invalid/RealESRGAN_x2plus.onnx';
+  const fallbackUrl = 'https://t32-fallback.invalid/RealESRGAN_x2plus.onnx';
+  const fixturePath = '/__playwright_t32_x2_fixture';
+  const chunkBytes = 1024 * 1024;
+  const chunkDelayMs = options.chunkDelayMs ?? 0;
+  const counters = { fixtureRequests: 0, fallbackRequests: 0, modelSourceUnavailable: false };
+
+  await context.route('**/t32-runtime-config.json', (route) =>
+    route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        schemaVersion: 1,
+        tier2: {
+          x2: {
+            primaryUrlBase64: Buffer.from(primaryUrl).toString('base64'),
+            fallbackUrlBase64: Buffer.from(fallbackUrl).toString('base64'),
+          },
+          x4: { primaryUrlBase64: '', fallbackUrlBase64: '' },
+        },
+      }),
+    }),
+  );
+  await context.route(`**${fixturePath}*`, async (route) => {
+    counters.fixtureRequests += 1;
+    if (counters.modelSourceUnavailable) {
+      await route.fulfill({ status: 503, body: 'test model source unavailable' });
+      return;
+    }
+    const requestUrl = new URL(route.request().url());
+    const start = Number(requestUrl.searchParams.get('start'));
+    const end = Number(requestUrl.searchParams.get('end'));
+    if (
+      !Number.isSafeInteger(start) ||
+      !Number.isSafeInteger(end) ||
+      start < 0 ||
+      end <= start ||
+      end > model.sizeBytes
+    ) {
+      await route.fulfill({ status: 416, body: 'invalid test model range' });
+      return;
+    }
+    if (chunkDelayMs > 0) await new Promise((resolve) => setTimeout(resolve, chunkDelayMs));
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/octet-stream',
+      headers: { 'content-length': String(end - start) },
+      body: model.bytes.subarray(start, end),
+    });
+  });
+  await context.route(fallbackUrl, async (route) => {
+    counters.fallbackRequests += 1;
+    await route.fulfill({ status: 503, body: 'fallback must not be used for integrity failures' });
+  });
+
+  await page.addInitScript(
+    ({
+      modelUrl,
+      modelFixturePath,
+      sizeBytes,
+      chunkSize,
+      holdAfterFirstChunk,
+      corruptFirstByte,
+    }) => {
+      const originalFetch = window.fetch.bind(window);
+      const instrumentedWindow = window as Window & {
+        __t32ModelSourceRequests?: number;
+        __t32ModelStreamCancelled?: boolean;
+        __t32ReleaseModelStream?: () => void;
+      };
+      window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+        const requestUrl =
+          input instanceof Request ? input.url : new URL(String(input), location.href).href;
+        if (requestUrl !== modelUrl) return originalFetch(input, init);
+
+        instrumentedWindow.__t32ModelSourceRequests =
+          (instrumentedWindow.__t32ModelSourceRequests ?? 0) + 1;
+        const signal = init?.signal ?? (input instanceof Request ? input.signal : undefined);
+        let receivedBytes = 0;
+        let releaseHeldPull: (() => void) | undefined;
+        let streamController: ReadableStreamDefaultController<Uint8Array> | undefined;
+        const abortStream = () => {
+          instrumentedWindow.__t32ModelStreamCancelled = true;
+          releaseHeldPull?.();
+          try {
+            streamController?.error(
+              new DOMException('The model transfer was cancelled.', 'AbortError'),
+            );
+          } catch {
+            // The stream may already be closed or cancelled.
+          }
+        };
+        signal?.addEventListener('abort', abortStream, { once: true });
+
+        const body = new ReadableStream<Uint8Array>({
+          start(controller) {
+            streamController = controller;
+          },
+          async pull(controller) {
+            if (signal?.aborted) return;
+            if (holdAfterFirstChunk && receivedBytes >= chunkSize) {
+              await new Promise<void>((resolve) => {
+                releaseHeldPull = resolve;
+                signal?.addEventListener('abort', resolve, { once: true });
+              });
+              if (signal?.aborted) return;
+            }
+            if (receivedBytes >= sizeBytes) {
+              controller.close();
+              signal?.removeEventListener('abort', abortStream);
+              return;
+            }
+
+            const start = receivedBytes;
+            const end = Math.min(start + chunkSize, sizeBytes);
+            const chunkResponse = await originalFetch(
+              `${modelFixturePath}?start=${start}&end=${end}`,
+              { cache: 'no-store', ...(signal ? { signal } : {}) },
+            );
+            if (!chunkResponse.ok) {
+              controller.error(
+                new Error(`The test model source returned HTTP ${chunkResponse.status}.`),
+              );
+              return;
+            }
+            const chunk = new Uint8Array(await chunkResponse.arrayBuffer());
+            if (chunk.byteLength !== end - start) {
+              controller.error(new Error('The test model source returned an incomplete chunk.'));
+              return;
+            }
+            if (corruptFirstByte && start === 0) chunk[0] ^= 1;
+            receivedBytes = end;
+            controller.enqueue(chunk);
+            if (receivedBytes === sizeBytes) {
+              controller.close();
+              signal?.removeEventListener('abort', abortStream);
+            }
+          },
+          cancel() {
+            instrumentedWindow.__t32ModelStreamCancelled = true;
+            releaseHeldPull?.();
+            signal?.removeEventListener('abort', abortStream);
+          },
+        });
+        return new Response(body, {
+          status: 200,
+          headers: { 'content-type': 'application/octet-stream' },
+        });
+      };
+    },
+    {
+      modelUrl: primaryUrl,
+      modelFixturePath: fixturePath,
+      sizeBytes: model.sizeBytes,
+      chunkSize: chunkBytes,
+      holdAfterFirstChunk: options.holdAfterFirstChunk ?? false,
+      corruptFirstByte: options.corruptFirstByte ?? false,
+    },
+  );
+
+  return { primaryUrl, fallbackUrl, counters, model };
 }
 
 for (const locale of ['en', 'en-XA', 'ar'] as const) {
@@ -417,5 +639,160 @@ test('T32 keeps model delivery opt-in and uses the configured backup after a pri
   await expect(page.getByTestId('t32-tier2-error')).toContainText('HTTP 503');
   expect(primaryRequests).toBe(1);
   expect(fallbackRequests).toBe(1);
+  await expect(page.getByTestId('t32-run')).toBeEnabled();
+});
+
+test('T32 streams the registered x2 bytes, runs the model, and reuses IndexedDB when its host is unavailable', async ({
+  page,
+  context,
+  browserName,
+}) => {
+  test.skip(
+    browserName !== 'chromium',
+    'The registered T32 browser runtime smoke is Chromium/WASM.',
+  );
+  test.setTimeout(180_000);
+
+  const model = await registeredX2Model();
+  const harness = await installT32Tier2Harness(page, context, model, { chunkDelayMs: 10 });
+  await page.goto('/upscale');
+  await page.getByTestId('t32-file-input').setInputFiles({
+    name: 'tier2-route.png',
+    mimeType: 'image/png',
+    buffer: await generatedPng(page),
+  });
+  const download = page.getByTestId('t32-tier2-download');
+  await expect(download).toBeVisible();
+  await expect(download).toContainText('65 MiB');
+  expect(harness.counters.fixtureRequests).toBe(0);
+
+  await download.click();
+  const progress = page.getByTestId('t32-tier2-progress');
+  await expect(progress).toBeVisible();
+  await expect
+    .poll(
+      async () =>
+        progress.evaluate((element) => (element as HTMLProgressElement).value).catch(() => 0),
+      { timeout: 20_000, intervals: [10, 25, 50] },
+    )
+    .toBeGreaterThan(0);
+  const partialProgress = await progress.evaluate(
+    (element) => (element as HTMLProgressElement).value,
+  );
+  expect(partialProgress).toBeLessThan(model.sizeBytes);
+  await expect(page.getByTestId('t32-tier2-progress-text')).toContainText('bytes');
+  await expect(page.getByTestId('t32-tier2-ready')).toBeVisible({ timeout: 90_000 });
+  expect(harness.counters.fallbackRequests).toBe(0);
+  await expect(page.getByTestId('t32-tier2-run')).toBeVisible();
+
+  await page.getByTestId('t32-tier2-run').click();
+  await expect(page.getByTestId('t32-output-dimensions')).toContainText('6 × 4', {
+    timeout: 90_000,
+  });
+  await expect(page.getByTestId('t32-status')).toContainText('Experimental AI output');
+
+  const downloadedChunkRequests = harness.counters.fixtureRequests;
+  expect(downloadedChunkRequests).toBeGreaterThan(1);
+  harness.counters.modelSourceUnavailable = true;
+  await page.reload();
+  await page.getByTestId('t32-file-input').setInputFiles({
+    name: 'tier2-cached.png',
+    mimeType: 'image/png',
+    buffer: await generatedPng(page),
+  });
+  await page.getByTestId('t32-tier2-download').click();
+  await expect(page.getByTestId('t32-tier2-ready')).toBeVisible({ timeout: 90_000 });
+  expect(harness.counters.fixtureRequests).toBe(downloadedChunkRequests);
+  expect(harness.counters.fallbackRequests).toBe(0);
+  await page.getByTestId('t32-tier2-run').click();
+  await expect(page.getByTestId('t32-output-dimensions')).toContainText('6 × 4', {
+    timeout: 90_000,
+  });
+});
+
+test('T32 rejects a same-size SHA mismatch without trying the fallback host', async ({
+  page,
+  context,
+  browserName,
+}) => {
+  test.skip(browserName !== 'chromium', 'The registered T32 model delivery E2E runs in Chromium.');
+  test.setTimeout(180_000);
+
+  const model = await registeredX2Model();
+  const harness = await installT32Tier2Harness(page, context, model, {
+    chunkDelayMs: 5,
+    corruptFirstByte: true,
+  });
+  await page.goto('/upscale');
+  await page.getByTestId('t32-file-input').setInputFiles({
+    name: 'tier2-integrity.png',
+    mimeType: 'image/png',
+    buffer: await generatedPng(page),
+  });
+  await page.getByTestId('t32-tier2-download').click();
+  await expect(page.getByTestId('t32-tier2-error')).toContainText('SHA-256 did not match', {
+    timeout: 90_000,
+  });
+  expect(harness.counters.fixtureRequests).toBeGreaterThan(1);
+  expect(harness.counters.fallbackRequests).toBe(0);
+  await expect(page.getByTestId('t32-tier2-ready')).toHaveCount(0);
+  await expect(page.getByTestId('t32-run')).toBeEnabled();
+});
+
+test('T32 cancels a partial model transfer and does not cache its incomplete bytes', async ({
+  page,
+  context,
+  browserName,
+}) => {
+  test.skip(browserName !== 'chromium', 'The registered T32 model delivery E2E runs in Chromium.');
+  test.setTimeout(120_000);
+
+  const model = await registeredX2Model();
+  const harness = await installT32Tier2Harness(page, context, model, {
+    holdAfterFirstChunk: true,
+    chunkDelayMs: 10,
+  });
+  await page.goto('/upscale');
+  await page.getByTestId('t32-file-input').setInputFiles({
+    name: 'tier2-cancel.png',
+    mimeType: 'image/png',
+    buffer: await generatedPng(page),
+  });
+  await page.getByTestId('t32-tier2-download').click();
+  const progress = page.getByTestId('t32-tier2-progress');
+  await expect(progress).toBeVisible();
+  await expect
+    .poll(
+      async () =>
+        progress.evaluate((element) => (element as HTMLProgressElement).value).catch(() => 0),
+      { timeout: 20_000, intervals: [10, 25, 50] },
+    )
+    .toBeGreaterThan(0);
+  const partialProgress = await progress.evaluate(
+    (element) => (element as HTMLProgressElement).value,
+  );
+  expect(partialProgress).toBeLessThan(model.sizeBytes);
+  await page.getByTestId('t32-tier2-cancel').click();
+  await expect(page.getByTestId('t32-tier2-status')).toContainText('download cancelled');
+  expect(harness.counters.fixtureRequests).toBe(1);
+  expect(harness.counters.fallbackRequests).toBe(0);
+  expect(
+    await page.evaluate((key) => {
+      return new Promise<boolean>((resolve, reject) => {
+        const request = indexedDB.open('ctimg-t32-models', 1);
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => {
+          const database = request.result;
+          const transaction = database.transaction('registered-models', 'readonly');
+          const keyRequest = transaction.objectStore('registered-models').count(key);
+          keyRequest.onsuccess = () => {
+            database.close();
+            resolve(keyRequest.result > 0);
+          };
+          keyRequest.onerror = () => reject(keyRequest.error);
+        };
+      });
+    }, model.sha256),
+  ).toBe(false);
   await expect(page.getByTestId('t32-run')).toBeEnabled();
 });

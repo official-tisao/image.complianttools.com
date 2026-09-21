@@ -169,35 +169,57 @@ function validateRasterFrame(image: RasterImage, frameIndex: number): Frame {
 export function prepareRealEsrganInput(
   image: RasterImage,
   frameIndex = 0,
+  padToMultiple = 1,
 ): PreparedRealEsrganInput {
   const frame = validateRasterFrame(image, frameIndex);
+  if (!Number.isInteger(padToMultiple) || padToMultiple < 1) {
+    throw new RangeError('Real-ESRGAN input padding multiple must be a positive integer.');
+  }
   const width = image.width;
   const height = image.height;
-  const pixelCount = width * height;
-  const data = new Float32Array(pixelCount * 3);
-  const alpha = new Float32Array(pixelCount);
+  const modelWidth = Math.ceil(width / padToMultiple) * padToMultiple;
+  const modelHeight = Math.ceil(height / padToMultiple) * padToMultiple;
+  const sourcePixelCount = width * height;
+  const modelPixelCount = modelWidth * modelHeight;
+  if (!Number.isSafeInteger(modelPixelCount * 3)) {
+    throw new RangeError('Real-ESRGAN padded input dimensions exceed safe image limits.');
+  }
+  const data = new Float32Array(modelPixelCount * 3);
+  const alpha = new Float32Array(sourcePixelCount);
   const rgba = image.bitDepth === 16 ? frame.data16! : frame.data;
   const maxValue = image.bitDepth === 16 ? 65535 : 255;
 
-  for (let pixel = 0; pixel < pixelCount; pixel++) {
-    const rgbaOffset = pixel * 4;
-    const a = rgba[rgbaOffset + 3]! / maxValue;
-    alpha[pixel] = a;
-    for (let channel = 0; channel < 3; channel++) {
-      const stored = rgba[rgbaOffset + channel]! / maxValue;
-      const straight = image.premultipliedAlpha ? (a > 0 ? stored / a : 0) : stored;
-      data[channel * pixelCount + pixel] = Math.min(1, Math.max(0, straight));
+  for (let y = 0; y < modelHeight; y++) {
+    const sourceY = Math.min(y, height - 1);
+    for (let x = 0; x < modelWidth; x++) {
+      const sourceX = Math.min(x, width - 1);
+      const sourcePixel = sourceY * width + sourceX;
+      const modelPixel = y * modelWidth + x;
+      const rgbaOffset = sourcePixel * 4;
+      const a = rgba[rgbaOffset + 3]! / maxValue;
+      if (x < width && y < height) alpha[sourcePixel] = a;
+      for (let channel = 0; channel < 3; channel++) {
+        const stored = rgba[rgbaOffset + channel]! / maxValue;
+        const straight = image.premultipliedAlpha ? (a > 0 ? stored / a : 0) : stored;
+        data[channel * modelPixelCount + modelPixel] = Math.min(1, Math.max(0, straight));
+      }
     }
   }
 
-  return { data, dimensions: [1, 3, height, width], alpha };
+  return { data, dimensions: [1, 3, modelHeight, modelWidth], alpha };
+}
+
+interface RealEsrganInputDimensions {
+  readonly width: number;
+  readonly height: number;
 }
 
 function expectedOutputDimensions(
-  image: RasterImage,
+  width: number,
+  height: number,
   scaleFactor: RealEsrganScale,
 ): [number, number, number, number] {
-  const dimensions = [1, 3, image.height * scaleFactor, image.width * scaleFactor] as const;
+  const dimensions = [1, 3, height * scaleFactor, width * scaleFactor] as const;
   const sampleCount = dimensions.reduce((product, value) => product * value, 1);
   if (!Number.isSafeInteger(sampleCount) || sampleCount <= 0) {
     throw new RangeError('Real-ESRGAN output dimensions exceed safe image limits.');
@@ -210,8 +232,19 @@ export function validateRealEsrganOutput(
   image: RasterImage,
   output: NumericOnnxOutput,
   scaleFactor: RealEsrganScale,
+  modelInputDimensions?: RealEsrganInputDimensions,
 ): void {
-  const expected = expectedOutputDimensions(image, scaleFactor);
+  const inputWidth = modelInputDimensions?.width ?? image.width;
+  const inputHeight = modelInputDimensions?.height ?? image.height;
+  if (
+    !Number.isInteger(inputWidth) ||
+    inputWidth < image.width ||
+    !Number.isInteger(inputHeight) ||
+    inputHeight < image.height
+  ) {
+    throw new RangeError('Real-ESRGAN model input dimensions must include the full source image.');
+  }
+  const expected = expectedOutputDimensions(inputWidth, inputHeight, scaleFactor);
   if (
     output.dims.length !== expected.length ||
     output.dims.some((value, i) => value !== expected[i])
@@ -261,26 +294,32 @@ export function reconstructRealEsrganFrame(
   alpha: Float32Array,
   output: NumericOnnxOutput,
   scaleFactor: RealEsrganScale,
+  modelInputDimensions?: RealEsrganInputDimensions,
 ): Frame {
   validateRasterFrame(image, frameIndex);
-  validateRealEsrganOutput(image, output, scaleFactor);
+  validateRealEsrganOutput(image, output, scaleFactor, modelInputDimensions);
   const width = image.width;
   const height = image.height;
+  const modelWidth = modelInputDimensions?.width ?? width;
+  const modelHeight = modelInputDimensions?.height ?? height;
+  const modelOutWidth = modelWidth * scaleFactor;
+  const modelOutHeight = modelHeight * scaleFactor;
   const outWidth = width * scaleFactor;
   const outHeight = height * scaleFactor;
   const outPixelCount = outWidth * outHeight;
   const byteData = new Uint8ClampedArray(outPixelCount * 4);
   const wordData = image.bitDepth === 16 ? new Uint16Array(outPixelCount * 4) : undefined;
-  const planeSize = outPixelCount;
+  const planeSize = modelOutWidth * modelOutHeight;
 
   for (let y = 0; y < outHeight; y++) {
     for (let x = 0; x < outWidth; x++) {
-      const pixel = y * outWidth + x;
-      const byteOffset = pixel * 4;
+      const modelPixel = y * modelOutWidth + x;
+      const outputPixel = y * outWidth + x;
+      const byteOffset = outputPixel * 4;
       for (let channel = 0; channel < 3; channel++) {
         const normalized = Math.max(
           0,
-          Math.min(1, Number(output.data[channel * planeSize + pixel])),
+          Math.min(1, Number(output.data[channel * planeSize + modelPixel])),
         );
         byteData[byteOffset + channel] = Math.round(normalized * 255);
         if (wordData) wordData[byteOffset + channel] = Math.round(normalized * 65535);
@@ -349,15 +388,29 @@ export async function upscaleWithRealEsrgan(
           tier1FallbackAvailable: true,
         };
       }
-      const prepared = prepareRealEsrganInput(image, frameIndex);
+      // Both registered exports contain pixel-unshuffle operations and require even dimensions.
+      // Replicate the last source edge for model input, then crop the inference result back to the
+      // exact requested x2/x4 dimensions during reconstruction.
+      const prepared = prepareRealEsrganInput(image, frameIndex, 2);
       const tensor = await runtime.createTensor(prepared.data, prepared.dimensions);
       const result = await runtime.run(state, {
         [state.session.inputNames[0]!]: tensor,
       } as OnnxTileFeeds);
       const output = result[state.session.outputNames[0]!];
       if (!output) throw new Error('The Real-ESRGAN session returned no output tensor.');
+      const modelInputDimensions = {
+        width: prepared.dimensions[3],
+        height: prepared.dimensions[2],
+      };
       frames.push(
-        reconstructRealEsrganFrame(image, frameIndex, prepared.alpha, output, scaleFactor),
+        reconstructRealEsrganFrame(
+          image,
+          frameIndex,
+          prepared.alpha,
+          output,
+          scaleFactor,
+          modelInputDimensions,
+        ),
       );
       options.onProgress?.({ completedFrames: frames.length, totalFrames: image.frames.length });
     }

@@ -135,6 +135,26 @@ describe('P4-16 Real-ESRGAN upscale adapter', () => {
     expect(Array.from(prepared.alpha)).toEqual(Array.from(new Float32Array([128 / 255, 1])));
   });
 
+  it('edge-pads model inputs to an even size while retaining only source alpha samples', () => {
+    const data = new Uint8ClampedArray(3 * 3 * 4);
+    for (let y = 0; y < 3; y++) {
+      for (let x = 0; x < 3; x++) {
+        const offset = (y * 3 + x) * 4;
+        data[offset] = (y * 3 + x + 1) * 10;
+        data[offset + 3] = 255;
+      }
+    }
+    const prepared = prepareRealEsrganInput(makeImage(3, 3, data), 0, 2);
+    const red = prepared.data.subarray(0, 16);
+
+    expect(prepared.dimensions).toEqual([1, 3, 4, 4]);
+    expect(red[2]).toBeCloseTo(30 / 255);
+    expect(red[3]).toBeCloseTo(30 / 255);
+    expect(red[14]).toBeCloseTo(90 / 255);
+    expect(red[15]).toBeCloseTo(90 / 255);
+    expect(prepared.alpha).toHaveLength(9);
+  });
+
   it('validates x2 output shape and rejects the wrong spatial scale', () => {
     const image = makeImage(2, 1);
     const output = { dims: [1, 3, 2, 4], data: new Float32Array(24) };
@@ -161,7 +181,7 @@ describe('P4-16 Real-ESRGAN upscale adapter', () => {
   });
 
   it('runs the caller-supplied x2 conversion and always releases its session', async () => {
-    const image = makeImage(2, 1);
+    const image = makeImage(3, 2);
     const fake = makeMockRuntime(2);
     const progress: Array<{ completedFrames: number; totalFrames: number }> = [];
     const result = await upscaleWithRealEsrgan(
@@ -174,10 +194,10 @@ describe('P4-16 Real-ESRGAN upscale adapter', () => {
     expect(result.status).toBe('complete');
     if (result.status !== 'complete') return;
     expect(result.backend).toBe('wasm');
-    expect(result.image.width).toBe(4);
-    expect(result.image.height).toBe(2);
-    expect(result.image.frames[0].data.length).toBe(4 * 2 * 4);
-    expect(fake.capturedInput()?.dimensions).toEqual([1, 3, 1, 2]);
+    expect(result.image.width).toBe(6);
+    expect(result.image.height).toBe(4);
+    expect(result.image.frames[0].data.length).toBe(6 * 4 * 4);
+    expect(fake.capturedInput()?.dimensions).toEqual([1, 3, 2, 4]);
     expect(progress).toEqual([{ completedFrames: 1, totalFrames: 1 }]);
     expect(fake.closed()).toBe(1);
   });
