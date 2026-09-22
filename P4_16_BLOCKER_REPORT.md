@@ -1,6 +1,19 @@
-# P4-16 Blocker Resolution — Report (no repo changes, no download)
+# Historical P4-16 blocker report — 2026-09-18 snapshot
 
-Status: BLOCKED (Phase 3 complete per user STOP instruction). No changes to `plan.md` ([!] preserved), ADR (`docs/ADR/ip-clearance.md` unchanged — line 127 remains exclusion, line 110 remains exclusion), `docs/static-assets.json` (empty — no unverified asset added), `packages/engine/src/cv/`, `packages/engine/test/`, `package.json`, or CI. Nothing committed. No `.pth` downloaded (verified: `find . -name '*.pth'` = empty before and after).
+> **Superseded by the current disposition below.** The original findings remain for history only; do not use their old `BLOCKED` state or requests for further approval as current instructions.
+
+## Current disposition — 2026-09-21
+
+- The owner directed the project to accept the upstream BSD-3 label for the exact official Real-ESRGAN `.pth` checkpoints. Their exact URLs, versions, byte lengths, hashes, and the owner-directed decision are recorded in `docs/model-assets.json` and `docs/ADR/ip-clearance.md`. This is the project's risk decision; the `.pth` files do not carry a separate upstream per-file licence statement.
+- `onnxruntime-web@1.30.0` is pinned and MIT-verified. Exact Hugging Face ONNX x2/x4 exports are registered at immutable revision `d14119a40dfeef208e4e724dfaceb2640d2df95b`; they passed recorded CPU parity and Chromium WASM inference checks.
+- T32 keeps DCCI/NEDI Tier 1 available by default. Tier 2 is an explicit browser download with progress, cancellation, byte/SHA-256 verification, IndexedDB caching, runtime probing, and configurable primary/fallback URLs. Docker only emits URL configuration; it never downloads or packages the model bytes. See [`T32 model hosting`](docs/t32-model-hosting.md).
+- The selected synthetic x2/x4 corpus does not show Real-ESRGAN outperforming Tier 1. Representative degraded-photo quality, durable production-host availability, fresh-start offline behavior, and full T32 STCC remain open.
+- T62 now has all 163 recursive `tessdata_fast` entries individually registered. The browser fetches only selected language/script/helper files from pinned public sources; Cyrillic is the only tracked traineddata file. Production builds prune ignored test caches, and the app server does not bulk-fetch OCR data. Hausa is absent upstream and remains unavailable.
+- P4-20 engine integration is recorded complete; route-level STCC remains open. P4-21 now includes synthetic and CC0 measurements, while remaining gaps are listed in its [corpus index](packages/engine/bench/escalation/p4-21-corpus-index.md). P4-22 has begun evidence-based register reconciliation and is not fully closed.
+
+---
+
+## Original blocker analysis (historical; superseded above)
 
 ---
 

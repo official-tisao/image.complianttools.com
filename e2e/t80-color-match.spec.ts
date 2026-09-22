@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
+import { allowAllNetwork, denyAllNetwork } from './support/network.js';
 
 async function generatedPng(
   page: import('@playwright/test').Page,
@@ -48,6 +49,10 @@ async function generatedPair(page: import('@playwright/test').Page) {
     source: await generatedPng(page, 4, 2, [10, 20, 30], [50, 60, 70]),
     reference: await generatedPng(page, 3, 2, [100, 120, 140], [200, 220, 240]),
   };
+}
+
+async function waitForHydration(page: import('@playwright/test').Page) {
+  await expect(page.locator('html')).toHaveAttribute('data-hydrated', 'true');
 }
 
 async function pngWithAnimationControl(page: import('@playwright/test').Page) {
@@ -103,6 +108,7 @@ test('T80 locally matches a generated still-PNG pair and downloads the exact pre
   const outsideRequests: string[] = [];
   let appOrigin = '';
   await page.goto('/color-match');
+  await waitForHydration(page);
   appOrigin = new URL(page.url()).origin;
   page.on('request', (request) => {
     if (new URL(request.url()).origin !== appOrigin) outsideRequests.push(request.url());
@@ -116,7 +122,10 @@ test('T80 locally matches a generated still-PNG pair and downloads the exact pre
     .getByTestId('t80-reference-input')
     .setInputFiles({ name: 'reference.png', mimeType: 'image/png', buffer: reference });
   await expect(page.getByTestId('t80-run')).toBeEnabled();
-  await page.getByRole('radio', { name: /Per-channel histogram matching/u }).check();
+  await page
+    .getByTestId('option-t80-method')
+    .getByRole('button', { name: 'Per-channel histogram matching' })
+    .click();
   await page.getByTestId('t80-run').click();
 
   await expect(page.getByTestId('t80-before')).toHaveJSProperty('naturalWidth', 4);
@@ -158,6 +167,7 @@ test('T80 locally matches a generated still-PNG pair and downloads the exact pre
 
 test('T80 matching controls work with the keyboard', async ({ page }) => {
   await page.goto('/color-match');
+  await waitForHydration(page);
   const { source, reference } = await generatedPair(page);
   await page
     .getByTestId('t80-source-input')
@@ -165,10 +175,12 @@ test('T80 matching controls work with the keyboard', async ({ page }) => {
   await page
     .getByTestId('t80-reference-input')
     .setInputFiles({ name: 'reference.png', mimeType: 'image/png', buffer: reference });
-  const histogram = page.getByRole('radio', { name: /Per-channel histogram matching/u });
+  const histogram = page
+    .getByTestId('option-t80-method')
+    .getByRole('button', { name: 'Per-channel histogram matching' });
   await histogram.focus();
   await page.keyboard.press('Space');
-  await expect(histogram).toBeChecked();
+  await expect(histogram).toHaveAttribute('aria-pressed', 'true');
   const run = page.getByTestId('t80-run');
   await run.focus();
   await page.keyboard.press('Enter');
@@ -179,6 +191,7 @@ test('T80 rejects unsupported, oversized, and animated PNG inputs with typed rec
   page,
 }) => {
   await page.goto('/color-match');
+  await expect(page.locator('html')).toHaveAttribute('data-hydrated', 'true');
   const sourceInput = page.getByTestId('t80-source-input');
   await sourceInput.setInputFiles({
     name: 'not-image.txt',
@@ -221,8 +234,56 @@ test('T80 rejects unsupported, oversized, and animated PNG inputs with typed rec
   await expect(page.getByRole('alert')).toContainText('6 megapixels');
 });
 
+test('T80 rejects a pair over the total pixel limit before decoding', async ({ page }) => {
+  await page.goto('/color-match');
+  await expect(page.locator('html')).toHaveAttribute('data-hydrated', 'true');
+  const source = Buffer.from(await generatedPng(page, 2, 2, [20, 30, 40], [80, 90, 100]));
+  const reference = Buffer.from(source);
+  // The selection validator reads PNG dimensions before decoding, so these tiny
+  // fixtures can exercise the 8 MP aggregate guard without allocating 10 MP.
+  source.writeUInt32BE(2_500, 16);
+  source.writeUInt32BE(2_000, 20);
+  reference.writeUInt32BE(2_500, 16);
+  reference.writeUInt32BE(2_000, 20);
+  await page.getByTestId('t80-source-input').setInputFiles({
+    name: 'aggregate-source.png',
+    mimeType: 'image/png',
+    buffer: source,
+  });
+  await page.getByTestId('t80-reference-input').setInputFiles({
+    name: 'aggregate-reference.png',
+    mimeType: 'image/png',
+    buffer: reference,
+  });
+  await expect(page.getByTestId('t80-run')).toBeEnabled();
+  await page.getByTestId('t80-run').click();
+  await expect(page.getByRole('alert')).toHaveAttribute('data-error-kind', 'image-too-large');
+  await expect(page.getByRole('alert')).toContainText('8 megapixels');
+});
+
+test('T80 reports a valid-PNG canvas failure with a typed remedy', async ({ page }) => {
+  await page.goto('/color-match');
+  await waitForHydration(page);
+  const { source, reference } = await generatedPair(page);
+  await page
+    .getByTestId('t80-source-input')
+    .setInputFiles({ name: 'canvas-source.png', mimeType: 'image/png', buffer: source });
+  await page
+    .getByTestId('t80-reference-input')
+    .setInputFiles({ name: 'canvas-reference.png', mimeType: 'image/png', buffer: reference });
+  await expect(page.getByTestId('t80-run')).toBeEnabled();
+  await page.evaluate(() => {
+    HTMLCanvasElement.prototype.getContext = (() =>
+      null) as typeof HTMLCanvasElement.prototype.getContext;
+  });
+  await page.getByTestId('t80-run').click();
+  await expect(page.getByRole('alert')).toHaveAttribute('data-error-kind', 'canvas-unavailable');
+  await expect(page.getByRole('alert')).toContainText('local 2D canvas support');
+});
+
 test('T80 reports decode and worker failures with typed remedies', async ({ page }) => {
   await page.goto('/color-match');
+  await waitForHydration(page);
   const { source, reference } = await generatedPair(page);
   await page
     .getByTestId('t80-source-input')
@@ -230,6 +291,7 @@ test('T80 reports decode and worker failures with typed remedies', async ({ page
   await page
     .getByTestId('t80-reference-input')
     .setInputFiles({ name: 'reference.png', mimeType: 'image/png', buffer: reference });
+  await expect(page.getByTestId('t80-run')).toBeEnabled();
 
   await page.evaluate(() => {
     Object.defineProperty(window, 'createImageBitmap', {
@@ -244,12 +306,14 @@ test('T80 reports decode and worker failures with typed remedies', async ({ page
   await expect(page.getByRole('alert')).toContainText('Export a valid, non-animated PNG');
 
   await page.reload();
+  await waitForHydration(page);
   await page
     .getByTestId('t80-source-input')
     .setInputFiles({ name: 'source.png', mimeType: 'image/png', buffer: source });
   await page
     .getByTestId('t80-reference-input')
     .setInputFiles({ name: 'reference.png', mimeType: 'image/png', buffer: reference });
+  await expect(page.getByTestId('t80-run')).toBeEnabled();
   await page.evaluate(() => {
     Object.defineProperty(window, 'Worker', {
       configurable: true,
@@ -269,6 +333,7 @@ test('T80 cancellation terminates the active worker and reports recovery steps',
   page,
 }) => {
   await page.goto('/color-match');
+  await waitForHydration(page);
   const { source, reference } = await generatedPair(page);
   await page
     .getByTestId('t80-source-input')
@@ -309,4 +374,58 @@ test('T80 cancellation terminates the active worker and reports recovery steps',
       () => (window as Window & { __t80WorkerTerminated?: boolean }).__t80WorkerTerminated,
     ),
   ).toBe(true);
+});
+
+test('T80 matches local PNGs after external network is blocked', async ({ page, context }) => {
+  const externalRequests: string[] = [];
+
+  await page.goto('/color-match');
+  await waitForHydration(page);
+  const appOrigin = new URL(page.url()).origin;
+  page.on('request', (request) => {
+    if (new URL(request.url()).origin !== appOrigin) externalRequests.push(request.url());
+  });
+  const { source, reference } = await generatedPair(page);
+  await denyAllNetwork(context);
+  try {
+    await page
+      .getByTestId('t80-source-input')
+      .setInputFiles({ name: 'offline-source.png', mimeType: 'image/png', buffer: source });
+    await page
+      .getByTestId('t80-reference-input')
+      .setInputFiles({ name: 'offline-reference.png', mimeType: 'image/png', buffer: reference });
+    await page.getByTestId('t80-run').click();
+    await expect(page.getByTestId('t80-after')).toHaveJSProperty('naturalWidth', 4);
+    await expect(page.getByRole('status')).toContainText('Preview ready');
+    expect(externalRequests).toEqual([]);
+  } finally {
+    await allowAllNetwork(context);
+  }
+});
+
+test('T80 matches an 8 MP total PNG pair within the Chromium route budget', async ({
+  page,
+  browserName,
+}) => {
+  test.skip(browserName !== 'chromium', 'The route latency budget is calibrated on Chromium.');
+  test.setTimeout(30_000);
+  await page.goto('/color-match');
+  await waitForHydration(page);
+  const source = await generatedPng(page, 2_000, 2_000, [12, 24, 36], [90, 102, 114]);
+  const reference = await generatedPng(page, 2_000, 2_000, [40, 80, 120], [140, 180, 220]);
+  await page
+    .getByTestId('t80-source-input')
+    .setInputFiles({ name: '8mp-source.png', mimeType: 'image/png', buffer: source });
+  await page
+    .getByTestId('t80-reference-input')
+    .setInputFiles({ name: '8mp-reference.png', mimeType: 'image/png', buffer: reference });
+  await expect(page.getByTestId('t80-run')).toBeEnabled();
+  const startedAt = performance.now();
+  await page.getByTestId('t80-run').click();
+  await expect(page.getByTestId('t80-after')).toHaveJSProperty('naturalWidth', 2_000, {
+    timeout: 10_000,
+  });
+  const elapsedMs = performance.now() - startedAt;
+  console.info(`T80 8 MP total route latency: ${elapsedMs.toFixed(1)} ms`);
+  expect(elapsedMs).toBeLessThanOrEqual(5_000);
 });

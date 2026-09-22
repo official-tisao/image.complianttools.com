@@ -1,6 +1,6 @@
 # P4-21 benchmark: T60 image comparison
 
-**Status:** Initial metric comparison measured on a small, generated corpus derived from four individually registered CC0 images. The expected exact-copy and JPEG-quality ordering checks passed. This verifies metric behavior on these controlled inputs; it does not establish user-perceived quality or route-level STCC.
+**Status:** Initial metric comparison measured on a small, generated corpus derived from four individually registered CC0 images. The expected exact-copy and JPEG-quality ordering checks passed. A Chromium production-preview route run measured a 12 MP pair at 339.3 ms against the 5 s route budget. These checks verify metric behavior and one local route timing; they do not establish user-perceived quality, broad-device latency, or route-level STCC.
 
 ## Corpus and method
 
@@ -46,4 +46,4 @@ node packages/engine/bench/escalation/t60-t61/prepare-fixtures.mjs --verify
 node packages/engine/bench/escalation/t60-t61/run.mjs
 ```
 
-The input corpus contains four different 128×128 central crops and deliberately generated variants. It does not include difficult visual comparisons, alignment/registration, alpha, animation, large images, or human judgments. The engine `approximateSSIM` name is retained as implemented, but its current output is `1 - mean absolute Rec.601 luminance error / 255`, not structural SSIM. The focused Chromium product-route E2E is recorded as passing 8/8 in `PLAN.md`; route-level STCC and a route-latency budget remain open. Broader fixtures and interaction evidence are still needed before claiming general comparison quality.
+The input corpus contains four different 128×128 central crops and deliberately generated variants. It does not include difficult visual comparisons, alignment/registration, alpha, animation, large images, or human judgments. The engine `approximateSSIM` name is retained as implemented, but its current output is `1 - mean absolute Rec.601 luminance error / 255`, not structural SSIM. The focused Chromium product-route E2E is recorded as passing 27/27 in `PLAN.md`; its 12 MP route timing was 339.3 ms in one local run against the 5 s budget. Broad-device latency, broader fixtures, hard comparisons, and interaction evidence are still needed before claiming general comparison quality or full STCC.

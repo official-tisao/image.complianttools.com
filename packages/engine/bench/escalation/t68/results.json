@@ -1,0 +1,17 @@
+{
+  "status": "PARTIAL",
+  "fixture": {
+    "width": 4,
+    "height": 4,
+    "trimap": [0, 0, 0, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 0, 0, 0],
+    "rgbaSha256": "748f1564c8de59d7d717ef883612a6d3f708f0e3140d5d595374d36fff54fae6"
+  },
+  "output": {
+    "alpha": [0, 0, 0, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 0, 0, 0],
+    "rgbaSha256": "440a40d33938cd5dd6a07f92923d57848ea3a4605701fa3930b90cb27d0f7cb7",
+    "hardForegroundAlpha": true,
+    "hardBackgroundAlpha": true
+  },
+  "elapsedMs": 0.6882,
+  "shortfall": "The local path requires a user trimap; hair, fur, veil, and zero-hint segmentation are not measured."
+}

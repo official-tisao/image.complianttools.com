@@ -1,0 +1,23 @@
+{
+  "status": "PARTIAL",
+  "fixture": {
+    "width": 6,
+    "height": 6,
+    "rgbaSha256": "290eae87eef8abb1c18cc18a2d96467c160821aa08e84cc70895f0fe1e7d5b61"
+  },
+  "rectangleHint": {
+    "x": 2,
+    "y": 1,
+    "width": 4,
+    "height": 4
+  },
+  "confusion": {
+    "tp": 18,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1,
+    "recall": 1
+  },
+  "elapsedMs": 1.0141,
+  "shortfall": "This is a simple colour-separated rectangle hint. It does not measure semantic object selection or hard boundaries without a usable colour/edge cue."
+}

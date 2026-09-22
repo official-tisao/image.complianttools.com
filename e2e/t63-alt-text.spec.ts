@@ -106,6 +106,7 @@ test('T63 previews a local image, drafts and reviews alt text by keyboard, and w
     if (new URL(request.url()).origin !== appOrigin) externalRequests.push(request.url());
   });
   await page.goto('/alt-text');
+  await expect(page.locator('html')).toHaveAttribute('data-hydrated', 'true');
   const imageBuffer = await generatedPng(page);
 
   await page.getByTestId('t63-file-input').setInputFiles({
@@ -113,7 +114,9 @@ test('T63 previews a local image, drafts and reviews alt text by keyboard, and w
     mimeType: 'image/png',
     buffer: imageBuffer,
   });
-  await expect(page.getByTestId('t63-preview-image')).toHaveJSProperty('naturalWidth', 16);
+  await expect(page.getByTestId('t63-preview-image')).toHaveJSProperty('naturalWidth', 16, {
+    timeout: 15_000,
+  });
   await context.setOffline(true);
   await expect(page.getByTestId('t63-attribute-empty')).toBeVisible();
   await expect(page.getByTestId('t63-copy')).toBeDisabled();
@@ -157,11 +160,16 @@ test('T63 copies the exact escaped attribute shown in the preview', async ({ pag
     mimeType: 'image/png',
     buffer: await generatedPng(page),
   });
+  // The local decode is asynchronous. Wait for the source before asserting the
+  // editable draft and clipboard preview are enabled.
+  await expect(page.getByTestId('t63-preview-image')).toHaveJSProperty('naturalWidth', 16);
   await page.getByTestId('t63-alt-text').fill('A & useful description');
   const preview = await page.getByTestId('t63-attribute').textContent();
   const expected = 'alt="A &amp; useful description"';
   expect(preview).toBe(expected);
-  await page.getByTestId('t63-copy').click();
+  const copy = page.getByTestId('t63-copy');
+  await copy.focus();
+  await page.keyboard.press('Enter');
   await expect(page.getByRole('status')).toHaveText('Attribute copied.');
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(preview);
 });
@@ -169,6 +177,15 @@ test('T63 copies the exact escaped attribute shown in the preview', async ({ pag
 test('T63 reports typed file and draft errors with remedies', async ({ page }) => {
   await page.goto('/alt-text');
   const input = page.getByTestId('t63-file-input');
+  // Firefox can expose the prerendered input for one frame before Svelte has
+  // attached its change handler. Let hydration settle before injecting a file
+  // through the DOM so this accept-filter bypass exercises the route handler.
+  await input.evaluate(
+    async () =>
+      await new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+      ),
+  );
   await input.evaluate((element) => {
     const file = new File(['not an image'], 'unsupported.txt', { type: 'text/plain' });
     const transfer = new DataTransfer();

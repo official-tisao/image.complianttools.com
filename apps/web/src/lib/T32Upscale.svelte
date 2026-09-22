@@ -1,8 +1,15 @@
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte';
   import CompareCanvas from './CompareCanvas.svelte';
+  import GeneratedControls from './GeneratedControls.svelte';
   import ToolPageCompletion from './ToolPageCompletion.svelte';
   import { translate, type Locale } from './i18n';
+  import type { OptionDescription } from '@complianttools/image-engine/schemas/options';
+  import {
+    T32UpscaleOptionsSchema,
+    t32UpscaleToolOptionDescriptions,
+    type T32UpscaleOptions,
+  } from '@complianttools/image-engine/schemas/t32-upscale-options';
   import {
     downloadAndCacheT32Model,
     loadT32ModelSources,
@@ -20,8 +27,8 @@
   const MAX_OUTPUT_BYTES = 32 * 1024 * 1024;
   const pngSignature = [137, 80, 78, 71, 13, 10, 26, 10];
 
-  type Method = 'dcci' | 'nedi';
-  type Factor = 2 | 4;
+  type Method = T32UpscaleOptions['method'];
+  type Factor = T32UpscaleOptions['factor'];
   type ErrorKind =
     | 'unsupported-file'
     | 'file-too-large'
@@ -54,8 +61,10 @@
   let outputFactor = $state<Factor>();
   let outputEngine = $state('');
   let outputBytes = $state(0);
-  let method = $state<Method>('dcci');
-  let factor = $state<Factor>(2);
+  let decodedSource: ImageBitmap | undefined;
+  let options = $state<T32UpscaleOptions>(T32UpscaleOptionsSchema.parse({}));
+  const method = $derived(options.method);
+  const factor = $derived(options.factor);
   let busy = $state(false);
   let status = $state('');
   let error = $state<UpscaleError>();
@@ -84,6 +93,35 @@
 
   const t = (key: string, fallback: string, value?: string | number) =>
     translate(locale, key, fallback, value);
+
+  const optionValues = $derived({
+    't32.method': options.method,
+    't32.factor': options.factor,
+  });
+  // Translators: preserve DCCI, NEDI and the numeric scale factors.
+  const optionDescriptions = $derived<Record<string, OptionDescription>>({
+    't32.method': {
+      ...t32UpscaleToolOptionDescriptions['t32.method']!,
+      label: t('t32.method', 'Scaling method'),
+    },
+    't32.factor': {
+      ...t32UpscaleToolOptionDescriptions['t32.factor']!,
+      label: t('t32.factor', 'Scale factor'),
+    },
+  });
+  const methodOptionDescriptions = $derived({ 't32.method': optionDescriptions['t32.method']! });
+  const factorOptionDescriptions = $derived({ 't32.factor': optionDescriptions['t32.factor']! });
+
+  function updateOption(path: string, value: unknown) {
+    const candidate =
+      path === 't32.method'
+        ? { ...options, method: value }
+        : path === 't32.factor'
+          ? { ...options, factor: Number(value) }
+          : options;
+    const parsed = T32UpscaleOptionsSchema.safeParse(candidate);
+    if (parsed.success) options = parsed.data;
+  }
 
   onMount(() => {
     tier2SupportIssue = t32Tier2SupportIssue();
@@ -170,6 +208,11 @@
     outputUrl = '';
   }
 
+  function clearDecodedSource() {
+    decodedSource?.close();
+    decodedSource = undefined;
+  }
+
   function readPngDimensions(file: File): Promise<Dimensions> {
     return (async () => {
       if (file.size > MAX_FILE_BYTES) throw new UpscaleError('file-too-large');
@@ -211,27 +254,27 @@
     })();
   }
 
-  async function validatePng(file: File, expected: Dimensions) {
+  async function validatePng(file: File, expected: Dimensions): Promise<ImageBitmap> {
     let bitmap: ImageBitmap | undefined;
     try {
       bitmap = await createImageBitmap(file);
       if (bitmap.width !== expected.width || bitmap.height !== expected.height)
         throw new UpscaleError('decode-failed', 'Decoded dimensions do not match the PNG header.');
+      return bitmap;
     } catch (cause) {
+      bitmap?.close();
       if (cause instanceof UpscaleError) throw cause;
       throw new UpscaleError(
         'decode-failed',
         cause instanceof Error ? cause.message : String(cause),
       );
-    } finally {
-      bitmap?.close();
     }
   }
 
-  async function decode(file: File, expected: Dimensions): Promise<ImageData> {
-    let bitmap: ImageBitmap | undefined;
+  async function decode(expected: Dimensions): Promise<ImageData> {
     try {
-      bitmap = await createImageBitmap(file);
+      const bitmap = decodedSource;
+      if (!bitmap) throw new UpscaleError('decode-failed');
       if (bitmap.width !== expected.width || bitmap.height !== expected.height)
         throw new UpscaleError('decode-failed');
       const canvas = document.createElement('canvas');
@@ -247,8 +290,6 @@
         'decode-failed',
         cause instanceof Error ? cause.message : String(cause),
       );
-    } finally {
-      bitmap?.close();
     }
   }
 
@@ -325,6 +366,7 @@
     previousWorker?.terminate();
     rejectPreviousWorker?.(new UpscaleError('cancelled'));
     clearUrls();
+    clearDecodedSource();
     sourceFile = undefined;
     sourceDimensions = undefined;
     outputDimensions = undefined;
@@ -335,13 +377,16 @@
     busy = false;
     latency = 0;
     status = '';
+    let bitmap: ImageBitmap | undefined;
     try {
       const dimensions = await readPngDimensions(file);
       if (task !== currentTask) return;
-      await validatePng(file, dimensions);
+      bitmap = await validatePng(file, dimensions);
       if (task !== currentTask) return;
       sourceFile = file;
       sourceDimensions = dimensions;
+      decodedSource = bitmap;
+      bitmap = undefined;
       sourceUrl = URL.createObjectURL(file);
       outputUrl = sourceUrl;
       outputBytes = file.size;
@@ -349,6 +394,8 @@
     } catch (cause) {
       if (task !== currentTask) return;
       error = cause instanceof UpscaleError ? cause : new UpscaleError('decode-failed');
+    } finally {
+      bitmap?.close();
     }
   }
 
@@ -369,7 +416,7 @@
     latency = 0;
     const started = performance.now();
     try {
-      const image = await decode(sourceFile, sourceDimensions);
+      const image = await decode(sourceDimensions);
       if (task !== currentTask) return;
       const result = await runWorker(image, method, factor);
       if (task !== currentTask) return;
@@ -570,7 +617,7 @@
     latency = 0;
     const started = performance.now();
     try {
-      const image = await decode(sourceFile, sourceDimensions);
+      const image = await decode(sourceDimensions);
       if (task !== currentTask) return;
       const modelBytes = await readCachedT32Model(definition);
       if (!modelBytes)
@@ -641,6 +688,7 @@
     activeWorker?.terminate();
     rejectActiveWorker = undefined;
     activeWorker = undefined;
+    clearDecodedSource();
     clearUrls();
   });
 </script>
@@ -705,26 +753,24 @@
     </div>
     <div class="options-panel" role="region" aria-labelledby="t32-options-heading">
       <h2 id="t32-options-heading">{t('workspace.options', 'Options')}</h2>
-      <label for="t32-method">{t('t32.method', 'Scaling method')}</label>
-      <select
-        id="t32-method"
-        data-testid="t32-method"
-        bind:value={method}
-        disabled={busy || tier2CheckingRuntime}
-      >
-        <option value="dcci">DCCI</option>
-        <option value="nedi">NEDI</option>
-      </select>
-      <label for="t32-factor">{t('t32.factor', 'Scale factor')}</label>
-      <select
-        id="t32-factor"
-        data-testid="t32-factor"
-        bind:value={factor}
-        disabled={busy || tier2Downloading || tier2CheckingRuntime}
-      >
-        <option value={2}>2×</option>
-        <option value={4}>4×</option>
-      </select>
+      <fieldset class="t32-option-group" disabled={busy || tier2CheckingRuntime}>
+        <legend class="t32-visually-hidden">{t('workspace.options', 'Options')}</legend>
+        <GeneratedControls
+          {locale}
+          descriptions={methodOptionDescriptions}
+          values={optionValues}
+          onChange={updateOption}
+        />
+        <fieldset class="t32-option-group" disabled={tier2Downloading}>
+          <legend class="t32-visually-hidden">{t('t32.factor', 'Scale factor')}</legend>
+          <GeneratedControls
+            {locale}
+            descriptions={factorOptionDescriptions}
+            values={optionValues}
+            onChange={updateOption}
+          />
+        </fieldset>
+      </fieldset>
       {#if sourceDimensions}
         <p data-testid="t32-source-dimensions">
           {t('t32.sourceDimensions', 'Source dimensions')}: {sourceDimensions.width} × {sourceDimensions.height}
@@ -905,3 +951,24 @@
     {faqs}
   />
 </main>
+
+<style>
+  .t32-option-group {
+    min-inline-size: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .t32-visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+</style>

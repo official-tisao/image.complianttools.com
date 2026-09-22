@@ -1,0 +1,17 @@
+{
+  "status": "PARTIAL",
+  "fixture": {
+    "width": 4,
+    "height": 4,
+    "baseSha256": "c45f29fb6389b809463627f24fd526681dddc01ba275e56b4642f5e94101ea03",
+    "overlaySha256": "2a06b2f9cc31bf1227bee72cdc7db677d6578cb269d230d47f28a3d5ae7f83fc"
+  },
+  "output": {
+    "firstPixel": [120, 60, 100, 191],
+    "alphaBlendReference": [120, 60, 100, 192],
+    "maxAbsError": 1,
+    "rgbaSha256": "7da5b41d37b65f3b5def386c938ba96e9feebe2139ae6a8befe74beb6cfb60d3"
+  },
+  "elapsedMs": 0.2553,
+  "shortfall": "The shipped function is a per-pixel alpha blend approximation; a full multiscale pyramid and plausible relighting corpus are not implemented."
+}

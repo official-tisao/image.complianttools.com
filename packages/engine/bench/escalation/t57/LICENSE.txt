@@ -1,0 +1,5 @@
+These project-generated fixture images and their accompanying annotations are dedicated to the
+public domain under CC0 1.0 Universal.
+
+License deed: https://creativecommons.org/publicdomain/zero/1.0/
+Legal code: https://creativecommons.org/publicdomain/zero/1.0/legalcode
