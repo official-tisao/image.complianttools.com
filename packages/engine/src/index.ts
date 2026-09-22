@@ -109,6 +109,7 @@ export * from './recipes/sharing.js';
 export * from './schemas/options.js';
 export * from './scheduler/memory-governor.js';
 export * from './security/redaction.js';
+export * from './ai/transport.js';
 export * from './scheduler/worker-pool.js';
 export * from './types.js';
 export * from './wasm/integrity.js';
