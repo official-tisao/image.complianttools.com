@@ -1,0 +1,367 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-09-20T08:44:33.009Z",
+  "runnerSha256": "bec8ccf8e51ff5b602dc20d8cc6192d951f734e3dfd1f0c4771e6ed43f4b2bc9",
+  "environment": {
+    "node": "v22.22.0",
+    "platform": "win32/x64",
+    "cpu": "Intel(R) Core(TM) i7-10750H CPU @ 2.60GHz",
+    "fixtureMethod": "Deterministically generated RGB texture distributions; no third-party images or source pixels.",
+    "recipe": "Three integer-coordinate modular texture recipes seeded by case ID; source and target use distinct channel transforms and different dimensions.",
+    "warmupRuns": 1,
+    "measuredRuns": 9
+  },
+  "metricLimit": "Distributional color similarity only. This does not measure semantic style quality, spatial preservation, or preference on photographs.",
+  "cases": [
+    {
+      "id": "blue-hour",
+      "sourceDimensions": [
+        31,
+        19
+      ],
+      "referenceDimensions": [
+        17,
+        29
+      ],
+      "sourcePixels": 589,
+      "referencePixels": 493,
+      "histogramMetric": "Mean channel-wise normalized empirical-CDF distance (1D Wasserstein, divided by 255); lower is closer distributional alignment.",
+      "improvementVsUnchanged": {
+        "unchanged": 0,
+        "reinhard": 0.04835206681167986,
+        "histogram": 0.06289558980132215
+      },
+      "measurements": {
+        "unchanged": {
+          "meanRgbHistogramWasserstein": 0.06527819896789123,
+          "latencyMedianMs": 0.0004000000000132786,
+          "latencyP95Ms": 0.0014999999999645297,
+          "latencySamplesMs": [
+            0.0014999999999645297,
+            0.0004000000000132786,
+            0.00029999999992469384,
+            0.0003000000000383807,
+            0.0012000000000398359,
+            0.0004000000000132786,
+            0.0004000000000132786,
+            0.0005999999999630745,
+            0.00029999999992469384
+          ]
+        },
+        "reinhard": {
+          "meanRgbHistogramWasserstein": 0.016926132156211374,
+          "latencyMedianMs": 1.0520999999999958,
+          "latencyP95Ms": 6.0353000000000065,
+          "latencySamplesMs": [
+            2.309400000000096,
+            6.0353000000000065,
+            1.0520999999999958,
+            1.0612999999999602,
+            1.0951000000000022,
+            0.8903999999999996,
+            0.6413000000000011,
+            0.3706999999999425,
+            0.40830000000005384
+          ]
+        },
+        "histogram": {
+          "meanRgbHistogramWasserstein": 0.0023826091665690888,
+          "latencyMedianMs": 1.283399999999915,
+          "latencyP95Ms": 3.5126999999999953,
+          "latencySamplesMs": [
+            3.5126999999999953,
+            3.040200000000027,
+            2.5629000000000133,
+            2.686700000000087,
+            1.283399999999915,
+            0.2536000000000058,
+            0.26559999999994943,
+            0.2544000000000324,
+            0.4717999999999165
+          ]
+        }
+      },
+      "artifacts": {
+        "source": {
+          "path": "artifacts/blue-hour-source.png",
+          "width": 31,
+          "height": 19,
+          "pngBytes": 2443,
+          "pngSha256": "38211142f53b86335c9b13df4ac53c118bcb731678a2548e8eb949413f6ffd75",
+          "rgbaSha256": "ebe978257ae858e4237af5a3a8e010a86cf0e18fa7af92347e8456adac085874"
+        },
+        "reference": {
+          "path": "artifacts/blue-hour-reference.png",
+          "width": 17,
+          "height": 29,
+          "pngBytes": 2069,
+          "pngSha256": "1306e2154dfbd43936945cd0b11cc3752b663441ff0ce5251520c5cb403c3e88",
+          "rgbaSha256": "916c399cacd8931186d888b7593f40b012720405f39511d3706b2eda1a2cc327"
+        },
+        "unchanged": {
+          "path": "artifacts/blue-hour-unchanged.png",
+          "width": 31,
+          "height": 19,
+          "pngBytes": 2443,
+          "pngSha256": "38211142f53b86335c9b13df4ac53c118bcb731678a2548e8eb949413f6ffd75",
+          "rgbaSha256": "ebe978257ae858e4237af5a3a8e010a86cf0e18fa7af92347e8456adac085874"
+        },
+        "reinhard": {
+          "path": "artifacts/blue-hour-reinhard.png",
+          "width": 31,
+          "height": 19,
+          "pngBytes": 2443,
+          "pngSha256": "80af11da3c49339446a4a2c9f88e018c496af351020ed8b25f98f1408cb77c90",
+          "rgbaSha256": "6a8b9ab7c180b59289152224f17d77f66ccc7da7b31f0144abb9f2700df5955d"
+        },
+        "histogram": {
+          "path": "artifacts/blue-hour-histogram.png",
+          "width": 31,
+          "height": 19,
+          "pngBytes": 2443,
+          "pngSha256": "171988d382436827c02c844df88c759da7586100a48fa26d29ec1acda3ab1732",
+          "rgbaSha256": "a021e04233c1404aa469e42f71055e2d98656cca39968f847603fcda8a2bb019"
+        }
+      }
+    },
+    {
+      "id": "muted-film",
+      "sourceDimensions": [
+        23,
+        27
+      ],
+      "referenceDimensions": [
+        37,
+        15
+      ],
+      "sourcePixels": 621,
+      "referencePixels": 555,
+      "histogramMetric": "Mean channel-wise normalized empirical-CDF distance (1D Wasserstein, divided by 255); lower is closer distributional alignment.",
+      "improvementVsUnchanged": {
+        "unchanged": 0,
+        "reinhard": 0.049683841272360724,
+        "histogram": 0.05985657154739253
+      },
+      "measurements": {
+        "unchanged": {
+          "meanRgbHistogramWasserstein": 0.06220964926278932,
+          "latencyMedianMs": 0.0004000000000132786,
+          "latencyP95Ms": 0.0013999999999896318,
+          "latencySamplesMs": [
+            0.0013999999999896318,
+            0.0004999999999881766,
+            0.0003999999998995918,
+            0.0004999999999881766,
+            0.0003999999998995918,
+            0.0003999999998995918,
+            0.0004000000000132786,
+            0.0004000000000132786,
+            0.0003999999998995918
+          ]
+        },
+        "reinhard": {
+          "meanRgbHistogramWasserstein": 0.01252580799042859,
+          "latencyMedianMs": 0.5620000000000118,
+          "latencyP95Ms": 0.8395000000000437,
+          "latencySamplesMs": [
+            0.615500000000111,
+            0.6386999999999716,
+            0.6342999999999392,
+            0.5620000000000118,
+            0.8395000000000437,
+            0.4678000000000111,
+            0.5428999999999178,
+            0.4213000000000875,
+            0.4214999999999236
+          ]
+        },
+        "histogram": {
+          "meanRgbHistogramWasserstein": 0.002353077715396784,
+          "latencyMedianMs": 0.48680000000001655,
+          "latencyP95Ms": 0.5731000000000677,
+          "latencySamplesMs": [
+            0.5335000000000036,
+            0.4837999999999738,
+            0.4823999999999842,
+            0.49130000000002383,
+            0.5731000000000677,
+            0.5073999999999614,
+            0.48680000000001655,
+            0.46040000000004966,
+            0.4782999999999902
+          ]
+        }
+      },
+      "artifacts": {
+        "source": {
+          "path": "artifacts/muted-film-source.png",
+          "width": 23,
+          "height": 27,
+          "pngBytes": 2579,
+          "pngSha256": "1212ce67d45ebac4ce614aea18180c03d81f52aeb0214bca631b2a91806554be",
+          "rgbaSha256": "17126abfe02b1383d5002f023ca892df723247cb13808a72d2f208052d285657"
+        },
+        "reference": {
+          "path": "artifacts/muted-film-reference.png",
+          "width": 37,
+          "height": 15,
+          "pngBytes": 2303,
+          "pngSha256": "111fd522ec8141c34b2785883c875cccbfdd463daba02232ddf984eb991c41dc",
+          "rgbaSha256": "13b2b78eb960ef485d3db75101ec12c07b555cfb6110e1cda8e133282aecc860"
+        },
+        "unchanged": {
+          "path": "artifacts/muted-film-unchanged.png",
+          "width": 23,
+          "height": 27,
+          "pngBytes": 2579,
+          "pngSha256": "1212ce67d45ebac4ce614aea18180c03d81f52aeb0214bca631b2a91806554be",
+          "rgbaSha256": "17126abfe02b1383d5002f023ca892df723247cb13808a72d2f208052d285657"
+        },
+        "reinhard": {
+          "path": "artifacts/muted-film-reinhard.png",
+          "width": 23,
+          "height": 27,
+          "pngBytes": 2579,
+          "pngSha256": "7b3859076d1e4242036c4fc6afad51ca8d0667dbb4d12a65739ecd6be43c7cfc",
+          "rgbaSha256": "31c7632eb58767d35be3a70fae8f7f2d049002eedfb80cc47d9092febf51efe8"
+        },
+        "histogram": {
+          "path": "artifacts/muted-film-histogram.png",
+          "width": 23,
+          "height": 27,
+          "pngBytes": 2579,
+          "pngSha256": "39e821f056c22b8d4f2f62df27d04bf7155a52eb277d1910dfde27a18a78aa59",
+          "rgbaSha256": "6ebb33227674c532971592d6c2d0395bcc5d41704807bf324ad595d0b37b4ceb"
+        }
+      }
+    },
+    {
+      "id": "warm-paper",
+      "sourceDimensions": [
+        28,
+        16
+      ],
+      "referenceDimensions": [
+        15,
+        24
+      ],
+      "sourcePixels": 448,
+      "referencePixels": 360,
+      "histogramMetric": "Mean channel-wise normalized empirical-CDF distance (1D Wasserstein, divided by 255); lower is closer distributional alignment.",
+      "improvementVsUnchanged": {
+        "unchanged": 0,
+        "reinhard": 0.05517195767195756,
+        "histogram": 0.06662037037037044
+      },
+      "measurements": {
+        "unchanged": {
+          "meanRgbHistogramWasserstein": 0.06912328820417077,
+          "latencyMedianMs": 0.0004000000000132786,
+          "latencyP95Ms": 0.002100000000041291,
+          "latencySamplesMs": [
+            0.002100000000041291,
+            0.0005000000001018634,
+            0.0004000000000132786,
+            0.0004000000000132786,
+            0.0003000000000383807,
+            0.0003999999998995918,
+            0.0004000000000132786,
+            0.0004000000000132786,
+            0.0004000000000132786
+          ]
+        },
+        "reinhard": {
+          "meanRgbHistogramWasserstein": 0.013951330532213207,
+          "latencyMedianMs": 0.07749999999998636,
+          "latencyP95Ms": 0.10129999999992378,
+          "latencySamplesMs": [
+            0.0886000000000422,
+            0.07730000000003656,
+            0.07749999999998636,
+            0.05540000000007694,
+            0.08580000000006294,
+            0.06210000000010041,
+            0.05919999999991887,
+            0.10129999999992378,
+            0.09540000000004056
+          ]
+        },
+        "histogram": {
+          "meanRgbHistogramWasserstein": 0.0025029178338003277,
+          "latencyMedianMs": 0.4494999999999436,
+          "latencyP95Ms": 0.7451999999999543,
+          "latencySamplesMs": [
+            0.43209999999999127,
+            0.3806999999999334,
+            0.52150000000006,
+            0.7451999999999543,
+            0.5728000000000293,
+            0.476099999999974,
+            0.4494999999999436,
+            0.4352000000000089,
+            0.44259999999997035
+          ]
+        }
+      },
+      "artifacts": {
+        "source": {
+          "path": "artifacts/warm-paper-source.png",
+          "width": 28,
+          "height": 16,
+          "pngBytes": 1876,
+          "pngSha256": "45b2e90cb374c3b65ac75e089821d9645d603f36222e033a2410039739ef2954",
+          "rgbaSha256": "c65a7473783d3629a93e9181ee77a90f085b9e4e115d39aa8cabeb0edd999be3"
+        },
+        "reference": {
+          "path": "artifacts/warm-paper-reference.png",
+          "width": 15,
+          "height": 24,
+          "pngBytes": 1532,
+          "pngSha256": "fc3b92bf5463d948fe7dcd40c81219983f5c4decf58e041441c00d36ffa5bef5",
+          "rgbaSha256": "81a2fbfde2956025b8d653e96a96f53d640b1bfdabb8a4167cd0e4a3be349a91"
+        },
+        "unchanged": {
+          "path": "artifacts/warm-paper-unchanged.png",
+          "width": 28,
+          "height": 16,
+          "pngBytes": 1876,
+          "pngSha256": "45b2e90cb374c3b65ac75e089821d9645d603f36222e033a2410039739ef2954",
+          "rgbaSha256": "c65a7473783d3629a93e9181ee77a90f085b9e4e115d39aa8cabeb0edd999be3"
+        },
+        "reinhard": {
+          "path": "artifacts/warm-paper-reinhard.png",
+          "width": 28,
+          "height": 16,
+          "pngBytes": 1876,
+          "pngSha256": "ff1ad102118f393362cf458ae1512535eb1f82ab8c15ea7a721b8aef6a689678",
+          "rgbaSha256": "e67d0a16f967c55ffbc75cf2d0c8668a45f08a0a21f80ee10ef6b11e39c65a1b"
+        },
+        "histogram": {
+          "path": "artifacts/warm-paper-histogram.png",
+          "width": 28,
+          "height": 16,
+          "pngBytes": 1876,
+          "pngSha256": "ec191574a016882972d947b1131d40a4669c32b5d7b8d16b3985efcf6e77bebc",
+          "rgbaSha256": "46a7c959e410134d037dd825b2fc8b4bc784ca124cf477cb50d2b966117691a0"
+        }
+      }
+    }
+  ],
+  "summary": {
+    "unchanged": {
+      "meanDistributionDistance": 0.06553704547828378,
+      "medianLatencyMs": 0.0004000000000132786,
+      "p95LatencyMs": 0.0014999999999645297
+    },
+    "reinhard": {
+      "meanDistributionDistance": 0.014467756892951057,
+      "medianLatencyMs": 0.4678000000000111,
+      "p95LatencyMs": 2.309400000000096
+    },
+    "histogram": {
+      "meanDistributionDistance": 0.0024128682385887337,
+      "medianLatencyMs": 0.4837999999999738,
+      "p95LatencyMs": 3.040200000000027
+    }
+  }
+}

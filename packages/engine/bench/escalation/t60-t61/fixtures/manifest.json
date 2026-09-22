@@ -1,0 +1,516 @@
+{
+  "schemaVersion": 1,
+  "benchmark": "P4-21 T60 comparison and T61 duplicate retrieval",
+  "sourceManifest": "../fixtures/cc0/manifest.json",
+  "sourceManifestSha256": "2eccd74e8dc2d4d57492ffb95717c9efcfc398010b0c7354af6705545ecfe6c5",
+  "generator": {
+    "script": "packages/engine/bench/escalation/t60-t61/prepare-fixtures.mjs",
+    "scriptSha256": "1323734a2995cc40a4cbf0b8cd2cbeafd4fb911bc644ff48f0f31c65806c1608",
+    "node": "v22.22.0",
+    "normalizedDimensions": {
+      "width": 128,
+      "height": 128
+    },
+    "normalization": "Center square crop of each individually registered CC0 source, followed by engine Lanczos3 resize to 128x128. This deliberately fixes dimensions for metric and hash comparison; it is not a production preprocessing recommendation.",
+    "transforms": [
+      {
+        "id": "reference",
+        "label": "Normalized CC0 reference",
+        "parameters": {
+          "operation": "center-square crop, then Lanczos3 resize to 128x128"
+        }
+      },
+      {
+        "id": "exact-copy",
+        "label": "Exact pixel duplicate",
+        "parameters": {
+          "operation": "copy normalized reference pixels without edits"
+        }
+      },
+      {
+        "id": "jpeg-q90",
+        "label": "Same-source JPEG re-encode, quality 90",
+        "parameters": {
+          "operation": "MozJPEG encode/decode",
+          "quality": 90
+        }
+      },
+      {
+        "id": "jpeg-q45",
+        "label": "Same-source JPEG re-encode, quality 45",
+        "parameters": {
+          "operation": "MozJPEG encode/decode",
+          "quality": 45
+        }
+      },
+      {
+        "id": "center-crop-90",
+        "label": "Same-source centered 90% crop, restored to 128x128",
+        "parameters": {
+          "operation": "center crop 90% width/height, then Lanczos3 resize to 128x128",
+          "retainedPercent": 90
+        }
+      },
+      {
+        "id": "brightness-plus-12",
+        "label": "Same-source RGB brightness shift",
+        "parameters": {
+          "operation": "add 12 to each RGB channel with 255 clamp",
+          "amount": 12
+        }
+      }
+    ],
+    "variantLabels": "All variants except reference share the sourceAssetId and are labeled same-source positives for the controlled T61 relation task; cross-source pairs are negatives."
+  },
+  "fixtureCount": 24,
+  "fixtures": [
+    {
+      "id": "landscape-dordogne-reference",
+      "sourceAssetId": "landscape-dordogne",
+      "sourceSha256": "c3e2eef6af01a10882c83f71ff849d2ffb95220aad0e70e98daf6cf27e1975b7",
+      "license": "CC0-1.0 source; generated derivative for benchmark use",
+      "relation": "reference",
+      "variantId": "reference",
+      "label": "Normalized CC0 reference",
+      "transformation": {
+        "operation": "center-square crop, then Lanczos3 resize to 128x128"
+      },
+      "fileName": "landscape-dordogne-reference.png",
+      "width": 128,
+      "height": 128,
+      "sizeBytes": 38342,
+      "pngSha256": "f6d0606e1dbbe658a60cf7f7e35be17f1b28b790dc0b4f37d8ff7fcc80f80bf1",
+      "rgbaSha256": "ca4dd0b2307e47f3903e166d6984e7476dede8d4ed3c5876bb70c991e4760f69"
+    },
+    {
+      "id": "landscape-dordogne-exact-copy",
+      "sourceAssetId": "landscape-dordogne",
+      "sourceSha256": "c3e2eef6af01a10882c83f71ff849d2ffb95220aad0e70e98daf6cf27e1975b7",
+      "license": "CC0-1.0 source; generated derivative for benchmark use",
+      "relation": "same-source-positive",
+      "variantId": "exact-copy",
+      "label": "Exact pixel duplicate",
+      "transformation": {
+        "operation": "copy normalized reference pixels without edits"
+      },
+      "fileName": "landscape-dordogne-exact-copy.png",
+      "width": 128,
+      "height": 128,
+      "sizeBytes": 38342,
+      "pngSha256": "f6d0606e1dbbe658a60cf7f7e35be17f1b28b790dc0b4f37d8ff7fcc80f80bf1",
+      "rgbaSha256": "ca4dd0b2307e47f3903e166d6984e7476dede8d4ed3c5876bb70c991e4760f69"
+    },
+    {
+      "id": "landscape-dordogne-jpeg-q90",
+      "sourceAssetId": "landscape-dordogne",
+      "sourceSha256": "c3e2eef6af01a10882c83f71ff849d2ffb95220aad0e70e98daf6cf27e1975b7",
+      "license": "CC0-1.0 source; generated derivative for benchmark use",
+      "relation": "same-source-positive",
+      "variantId": "jpeg-q90",
+      "label": "Same-source JPEG re-encode, quality 90",
+      "transformation": {
+        "operation": "MozJPEG encode/decode",
+        "quality": 90
+      },
+      "fileName": "landscape-dordogne-jpeg-q90.png",
+      "width": 128,
+      "height": 128,
+      "sizeBytes": 39239,
+      "pngSha256": "87c919dad3a765f179c491c12818d858ac139e60b401111b622a73a7388df0b4",
+      "rgbaSha256": "ea1b9b217f52e9cc5c719975a35f10211efd1610fc3e7398d28e8db0f8f2a774"
+    },
+    {
+      "id": "landscape-dordogne-jpeg-q45",
+      "sourceAssetId": "landscape-dordogne",
+      "sourceSha256": "c3e2eef6af01a10882c83f71ff849d2ffb95220aad0e70e98daf6cf27e1975b7",
+      "license": "CC0-1.0 source; generated derivative for benchmark use",
+      "relation": "same-source-positive",
+      "variantId": "jpeg-q45",
+      "label": "Same-source JPEG re-encode, quality 45",
+      "transformation": {
+        "operation": "MozJPEG encode/decode",
+        "quality": 45
+      },
+      "fileName": "landscape-dordogne-jpeg-q45.png",
+      "width": 128,
+      "height": 128,
+      "sizeBytes": 35673,
+      "pngSha256": "c5510ee793625031f792e99e49ab877e1c6e44cc930050b7dbbc202030d17a4a",
+      "rgbaSha256": "384d1d442c97e0430b2eb7ec0084e047edaf5e14910acd8a8c8ad670b3e6ef09"
+    },
+    {
+      "id": "landscape-dordogne-center-crop-90",
+      "sourceAssetId": "landscape-dordogne",
+      "sourceSha256": "c3e2eef6af01a10882c83f71ff849d2ffb95220aad0e70e98daf6cf27e1975b7",
+      "license": "CC0-1.0 source; generated derivative for benchmark use",
+      "relation": "same-source-positive",
+      "variantId": "center-crop-90",
+      "label": "Same-source centered 90% crop, restored to 128x128",
+      "transformation": {
+        "operation": "center crop 90% width/height, then Lanczos3 resize to 128x128",
+        "retainedPercent": 90
+      },
+      "fileName": "landscape-dordogne-center-crop-90.png",
+      "width": 128,
+      "height": 128,
+      "sizeBytes": 36774,
+      "pngSha256": "cc66a15c1bb6ba19d1fa8c4ff25e8468b4e0cc0cbba6473a2f50f20910139ad7",
+      "rgbaSha256": "2fc4991e0c1822ee770308774b4e270be059f32878044dda07b236970854fa24"
+    },
+    {
+      "id": "landscape-dordogne-brightness-plus-12",
+      "sourceAssetId": "landscape-dordogne",
+      "sourceSha256": "c3e2eef6af01a10882c83f71ff849d2ffb95220aad0e70e98daf6cf27e1975b7",
+      "license": "CC0-1.0 source; generated derivative for benchmark use",
+      "relation": "same-source-positive",
+      "variantId": "brightness-plus-12",
+      "label": "Same-source RGB brightness shift",
+      "transformation": {
+        "operation": "add 12 to each RGB channel with 255 clamp",
+        "amount": 12
+      },
+      "fileName": "landscape-dordogne-brightness-plus-12.png",
+      "width": 128,
+      "height": 128,
+      "sizeBytes": 38382,
+      "pngSha256": "247f03eff16bb17cf9a36e8579a09addd8bf6fc1c62f76daa24cf07601567827",
+      "rgbaSha256": "c50ac309f7a743510bae9426aa2804a369cb4a35e8a779b67a0e560170d709e6"
+    },
+    {
+      "id": "oak-leaves-reference",
+      "sourceAssetId": "oak-leaves",
+      "sourceSha256": "71c0f2fb2fa89385955bca609cf9983d493137a81879005143606d0fa74d2802",
+      "license": "CC0-1.0 source; generated derivative for benchmark use",
+      "relation": "reference",
+      "variantId": "reference",
+      "label": "Normalized CC0 reference",
+      "transformation": {
+        "operation": "center-square crop, then Lanczos3 resize to 128x128"
+      },
+      "fileName": "oak-leaves-reference.png",
+      "width": 128,
+      "height": 128,
+      "sizeBytes": 36333,
+      "pngSha256": "ba6625138a40916482b60d6fc509b1b45eeacedc2e9ffea181edcfd43237de90",
+      "rgbaSha256": "b0646445ddd9149255abaeb7114469e0b47f840dd07a458b903bc0d48e9772bf"
+    },
+    {
+      "id": "oak-leaves-exact-copy",
+      "sourceAssetId": "oak-leaves",
+      "sourceSha256": "71c0f2fb2fa89385955bca609cf9983d493137a81879005143606d0fa74d2802",
+      "license": "CC0-1.0 source; generated derivative for benchmark use",
+      "relation": "same-source-positive",
+      "variantId": "exact-copy",
+      "label": "Exact pixel duplicate",
+      "transformation": {
+        "operation": "copy normalized reference pixels without edits"
+      },
+      "fileName": "oak-leaves-exact-copy.png",
+      "width": 128,
+      "height": 128,
+      "sizeBytes": 36333,
+      "pngSha256": "ba6625138a40916482b60d6fc509b1b45eeacedc2e9ffea181edcfd43237de90",
+      "rgbaSha256": "b0646445ddd9149255abaeb7114469e0b47f840dd07a458b903bc0d48e9772bf"
+    },
+    {
+      "id": "oak-leaves-jpeg-q90",
+      "sourceAssetId": "oak-leaves",
+      "sourceSha256": "71c0f2fb2fa89385955bca609cf9983d493137a81879005143606d0fa74d2802",
+      "license": "CC0-1.0 source; generated derivative for benchmark use",
+      "relation": "same-source-positive",
+      "variantId": "jpeg-q90",
+      "label": "Same-source JPEG re-encode, quality 90",
+      "transformation": {
+        "operation": "MozJPEG encode/decode",
+        "quality": 90
+      },
+      "fileName": "oak-leaves-jpeg-q90.png",
+      "width": 128,
+      "height": 128,
+      "sizeBytes": 37139,
+      "pngSha256": "f45581fdf93f03f8f8b4140767b757ebd17355cc59df7725ef37cd8b0c3a0745",
+      "rgbaSha256": "3dbb8c16d46296cd6d3d06dae7b57a3b70f10fde7fb3be2b887de193886a3bba"
+    },
+    {
+      "id": "oak-leaves-jpeg-q45",
+      "sourceAssetId": "oak-leaves",
+      "sourceSha256": "71c0f2fb2fa89385955bca609cf9983d493137a81879005143606d0fa74d2802",
+      "license": "CC0-1.0 source; generated derivative for benchmark use",
+      "relation": "same-source-positive",
+      "variantId": "jpeg-q45",
+      "label": "Same-source JPEG re-encode, quality 45",
+      "transformation": {
+        "operation": "MozJPEG encode/decode",
+        "quality": 45
+      },
+      "fileName": "oak-leaves-jpeg-q45.png",
+      "width": 128,
+      "height": 128,
+      "sizeBytes": 35952,
+      "pngSha256": "412f24ae714bf6ef05fb3487d5f0b7025d73a45d3bdfef50122bcd358b0f5ebd",
+      "rgbaSha256": "b51a74326c813d4aff2f9faa061501cdaa3e79d079b90206672b4581245f649a"
+    },
+    {
+      "id": "oak-leaves-center-crop-90",
+      "sourceAssetId": "oak-leaves",
+      "sourceSha256": "71c0f2fb2fa89385955bca609cf9983d493137a81879005143606d0fa74d2802",
+      "license": "CC0-1.0 source; generated derivative for benchmark use",
+      "relation": "same-source-positive",
+      "variantId": "center-crop-90",
+      "label": "Same-source centered 90% crop, restored to 128x128",
+      "transformation": {
+        "operation": "center crop 90% width/height, then Lanczos3 resize to 128x128",
+        "retainedPercent": 90
+      },
+      "fileName": "oak-leaves-center-crop-90.png",
+      "width": 128,
+      "height": 128,
+      "sizeBytes": 37840,
+      "pngSha256": "bf787a021c2cad403f803669a55aa65c2d60963cd56b722a31f29ee51ab0bf33",
+      "rgbaSha256": "355e3a90eb06d950a78d5881c2979c3c70f88c83a1ba4c3b36c83abb9bbb7dd2"
+    },
+    {
+      "id": "oak-leaves-brightness-plus-12",
+      "sourceAssetId": "oak-leaves",
+      "sourceSha256": "71c0f2fb2fa89385955bca609cf9983d493137a81879005143606d0fa74d2802",
+      "license": "CC0-1.0 source; generated derivative for benchmark use",
+      "relation": "same-source-positive",
+      "variantId": "brightness-plus-12",
+      "label": "Same-source RGB brightness shift",
+      "transformation": {
+        "operation": "add 12 to each RGB channel with 255 clamp",
+        "amount": 12
+      },
+      "fileName": "oak-leaves-brightness-plus-12.png",
+      "width": 128,
+      "height": 128,
+      "sizeBytes": 36360,
+      "pngSha256": "12c84d6536830550368c1acd3a36345c4496cdb05833e865e32ad325899b51ae",
+      "rgbaSha256": "b55a1c2dfc5ed7f89718eedd163628f4bd797d9560b5489fe2e6db4f9ef35677"
+    },
+    {
+      "id": "gold-weight-reference",
+      "sourceAssetId": "gold-weight",
+      "sourceSha256": "575c3663c372bb43e7da86a253cd9cb3602211bc39e3756332ca682963beb351",
+      "license": "CC0-1.0 source; generated derivative for benchmark use",
+      "relation": "reference",
+      "variantId": "reference",
+      "label": "Normalized CC0 reference",
+      "transformation": {
+        "operation": "center-square crop, then Lanczos3 resize to 128x128"
+      },
+      "fileName": "gold-weight-reference.png",
+      "width": 128,
+      "height": 128,
+      "sizeBytes": 33065,
+      "pngSha256": "f37577982410402604c018d7bcfc54f398bc235fd6cff42ecf2c5786fe785651",
+      "rgbaSha256": "510dce8797538513c7f64e1431c2f6ffb82c9216e768815990df9ea8e7876618"
+    },
+    {
+      "id": "gold-weight-exact-copy",
+      "sourceAssetId": "gold-weight",
+      "sourceSha256": "575c3663c372bb43e7da86a253cd9cb3602211bc39e3756332ca682963beb351",
+      "license": "CC0-1.0 source; generated derivative for benchmark use",
+      "relation": "same-source-positive",
+      "variantId": "exact-copy",
+      "label": "Exact pixel duplicate",
+      "transformation": {
+        "operation": "copy normalized reference pixels without edits"
+      },
+      "fileName": "gold-weight-exact-copy.png",
+      "width": 128,
+      "height": 128,
+      "sizeBytes": 33065,
+      "pngSha256": "f37577982410402604c018d7bcfc54f398bc235fd6cff42ecf2c5786fe785651",
+      "rgbaSha256": "510dce8797538513c7f64e1431c2f6ffb82c9216e768815990df9ea8e7876618"
+    },
+    {
+      "id": "gold-weight-jpeg-q90",
+      "sourceAssetId": "gold-weight",
+      "sourceSha256": "575c3663c372bb43e7da86a253cd9cb3602211bc39e3756332ca682963beb351",
+      "license": "CC0-1.0 source; generated derivative for benchmark use",
+      "relation": "same-source-positive",
+      "variantId": "jpeg-q90",
+      "label": "Same-source JPEG re-encode, quality 90",
+      "transformation": {
+        "operation": "MozJPEG encode/decode",
+        "quality": 90
+      },
+      "fileName": "gold-weight-jpeg-q90.png",
+      "width": 128,
+      "height": 128,
+      "sizeBytes": 28206,
+      "pngSha256": "54d36888411823eff2076c4952d5e05bb842a6e2eea43971ed275c9ba4a48425",
+      "rgbaSha256": "87b250cc953c9ce50cf54bfb7db7ad87cc297b1cda309665f757e3c16419b5d3"
+    },
+    {
+      "id": "gold-weight-jpeg-q45",
+      "sourceAssetId": "gold-weight",
+      "sourceSha256": "575c3663c372bb43e7da86a253cd9cb3602211bc39e3756332ca682963beb351",
+      "license": "CC0-1.0 source; generated derivative for benchmark use",
+      "relation": "same-source-positive",
+      "variantId": "jpeg-q45",
+      "label": "Same-source JPEG re-encode, quality 45",
+      "transformation": {
+        "operation": "MozJPEG encode/decode",
+        "quality": 45
+      },
+      "fileName": "gold-weight-jpeg-q45.png",
+      "width": 128,
+      "height": 128,
+      "sizeBytes": 25901,
+      "pngSha256": "8fedb014aeb882b32f797cf834438a85c7097638075b5682ce5294a4265ff1a1",
+      "rgbaSha256": "2019a8aa390fd6fc5f7e72dfc2d79cac422b1501a4ea75591d2aa666290eb802"
+    },
+    {
+      "id": "gold-weight-center-crop-90",
+      "sourceAssetId": "gold-weight",
+      "sourceSha256": "575c3663c372bb43e7da86a253cd9cb3602211bc39e3756332ca682963beb351",
+      "license": "CC0-1.0 source; generated derivative for benchmark use",
+      "relation": "same-source-positive",
+      "variantId": "center-crop-90",
+      "label": "Same-source centered 90% crop, restored to 128x128",
+      "transformation": {
+        "operation": "center crop 90% width/height, then Lanczos3 resize to 128x128",
+        "retainedPercent": 90
+      },
+      "fileName": "gold-weight-center-crop-90.png",
+      "width": 128,
+      "height": 128,
+      "sizeBytes": 34099,
+      "pngSha256": "5920640d4f9ffc578a95b63c1de2ab917e10c3ae5ec3d8fac2121842e6e4b09d",
+      "rgbaSha256": "618934659162464acd6330599f63fdb0e542d397aae9f84aa7f3e04521dbc035"
+    },
+    {
+      "id": "gold-weight-brightness-plus-12",
+      "sourceAssetId": "gold-weight",
+      "sourceSha256": "575c3663c372bb43e7da86a253cd9cb3602211bc39e3756332ca682963beb351",
+      "license": "CC0-1.0 source; generated derivative for benchmark use",
+      "relation": "same-source-positive",
+      "variantId": "brightness-plus-12",
+      "label": "Same-source RGB brightness shift",
+      "transformation": {
+        "operation": "add 12 to each RGB channel with 255 clamp",
+        "amount": 12
+      },
+      "fileName": "gold-weight-brightness-plus-12.png",
+      "width": 128,
+      "height": 128,
+      "sizeBytes": 32999,
+      "pngSha256": "d54e385232f6a27264ad6d8008498a48cc998f3126a8f57714bafb4c6f4e9161",
+      "rgbaSha256": "6f7c7410af0d052ed231e53861fa1d8b922eefe64fb963b119979619d36c59aa"
+    },
+    {
+      "id": "rome-map-reference",
+      "sourceAssetId": "rome-map",
+      "sourceSha256": "4f86a0ae3baa75bd29b690ef005e40029327824ec49f5241fd102e3a06126065",
+      "license": "CC0-1.0 source; generated derivative for benchmark use",
+      "relation": "reference",
+      "variantId": "reference",
+      "label": "Normalized CC0 reference",
+      "transformation": {
+        "operation": "center-square crop, then Lanczos3 resize to 128x128"
+      },
+      "fileName": "rome-map-reference.png",
+      "width": 128,
+      "height": 128,
+      "sizeBytes": 42739,
+      "pngSha256": "3968291938d0cc975e4726f0b120f781fa8dca4a767ef8a9363cdd883c887d90",
+      "rgbaSha256": "123363ddde6f8451ea3c9e8ceb26b1f5492cf1745aeb22de8899abbbecbf6de1"
+    },
+    {
+      "id": "rome-map-exact-copy",
+      "sourceAssetId": "rome-map",
+      "sourceSha256": "4f86a0ae3baa75bd29b690ef005e40029327824ec49f5241fd102e3a06126065",
+      "license": "CC0-1.0 source; generated derivative for benchmark use",
+      "relation": "same-source-positive",
+      "variantId": "exact-copy",
+      "label": "Exact pixel duplicate",
+      "transformation": {
+        "operation": "copy normalized reference pixels without edits"
+      },
+      "fileName": "rome-map-exact-copy.png",
+      "width": 128,
+      "height": 128,
+      "sizeBytes": 42739,
+      "pngSha256": "3968291938d0cc975e4726f0b120f781fa8dca4a767ef8a9363cdd883c887d90",
+      "rgbaSha256": "123363ddde6f8451ea3c9e8ceb26b1f5492cf1745aeb22de8899abbbecbf6de1"
+    },
+    {
+      "id": "rome-map-jpeg-q90",
+      "sourceAssetId": "rome-map",
+      "sourceSha256": "4f86a0ae3baa75bd29b690ef005e40029327824ec49f5241fd102e3a06126065",
+      "license": "CC0-1.0 source; generated derivative for benchmark use",
+      "relation": "same-source-positive",
+      "variantId": "jpeg-q90",
+      "label": "Same-source JPEG re-encode, quality 90",
+      "transformation": {
+        "operation": "MozJPEG encode/decode",
+        "quality": 90
+      },
+      "fileName": "rome-map-jpeg-q90.png",
+      "width": 128,
+      "height": 128,
+      "sizeBytes": 42702,
+      "pngSha256": "c6606bd92b0b2d992bf1db51d6c594e2d5f8b499f81fddc83bc705730fe479eb",
+      "rgbaSha256": "1186abe0c6757cbc759fe06d097791974a301f24d5197fea06d0e4ac32369800"
+    },
+    {
+      "id": "rome-map-jpeg-q45",
+      "sourceAssetId": "rome-map",
+      "sourceSha256": "4f86a0ae3baa75bd29b690ef005e40029327824ec49f5241fd102e3a06126065",
+      "license": "CC0-1.0 source; generated derivative for benchmark use",
+      "relation": "same-source-positive",
+      "variantId": "jpeg-q45",
+      "label": "Same-source JPEG re-encode, quality 45",
+      "transformation": {
+        "operation": "MozJPEG encode/decode",
+        "quality": 45
+      },
+      "fileName": "rome-map-jpeg-q45.png",
+      "width": 128,
+      "height": 128,
+      "sizeBytes": 36596,
+      "pngSha256": "6333f04f54cb71d118f11af67a703ca5a054e5294a124691cbf536d6b5cec23b",
+      "rgbaSha256": "a08547bbbc520a67d9b1ce0ff4fb4a52ee76a2bce46b61598877dde754aaecf8"
+    },
+    {
+      "id": "rome-map-center-crop-90",
+      "sourceAssetId": "rome-map",
+      "sourceSha256": "4f86a0ae3baa75bd29b690ef005e40029327824ec49f5241fd102e3a06126065",
+      "license": "CC0-1.0 source; generated derivative for benchmark use",
+      "relation": "same-source-positive",
+      "variantId": "center-crop-90",
+      "label": "Same-source centered 90% crop, restored to 128x128",
+      "transformation": {
+        "operation": "center crop 90% width/height, then Lanczos3 resize to 128x128",
+        "retainedPercent": 90
+      },
+      "fileName": "rome-map-center-crop-90.png",
+      "width": 128,
+      "height": 128,
+      "sizeBytes": 41241,
+      "pngSha256": "1e73efa5e7da3c2f392ffcdaa53812732d44e5e99261dd3352803b5934c2d0f4",
+      "rgbaSha256": "0cfc3a07947dbbb6713b4ffa7a440eec59525fd5fcf010dc8fa5e313a7d588b8"
+    },
+    {
+      "id": "rome-map-brightness-plus-12",
+      "sourceAssetId": "rome-map",
+      "sourceSha256": "4f86a0ae3baa75bd29b690ef005e40029327824ec49f5241fd102e3a06126065",
+      "license": "CC0-1.0 source; generated derivative for benchmark use",
+      "relation": "same-source-positive",
+      "variantId": "brightness-plus-12",
+      "label": "Same-source RGB brightness shift",
+      "transformation": {
+        "operation": "add 12 to each RGB channel with 255 clamp",
+        "amount": 12
+      },
+      "fileName": "rome-map-brightness-plus-12.png",
+      "width": 128,
+      "height": 128,
+      "sizeBytes": 42729,
+      "pngSha256": "b5726f2e54da6e402df1ab9060b8a40d74387541a96e3252a9cf2829ae3f3c2a",
+      "rgbaSha256": "3ffd782a2ec91a84a43903f6903647e3f3e2b0da1be44298a9fa7986fe5d73e1"
+    }
+  ]
+}

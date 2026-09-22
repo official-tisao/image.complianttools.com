@@ -21,20 +21,12 @@ import type { RasterImage } from '../types.js';
 export interface RetargetOptions {
   readonly targetWidth: number;
   readonly targetHeight: number;
-  /** Mask: pixels with value 255 are protected (not scaled); 0 = unprotected. */
+  /** Pixels marked 255 keep their original sampling density; 0 = unprotected. */
   readonly protectMask?: Uint8ClampedArray;
 }
 
-/** Simple gradient magnitude (Sobel-style) with optional protect mask.
- *  Protected pixels (mask === 255) have their gradient contribution zeroed,
- *  reducing their influence on the saliency profile and protecting them
- *  from being scaled disproportionately. */
-function gradientMagnitude(
-  data: Uint8ClampedArray,
-  width: number,
-  height: number,
-  protectMask?: Uint8ClampedArray,
-): Float64Array {
+/** Simple gradient magnitude (Sobel-style). */
+function gradientMagnitude(data: Uint8ClampedArray, width: number, height: number): Float64Array {
   const gray = new Float64Array(width * height);
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
@@ -48,31 +40,108 @@ function gradientMagnitude(
   const gy = [-1, -2, -1, 0, 0, 0, 1, 2, 1];
   for (let y = 1; y < height - 1; y++) {
     for (let x = 1; x < width - 1; x++) {
-      // Skip protected pixels in gradient computation so protected
-      // regions contribute zero to saliency profile (they are protected
-      // from being scaled disproportionately by the warp).
-      const maskIdx = y * width + x;
-      const isProtected = protectMask !== undefined && protectMask[maskIdx] === 255;
-      if (isProtected) {
-        // Protected pixels: zero out gradient at this pixel, but the neighborhood
-        // still includes unprotected pixels so the profile reflects actual edges.
-        mag[y * width + x] = 0;
-      } else {
-        let sx = 0,
-          sy = 0;
-        for (let ky = -1; ky <= 1; ky++) {
-          for (let kx = -1; kx <= 1; kx++) {
-            const v = gray[(y + ky) * width + (x + kx)];
-            const idx = (ky + 1) * 3 + (kx + 1);
-            sx += (v ?? 0) * gx[idx]!;
-            sy += (v ?? 0) * gy[idx]!;
-          }
+      let sx = 0,
+        sy = 0;
+      for (let ky = -1; ky <= 1; ky++) {
+        for (let kx = -1; kx <= 1; kx++) {
+          const v = gray[(y + ky) * width + (x + kx)];
+          const idx = (ky + 1) * 3 + (kx + 1);
+          sx += (v ?? 0) * gx[idx]!;
+          sy += (v ?? 0) * gy[idx]!;
         }
-        mag[y * width + x] = Math.sqrt(sx * sx + sy * sy);
       }
+      mag[y * width + x] = Math.sqrt(sx * sx + sy * sy);
     }
   }
   return mag;
+}
+
+/** Project a pixel mask to source coordinates along one axis. */
+function projectProtectedAxis(
+  mask: Uint8ClampedArray,
+  width: number,
+  height: number,
+  axis: 'x' | 'y',
+): Uint8Array {
+  const projected = new Uint8Array(axis === 'x' ? width : height);
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      if (mask[y * width + x] === 255) projected[axis === 'x' ? x : y] = 1;
+    }
+  }
+  return projected;
+}
+
+/**
+ * Reserve one output sample for every protected input coordinate, then
+ * distribute all remaining samples over unprotected coordinates by saliency.
+ */
+function buildProtectedAxisMap(
+  profile: Float64Array,
+  protectedAxis: Uint8Array,
+  targetLength: number,
+  axisName: 'width' | 'height',
+): Uint32Array | undefined {
+  const protectedCount = protectedAxis.reduce((sum, isProtected) => sum + isProtected, 0);
+  if (protectedCount === 0) return undefined;
+
+  if (protectedCount > targetLength) {
+    throw new RangeError(
+      `Protected source ${axisName} coordinates (${protectedCount}) exceed target ${axisName} (${targetLength}); increase the target ${axisName} or reduce the protected mask.`,
+    );
+  }
+
+  const unprotectedCount = profile.length - protectedCount;
+  if (unprotectedCount === 0 && targetLength !== protectedCount) {
+    throw new RangeError(
+      `Every source ${axisName} coordinate is protected, so target ${axisName} must remain ${protectedCount}; reduce the protected mask or keep the original ${axisName}.`,
+    );
+  }
+
+  const remaining = targetLength - protectedCount;
+  const quotas = new Uint32Array(profile.length);
+  const fractions: Array<{ index: number; fraction: number }> = [];
+  let weightTotal = 0;
+  for (let index = 0; index < profile.length; index++) {
+    if (protectedAxis[index] === 1) continue;
+    weightTotal += Math.max(0.01, profile[index]!);
+  }
+
+  let assigned = protectedCount;
+  for (let index = 0; index < profile.length; index++) {
+    if (protectedAxis[index] === 1) {
+      quotas[index] = 1;
+      continue;
+    }
+
+    const weight = Math.max(0.01, profile[index]!);
+    const exactQuota = remaining * (weight / weightTotal);
+    const wholeQuota = Math.floor(exactQuota);
+    quotas[index] = wholeQuota;
+    assigned += wholeQuota;
+    fractions.push({ index, fraction: exactQuota - wholeQuota });
+  }
+
+  fractions.sort((left, right) => right.fraction - left.fraction || left.index - right.index);
+  for (let index = 0; index < targetLength - assigned; index++) {
+    const sourceIndex = fractions[index]!.index;
+    quotas[sourceIndex] = quotas[sourceIndex]! + 1;
+  }
+
+  const lookup = new Uint32Array(targetLength);
+  let outputIndex = 0;
+  for (let sourceIndex = 0; sourceIndex < profile.length; sourceIndex++) {
+    for (let count = 0; count < quotas[sourceIndex]!; count++) {
+      lookup[outputIndex] = sourceIndex;
+      outputIndex++;
+    }
+  }
+  if (outputIndex !== targetLength) {
+    throw new Error(
+      `Protected ${axisName} mapping produced ${outputIndex} of ${targetLength} samples.`,
+    );
+  }
+  return lookup;
 }
 
 /** Build a per-row saliency profile (sum of gradient magnitudes per row). */
@@ -134,11 +203,34 @@ export function saliencyRetarget(image: RasterImage, opts: RetargetOptions): Ras
   const h = image.height;
   const frame = image.frames[0]!;
   const src = frame.data;
+  const targetW = Math.max(1, Math.round(opts.targetWidth ?? w));
+  const targetH = Math.max(1, Math.round(opts.targetHeight ?? h));
 
-  // Compute saliency from gradient magnitude, with mask applied.
-  const mag = gradientMagnitude(src, w, h, opts.protectMask);
+  if (opts.protectMask && opts.protectMask.length !== w * h) {
+    throw new RangeError(
+      `Protection mask has ${opts.protectMask.length} pixels for an image with ${w * h}; provide one mask value per source pixel.`,
+    );
+  }
+
+  const protectedColumns = opts.protectMask
+    ? projectProtectedAxis(opts.protectMask, w, h, 'x')
+    : undefined;
+  const protectedRows = opts.protectMask
+    ? projectProtectedAxis(opts.protectMask, w, h, 'y')
+    : undefined;
+
+  // Protected coordinates are reserved in the output mapping below. Keep
+  // ordinary saliency intact so it can distribute remaining samples among
+  // unprotected coordinates.
+  const mag = gradientMagnitude(src, w, h);
   const rowProf = smoothProfile(rowProfile(mag, w, h), 2);
   const colProf = smoothProfile(colProfile(mag, w, h), 2);
+  const protectedColumnMap = protectedColumns
+    ? buildProtectedAxisMap(colProf, protectedColumns, targetW, 'width')
+    : undefined;
+  const protectedRowMap = protectedRows
+    ? buildProtectedAxisMap(rowProf, protectedRows, targetH, 'height')
+    : undefined;
 
   // If either profile is too uniform, fall back honestly (spec: "falls back
   // to standard resize with an explanation when saliency is too uniform").
@@ -151,9 +243,6 @@ export function saliencyRetarget(image: RasterImage, opts: RetargetOptions): Ras
   if (isTooUniform(rowProf) || isTooUniform(colProf)) {
     return image;
   }
-
-  const targetW = Math.max(1, Math.round(opts.targetWidth ?? w));
-  const targetH = Math.max(1, Math.round(opts.targetHeight ?? h));
 
   // Continuous warp: compute scaled row and column positions.
   // We build the output by resampling at non-uniform intervals.
@@ -186,22 +275,26 @@ export function saliencyRetarget(image: RasterImage, opts: RetargetOptions): Ras
   for (let y = 0; y < targetH; y++) {
     const t = (y + 0.5) / targetH;
     // Binary search for source row index.
-    let srcY = Math.floor(t * (h - 1));
-    for (let i = 0; i < h; i++) {
-      if (t >= rowCumulative[i]! && t < rowCumulative[i + 1]!) {
-        srcY = i;
-        break;
+    let srcY = protectedRowMap?.[y] ?? Math.floor(t * (h - 1));
+    if (!protectedRowMap) {
+      for (let i = 0; i < h; i++) {
+        if (t >= rowCumulative[i]! && t < rowCumulative[i + 1]!) {
+          srcY = i;
+          break;
+        }
       }
     }
     srcY = Math.max(0, Math.min(h - 1, srcY));
 
     for (let x = 0; x < targetW; x++) {
       const s = (x + 0.5) / targetW;
-      let srcX = Math.floor(s * (w - 1));
-      for (let i = 0; i < w; i++) {
-        if (s >= colCumulative[i]! && s < colCumulative[i + 1]!) {
-          srcX = i;
-          break;
+      let srcX = protectedColumnMap?.[x] ?? Math.floor(s * (w - 1));
+      if (!protectedColumnMap) {
+        for (let i = 0; i < w; i++) {
+          if (s >= colCumulative[i]! && s < colCumulative[i + 1]!) {
+            srcX = i;
+            break;
+          }
         }
       }
       srcX = Math.max(0, Math.min(w - 1, srcX));

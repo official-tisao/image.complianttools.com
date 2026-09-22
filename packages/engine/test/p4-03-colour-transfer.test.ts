@@ -88,6 +88,17 @@ describe('P4-03 — Reinhard colour transfer', () => {
     expect(result.width).toBe(2);
     expect(result.height).toBe(2);
   });
+
+  it('uses every pixel in a differently-sized target image', () => {
+    const src = makeImage(2, 1, new Uint8ClampedArray([20, 30, 40, 255, 230, 220, 210, 180]));
+    const tgt = makeImage(1, 1, new Uint8ClampedArray([180, 120, 80, 255]));
+    const result = reinhardTransfer(src, tgt);
+    const output = result.frames[0]!.data;
+
+    expect([...output.slice(0, 3)]).toEqual([180, 120, 80]);
+    expect([...output.slice(4, 7)]).toEqual([180, 120, 80]);
+    expect([output[3], output[7]]).toEqual([255, 180]);
+  });
 });
 
 describe('P4-03 — Histogram matching', () => {
@@ -161,5 +172,24 @@ describe('P4-03 — Histogram matching', () => {
     expect(result.width).toBe(2);
     expect(result.height).toBe(2);
     expect(result.frames[0]!.data[3]).toBe(255);
+  });
+
+  it('matches normalized channel quantiles when reference size differs', () => {
+    const src = makeImage(
+      4,
+      1,
+      new Uint8ClampedArray([
+        0, 0, 0, 255, 50, 50, 50, 255, 100, 100, 100, 255, 150, 150, 150, 255,
+      ]),
+    );
+    const ref = makeImage(2, 1, new Uint8ClampedArray([200, 200, 200, 255, 240, 240, 240, 255]));
+    const result = histogramMatch(src, ref);
+
+    expect([0, 4, 8, 12].map((offset) => result.frames[0]!.data[offset])).toEqual([
+      200, 200, 240, 240,
+    ]);
+    expect([3, 7, 11, 15].map((offset) => result.frames[0]!.data[offset])).toEqual([
+      255, 255, 255, 255,
+    ]);
   });
 });

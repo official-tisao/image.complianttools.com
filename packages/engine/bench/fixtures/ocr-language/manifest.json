@@ -1,0 +1,119 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Self-generated OCR text-recognition fixtures; no scanned or third-party images.",
+  "renderer": {
+    "browser": "Chromium 151.0.7922.34",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.7922.34 Safari/537.36",
+    "method": "Canvas 2D, white background, #111 text, centered, 48 CSS px, PNG encoded losslessly.",
+    "dimensions": {
+      "width": 1200,
+      "height": 160
+    }
+  },
+  "fixtures": [
+    {
+      "language": "eng",
+      "groundTruth": "THE QUICK BROWN FOX 123",
+      "requestedFontStack": "Arial, sans-serif",
+      "dimensions": {
+        "width": 1200,
+        "height": 160
+      },
+      "path": "packages/engine/bench/fixtures/ocr-language/eng.png",
+      "sizeBytes": 16819,
+      "pngSha256": "3b2ab2cf93a2255c728d12023915f40fe82557c703053a4d6e07787aa90ade47",
+      "rgbaSha256": "7c4425a91d8b2a5a1c87a62da97e36dcf41d6227cf698a5b59ca365234afc122"
+    },
+    {
+      "language": "fra",
+      "groundTruth": "École française, ça va ? 123",
+      "requestedFontStack": "Arial, sans-serif",
+      "dimensions": {
+        "width": 1200,
+        "height": 160
+      },
+      "path": "packages/engine/bench/fixtures/ocr-language/fra.png",
+      "sizeBytes": 16708,
+      "pngSha256": "9723a6aa992b30084aebf695a5f0466493f381ae87c8eeb7e999a44610732626",
+      "rgbaSha256": "6155155e38c4293ca1263a753f301e085e418c95a303c482049984e4f221b43e"
+    },
+    {
+      "language": "spa",
+      "groundTruth": "¡Árbol, niño y café! 123",
+      "requestedFontStack": "Arial, sans-serif",
+      "dimensions": {
+        "width": 1200,
+        "height": 160
+      },
+      "path": "packages/engine/bench/fixtures/ocr-language/spa.png",
+      "sizeBytes": 15782,
+      "pngSha256": "b11a71ba0317f9d50ca91a9da96c38f3f5f80b1f0025506afbf363b5554a9278",
+      "rgbaSha256": "e5b5893a68e8dea86e78f195a2c663bce64c160dc1de6ff6697bc705a9b53ca6"
+    },
+    {
+      "language": "hin",
+      "groundTruth": "नमस्ते दुनिया 123",
+      "requestedFontStack": "Nirmala UI, Noto Sans Devanagari, sans-serif",
+      "dimensions": {
+        "width": 1200,
+        "height": 160
+      },
+      "path": "packages/engine/bench/fixtures/ocr-language/hin.png",
+      "sizeBytes": 11730,
+      "pngSha256": "f9abe1c97f75de30fb520403a7073694b88f211a18b95b2b09baa2f4dfb91001",
+      "rgbaSha256": "3e24a6e67eaf3d85293727bc8b0ece24a559bdbf0f01e42e7cbf4c4fd0243aad"
+    },
+    {
+      "language": "chi_sim",
+      "groundTruth": "你好世界 123",
+      "requestedFontStack": "Microsoft YaHei, Noto Sans CJK SC, sans-serif",
+      "dimensions": {
+        "width": 1200,
+        "height": 160
+      },
+      "path": "packages/engine/bench/fixtures/ocr-language/chi_sim.png",
+      "sizeBytes": 12466,
+      "pngSha256": "676f6293dda0ba37d2904230f2457b7e8da0954ba48821c5dad258f2b692640f",
+      "rgbaSha256": "6c249fbdd808b179356ebe5fcfdefefb7082bcc51a90f5fc03392383c2ec5bd4"
+    },
+    {
+      "language": "deu",
+      "groundTruth": "Fünf süße Äpfel 123",
+      "requestedFontStack": "Arial, sans-serif",
+      "dimensions": {
+        "width": 1200,
+        "height": 160
+      },
+      "path": "packages/engine/bench/fixtures/ocr-language/deu.png",
+      "sizeBytes": 13212,
+      "pngSha256": "dd602dd9c6ab44ce3d411bd5c162ecaba4c65cd456cf0b44cba4c27d318b4bce",
+      "rgbaSha256": "2c76345fe3f39a69b4a2ebc605d7e508a1bed1becf32814a74e46c6581a37505"
+    },
+    {
+      "language": "jpn",
+      "groundTruth": "こんにちは世界 123",
+      "requestedFontStack": "Yu Gothic, Noto Sans CJK JP, sans-serif",
+      "dimensions": {
+        "width": 1200,
+        "height": 160
+      },
+      "path": "packages/engine/bench/fixtures/ocr-language/jpn.png",
+      "sizeBytes": 14025,
+      "pngSha256": "84ad24b9485351e7233c6bb6712d92b8dbd4cf37fc6c97b936a8324031ae2fb9",
+      "rgbaSha256": "bbc5fcf24c651667f21e57403826c9897130c7c01fdb45d70d0e836036f49688"
+    },
+    {
+      "language": "ita",
+      "groundTruth": "Città italiana, caffè 123",
+      "requestedFontStack": "Arial, sans-serif",
+      "dimensions": {
+        "width": 1200,
+        "height": 160
+      },
+      "path": "packages/engine/bench/fixtures/ocr-language/ita.png",
+      "sizeBytes": 14504,
+      "pngSha256": "8a19450be01b68fd509bd47f8030b0594be793b78c16c5d032f7807c88ab3202",
+      "rgbaSha256": "81303b47e0758472d6066f5cceeb3f0ee3eb1f4885f01f95ad134d471b7416fa"
+    }
+  ]
+}

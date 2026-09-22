@@ -79,3 +79,31 @@ export async function probeCapabilities(
   const runtime = probeRuntimeCapabilities(environment);
   return codecCapabilities(runtime);
 }
+
+/** Browser location access stays behind the engine's platform capability boundary. */
+export function getBrowserOrigin(): string | undefined {
+  return typeof window === 'undefined' ? undefined : window.location.origin;
+}
+
+/** Report whether browser connectivity is explicitly offline. */
+export function isBrowserOffline(): boolean {
+  return typeof navigator !== 'undefined' && navigator.onLine === false;
+}
+
+/** Convert packed RGBA samples to a canvas for browser-only adapters such as OCR. */
+export function createCanvasFromRgba(
+  width: number,
+  height: number,
+  data: Uint8ClampedArray,
+): HTMLCanvasElement {
+  if (typeof document === 'undefined' || typeof ImageData === 'undefined') {
+    throw new Error('Canvas image conversion requires a browser document.');
+  }
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext('2d');
+  if (!context) throw new Error('The browser could not create a 2D canvas.');
+  context.putImageData(new ImageData(data, width, height), 0, 0);
+  return canvas;
+}

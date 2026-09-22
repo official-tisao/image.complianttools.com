@@ -18,6 +18,7 @@ import {
   initLazyTessdata,
   createOcrWorker,
   ocrError,
+  getUpscaleTier2Availability,
 } from '../src/p4-20-tools.js';
 
 describe('P4-20: Remaining local tools — engine-level verification', () => {
@@ -51,10 +52,14 @@ describe('P4-20: Remaining local tools — engine-level verification', () => {
     expect(typeof nearestHash).toBe('function');
   });
 
-  it('T62 OCR — lazy tessdata state exists; worker factory returns stub', () => {
+  it('T62 OCR — lazy tessdata is available and the local worker accepts jobs', () => {
     const state = initLazyTessdata();
-    expect(state.length).toBeGreaterThanOrEqual(5); // 5 required languages
-    expect(typeof createOcrWorker).toBe('function');
+    expect(state.length).toBe(8); // Minimum-language lazy-load fixture states; the full catalogue is larger.
+    const worker = createOcrWorker();
+    expect(worker.module).toBe('ocr');
+    expect(typeof worker.postMessage).toBe('function');
+    expect(typeof worker.terminate).toBe('function');
+    worker.terminate();
   });
 
   it('T62 OCR — typed error carries remedy', () => {
@@ -64,9 +69,25 @@ describe('P4-20: Remaining local tools — engine-level verification', () => {
     expect(err.remedy.length).toBeGreaterThan(0);
   });
 
-  it('P4-20 BLOCKED: T32 Tier 2 ONNX upscale model weights excluded', () => {
-    // Per docs/ADR/ip-clearance.md line 127: Real-ESRGAN weights excluded.
-    // This is an HONEST BLOCK, not a fabricated success.
-    expect(true).toBe(true); // Recorded blocker only
+  it('T32 Tier 2 requires a consented caller-supplied conversion; Tier 1 remains available', () => {
+    expect(getUpscaleTier2Availability()).toEqual({
+      status: 'unavailable',
+      reason: 'model_not_supplied',
+      tier1FallbackAvailable: true,
+    });
+    expect(
+      getUpscaleTier2Availability({ variant: 'x2plus', modelPath: '/models/realesrgan-x2.onnx' }),
+    ).toEqual({
+      status: 'unavailable',
+      reason: 'consent_required',
+      tier1FallbackAvailable: true,
+    });
+    expect(
+      getUpscaleTier2Availability({
+        variant: 'x2plus',
+        modelPath: '/models/realesrgan-x2.onnx',
+        consentGranted: true,
+      }),
+    ).toEqual({ status: 'available', scaleFactor: 2, tier1FallbackAvailable: true });
   });
 });

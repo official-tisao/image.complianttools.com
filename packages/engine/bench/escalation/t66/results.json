@@ -1,0 +1,477 @@
+{
+  "schemaVersion": 1,
+  "benchmark": "P4-21 T66 local object-removal inpainting comparison",
+  "recordedAt": "2026-09-20T01:21:52.958Z",
+  "benchmarkScriptSha256": "07dfe8e9935ee1d28045128ff9fd43600dac8ba0c7f64b24453c7a0c69d64bdf",
+  "fixtureCount": 3,
+  "assetPolicy": "All scenes and exact pre-occlusion references are generated in this script. No external images or downloaded model assets are used.",
+  "setup": {
+    "width": 48,
+    "height": 48,
+    "mask": "8x8 rectangle at (20,20); same opaque magenta fill and mask for every method; input/reference dimensions are unchanged.",
+    "algorithms": ["telea", "navier-stokes", "confidence-priority", "efros-leung", "quilting"]
+  },
+  "latencyMethodology": "1 warmup and 5 timed calls per scene and method; only the exported removeObject call is timed. PNG encoding, metric calculation, and fixture generation are excluded. p95 uses nearest-rank and equals the maximum with five samples.",
+  "qualityMethodology": {
+    "psnr": "Exact RGB channel MSE strictly over the masked pixels, compared with the original generated values before occlusion; PSNR=10*log10(255^2/MSE).",
+    "ssim": "Mean local SSIM of Rec.601 luminance, with a 7x7 Gaussian window (sigma 1.2), constants C1=(0.01*255)^2 and C2=(0.03*255)^2, clamped-edge extension, and window centers restricted to masked pixels. The window samples include known neighboring context."
+  },
+  "artifactMethodology": "Reference, masked input, and each output are saved as lossless 8-bit RGBA PNGs. Encoded-PNG and raw-RGBA SHA-256 hashes are recorded with dimensions.",
+  "runtime": {
+    "node": "v22.22.0",
+    "platform": "win32",
+    "architecture": "x64",
+    "cpuModel": "Intel(R) Core(TM) i7-10750H CPU @ 2.60GHz",
+    "logicalCpuCount": 12,
+    "runtime": "Node.js CPU, synchronous single-threaded benchmark loop; no browser or GPU backend."
+  },
+  "implementationNotes": [
+    "Calls use the exported removeObject controller; all five currently exported algorithm choices are compared on the identical masked input for each fixture.",
+    "Quality scores measure recovery of a small, known hidden synthetic patch. They do not establish quality on real photographs, varied mask geometries, larger objects, or user-selected content.",
+    "The implementations are repository-local algorithm labels; this comparison does not independently validate conformance to the named academic methods.",
+    "PSNR reflects only exact ROI RGB error; SSIM uses each ROI pixel as a local-window center but also reads adjacent unmasked context. Both are descriptive metrics and not a user study."
+  ],
+  "aggregateLatency": {
+    "telea": {
+      "sampleCount": 15,
+      "medianMs": 1.739,
+      "p95Ms": 3.789
+    },
+    "navier-stokes": {
+      "sampleCount": 15,
+      "medianMs": 0.347,
+      "p95Ms": 1.625
+    },
+    "confidence-priority": {
+      "sampleCount": 15,
+      "medianMs": 4.371,
+      "p95Ms": 6.52
+    },
+    "efros-leung": {
+      "sampleCount": 15,
+      "medianMs": 40.967,
+      "p95Ms": 50.66
+    },
+    "quilting": {
+      "sampleCount": 15,
+      "medianMs": 29.685,
+      "p95Ms": 35.402
+    }
+  },
+  "aggregateQuality": {
+    "telea": {
+      "fixtureCount": 3,
+      "meanRoiPsnrRgbDb": 19.9944,
+      "meanRoiSsimRec601Gaussian7x7": 0.678207
+    },
+    "navier-stokes": {
+      "fixtureCount": 3,
+      "meanRoiPsnrRgbDb": 13.8012,
+      "meanRoiSsimRec601Gaussian7x7": 0.384905
+    },
+    "confidence-priority": {
+      "fixtureCount": 3,
+      "meanRoiPsnrRgbDb": 5.5982,
+      "meanRoiSsimRec601Gaussian7x7": 0.251969
+    },
+    "efros-leung": {
+      "fixtureCount": 3,
+      "meanRoiPsnrRgbDb": 20.0959,
+      "meanRoiSsimRec601Gaussian7x7": 0.608839
+    },
+    "quilting": {
+      "fixtureCount": 3,
+      "meanRoiPsnrRgbDb": 14.3052,
+      "meanRoiSsimRec601Gaussian7x7": 0.331379
+    }
+  },
+  "fixtures": [
+    {
+      "id": "woven-lattice",
+      "generator": {
+        "type": "deterministic in-code procedural field",
+        "parameters": "Three RGB channels combine fixed-period sinusoidal woven waves; no random state."
+      },
+      "width": 48,
+      "height": 48,
+      "mask": {
+        "rectangle": {
+          "x": 20,
+          "y": 20,
+          "width": 8,
+          "height": 8
+        },
+        "maskedPixelCount": 64,
+        "rawMaskSha256": "e42474b5bc82ea5eca263acd1c57b781c82d13b464db18fd74544a1e2fb2ecf9",
+        "fillColorRgba": [255, 0, 255, 255]
+      },
+      "reference": {
+        "path": "artifacts/woven-lattice-reference.png",
+        "width": 48,
+        "height": 48,
+        "pngBytes": 8198,
+        "pngSha256": "fd9f3d177447b317503686a0bc56ac726bfd1ee631cf6116a19dc4e0fe0bc407",
+        "rgbaSha256": "285419ce198c3af2e5dc19fcec41a22bc72e3cb74b6b1c7f51ba4df163a38825"
+      },
+      "maskedInput": {
+        "path": "artifacts/woven-lattice-masked-input.png",
+        "width": 48,
+        "height": 48,
+        "pngBytes": 8041,
+        "pngSha256": "6002b5521fa80de6f182cd76d662d9aa4844a3b62ad9b92f44d388cff37a9d49",
+        "rgbaSha256": "6c7cd0b0d811cd85589cc183f76ab87e532c3896188a83bc1dfe7cd69ef6e780"
+      },
+      "scoreRegion": "PSNR scores RGB pixels whose mask value is 255. SSIM averages 7x7 Gaussian-window local SSIM (sigma 1.2) at those same masked-pixel centers; windows include surrounding known context.",
+      "methods": [
+        {
+          "algorithm": "telea",
+          "output": {
+            "path": "artifacts/woven-lattice-telea.png",
+            "width": 48,
+            "height": 48,
+            "pngBytes": 8110,
+            "pngSha256": "fa9d617af4f1ea81724b9c262c885708612a8f5ebf070568bb6641b58c925863",
+            "rgbaSha256": "7f5a53eea2f846486fc33d137f0fd886fdbdf7ae07fab53c7b3d0e70f175e5df"
+          },
+          "latency": {
+            "samplesMs": [1.588, 2.112, 1.736, 1.571, 1.739],
+            "medianMs": 1.736,
+            "p95Ms": 2.112
+          },
+          "roiPsnrRgbDb": 17.1905,
+          "roiSsimRec601Gaussian7x7": 0.573947
+        },
+        {
+          "algorithm": "navier-stokes",
+          "output": {
+            "path": "artifacts/woven-lattice-navier-stokes.png",
+            "width": 48,
+            "height": 48,
+            "pngBytes": 8125,
+            "pngSha256": "1d9a1ab37f0bf3f30f54ca8322b352c9a1decc71ac4b3538e0535f89fa0739c2",
+            "rgbaSha256": "46185ce7fcbfe1a0671a5b95ee8cad18e868289e426bcbe569f92d7d0cd2adf6"
+          },
+          "latency": {
+            "samplesMs": [1.457, 1.625, 0.942, 0.857, 0.814],
+            "medianMs": 0.942,
+            "p95Ms": 1.625
+          },
+          "roiPsnrRgbDb": 15.6674,
+          "roiSsimRec601Gaussian7x7": 0.450161
+        },
+        {
+          "algorithm": "confidence-priority",
+          "output": {
+            "path": "artifacts/woven-lattice-confidence-priority.png",
+            "width": 48,
+            "height": 48,
+            "pngBytes": 8067,
+            "pngSha256": "c3bbec0866c732ef1a41aad6d341509cdf3126af23352b96e5e40cba7bb95f96",
+            "rgbaSha256": "61e0b588eb9648ff751fc3aacddd1f54891f245c5697b1e67a4ef95c6b4843ec"
+          },
+          "latency": {
+            "samplesMs": [4.428, 3.737, 3.752, 3.909, 3.408],
+            "medianMs": 3.752,
+            "p95Ms": 4.428
+          },
+          "roiPsnrRgbDb": 6.7774,
+          "roiSsimRec601Gaussian7x7": 0.367532
+        },
+        {
+          "algorithm": "efros-leung",
+          "output": {
+            "path": "artifacts/woven-lattice-efros-leung.png",
+            "width": 48,
+            "height": 48,
+            "pngBytes": 8166,
+            "pngSha256": "397516a0a798df8a5b125dc621ea59d54933f18563b41fd80f8f820a3176cccd",
+            "rgbaSha256": "1b52581aee5fd468e6485d09c200a68eb090ddc9b09298b65390cf179b0690bd"
+          },
+          "latency": {
+            "samplesMs": [26.181, 40.62, 31.593, 25.908, 26.258],
+            "medianMs": 26.258,
+            "p95Ms": 40.62
+          },
+          "roiPsnrRgbDb": 23.4961,
+          "roiSsimRec601Gaussian7x7": 0.865673
+        },
+        {
+          "algorithm": "quilting",
+          "output": {
+            "path": "artifacts/woven-lattice-quilting.png",
+            "width": 48,
+            "height": 48,
+            "pngBytes": 8078,
+            "pngSha256": "9ca3b48a22de046fdbc67fd4ad0269549bbb293ce918948d486ae05431ab486e",
+            "rgbaSha256": "e84a725de6573577d837719d303438ac2cd9a51b881223a736673944d5dfe42e"
+          },
+          "latency": {
+            "samplesMs": [18.019, 19.988, 20.211, 19.46, 18.88],
+            "medianMs": 19.46,
+            "p95Ms": 20.211
+          },
+          "roiPsnrRgbDb": 16.1078,
+          "roiSsimRec601Gaussian7x7": 0.50015
+        }
+      ]
+    },
+    {
+      "id": "crossing-bands",
+      "generator": {
+        "type": "deterministic in-code procedural field",
+        "parameters": "Crossing sinusoidal RGB bands plus per-pixel hash noise, seed 0x66a31."
+      },
+      "width": 48,
+      "height": 48,
+      "mask": {
+        "rectangle": {
+          "x": 20,
+          "y": 20,
+          "width": 8,
+          "height": 8
+        },
+        "maskedPixelCount": 64,
+        "rawMaskSha256": "e42474b5bc82ea5eca263acd1c57b781c82d13b464db18fd74544a1e2fb2ecf9",
+        "fillColorRgba": [255, 0, 255, 255]
+      },
+      "reference": {
+        "path": "artifacts/crossing-bands-reference.png",
+        "width": 48,
+        "height": 48,
+        "pngBytes": 7670,
+        "pngSha256": "c8a2bd83a28e23cb691f943d3f2be09a650479b47b24eb686752b295f550fdf7",
+        "rgbaSha256": "dc6d79e3f3c400af75f3d127ed8caed3c8c1a0c463862a945099d93f8e4d4a28"
+      },
+      "maskedInput": {
+        "path": "artifacts/crossing-bands-masked-input.png",
+        "width": 48,
+        "height": 48,
+        "pngBytes": 7523,
+        "pngSha256": "46737d68b091dd91487f60d5a2b601cacae923092d4a6d806c08f34811ae6b8f",
+        "rgbaSha256": "5c295872e1bd27e9f8cd66d6bdbdf570ff62ffbc623aa4a3d43909bd18d8d97b"
+      },
+      "scoreRegion": "PSNR scores RGB pixels whose mask value is 255. SSIM averages 7x7 Gaussian-window local SSIM (sigma 1.2) at those same masked-pixel centers; windows include surrounding known context.",
+      "methods": [
+        {
+          "algorithm": "telea",
+          "output": {
+            "path": "artifacts/crossing-bands-telea.png",
+            "width": 48,
+            "height": 48,
+            "pngBytes": 7589,
+            "pngSha256": "b3880a484e52eeaeabf02bf0956e3c1dac7eda7f0de8b6b8d578a14eca012edc",
+            "rgbaSha256": "030a2c780c9e45c0bddd2881b56a1fc8d60d8b286a8494c0ea17b0c927f28cc1"
+          },
+          "latency": {
+            "samplesMs": [1.215, 1.171, 1.064, 1.636, 1.852],
+            "medianMs": 1.215,
+            "p95Ms": 1.852
+          },
+          "roiPsnrRgbDb": 18.4435,
+          "roiSsimRec601Gaussian7x7": 0.636678
+        },
+        {
+          "algorithm": "navier-stokes",
+          "output": {
+            "path": "artifacts/crossing-bands-navier-stokes.png",
+            "width": 48,
+            "height": 48,
+            "pngBytes": 7603,
+            "pngSha256": "9276e998b848852e72d378af3bc986e15be740057a2c9a35c8419472f199aaa3",
+            "rgbaSha256": "7c6b636a88df1bb49b81f8e25f8f0e74d733a89e21c7dc8bb460d053d28431c1"
+          },
+          "latency": {
+            "samplesMs": [0.221, 0.205, 0.197, 0.228, 0.23],
+            "medianMs": 0.221,
+            "p95Ms": 0.23
+          },
+          "roiPsnrRgbDb": 14.6844,
+          "roiSsimRec601Gaussian7x7": 0.465012
+        },
+        {
+          "algorithm": "confidence-priority",
+          "output": {
+            "path": "artifacts/crossing-bands-confidence-priority.png",
+            "width": 48,
+            "height": 48,
+            "pngBytes": 7547,
+            "pngSha256": "003785836ad540887a225cd64b24e4dd3e9f0af703cced3cf9ef6cc22ab0261e",
+            "rgbaSha256": "b5a3d2f821741e8c1b14b272d861458ae1a4300820082d2e46d2801705754ae9"
+          },
+          "latency": {
+            "samplesMs": [4.23, 4.371, 4.443, 3.672, 4.265],
+            "medianMs": 4.265,
+            "p95Ms": 4.443
+          },
+          "roiPsnrRgbDb": 6.2203,
+          "roiSsimRec601Gaussian7x7": 0.228429
+        },
+        {
+          "algorithm": "efros-leung",
+          "output": {
+            "path": "artifacts/crossing-bands-efros-leung.png",
+            "width": 48,
+            "height": 48,
+            "pngBytes": 7637,
+            "pngSha256": "4682ac3fb7ca834f0ed5c46964d4f484dbfa14ad8a3c6a3c87701c9699b93ba3",
+            "rgbaSha256": "9bf8ab353186932b0b1b56c97e2e50afbc5829794d81165e0697b18a37eab87b"
+          },
+          "latency": {
+            "samplesMs": [50.66, 40.967, 42.389, 39.589, 38.929],
+            "medianMs": 40.967,
+            "p95Ms": 50.66
+          },
+          "roiPsnrRgbDb": 16.9756,
+          "roiSsimRec601Gaussian7x7": 0.429174
+        },
+        {
+          "algorithm": "quilting",
+          "output": {
+            "path": "artifacts/crossing-bands-quilting.png",
+            "width": 48,
+            "height": 48,
+            "pngBytes": 7577,
+            "pngSha256": "2b73fd261146dd17062d8930dcc383c1b5a6b4176e9c6dc63f37174ce99bfc0c",
+            "rgbaSha256": "6d76070c383a6fa12543f5f0fe2848737fffe03eaf2c3e0fc7e2f751e36b1768"
+          },
+          "latency": {
+            "samplesMs": [35.402, 32.54, 29.42, 33.344, 29.685],
+            "medianMs": 32.54,
+            "p95Ms": 35.402
+          },
+          "roiPsnrRgbDb": 12.0311,
+          "roiSsimRec601Gaussian7x7": 0.069767
+        }
+      ]
+    },
+    {
+      "id": "seeded-cloud",
+      "generator": {
+        "type": "deterministic in-code procedural field",
+        "parameters": "Bilinear smooth value-noise octaves at spacings 13 and 6 plus per-pixel hash noise, seed 0x66b27."
+      },
+      "width": 48,
+      "height": 48,
+      "mask": {
+        "rectangle": {
+          "x": 20,
+          "y": 20,
+          "width": 8,
+          "height": 8
+        },
+        "maskedPixelCount": 64,
+        "rawMaskSha256": "e42474b5bc82ea5eca263acd1c57b781c82d13b464db18fd74544a1e2fb2ecf9",
+        "fillColorRgba": [255, 0, 255, 255]
+      },
+      "reference": {
+        "path": "artifacts/seeded-cloud-reference.png",
+        "width": 48,
+        "height": 48,
+        "pngBytes": 6554,
+        "pngSha256": "8a8df2cbd193e1d1cafadabe9efb3b13dfb487c02d1dafbb9a7d5828e8e40440",
+        "rgbaSha256": "51f9edc9f004ad78fc6f27013680fd0adb24696f0f5b4b4da91238b6085f6e86"
+      },
+      "maskedInput": {
+        "path": "artifacts/seeded-cloud-masked-input.png",
+        "width": 48,
+        "height": 48,
+        "pngBytes": 6462,
+        "pngSha256": "03a5665ed7006c7d321f722b563c1eb9760608ade315a68c1428857d029c77a4",
+        "rgbaSha256": "41aac01cdc188fd34235b18759f243f2ee8dec555167148205a33da5f1a32f34"
+      },
+      "scoreRegion": "PSNR scores RGB pixels whose mask value is 255. SSIM averages 7x7 Gaussian-window local SSIM (sigma 1.2) at those same masked-pixel centers; windows include surrounding known context.",
+      "methods": [
+        {
+          "algorithm": "telea",
+          "output": {
+            "path": "artifacts/seeded-cloud-telea.png",
+            "width": 48,
+            "height": 48,
+            "pngBytes": 6501,
+            "pngSha256": "2b3058337e7154dd5d8a1c7066e1fd9f5f3437680ae615a7e89e6690837b24e4",
+            "rgbaSha256": "03f207884907e1eca9f045d9c9b9c52654e578205b3a486370be52b52bf07676"
+          },
+          "latency": {
+            "samplesMs": [2.135, 3.789, 1.922, 2.298, 2.474],
+            "medianMs": 2.298,
+            "p95Ms": 3.789
+          },
+          "roiPsnrRgbDb": 24.3491,
+          "roiSsimRec601Gaussian7x7": 0.823995
+        },
+        {
+          "algorithm": "navier-stokes",
+          "output": {
+            "path": "artifacts/seeded-cloud-navier-stokes.png",
+            "width": 48,
+            "height": 48,
+            "pngBytes": 6531,
+            "pngSha256": "c11ecfd260d3d9e71af1e729983650e5adf55424f8a8dba8631997f0ae4d5206",
+            "rgbaSha256": "32396ce70ba9bec26d3905a28bc48055bea59623646ad56277b70f3626b0b24a"
+          },
+          "latency": {
+            "samplesMs": [0.347, 0.337, 0.328, 0.369, 0.356],
+            "medianMs": 0.347,
+            "p95Ms": 0.369
+          },
+          "roiPsnrRgbDb": 11.0518,
+          "roiSsimRec601Gaussian7x7": 0.239541
+        },
+        {
+          "algorithm": "confidence-priority",
+          "output": {
+            "path": "artifacts/seeded-cloud-confidence-priority.png",
+            "width": 48,
+            "height": 48,
+            "pngBytes": 6481,
+            "pngSha256": "5edaa294a2e232cb34c001165a40cd77de9bdf0856375eeddc12cf4a19559375",
+            "rgbaSha256": "c0192cf3af6208c12b879bfac30320a734e32069e8c2053f625bbdfcd967fbbe"
+          },
+          "latency": {
+            "samplesMs": [5.855, 6.299, 5.456, 6.52, 5.494],
+            "medianMs": 5.855,
+            "p95Ms": 6.52
+          },
+          "roiPsnrRgbDb": 3.7969,
+          "roiSsimRec601Gaussian7x7": 0.159947
+        },
+        {
+          "algorithm": "efros-leung",
+          "output": {
+            "path": "artifacts/seeded-cloud-efros-leung.png",
+            "width": 48,
+            "height": 48,
+            "pngBytes": 6534,
+            "pngSha256": "04051ad085b3030eee9795a9b770c85b4368688135a356dae9a5fb6161d0a0ef",
+            "rgbaSha256": "97d92369a324b9233e5071e0a7cdc93940bbd2d5346ab64cd8e41cd0a5bbf65c"
+          },
+          "latency": {
+            "samplesMs": [46.898, 50.116, 44.508, 49.287, 47.444],
+            "medianMs": 47.444,
+            "p95Ms": 50.116
+          },
+          "roiPsnrRgbDb": 19.8159,
+          "roiSsimRec601Gaussian7x7": 0.531669
+        },
+        {
+          "algorithm": "quilting",
+          "output": {
+            "path": "artifacts/seeded-cloud-quilting.png",
+            "width": 48,
+            "height": 48,
+            "pngBytes": 6495,
+            "pngSha256": "28df98aa209963008d2529d1fe70788f0af0c2070f7164726557b50e781a3559",
+            "rgbaSha256": "842d67e21be662b95d1ef565840ec293f9d7cb5ce3ceb97f1fa2327582bafc74"
+          },
+          "latency": {
+            "samplesMs": [33.436, 34.86, 30.125, 24.298, 31.264],
+            "medianMs": 31.264,
+            "p95Ms": 34.86
+          },
+          "roiPsnrRgbDb": 14.7768,
+          "roiSsimRec601Gaussian7x7": 0.42422
+        }
+      ]
+    }
+  ]
+}

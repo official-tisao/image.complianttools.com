@@ -2,7 +2,6 @@
   import { onDestroy } from 'svelte';
   import { codecUnavailableError } from '@complianttools/image-engine/codecs/registry';
   import { decodeCbz, encodeCbz, type ComicPage } from '@complianttools/image-engine/documents/cbz';
-  import { createPdfFromPngPages } from '@complianttools/image-engine/documents/pdf';
   import {
     engineErrorMessage,
     isEngineError,
@@ -129,6 +128,8 @@
             status = `${t('cbz.prepared', 'Prepared {value}', pages.length)} ${t(pages.length === 1 ? 'cbz.orderedPage' : 'cbz.orderedPages', pages.length === 1 ? 'naturally ordered image page' : 'naturally ordered image pages')} ${t('cbz.locally', 'locally')}.`;
             return;
           }
+          const { createPdfFromPngPages } =
+            await import('@complianttools/image-engine/documents/pdf');
           output = new Uint8Array(
             await createPdfFromPngPages(await Promise.all(pages.map(pageAsPng))),
           );

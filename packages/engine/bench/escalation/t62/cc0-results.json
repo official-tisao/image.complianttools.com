@@ -1,0 +1,172 @@
+{
+  "generatedAt": "2026-09-21T13:22:45.121Z",
+  "environment": {
+    "browser": "Chromium 151.0.7922.34",
+    "server": "Local Vite test server",
+    "runtimeRequests": [
+      {
+        "url": "/__cc0-ocr-smoke.html",
+        "method": "GET"
+      },
+      {
+        "url": "/@fs/<workspace>/packages/engine/src/ocr.ts",
+        "method": "GET"
+      },
+      {
+        "url": "/@fs/<workspace>/packages/engine/src/capabilities.ts",
+        "method": "GET"
+      },
+      {
+        "url": "/@fs/<workspace>/packages/engine/src/ai/transport.ts",
+        "method": "GET"
+      },
+      {
+        "url": "/@fs/<workspace>/packages/engine/src/ocr-runtime-version.ts",
+        "method": "GET"
+      },
+      {
+        "url": "/@fs/<workspace>/packages/engine/src/ocr-tessdata-catalog.ts",
+        "method": "GET"
+      },
+      {
+        "url": "/@fs/<workspace>/packages/engine/src/codecs/registry.ts",
+        "method": "GET"
+      },
+      {
+        "url": "/node_modules/.vite/deps/tesseract__js.js?v=5b1d2382",
+        "method": "GET"
+      },
+      {
+        "url": "/node_modules/.vite/deps/chunk-E2JEHENU.js?v=5b1d2382",
+        "method": "GET"
+      },
+      {
+        "url": "/tessdata/eng.traineddata",
+        "method": "HEAD"
+      },
+      {
+        "url": "/ocr-runtime/v7.0.0/worker.min.js",
+        "method": "GET"
+      },
+      {
+        "url": "/ocr-runtime/v7.0.0/tesseract-core-relaxedsimd-lstm.wasm.js",
+        "method": "GET"
+      },
+      {
+        "url": "/tessdata/eng.traineddata",
+        "method": "GET"
+      }
+    ],
+    "runtimeExternalOrigins": [],
+    "pageErrors": []
+  },
+  "source": {
+    "id": "test-ocr-document",
+    "sourcePageUrl": "https://commons.wikimedia.org/wiki/File:Test_OCR_document.jpg",
+    "sourceBytes": 583690,
+    "sourceSha1": "f00cba5fc4882a570170246d44febfdb746e22ac",
+    "sourceSha256": "3b06e74ec9ddcdd647357cbda13ab264fa28ed1ce9a41ec16d116786f7b97f0b",
+    "sourceMetadataSha256": "bb34d6646d3eb3fad1adffcb6594706b7da74d584d3d8f351c699e912fe77892",
+    "license": "CC0-1.0"
+  },
+  "measurement": {
+    "language": "eng",
+    "groundTruth": "Alice was beginning to get very tired of sitting by her sister in the café, and of having nothing to do: once or twice she had peeped into the book her sister was reading, but it had no pictures or conversations in it, “and what is the use of a book,” thought Alice, “without pictures or conversations?”",
+    "crop": {
+      "x": 270,
+      "y": 430,
+      "width": 1000,
+      "height": 540
+    },
+    "cropMethod": "Decode the registered JPEG at its native dimensions in Chromium Canvas 2D; copy this rectangle to ImageData without rescaling.",
+    "dimensions": {
+      "width": 1000,
+      "height": 540
+    },
+    "rgbaSha256": "26074af79381a73cc7ab0cf2e6dbff719830e0af5d22052dbda2b68da25de96f",
+    "output": {
+      "type": "ocr-result",
+      "language": "eng",
+      "text": "Aitice was beginning to get very tired of\nsitting by her sister in the café, and of having\nnothing to do: once or twice she had peeped\ninto the book her sister was reading, but it\nhad no pictures or conversations in it, “and\nwhat is the use of a book,” thought Alice,\n“without pictures or conversations?”\n",
+      "confidence": 94
+    },
+    "exactMatch": false,
+    "characterErrorRate": 0.006600660066006601,
+    "progress": [
+      {
+        "phase": "loading tesseract core",
+        "percent": 0
+      },
+      {
+        "phase": "loading tesseract core",
+        "percent": 100
+      },
+      {
+        "phase": "initializing tesseract",
+        "percent": 0
+      },
+      {
+        "phase": "initializing tesseract",
+        "percent": 100
+      },
+      {
+        "phase": "loading language traineddata",
+        "percent": 0
+      },
+      {
+        "phase": "loading language traineddata",
+        "percent": 50
+      },
+      {
+        "phase": "loading language traineddata",
+        "percent": 100
+      },
+      {
+        "phase": "initializing api",
+        "percent": 0
+      },
+      {
+        "phase": "initializing api",
+        "percent": 100
+      },
+      {
+        "phase": "recognizing text",
+        "percent": 0
+      },
+      {
+        "phase": "recognizing text",
+        "percent": 8.571428571428571
+      },
+      {
+        "phase": "recognizing text",
+        "percent": 17.142857142857142
+      },
+      {
+        "phase": "recognizing text",
+        "percent": 25.71428571428571
+      },
+      {
+        "phase": "recognizing text",
+        "percent": 35.714285714285715
+      },
+      {
+        "phase": "recognizing text",
+        "percent": 44.285714285714285
+      },
+      {
+        "phase": "recognizing text",
+        "percent": 52.85714285714286
+      },
+      {
+        "phase": "recognizing text",
+        "percent": 61.42857142857143
+      },
+      {
+        "phase": "recognizing text",
+        "percent": 100
+      }
+    ]
+  },
+  "metric": "Unicode-codepoint edit distance after NFC normalization and whitespace collapse; exact match uses the same normalization.",
+  "limitation": "One manually transcribed English printed paragraph from one CC0 test page; not a representative estimate of Tesseract accuracy across languages, layouts, handwriting, or camera captures."
+}

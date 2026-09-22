@@ -1,11 +1,12 @@
 import { expect, test } from '@playwright/test';
 import { decodeGif } from '../packages/engine/src/codecs/third-party/gif.js';
+import { LOCAL_ORIGIN } from './support/network.js';
 
 test('decodes real browser-recorded WebM pixels and exports them as GIF', async ({ page }) => {
   const crossOrigin: string[] = [];
   page.on('request', (request) => {
     const url = new URL(request.url());
-    if (url.origin !== 'http://127.0.0.1:4173') crossOrigin.push(request.url());
+    if (url.origin !== LOCAL_ORIGIN) crossOrigin.push(request.url());
   });
   await page.goto('/video-to-gif');
   await page.waitForLoadState('networkidle');
@@ -89,7 +90,7 @@ test('decodes real browser-recorded MP4 family pixels and exports them as GIF', 
   const crossOrigin: string[] = [];
   page.on('request', (request) => {
     const url = new URL(request.url());
-    if (url.origin !== 'http://127.0.0.1:4173') crossOrigin.push(request.url());
+    if (url.origin !== LOCAL_ORIGIN) crossOrigin.push(request.url());
   });
   await page.goto('/video-to-gif');
   await page.waitForLoadState('networkidle');
@@ -161,7 +162,7 @@ test('video frame tool reports an invalid local container without a network fall
   const crossOrigin: string[] = [];
   page.on('request', (request) => {
     const url = new URL(request.url());
-    if (url.origin !== 'http://127.0.0.1:4173') crossOrigin.push(request.url());
+    if (url.origin !== LOCAL_ORIGIN) crossOrigin.push(request.url());
   });
   await page.goto('/video-to-gif');
   await page.waitForLoadState('networkidle');

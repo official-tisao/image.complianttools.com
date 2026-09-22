@@ -1,0 +1,1536 @@
+{
+  "schemaVersion": 1,
+  "benchmark": "P4-21 T66 CC0 photo-derived inpainting proxy",
+  "recordedAt": "2026-09-20T11:28:34.202Z",
+  "benchmarkScriptSha256": "97b48b4d028c8f38f2558b7e5d8d6081a81afe754d303bc6870061b0f6d369da",
+  "sourceManifestPath": "../fixtures/cc0/manifest.json",
+  "sourceManifestSha256": "2eccd74e8dc2d4d57492ffb95717c9efcfc398010b0c7354af6705545ecfe6c5",
+  "fixtureCount": 8,
+  "sourceCount": 4,
+  "assetPolicy": "Uses four individually registered CC0-1.0 source images and their locally pinned item-level metadata snapshots. The runner verifies source bytes, metadata hashes, and CC0 declarations before producing derivatives.",
+  "setup": {
+    "dimensions": "32x32",
+    "sourceCrop": "256x256 in original JPEG pixels, then Lanczos3 resampling",
+    "masks": "Eight cases: one 6x6 interior rectangle and one irregular stepped 8-row mask touching the left crop boundary per source.",
+    "fillColorRgba": [
+      255,
+      0,
+      255,
+      255
+    ],
+    "algorithms": [
+      "telea",
+      "navier-stokes",
+      "confidence-priority",
+      "efros-leung",
+      "quilting"
+    ]
+  },
+  "latencyMethodology": "1 warmup and 3 timed synchronous removeObject calls per case and method. PNG output, score calculation, decoding, cropping, and resampling are excluded. Aggregate p95 is nearest-rank over 24 samples per method.",
+  "qualityMethodology": {
+    "psnr": "Exact RGB channel MSE strictly over masked pixels compared with the original pre-occlusion crop; PSNR=10*log10(255^2/MSE).",
+    "ssim": "Mean local SSIM of Rec.601 luminance, 7x7 Gaussian window (sigma 1.2), C1=(0.01*255)^2 and C2=(0.03*255)^2, clamped-edge extension, with window centers restricted to masked pixels.",
+    "limitation": "These are synthetic occlusions over resized CC0 photographs. The hidden source pixels are known by construction, but this is not ground truth for real object removal, because no real object was removed and no plausible replacement scene was annotated."
+  },
+  "artifactMethodology": "Lossless RGBA PNGs for the reference, magenta-occluded input, binary mask, and every method output. PNG and decoded RGBA SHA-256 hashes and dimensions are recorded.",
+  "invariants": [
+    "Every output must preserve all unmasked RGBA pixels exactly.",
+    "Every output must retain the 32x32 input dimensions.",
+    "Only registered manifest assets may be used; a source, item-level metadata, or license hash mismatch aborts the run."
+  ],
+  "runtime": {
+    "node": "v22.22.0",
+    "platform": "win32",
+    "architecture": "x64",
+    "cpuModel": "Intel(R) Core(TM) i7-10750H CPU @ 2.60GHz",
+    "logicalCpuCount": 12,
+    "runtime": "Node.js CPU, synchronous single-threaded benchmark loop; no browser or GPU backend."
+  },
+  "aggregate": [
+    {
+      "algorithm": "telea",
+      "meanRoiPsnrRgbDb": 25.3583,
+      "meanRoiSsim": 0.610996,
+      "medianLatencyMs": 0.9,
+      "p95LatencyMs": 3.091
+    },
+    {
+      "algorithm": "navier-stokes",
+      "meanRoiPsnrRgbDb": 13.129,
+      "meanRoiSsim": 0.208173,
+      "medianLatencyMs": 0.32,
+      "p95LatencyMs": 3.882
+    },
+    {
+      "algorithm": "confidence-priority",
+      "meanRoiPsnrRgbDb": 5.8823,
+      "meanRoiSsim": 0.253917,
+      "medianLatencyMs": 2.721,
+      "p95LatencyMs": 9.328
+    },
+    {
+      "algorithm": "efros-leung",
+      "meanRoiPsnrRgbDb": 22.1028,
+      "meanRoiSsim": 0.43746,
+      "medianLatencyMs": 13.425,
+      "p95LatencyMs": 22.323
+    },
+    {
+      "algorithm": "quilting",
+      "meanRoiPsnrRgbDb": 19.5491,
+      "meanRoiSsim": 0.39024,
+      "medianLatencyMs": 10.93,
+      "p95LatencyMs": 18.912
+    }
+  ],
+  "fixtures": [
+    {
+      "id": "landscape-dordogne-interior",
+      "source": {
+        "id": "landscape-dordogne",
+        "title": "Landscape Dordogne Château de Hautefort 18",
+        "creator": "Jebulon",
+        "license": "CC0-1.0",
+        "licenseEvidence": "Commons imageinfo extmetadata: LicenseShortName=CC0; LicenseUrl=https://creativecommons.org/publicdomain/zero/1.0/",
+        "sourcePageUrl": "https://commons.wikimedia.org/wiki/File:Landscape_Dordogne_Ch%C3%A2teau_de_Hautefort_18.jpg",
+        "imagePath": "../fixtures/cc0/landscape-dordogne.jpg",
+        "imageBytes": 2140794,
+        "imageSha256": "c3e2eef6af01a10882c83f71ff849d2ffb95220aad0e70e98daf6cf27e1975b7",
+        "metadataPath": "../fixtures/cc0/landscape-dordogne.metadata.json",
+        "metadataSha256": "a00d556a2800aa055d7cea0b052b4166e5e42d9c1f7b4a29a3ab6034aa6d676e"
+      },
+      "derivation": {
+        "decode": "Pinned local JPEG decoder @jsquash/jpeg from the workspace lockfile; decoded 8-bit RGBA.",
+        "cropPixelsInSource": {
+          "x": 2050,
+          "y": 1260,
+          "width": 256,
+          "height": 256
+        },
+        "cropToOutput": "Lanczos3 resampling from 256x256 to 32x32."
+      },
+      "width": 32,
+      "height": 32,
+      "mask": {
+        "shape": "6x6 rectangle at (13,13), fully interior",
+        "rawMaskSha256": "71bf2798672a74e83a38ebe8e4a38dc8d62b9661f9820d72e2ef3d6eb43ef920",
+        "maskedPixelCount": 36,
+        "fillColorRgba": [
+          255,
+          0,
+          255,
+          255
+        ],
+        "artifact": {
+          "path": "cc0-artifacts/landscape-dordogne-interior-mask.png",
+          "width": 32,
+          "height": 32,
+          "pngBytes": 388,
+          "pngSha256": "e7e3c8d79197ee461d8cf846af1dd499507faed7ebbb086b40650c90cb88fed0",
+          "rgbaSha256": "6ee03e6205369192a94bccfef400e573498a448652802103d98f1c932ea01d2d"
+        }
+      },
+      "reference": {
+        "path": "cc0-artifacts/landscape-dordogne-interior-reference.png",
+        "width": 32,
+        "height": 32,
+        "pngBytes": 2572,
+        "pngSha256": "6259f677ea327f8e294df7eecf64d823283fdab10ddd47c9d9c3913e1beff904",
+        "rgbaSha256": "1a9ae887313a2d780543fe6b33a124354f9f7b484ae007d5f1d5c0d24c6b67e0"
+      },
+      "maskedInput": {
+        "path": "cc0-artifacts/landscape-dordogne-interior-masked-input.png",
+        "width": 32,
+        "height": 32,
+        "pngBytes": 2544,
+        "pngSha256": "8266caf24f9bf6a83d6703c16ee2d4a70b756e056e4c99f81b22f3c0013a6cd7",
+        "rgbaSha256": "c8e1c94c9db6a925814ffcae251118e8cd8560b38f637c60a4000a1f65352eb7"
+      },
+      "scoreRegion": "PSNR uses RGB channels of masked pixels only. SSIM is Rec.601 luminance, 7x7 Gaussian windows (sigma 1.2) centered on masked pixels; windows include neighboring known context.",
+      "methods": [
+        {
+          "algorithm": "telea",
+          "output": {
+            "path": "cc0-artifacts/landscape-dordogne-interior-telea.png",
+            "width": 32,
+            "height": 32,
+            "pngBytes": 2549,
+            "pngSha256": "80eca626893af1d8edd4aa956fd6c90fb78ce244801414fc7f094e22d2a665f8",
+            "rgbaSha256": "a3d767dcf498ff76cff1c1ed18b714c60bcde2a7644d47bdba038765e004ae46"
+          },
+          "latency": {
+            "samplesMs": [
+              16.918,
+              1.809,
+              0.759
+            ],
+            "medianMs": 1.809,
+            "p95Ms": 16.918
+          },
+          "maskedPixelCount": 36,
+          "roiPsnrRgbDb": 23.7554,
+          "roiSsimRec601Gaussian7x7": 0.445806
+        },
+        {
+          "algorithm": "navier-stokes",
+          "output": {
+            "path": "cc0-artifacts/landscape-dordogne-interior-navier-stokes.png",
+            "width": 32,
+            "height": 32,
+            "pngBytes": 2584,
+            "pngSha256": "d8c643b2549a7b44c17d15685408a2daf0f045ba1e737f883895614bfc9391d0",
+            "rgbaSha256": "180c923744cd611a582a1588fdeca055cbe1305f75f9ac7b18ca727bbccc91d5"
+          },
+          "latency": {
+            "samplesMs": [
+              4.705,
+              1.839,
+              3.882
+            ],
+            "medianMs": 3.882,
+            "p95Ms": 4.705
+          },
+          "maskedPixelCount": 36,
+          "roiPsnrRgbDb": 10.1372,
+          "roiSsimRec601Gaussian7x7": -0.095887
+        },
+        {
+          "algorithm": "confidence-priority",
+          "output": {
+            "path": "cc0-artifacts/landscape-dordogne-interior-confidence-priority.png",
+            "width": 32,
+            "height": 32,
+            "pngBytes": 2553,
+            "pngSha256": "9eec09724a9b26bbfa87f900b464c0c620a4dba44bb99fd6193d77f5bdfa0e0a",
+            "rgbaSha256": "e893f2f11966bffa3d228a28fc09279b0e1264480bf5b25dd55d745898e5d6b1"
+          },
+          "latency": {
+            "samplesMs": [
+              4.712,
+              2.384,
+              2.126
+            ],
+            "medianMs": 2.384,
+            "p95Ms": 4.712
+          },
+          "maskedPixelCount": 36,
+          "roiPsnrRgbDb": 4.9135,
+          "roiSsimRec601Gaussian7x7": -0.002506
+        },
+        {
+          "algorithm": "efros-leung",
+          "output": {
+            "path": "cc0-artifacts/landscape-dordogne-interior-efros-leung.png",
+            "width": 32,
+            "height": 32,
+            "pngBytes": 2578,
+            "pngSha256": "01d4aa67c9ca935d959e645de371113e1ef856d8579090d3a5a5de0296c31151",
+            "rgbaSha256": "4105e65400bd6c122b03bbc257e779a1ec497cba459ebed4630c4395137a87ef"
+          },
+          "latency": {
+            "samplesMs": [
+              14.888,
+              24.909,
+              18.975
+            ],
+            "medianMs": 18.975,
+            "p95Ms": 24.909
+          },
+          "maskedPixelCount": 36,
+          "roiPsnrRgbDb": 15.0856,
+          "roiSsimRec601Gaussian7x7": 0.093851
+        },
+        {
+          "algorithm": "quilting",
+          "output": {
+            "path": "cc0-artifacts/landscape-dordogne-interior-quilting.png",
+            "width": 32,
+            "height": 32,
+            "pngBytes": 2552,
+            "pngSha256": "0f079c790c015a2b07c118ab1728504faef9792b26c37ecaa43f704571ef41c1",
+            "rgbaSha256": "2a4f35271bb1dec4d232cde15b7f0eede2ce13ba0c1c5f0e23e0258d9dfebc3f"
+          },
+          "latency": {
+            "samplesMs": [
+              21.38,
+              9.661,
+              13.142
+            ],
+            "medianMs": 13.142,
+            "p95Ms": 21.38
+          },
+          "maskedPixelCount": 36,
+          "roiPsnrRgbDb": 20.3693,
+          "roiSsimRec601Gaussian7x7": 0.137226
+        }
+      ]
+    },
+    {
+      "id": "landscape-dordogne-offset",
+      "source": {
+        "id": "landscape-dordogne",
+        "title": "Landscape Dordogne Château de Hautefort 18",
+        "creator": "Jebulon",
+        "license": "CC0-1.0",
+        "licenseEvidence": "Commons imageinfo extmetadata: LicenseShortName=CC0; LicenseUrl=https://creativecommons.org/publicdomain/zero/1.0/",
+        "sourcePageUrl": "https://commons.wikimedia.org/wiki/File:Landscape_Dordogne_Ch%C3%A2teau_de_Hautefort_18.jpg",
+        "imagePath": "../fixtures/cc0/landscape-dordogne.jpg",
+        "imageBytes": 2140794,
+        "imageSha256": "c3e2eef6af01a10882c83f71ff849d2ffb95220aad0e70e98daf6cf27e1975b7",
+        "metadataPath": "../fixtures/cc0/landscape-dordogne.metadata.json",
+        "metadataSha256": "a00d556a2800aa055d7cea0b052b4166e5e42d9c1f7b4a29a3ab6034aa6d676e"
+      },
+      "derivation": {
+        "decode": "Pinned local JPEG decoder @jsquash/jpeg from the workspace lockfile; decoded 8-bit RGBA.",
+        "cropPixelsInSource": {
+          "x": 2610,
+          "y": 1740,
+          "width": 256,
+          "height": 256
+        },
+        "cropToOutput": "Lanczos3 resampling from 256x256 to 32x32."
+      },
+      "width": 32,
+      "height": 32,
+      "mask": {
+        "shape": "irregular stepped 8-row mask at x=0; touches left image boundary",
+        "rawMaskSha256": "a742d93ab7ca046f8bcd5b69d1a00e3ea9d5de81983a2cd1a0b98f5a7794f56b",
+        "maskedPixelCount": 42,
+        "fillColorRgba": [
+          255,
+          0,
+          255,
+          255
+        ],
+        "artifact": {
+          "path": "cc0-artifacts/landscape-dordogne-offset-mask.png",
+          "width": 32,
+          "height": 32,
+          "pngBytes": 377,
+          "pngSha256": "e9471d11ff708a795926720610bffc2d19d5d93d18029457aaac465b19b29902",
+          "rgbaSha256": "da6aa87b8cc1644c5c40840923e1d1c14283fd445235f6dd7d5a8bcf9a0c60c5"
+        }
+      },
+      "reference": {
+        "path": "cc0-artifacts/landscape-dordogne-offset-reference.png",
+        "width": 32,
+        "height": 32,
+        "pngBytes": 3076,
+        "pngSha256": "3ae49985e510faa43dd59a0af986b53aff0f495b75bf2d26e6989733f4a03ddd",
+        "rgbaSha256": "06b8cca9f8d16264239b42bbb01c755add512bb9ce233c2d36eebbbc990fc33e"
+      },
+      "maskedInput": {
+        "path": "cc0-artifacts/landscape-dordogne-offset-masked-input.png",
+        "width": 32,
+        "height": 32,
+        "pngBytes": 3002,
+        "pngSha256": "5858b5e655552f9fed63a9cddde7ea6e3c28fe8e46a52bbd8d676098dca6a465",
+        "rgbaSha256": "89ef89e145ff6cace1e54bc7929f0d10d9a31f8d14a9402bca6b755245884ac6"
+      },
+      "scoreRegion": "PSNR uses RGB channels of masked pixels only. SSIM is Rec.601 luminance, 7x7 Gaussian windows (sigma 1.2) centered on masked pixels; windows include neighboring known context.",
+      "methods": [
+        {
+          "algorithm": "telea",
+          "output": {
+            "path": "cc0-artifacts/landscape-dordogne-offset-telea.png",
+            "width": 32,
+            "height": 32,
+            "pngBytes": 3061,
+            "pngSha256": "a96d908124d7b4dfc6e01d70fcb360d7ba350d51b35056d220a8c3aeb5fc6894",
+            "rgbaSha256": "cc4420b7c8244b304e10f8214fdf38b9b415fc4489ad7301c2d955153fd792b7"
+          },
+          "latency": {
+            "samplesMs": [
+              0.843,
+              0.722,
+              1.311
+            ],
+            "medianMs": 0.843,
+            "p95Ms": 1.311
+          },
+          "maskedPixelCount": 42,
+          "roiPsnrRgbDb": 21.8926,
+          "roiSsimRec601Gaussian7x7": 0.33867
+        },
+        {
+          "algorithm": "navier-stokes",
+          "output": {
+            "path": "cc0-artifacts/landscape-dordogne-offset-navier-stokes.png",
+            "width": 32,
+            "height": 32,
+            "pngBytes": 3067,
+            "pngSha256": "c511972d1834154726e1bb6b5a093e99e29f80c377b1eeff5028217098e48d6f",
+            "rgbaSha256": "4c39b9b188edd56b4bf25360be101db954cf736be7ab141ab8a0f999c3316d66"
+          },
+          "latency": {
+            "samplesMs": [
+              0.224,
+              0.387,
+              0.686
+            ],
+            "medianMs": 0.387,
+            "p95Ms": 0.686
+          },
+          "maskedPixelCount": 42,
+          "roiPsnrRgbDb": 6.4233,
+          "roiSsimRec601Gaussian7x7": -0.019134
+        },
+        {
+          "algorithm": "confidence-priority",
+          "output": {
+            "path": "cc0-artifacts/landscape-dordogne-offset-confidence-priority.png",
+            "width": 32,
+            "height": 32,
+            "pngBytes": 3014,
+            "pngSha256": "2c0a8414339eaa49e3604fcfa156a3aad39cdf8e37f0d20c0eb827ced2285044",
+            "rgbaSha256": "8f6f8a858a099e02e1db36d11aca8bce911ae296680ca320c09139c3479f36b8"
+          },
+          "latency": {
+            "samplesMs": [
+              5.01,
+              2.995,
+              3.312
+            ],
+            "medianMs": 3.312,
+            "p95Ms": 5.01
+          },
+          "maskedPixelCount": 42,
+          "roiPsnrRgbDb": 3.8254,
+          "roiSsimRec601Gaussian7x7": 0.030134
+        },
+        {
+          "algorithm": "efros-leung",
+          "output": {
+            "path": "cc0-artifacts/landscape-dordogne-offset-efros-leung.png",
+            "width": 32,
+            "height": 32,
+            "pngBytes": 3079,
+            "pngSha256": "93987046e905e9da1986888a62b5cf62e87ccaebec14bc3d46c22d94f9fe4695",
+            "rgbaSha256": "0ee3161fd6661f938947afa4a14046eb7612a0c66cc2bf97029a66a52b247de6"
+          },
+          "latency": {
+            "samplesMs": [
+              12.27,
+              15.19,
+              12.702
+            ],
+            "medianMs": 12.702,
+            "p95Ms": 15.19
+          },
+          "maskedPixelCount": 42,
+          "roiPsnrRgbDb": 20.5332,
+          "roiSsimRec601Gaussian7x7": 0.255958
+        },
+        {
+          "algorithm": "quilting",
+          "output": {
+            "path": "cc0-artifacts/landscape-dordogne-offset-quilting.png",
+            "width": 32,
+            "height": 32,
+            "pngBytes": 3081,
+            "pngSha256": "08f2798812f3e1608a99c022396f2eee30d7e3a583c18d4c0a845b50a29f8bca",
+            "rgbaSha256": "40f5ac44efc253168b5b90496277e5d51b0eff402425d327ea9baac9ec69cd3c"
+          },
+          "latency": {
+            "samplesMs": [
+              10.93,
+              10.679,
+              13.307
+            ],
+            "medianMs": 10.93,
+            "p95Ms": 13.307
+          },
+          "maskedPixelCount": 42,
+          "roiPsnrRgbDb": 11.7263,
+          "roiSsimRec601Gaussian7x7": 0.018385
+        }
+      ]
+    },
+    {
+      "id": "oak-leaves-interior",
+      "source": {
+        "id": "oak-leaves",
+        "title": "New oak leaves with female flowers",
+        "creator": "W.carter",
+        "license": "CC0-1.0",
+        "licenseEvidence": "Commons imageinfo extmetadata: LicenseShortName=CC0; LicenseUrl=https://creativecommons.org/publicdomain/zero/1.0/",
+        "sourcePageUrl": "https://commons.wikimedia.org/wiki/File:New_oak_leaves_with_female_flowers.jpg",
+        "imagePath": "../fixtures/cc0/oak-leaves.jpg",
+        "imageBytes": 5671146,
+        "imageSha256": "71c0f2fb2fa89385955bca609cf9983d493137a81879005143606d0fa74d2802",
+        "metadataPath": "../fixtures/cc0/oak-leaves.metadata.json",
+        "metadataSha256": "68de096c7215cedd551c66b4c77b281eb48d478105fba0254394bd83c880b2cb"
+      },
+      "derivation": {
+        "decode": "Pinned local JPEG decoder @jsquash/jpeg from the workspace lockfile; decoded 8-bit RGBA.",
+        "cropPixelsInSource": {
+          "x": 1700,
+          "y": 1080,
+          "width": 256,
+          "height": 256
+        },
+        "cropToOutput": "Lanczos3 resampling from 256x256 to 32x32."
+      },
+      "width": 32,
+      "height": 32,
+      "mask": {
+        "shape": "6x6 rectangle at (13,13), fully interior",
+        "rawMaskSha256": "71bf2798672a74e83a38ebe8e4a38dc8d62b9661f9820d72e2ef3d6eb43ef920",
+        "maskedPixelCount": 36,
+        "fillColorRgba": [
+          255,
+          0,
+          255,
+          255
+        ],
+        "artifact": {
+          "path": "cc0-artifacts/oak-leaves-interior-mask.png",
+          "width": 32,
+          "height": 32,
+          "pngBytes": 388,
+          "pngSha256": "e7e3c8d79197ee461d8cf846af1dd499507faed7ebbb086b40650c90cb88fed0",
+          "rgbaSha256": "6ee03e6205369192a94bccfef400e573498a448652802103d98f1c932ea01d2d"
+        }
+      },
+      "reference": {
+        "path": "cc0-artifacts/oak-leaves-interior-reference.png",
+        "width": 32,
+        "height": 32,
+        "pngBytes": 3022,
+        "pngSha256": "e1f9f69c971e76f6c3b8e99f600947b035d56fbf416987b77b40f23ee0120481",
+        "rgbaSha256": "0e6d527ed8b601c6369224cfb6214d1bafeba64bbfcb21296b15ff3af3df56ef"
+      },
+      "maskedInput": {
+        "path": "cc0-artifacts/oak-leaves-interior-masked-input.png",
+        "width": 32,
+        "height": 32,
+        "pngBytes": 2973,
+        "pngSha256": "c5891726673243aee151b9cf4c299281c25b1ec7f974cc60f6a2f2009ebaa921",
+        "rgbaSha256": "218763fe08720567dc5dffad57c0e9c86711fc8cf6275e13bc60a6670e93afca"
+      },
+      "scoreRegion": "PSNR uses RGB channels of masked pixels only. SSIM is Rec.601 luminance, 7x7 Gaussian windows (sigma 1.2) centered on masked pixels; windows include neighboring known context.",
+      "methods": [
+        {
+          "algorithm": "telea",
+          "output": {
+            "path": "cc0-artifacts/oak-leaves-interior-telea.png",
+            "width": 32,
+            "height": 32,
+            "pngBytes": 2989,
+            "pngSha256": "ed58ac266f3c768d4497b73ac6ff5b73a06f7b16c53282983597e0ec15b63575",
+            "rgbaSha256": "95c4108659b0a418cc9782e75aa0d16a5e9e96addf073fd45075316071eceff9"
+          },
+          "latency": {
+            "samplesMs": [
+              0.61,
+              0.609,
+              0.524
+            ],
+            "medianMs": 0.609,
+            "p95Ms": 0.61
+          },
+          "maskedPixelCount": 36,
+          "roiPsnrRgbDb": 25.2389,
+          "roiSsimRec601Gaussian7x7": 0.799215
+        },
+        {
+          "algorithm": "navier-stokes",
+          "output": {
+            "path": "cc0-artifacts/oak-leaves-interior-navier-stokes.png",
+            "width": 32,
+            "height": 32,
+            "pngBytes": 3038,
+            "pngSha256": "2317256a3e1cc0b047d084fdc4ce2e9d8770d6c59d40161cc41022fb6256d8f3",
+            "rgbaSha256": "29b98e6f65c0476b625507f568b946e28d7f2cd7b294d3f9efb65d49ff91ee55"
+          },
+          "latency": {
+            "samplesMs": [
+              0.263,
+              0.697,
+              0.356
+            ],
+            "medianMs": 0.356,
+            "p95Ms": 0.697
+          },
+          "maskedPixelCount": 36,
+          "roiPsnrRgbDb": 9.8485,
+          "roiSsimRec601Gaussian7x7": 0.162054
+        },
+        {
+          "algorithm": "confidence-priority",
+          "output": {
+            "path": "cc0-artifacts/oak-leaves-interior-confidence-priority.png",
+            "width": 32,
+            "height": 32,
+            "pngBytes": 2982,
+            "pngSha256": "18c28717ff180968b6cbc38d97f033df6053c1ce88902817bae2c063ac610f7c",
+            "rgbaSha256": "3024e68b92521bf982e8b0df183cd3638659f5e68b2cb6528d73a807ffb4417c"
+          },
+          "latency": {
+            "samplesMs": [
+              1.923,
+              1.607,
+              1.443
+            ],
+            "medianMs": 1.607,
+            "p95Ms": 1.923
+          },
+          "maskedPixelCount": 36,
+          "roiPsnrRgbDb": 4.8425,
+          "roiSsimRec601Gaussian7x7": 0.512792
+        },
+        {
+          "algorithm": "efros-leung",
+          "output": {
+            "path": "cc0-artifacts/oak-leaves-interior-efros-leung.png",
+            "width": 32,
+            "height": 32,
+            "pngBytes": 3026,
+            "pngSha256": "70e93cd0977f2efaf39a17fd263de4bb65c751113d62987cb192586e96ab43da",
+            "rgbaSha256": "b4a8d97b659ba0dcb7cddc7cbe3430941803fd7df28931e4f016b8117d917ac5"
+          },
+          "latency": {
+            "samplesMs": [
+              13.347,
+              12.365,
+              11.979
+            ],
+            "medianMs": 12.365,
+            "p95Ms": 13.347
+          },
+          "maskedPixelCount": 36,
+          "roiPsnrRgbDb": 23.9412,
+          "roiSsimRec601Gaussian7x7": 0.656982
+        },
+        {
+          "algorithm": "quilting",
+          "output": {
+            "path": "cc0-artifacts/oak-leaves-interior-quilting.png",
+            "width": 32,
+            "height": 32,
+            "pngBytes": 2982,
+            "pngSha256": "af19200e198fce78d5147d214499adac9aeefa5f05a96bc363de845e1b394165",
+            "rgbaSha256": "05fac323d92eebe07d59ea12b5dc0e42eebf337e5dd8d58d61a1d700f3fe348b"
+          },
+          "latency": {
+            "samplesMs": [
+              9.566,
+              8.782,
+              9.849
+            ],
+            "medianMs": 9.566,
+            "p95Ms": 9.849
+          },
+          "maskedPixelCount": 36,
+          "roiPsnrRgbDb": 20.0637,
+          "roiSsimRec601Gaussian7x7": 0.483872
+        }
+      ]
+    },
+    {
+      "id": "oak-leaves-offset",
+      "source": {
+        "id": "oak-leaves",
+        "title": "New oak leaves with female flowers",
+        "creator": "W.carter",
+        "license": "CC0-1.0",
+        "licenseEvidence": "Commons imageinfo extmetadata: LicenseShortName=CC0; LicenseUrl=https://creativecommons.org/publicdomain/zero/1.0/",
+        "sourcePageUrl": "https://commons.wikimedia.org/wiki/File:New_oak_leaves_with_female_flowers.jpg",
+        "imagePath": "../fixtures/cc0/oak-leaves.jpg",
+        "imageBytes": 5671146,
+        "imageSha256": "71c0f2fb2fa89385955bca609cf9983d493137a81879005143606d0fa74d2802",
+        "metadataPath": "../fixtures/cc0/oak-leaves.metadata.json",
+        "metadataSha256": "68de096c7215cedd551c66b4c77b281eb48d478105fba0254394bd83c880b2cb"
+      },
+      "derivation": {
+        "decode": "Pinned local JPEG decoder @jsquash/jpeg from the workspace lockfile; decoded 8-bit RGBA.",
+        "cropPixelsInSource": {
+          "x": 2220,
+          "y": 1510,
+          "width": 256,
+          "height": 256
+        },
+        "cropToOutput": "Lanczos3 resampling from 256x256 to 32x32."
+      },
+      "width": 32,
+      "height": 32,
+      "mask": {
+        "shape": "irregular stepped 8-row mask at x=0; touches left image boundary",
+        "rawMaskSha256": "a742d93ab7ca046f8bcd5b69d1a00e3ea9d5de81983a2cd1a0b98f5a7794f56b",
+        "maskedPixelCount": 42,
+        "fillColorRgba": [
+          255,
+          0,
+          255,
+          255
+        ],
+        "artifact": {
+          "path": "cc0-artifacts/oak-leaves-offset-mask.png",
+          "width": 32,
+          "height": 32,
+          "pngBytes": 377,
+          "pngSha256": "e9471d11ff708a795926720610bffc2d19d5d93d18029457aaac465b19b29902",
+          "rgbaSha256": "da6aa87b8cc1644c5c40840923e1d1c14283fd445235f6dd7d5a8bcf9a0c60c5"
+        }
+      },
+      "reference": {
+        "path": "cc0-artifacts/oak-leaves-offset-reference.png",
+        "width": 32,
+        "height": 32,
+        "pngBytes": 3116,
+        "pngSha256": "47d3b111a0f564b07383376e363978e71b582d3fedafe960e746131bf5be7b38",
+        "rgbaSha256": "55f7d761e52abafa925f1d7a548ae210c8ec60ee54fff9a0c20e8fd43142cad4"
+      },
+      "maskedInput": {
+        "path": "cc0-artifacts/oak-leaves-offset-masked-input.png",
+        "width": 32,
+        "height": 32,
+        "pngBytes": 3036,
+        "pngSha256": "32b1e722a949a1083dbe21d7619a8e30775499a73823bcee8712f7a92cb0243b",
+        "rgbaSha256": "d0ffc55d393b82dc5cd2381d2d83b2fc3ea7c4e41345d7d86874515d760b01d5"
+      },
+      "scoreRegion": "PSNR uses RGB channels of masked pixels only. SSIM is Rec.601 luminance, 7x7 Gaussian windows (sigma 1.2) centered on masked pixels; windows include neighboring known context.",
+      "methods": [
+        {
+          "algorithm": "telea",
+          "output": {
+            "path": "cc0-artifacts/oak-leaves-offset-telea.png",
+            "width": 32,
+            "height": 32,
+            "pngBytes": 3098,
+            "pngSha256": "60343807feb23e6c26a334a16148c60fa18d307657a8bd50f1621ad0a60fa73e",
+            "rgbaSha256": "8e1f6c31db43162808e7c63012aff66cd7db324e6f444bf8382136ff16e78b6b"
+          },
+          "latency": {
+            "samplesMs": [
+              1.027,
+              0.9,
+              0.796
+            ],
+            "medianMs": 0.9,
+            "p95Ms": 1.027
+          },
+          "maskedPixelCount": 42,
+          "roiPsnrRgbDb": 19.2452,
+          "roiSsimRec601Gaussian7x7": 0.461324
+        },
+        {
+          "algorithm": "navier-stokes",
+          "output": {
+            "path": "cc0-artifacts/oak-leaves-offset-navier-stokes.png",
+            "width": 32,
+            "height": 32,
+            "pngBytes": 3108,
+            "pngSha256": "0dfdb135163fd1adc9213dc6475ce9ca828feb41b92d0e7b229361958b9c5bf9",
+            "rgbaSha256": "6e5c37d661f331dd535d496fea6856c3cb954d7717f10ba65ee4c3a61d19a607"
+          },
+          "latency": {
+            "samplesMs": [
+              0.232,
+              0.32,
+              0.226
+            ],
+            "medianMs": 0.232,
+            "p95Ms": 0.32
+          },
+          "maskedPixelCount": 42,
+          "roiPsnrRgbDb": 8.9812,
+          "roiSsimRec601Gaussian7x7": 0.234151
+        },
+        {
+          "algorithm": "confidence-priority",
+          "output": {
+            "path": "cc0-artifacts/oak-leaves-offset-confidence-priority.png",
+            "width": 32,
+            "height": 32,
+            "pngBytes": 3058,
+            "pngSha256": "584e63669c2b96f43a5baa0274f8bb70b32798f9739cbb3b838c2ac9c9e4585d",
+            "rgbaSha256": "5e057dcfaf2fdde38cde07c6f9f194c629a3f7c27c6636f251b2cd89ca01dc97"
+          },
+          "latency": {
+            "samplesMs": [
+              2.868,
+              3.143,
+              3.124
+            ],
+            "medianMs": 3.124,
+            "p95Ms": 3.143
+          },
+          "maskedPixelCount": 42,
+          "roiPsnrRgbDb": 4.6141,
+          "roiSsimRec601Gaussian7x7": 0.581747
+        },
+        {
+          "algorithm": "efros-leung",
+          "output": {
+            "path": "cc0-artifacts/oak-leaves-offset-efros-leung.png",
+            "width": 32,
+            "height": 32,
+            "pngBytes": 3123,
+            "pngSha256": "b06014d33da2521c6dd31237adb483cc8216c760cc35e4cf000758fdf675f299",
+            "rgbaSha256": "fdb3f140b86e21c59b9962bf2eabc242bb0a756c94e09423bce41298fb7b2369"
+          },
+          "latency": {
+            "samplesMs": [
+              17.912,
+              13.952,
+              22.323
+            ],
+            "medianMs": 17.912,
+            "p95Ms": 22.323
+          },
+          "maskedPixelCount": 42,
+          "roiPsnrRgbDb": 18.618,
+          "roiSsimRec601Gaussian7x7": 0.288381
+        },
+        {
+          "algorithm": "quilting",
+          "output": {
+            "path": "cc0-artifacts/oak-leaves-offset-quilting.png",
+            "width": 32,
+            "height": 32,
+            "pngBytes": 3093,
+            "pngSha256": "1aa2ef649b223b6680775cb96908576b15743bd27013d242befcad70239501a2",
+            "rgbaSha256": "031ac1af135a17961d93252b60a0357c486e1cbc76f68db7c2e28a8eb633e4ef"
+          },
+          "latency": {
+            "samplesMs": [
+              11.138,
+              13.454,
+              8.542
+            ],
+            "medianMs": 11.138,
+            "p95Ms": 13.454
+          },
+          "maskedPixelCount": 42,
+          "roiPsnrRgbDb": 13.2992,
+          "roiSsimRec601Gaussian7x7": 0.252258
+        }
+      ]
+    },
+    {
+      "id": "gold-weight-interior",
+      "source": {
+        "id": "gold-weight",
+        "title": "Gold Weight (abrammuo): Geometric",
+        "creator": "Asante goldsmith, unidentified",
+        "license": "CC0-1.0",
+        "licenseEvidence": "Cleveland Museum of Art Open Access API: share_license_status=CC0",
+        "sourcePageUrl": "https://clevelandart.org/art/1969.265",
+        "imagePath": "../fixtures/cc0/gold-weight.jpg",
+        "imageBytes": 3330155,
+        "imageSha256": "575c3663c372bb43e7da86a253cd9cb3602211bc39e3756332ca682963beb351",
+        "metadataPath": "../fixtures/cc0/gold-weight.metadata.json",
+        "metadataSha256": "a7a15d396f58877f0fa73f5feb705b790710fe81c1ea63b94c1a120ecb70928e"
+      },
+      "derivation": {
+        "decode": "Pinned local JPEG decoder @jsquash/jpeg from the workspace lockfile; decoded 8-bit RGBA.",
+        "cropPixelsInSource": {
+          "x": 1010,
+          "y": 790,
+          "width": 256,
+          "height": 256
+        },
+        "cropToOutput": "Lanczos3 resampling from 256x256 to 32x32."
+      },
+      "width": 32,
+      "height": 32,
+      "mask": {
+        "shape": "6x6 rectangle at (13,13), fully interior",
+        "rawMaskSha256": "71bf2798672a74e83a38ebe8e4a38dc8d62b9661f9820d72e2ef3d6eb43ef920",
+        "maskedPixelCount": 36,
+        "fillColorRgba": [
+          255,
+          0,
+          255,
+          255
+        ],
+        "artifact": {
+          "path": "cc0-artifacts/gold-weight-interior-mask.png",
+          "width": 32,
+          "height": 32,
+          "pngBytes": 388,
+          "pngSha256": "e7e3c8d79197ee461d8cf846af1dd499507faed7ebbb086b40650c90cb88fed0",
+          "rgbaSha256": "6ee03e6205369192a94bccfef400e573498a448652802103d98f1c932ea01d2d"
+        }
+      },
+      "reference": {
+        "path": "cc0-artifacts/gold-weight-interior-reference.png",
+        "width": 32,
+        "height": 32,
+        "pngBytes": 3054,
+        "pngSha256": "651c0d73f866c81be6e1ce099b154e00c249c207589cf053f9d580e037599359",
+        "rgbaSha256": "d0802ecf48e94ab2b8295b62ba9e36cc1144cfda683e069062d6ac06d254b4fd"
+      },
+      "maskedInput": {
+        "path": "cc0-artifacts/gold-weight-interior-masked-input.png",
+        "width": 32,
+        "height": 32,
+        "pngBytes": 2983,
+        "pngSha256": "6cf1bba3c109def3d09d4ad05fe53f2a1c558d5a9c160e18c08dffe2060ea036",
+        "rgbaSha256": "7c3495cac7f316d5bcf8d078e7cdbdab22f9f8e7b5b4895d9389014601072b38"
+      },
+      "scoreRegion": "PSNR uses RGB channels of masked pixels only. SSIM is Rec.601 luminance, 7x7 Gaussian windows (sigma 1.2) centered on masked pixels; windows include neighboring known context.",
+      "methods": [
+        {
+          "algorithm": "telea",
+          "output": {
+            "path": "cc0-artifacts/gold-weight-interior-telea.png",
+            "width": 32,
+            "height": 32,
+            "pngBytes": 3010,
+            "pngSha256": "25a03baa4fd251336ae3ff830aa4625a30f58669068a4017673278f5edb6ac1a",
+            "rgbaSha256": "ece249c484a4cd1c1b253e5f31d2aa69e0f5e88e55267c44013d39342b4d6c79"
+          },
+          "latency": {
+            "samplesMs": [
+              1.371,
+              0.593,
+              0.583
+            ],
+            "medianMs": 0.593,
+            "p95Ms": 1.371
+          },
+          "maskedPixelCount": 36,
+          "roiPsnrRgbDb": 19.3179,
+          "roiSsimRec601Gaussian7x7": 0.518751
+        },
+        {
+          "algorithm": "navier-stokes",
+          "output": {
+            "path": "cc0-artifacts/gold-weight-interior-navier-stokes.png",
+            "width": 32,
+            "height": 32,
+            "pngBytes": 3021,
+            "pngSha256": "9de820c0c37953bc189910436afb0e3d409974dc9af6eb24f19113c549cdf5cc",
+            "rgbaSha256": "ab07ce2cf2d6b12e4c7b3b06cf4f1a1397a675dd7cc4a64b5d83e4c1a0aea783"
+          },
+          "latency": {
+            "samplesMs": [
+              0.106,
+              0.205,
+              1.136
+            ],
+            "medianMs": 0.205,
+            "p95Ms": 1.136
+          },
+          "maskedPixelCount": 36,
+          "roiPsnrRgbDb": 16.6797,
+          "roiSsimRec601Gaussian7x7": 0.464403
+        },
+        {
+          "algorithm": "confidence-priority",
+          "output": {
+            "path": "cc0-artifacts/gold-weight-interior-confidence-priority.png",
+            "width": 32,
+            "height": 32,
+            "pngBytes": 2999,
+            "pngSha256": "83894e8b66d2c87484c88669a930b323fd97e707b76811922e974cfc749aa30f",
+            "rgbaSha256": "a1e7ad5de593b4461f6404835ef50fb429c5945a8aa4eb2b0d3dc1c095c335cf"
+          },
+          "latency": {
+            "samplesMs": [
+              2.805,
+              1.741,
+              2.128
+            ],
+            "medianMs": 2.128,
+            "p95Ms": 2.805
+          },
+          "maskedPixelCount": 36,
+          "roiPsnrRgbDb": 7.2389,
+          "roiSsimRec601Gaussian7x7": 0.248668
+        },
+        {
+          "algorithm": "efros-leung",
+          "output": {
+            "path": "cc0-artifacts/gold-weight-interior-efros-leung.png",
+            "width": 32,
+            "height": 32,
+            "pngBytes": 3041,
+            "pngSha256": "d23ae1582b187ab4dc0d6d136fb3daaf79609d923fbe99f8dda43427bc43221c",
+            "rgbaSha256": "3b19600d3f80a70b1c68abc943160faabeb18fc6a11769da1159d5cb4b1be63e"
+          },
+          "latency": {
+            "samplesMs": [
+              11.643,
+              11.615,
+              11.715
+            ],
+            "medianMs": 11.643,
+            "p95Ms": 11.715
+          },
+          "maskedPixelCount": 36,
+          "roiPsnrRgbDb": 21.3883,
+          "roiSsimRec601Gaussian7x7": 0.606332
+        },
+        {
+          "algorithm": "quilting",
+          "output": {
+            "path": "cc0-artifacts/gold-weight-interior-quilting.png",
+            "width": 32,
+            "height": 32,
+            "pngBytes": 2990,
+            "pngSha256": "08386d28e114b443b1da7fbe5e0f05dcbadf1a29ec3c9cb1b50fc981b6424c83",
+            "rgbaSha256": "2a0c1a7ffed10996387184c3d34a97cb3129cccc25bfb8bd76c3614ce8662c4a"
+          },
+          "latency": {
+            "samplesMs": [
+              8.281,
+              9.553,
+              8.181
+            ],
+            "medianMs": 8.281,
+            "p95Ms": 9.553
+          },
+          "maskedPixelCount": 36,
+          "roiPsnrRgbDb": 20.7322,
+          "roiSsimRec601Gaussian7x7": 0.477967
+        }
+      ]
+    },
+    {
+      "id": "gold-weight-offset",
+      "source": {
+        "id": "gold-weight",
+        "title": "Gold Weight (abrammuo): Geometric",
+        "creator": "Asante goldsmith, unidentified",
+        "license": "CC0-1.0",
+        "licenseEvidence": "Cleveland Museum of Art Open Access API: share_license_status=CC0",
+        "sourcePageUrl": "https://clevelandart.org/art/1969.265",
+        "imagePath": "../fixtures/cc0/gold-weight.jpg",
+        "imageBytes": 3330155,
+        "imageSha256": "575c3663c372bb43e7da86a253cd9cb3602211bc39e3756332ca682963beb351",
+        "metadataPath": "../fixtures/cc0/gold-weight.metadata.json",
+        "metadataSha256": "a7a15d396f58877f0fa73f5feb705b790710fe81c1ea63b94c1a120ecb70928e"
+      },
+      "derivation": {
+        "decode": "Pinned local JPEG decoder @jsquash/jpeg from the workspace lockfile; decoded 8-bit RGBA.",
+        "cropPixelsInSource": {
+          "x": 1390,
+          "y": 1180,
+          "width": 256,
+          "height": 256
+        },
+        "cropToOutput": "Lanczos3 resampling from 256x256 to 32x32."
+      },
+      "width": 32,
+      "height": 32,
+      "mask": {
+        "shape": "irregular stepped 8-row mask at x=0; touches left image boundary",
+        "rawMaskSha256": "a742d93ab7ca046f8bcd5b69d1a00e3ea9d5de81983a2cd1a0b98f5a7794f56b",
+        "maskedPixelCount": 42,
+        "fillColorRgba": [
+          255,
+          0,
+          255,
+          255
+        ],
+        "artifact": {
+          "path": "cc0-artifacts/gold-weight-offset-mask.png",
+          "width": 32,
+          "height": 32,
+          "pngBytes": 377,
+          "pngSha256": "e9471d11ff708a795926720610bffc2d19d5d93d18029457aaac465b19b29902",
+          "rgbaSha256": "da6aa87b8cc1644c5c40840923e1d1c14283fd445235f6dd7d5a8bcf9a0c60c5"
+        }
+      },
+      "reference": {
+        "path": "cc0-artifacts/gold-weight-offset-reference.png",
+        "width": 32,
+        "height": 32,
+        "pngBytes": 2557,
+        "pngSha256": "ffe3237ab015ba427a2a35c2ecb611ead43cf1b2566f1f12eb95c1594a364bd6",
+        "rgbaSha256": "9630e2d1615ce14e03f78cf6c624232a4b49cb4d9f2c74e521884c57afd86033"
+      },
+      "maskedInput": {
+        "path": "cc0-artifacts/gold-weight-offset-masked-input.png",
+        "width": 32,
+        "height": 32,
+        "pngBytes": 2491,
+        "pngSha256": "36917b9e0d68ccb28b0013c13132c34dd92f46f5a79dfa4159aec34e3ca6e341",
+        "rgbaSha256": "c7b57d04badff2ffda6af074e3630356275b0c4c177053c27458998fe093df06"
+      },
+      "scoreRegion": "PSNR uses RGB channels of masked pixels only. SSIM is Rec.601 luminance, 7x7 Gaussian windows (sigma 1.2) centered on masked pixels; windows include neighboring known context.",
+      "methods": [
+        {
+          "algorithm": "telea",
+          "output": {
+            "path": "cc0-artifacts/gold-weight-offset-telea.png",
+            "width": 32,
+            "height": 32,
+            "pngBytes": 2544,
+            "pngSha256": "d449079f8658b4846dbb8b42dbb76b3116042eefb4b305a7df28c709e996165d",
+            "rgbaSha256": "2cc9720927e6d1be2bc845ec9b2ef6ed497077019e5690534d87972f0e8c1ab9"
+          },
+          "latency": {
+            "samplesMs": [
+              0.665,
+              1,
+              1.138
+            ],
+            "medianMs": 1,
+            "p95Ms": 1.138
+          },
+          "maskedPixelCount": 42,
+          "roiPsnrRgbDb": 29.6226,
+          "roiSsimRec601Gaussian7x7": 0.658452
+        },
+        {
+          "algorithm": "navier-stokes",
+          "output": {
+            "path": "cc0-artifacts/gold-weight-offset-navier-stokes.png",
+            "width": 32,
+            "height": 32,
+            "pngBytes": 2552,
+            "pngSha256": "0535c0749f565dc01c679a906d0bf1eee9d88b177e371cc288b20e6e1ad53685",
+            "rgbaSha256": "b58618338cf36b3595f0657ea88d8716b14f869f9cc87161d2ce39d8f6656c11"
+          },
+          "latency": {
+            "samplesMs": [
+              0.124,
+              0.134,
+              0.172
+            ],
+            "medianMs": 0.134,
+            "p95Ms": 0.172
+          },
+          "maskedPixelCount": 42,
+          "roiPsnrRgbDb": 13.7636,
+          "roiSsimRec601Gaussian7x7": 0.164437
+        },
+        {
+          "algorithm": "confidence-priority",
+          "output": {
+            "path": "cc0-artifacts/gold-weight-offset-confidence-priority.png",
+            "width": 32,
+            "height": 32,
+            "pngBytes": 2504,
+            "pngSha256": "bb6156d8a8ca1c50fcdec9dd043002198a0e49068d4ab483a68f15a82a53d4e1",
+            "rgbaSha256": "c0a634f391caa994f399efb9dd8e9c6221d79e2a00331c9deee92129354d8096"
+          },
+          "latency": {
+            "samplesMs": [
+              2.428,
+              26.864,
+              3.226
+            ],
+            "medianMs": 3.226,
+            "p95Ms": 26.864
+          },
+          "maskedPixelCount": 42,
+          "roiPsnrRgbDb": 6.6587,
+          "roiSsimRec601Gaussian7x7": 0.556488
+        },
+        {
+          "algorithm": "efros-leung",
+          "output": {
+            "path": "cc0-artifacts/gold-weight-offset-efros-leung.png",
+            "width": 32,
+            "height": 32,
+            "pngBytes": 2567,
+            "pngSha256": "b90fb92ada5e704c00e39f89c188b6c2f079e271a06e3978d0aaeb521ae9608b",
+            "rgbaSha256": "e0bead859c251a7e295e47dc5e36a606b23a85debf4f80227f4e3c6d7b6807e5"
+          },
+          "latency": {
+            "samplesMs": [
+              11.14,
+              11.254,
+              13.425
+            ],
+            "medianMs": 11.254,
+            "p95Ms": 13.425
+          },
+          "maskedPixelCount": 42,
+          "roiPsnrRgbDb": 27.8567,
+          "roiSsimRec601Gaussian7x7": 0.600779
+        },
+        {
+          "algorithm": "quilting",
+          "output": {
+            "path": "cc0-artifacts/gold-weight-offset-quilting.png",
+            "width": 32,
+            "height": 32,
+            "pngBytes": 2520,
+            "pngSha256": "82b9722e8fb27351472740cccefdff2be1223ea790784e1f4cd05778582260fb",
+            "rgbaSha256": "3b972859c8e73e9e60b38c3ca8495a85ced579bd9bf089d5474d1336d483d9b4"
+          },
+          "latency": {
+            "samplesMs": [
+              15.636,
+              12.332,
+              9.635
+            ],
+            "medianMs": 12.332,
+            "p95Ms": 15.636
+          },
+          "maskedPixelCount": 42,
+          "roiPsnrRgbDb": 26.2315,
+          "roiSsimRec601Gaussian7x7": 0.6538
+        }
+      ]
+    },
+    {
+      "id": "rome-map-interior",
+      "source": {
+        "id": "rome-map",
+        "title": "La Pianta Grande di Roma",
+        "creator": "Giovanni Battista Nolli and collaborators",
+        "license": "CC0-1.0",
+        "licenseEvidence": "Cleveland Museum of Art Open Access API: share_license_status=CC0",
+        "sourcePageUrl": "https://clevelandart.org/art/2020.276.15",
+        "imagePath": "../fixtures/cc0/rome-map.jpg",
+        "imageBytes": 3948980,
+        "imageSha256": "4f86a0ae3baa75bd29b690ef005e40029327824ec49f5241fd102e3a06126065",
+        "metadataPath": "../fixtures/cc0/rome-map.metadata.json",
+        "metadataSha256": "d3c8ec700a20ab96be384047944ff1d67115c636c9fc9bf96be76fe3e06daf08"
+      },
+      "derivation": {
+        "decode": "Pinned local JPEG decoder @jsquash/jpeg from the workspace lockfile; decoded 8-bit RGBA.",
+        "cropPixelsInSource": {
+          "x": 1420,
+          "y": 640,
+          "width": 256,
+          "height": 256
+        },
+        "cropToOutput": "Lanczos3 resampling from 256x256 to 32x32."
+      },
+      "width": 32,
+      "height": 32,
+      "mask": {
+        "shape": "6x6 rectangle at (13,13), fully interior",
+        "rawMaskSha256": "71bf2798672a74e83a38ebe8e4a38dc8d62b9661f9820d72e2ef3d6eb43ef920",
+        "maskedPixelCount": 36,
+        "fillColorRgba": [
+          255,
+          0,
+          255,
+          255
+        ],
+        "artifact": {
+          "path": "cc0-artifacts/rome-map-interior-mask.png",
+          "width": 32,
+          "height": 32,
+          "pngBytes": 388,
+          "pngSha256": "e7e3c8d79197ee461d8cf846af1dd499507faed7ebbb086b40650c90cb88fed0",
+          "rgbaSha256": "6ee03e6205369192a94bccfef400e573498a448652802103d98f1c932ea01d2d"
+        }
+      },
+      "reference": {
+        "path": "cc0-artifacts/rome-map-interior-reference.png",
+        "width": 32,
+        "height": 32,
+        "pngBytes": 2881,
+        "pngSha256": "c31faa797f94874801cfede74a3b11c8c0d1c2c5b27387c2c6b51fc9473f9465",
+        "rgbaSha256": "ca1a593332edfccbb0dd0623605a6695b487747c459a279e467fcb1669e968c1"
+      },
+      "maskedInput": {
+        "path": "cc0-artifacts/rome-map-interior-masked-input.png",
+        "width": 32,
+        "height": 32,
+        "pngBytes": 2869,
+        "pngSha256": "35ce746642c9911c7b1590364b29d50a0c7b406bf19391ea9963566e18886b14",
+        "rgbaSha256": "b03281c960c3546e703790672cc83b70d0e68be0c6fc672b14c49d52c7248667"
+      },
+      "scoreRegion": "PSNR uses RGB channels of masked pixels only. SSIM is Rec.601 luminance, 7x7 Gaussian windows (sigma 1.2) centered on masked pixels; windows include neighboring known context.",
+      "methods": [
+        {
+          "algorithm": "telea",
+          "output": {
+            "path": "cc0-artifacts/rome-map-interior-telea.png",
+            "width": 32,
+            "height": 32,
+            "pngBytes": 2868,
+            "pngSha256": "418d5af44273d63a3bd9ce497a316d731ad6e761e70d7288f8e8c9edfa0fa439",
+            "rgbaSha256": "7c0f116149f38ec808cc591e4cb3d1f3da3660c1346e5795f4e8b54d910df36b"
+          },
+          "latency": {
+            "samplesMs": [
+              1.167,
+              1.78,
+              3.091
+            ],
+            "medianMs": 1.78,
+            "p95Ms": 3.091
+          },
+          "maskedPixelCount": 36,
+          "roiPsnrRgbDb": 31.6238,
+          "roiSsimRec601Gaussian7x7": 0.87566
+        },
+        {
+          "algorithm": "navier-stokes",
+          "output": {
+            "path": "cc0-artifacts/rome-map-interior-navier-stokes.png",
+            "width": 32,
+            "height": 32,
+            "pngBytes": 2901,
+            "pngSha256": "b602eb5dd5bbdcec1ca496a10f571580b54103836bf6f166fd380f23bdb10d9e",
+            "rgbaSha256": "35106240a12c53f5cbc8c36b0fd4e82be12a074d1874929ce9feb0a45cd56c24"
+          },
+          "latency": {
+            "samplesMs": [
+              0.081,
+              0.111,
+              1.121
+            ],
+            "medianMs": 0.111,
+            "p95Ms": 1.121
+          },
+          "maskedPixelCount": 36,
+          "roiPsnrRgbDb": 20.0116,
+          "roiSsimRec601Gaussian7x7": 0.355719
+        },
+        {
+          "algorithm": "confidence-priority",
+          "output": {
+            "path": "cc0-artifacts/rome-map-interior-confidence-priority.png",
+            "width": 32,
+            "height": 32,
+            "pngBytes": 2874,
+            "pngSha256": "8d463b06a3ebfe673803d7d9fe3a5bca2690305e0046400772408dfda57acb4f",
+            "rgbaSha256": "137d0d32442645d46815b180f9cd4e234fd14713837de4283d7374cd6130681e"
+          },
+          "latency": {
+            "samplesMs": [
+              9.328,
+              2.093,
+              2.721
+            ],
+            "medianMs": 2.721,
+            "p95Ms": 9.328
+          },
+          "maskedPixelCount": 36,
+          "roiPsnrRgbDb": 7.5935,
+          "roiSsimRec601Gaussian7x7": -0.027615
+        },
+        {
+          "algorithm": "efros-leung",
+          "output": {
+            "path": "cc0-artifacts/rome-map-interior-efros-leung.png",
+            "width": 32,
+            "height": 32,
+            "pngBytes": 2906,
+            "pngSha256": "bc1705497999a339ecd76a6bf801ad3c6dbeefb16ada89c06bb8b2b078616ce3",
+            "rgbaSha256": "cddfc868c3c7f4df49803def4711e5d3cfbf1e5c778be338d22c5fdfc0c88245"
+          },
+          "latency": {
+            "samplesMs": [
+              13.707,
+              15.163,
+              15.854
+            ],
+            "medianMs": 15.163,
+            "p95Ms": 15.854
+          },
+          "maskedPixelCount": 36,
+          "roiPsnrRgbDb": 21.9344,
+          "roiSsimRec601Gaussian7x7": 0.438953
+        },
+        {
+          "algorithm": "quilting",
+          "output": {
+            "path": "cc0-artifacts/rome-map-interior-quilting.png",
+            "width": 32,
+            "height": 32,
+            "pngBytes": 2852,
+            "pngSha256": "6ef4ebdd16eedfb6cc2ac6bddb1f2db01953c7939a19c6e3e275c360a8f7ae61",
+            "rgbaSha256": "8cfd1216336ba60f413f5783383f338276291ab0aee4760152c065e6f6994e52"
+          },
+          "latency": {
+            "samplesMs": [
+              18.912,
+              13.165,
+              12.182
+            ],
+            "medianMs": 13.165,
+            "p95Ms": 18.912
+          },
+          "maskedPixelCount": 36,
+          "roiPsnrRgbDb": 24.3504,
+          "roiSsimRec601Gaussian7x7": 0.677634
+        }
+      ]
+    },
+    {
+      "id": "rome-map-offset",
+      "source": {
+        "id": "rome-map",
+        "title": "La Pianta Grande di Roma",
+        "creator": "Giovanni Battista Nolli and collaborators",
+        "license": "CC0-1.0",
+        "licenseEvidence": "Cleveland Museum of Art Open Access API: share_license_status=CC0",
+        "sourcePageUrl": "https://clevelandart.org/art/2020.276.15",
+        "imagePath": "../fixtures/cc0/rome-map.jpg",
+        "imageBytes": 3948980,
+        "imageSha256": "4f86a0ae3baa75bd29b690ef005e40029327824ec49f5241fd102e3a06126065",
+        "metadataPath": "../fixtures/cc0/rome-map.metadata.json",
+        "metadataSha256": "d3c8ec700a20ab96be384047944ff1d67115c636c9fc9bf96be76fe3e06daf08"
+      },
+      "derivation": {
+        "decode": "Pinned local JPEG decoder @jsquash/jpeg from the workspace lockfile; decoded 8-bit RGBA.",
+        "cropPixelsInSource": {
+          "x": 1990,
+          "y": 1110,
+          "width": 256,
+          "height": 256
+        },
+        "cropToOutput": "Lanczos3 resampling from 256x256 to 32x32."
+      },
+      "width": 32,
+      "height": 32,
+      "mask": {
+        "shape": "irregular stepped 8-row mask at x=0; touches left image boundary",
+        "rawMaskSha256": "a742d93ab7ca046f8bcd5b69d1a00e3ea9d5de81983a2cd1a0b98f5a7794f56b",
+        "maskedPixelCount": 42,
+        "fillColorRgba": [
+          255,
+          0,
+          255,
+          255
+        ],
+        "artifact": {
+          "path": "cc0-artifacts/rome-map-offset-mask.png",
+          "width": 32,
+          "height": 32,
+          "pngBytes": 377,
+          "pngSha256": "e9471d11ff708a795926720610bffc2d19d5d93d18029457aaac465b19b29902",
+          "rgbaSha256": "da6aa87b8cc1644c5c40840923e1d1c14283fd445235f6dd7d5a8bcf9a0c60c5"
+        }
+      },
+      "reference": {
+        "path": "cc0-artifacts/rome-map-offset-reference.png",
+        "width": 32,
+        "height": 32,
+        "pngBytes": 2917,
+        "pngSha256": "8af62bf5c720b55f01865830ec793d65672e005f50e6e5bf6841690a8753e4ba",
+        "rgbaSha256": "d23eb8b00c67ecf7ddf67cd6f045231de6b283f460a679fc8a2f49c9908b3bb2"
+      },
+      "maskedInput": {
+        "path": "cc0-artifacts/rome-map-offset-masked-input.png",
+        "width": 32,
+        "height": 32,
+        "pngBytes": 2882,
+        "pngSha256": "c5dac9879babca6984cda33894106db8287e1f92f87ea02b4458d6cab128b7a9",
+        "rgbaSha256": "bc65b40990bbbd839482c4bfde56cb38f3ff65b17d489e61034e223670382ca6"
+      },
+      "scoreRegion": "PSNR uses RGB channels of masked pixels only. SSIM is Rec.601 luminance, 7x7 Gaussian windows (sigma 1.2) centered on masked pixels; windows include neighboring known context.",
+      "methods": [
+        {
+          "algorithm": "telea",
+          "output": {
+            "path": "cc0-artifacts/rome-map-offset-telea.png",
+            "width": 32,
+            "height": 32,
+            "pngBytes": 2924,
+            "pngSha256": "e9e0a79d6bf2f1943038cba0520dfbcf8b2895ff580245f37b0ed38e8071d9d2",
+            "rgbaSha256": "d5598d0ee6fc8a38965dcda94f0c851da449dfd01b2bf8ac2c652ad8e60b148d"
+          },
+          "latency": {
+            "samplesMs": [
+              1.155,
+              0.87,
+              0.923
+            ],
+            "medianMs": 0.923,
+            "p95Ms": 1.155
+          },
+          "maskedPixelCount": 42,
+          "roiPsnrRgbDb": 32.1701,
+          "roiSsimRec601Gaussian7x7": 0.790087
+        },
+        {
+          "algorithm": "navier-stokes",
+          "output": {
+            "path": "cc0-artifacts/rome-map-offset-navier-stokes.png",
+            "width": 32,
+            "height": 32,
+            "pngBytes": 2933,
+            "pngSha256": "2cee07741bc28a2f96e0aae2173290b69276536b26ce8168ec759255e4fe057b",
+            "rgbaSha256": "01531095aa143ff30b96f51d50a9583cddd0e842cc5d591bc38cdecf8b6df909"
+          },
+          "latency": {
+            "samplesMs": [
+              0.51,
+              0.387,
+              0.501
+            ],
+            "medianMs": 0.501,
+            "p95Ms": 0.51
+          },
+          "maskedPixelCount": 42,
+          "roiPsnrRgbDb": 19.1866,
+          "roiSsimRec601Gaussian7x7": 0.399641
+        },
+        {
+          "algorithm": "confidence-priority",
+          "output": {
+            "path": "cc0-artifacts/rome-map-offset-confidence-priority.png",
+            "width": 32,
+            "height": 32,
+            "pngBytes": 2895,
+            "pngSha256": "4841ffb2e712b48ff0bfef62da95d62381009b2174bcf2e749fdcc91c8ced157",
+            "rgbaSha256": "b0b3dbc6067342de9bd71731e664ea7af804cc55725b5fdccf1bd87b7ec38e65"
+          },
+          "latency": {
+            "samplesMs": [
+              2.67,
+              2.339,
+              4.989
+            ],
+            "medianMs": 2.67,
+            "p95Ms": 4.989
+          },
+          "maskedPixelCount": 42,
+          "roiPsnrRgbDb": 7.3714,
+          "roiSsimRec601Gaussian7x7": 0.131626
+        },
+        {
+          "algorithm": "efros-leung",
+          "output": {
+            "path": "cc0-artifacts/rome-map-offset-efros-leung.png",
+            "width": 32,
+            "height": 32,
+            "pngBytes": 2946,
+            "pngSha256": "d24312dc2b069ab65ec5cb8f673c9eee3a8985741259b74f8abb4fbe0d7490b8",
+            "rgbaSha256": "23b115521ddc364525a61fc47ed5a5e8baad3af2daaf22d98e16bbcc6270db4d"
+          },
+          "latency": {
+            "samplesMs": [
+              11.498,
+              14.326,
+              13.638
+            ],
+            "medianMs": 13.638,
+            "p95Ms": 14.326
+          },
+          "maskedPixelCount": 42,
+          "roiPsnrRgbDb": 27.4649,
+          "roiSsimRec601Gaussian7x7": 0.558444
+        },
+        {
+          "algorithm": "quilting",
+          "output": {
+            "path": "cc0-artifacts/rome-map-offset-quilting.png",
+            "width": 32,
+            "height": 32,
+            "pngBytes": 2944,
+            "pngSha256": "8e8c5e14d33c2d42155ca7166af1e6a15137ab1183762c8d11b6a77487ccbbd3",
+            "rgbaSha256": "e0595a59bc8e393aa655db6fb0d2af5dab9c6fd03e565b69a1fd37da093a84c1"
+          },
+          "latency": {
+            "samplesMs": [
+              9.655,
+              12.17,
+              17.672
+            ],
+            "medianMs": 12.17,
+            "p95Ms": 17.672
+          },
+          "maskedPixelCount": 42,
+          "roiPsnrRgbDb": 19.6202,
+          "roiSsimRec601Gaussian7x7": 0.420779
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,803 @@
+{
+  "schemaVersion": 1,
+  "benchmark": "P4-21 T81 adaptive-resize geometry and subject-preservation comparison",
+  "recordedAt": "2026-09-20T09:00:32.861Z",
+  "fixtureManifest": {
+    "path": "fixtures/manifest.json",
+    "sha256": "4d03e2717462180a8ec4ab8b0997f40686094685ee84ad489b08649d3406d907",
+    "fixtureCount": 3
+  },
+  "runtime": {
+    "node": "v22.22.0",
+    "platform": "win32",
+    "architecture": "x64",
+    "cpuModel": "Intel(R) Core(TM) i7-10750H CPU @ 2.60GHz",
+    "runtime": "Node.js CPU, single-threaded benchmark loop; no GPU or model used."
+  },
+  "metricMethodology": {
+    "subjectDetection": "Exact known palette classes from generated synthetic subjects; Lanczos edge blends are handled by broad RGB predicates recorded in the fixture manifest.",
+    "bboxAspectChange": "Absolute percentage change between detected output subject bounding-box aspect ratio and its annotated input rectangle aspect ratio. Zero is ideal for shape preservation.",
+    "pixelRetention": "Detected subject-colour pixels divided by the subject rectangle area in the input. The uniform resize control has a theoretical area ratio of targetWidth/sourceWidth × targetHeight/sourceHeight; centered crop retention is computed from exact rectangle intersection.",
+    "centroid": "Horizontal subject centroid offset from the position under a uniform proportional resize to target width; it is diagnostic and not a perceptual score."
+  },
+  "limitations": [
+    "Three self-generated scenes with simple annotated rectangular subjects do not represent natural photographs, portraits, text, or mixed saliency.",
+    "There is no exact perceptual ground truth for retargeting; measures are geometry, known-class retention, and location diagnostics only.",
+    "Center-crop is a conventional composition control and intentionally discards edge content; Lanczos3 is a conventional whole-frame resize control and intentionally changes aspect ratio.",
+    "Results measure this CPU engine implementation and these 192x128 to 128x128 tasks only; they do not establish route behavior or larger-image performance."
+  ],
+  "aggregate": {
+    "lanczos3-resize": {
+      "outputGeometryPassCount": 3,
+      "caseCount": 3,
+      "subjectCount": 4,
+      "detectedSubjectCount": 4,
+      "meanSubjectPixelRetentionRatio": 0.6647,
+      "meanAbsoluteBBoxAspectChangePercent": 33.53,
+      "meanCentroidOffsetFromProportionalResizePx": 0.21
+    },
+    "center-crop": {
+      "outputGeometryPassCount": 3,
+      "caseCount": 3,
+      "subjectCount": 4,
+      "detectedSubjectCount": 4,
+      "meanSubjectPixelRetentionRatio": 0.68,
+      "meanAbsoluteBBoxAspectChangePercent": 32,
+      "meanCentroidOffsetFromProportionalResizePx": 7.17
+    },
+    "saliency-retarget": {
+      "outputGeometryPassCount": 3,
+      "caseCount": 3,
+      "subjectCount": 4,
+      "detectedSubjectCount": 4,
+      "meanSubjectPixelRetentionRatio": 1.472,
+      "meanAbsoluteBBoxAspectChangePercent": 19.29,
+      "meanCentroidOffsetFromProportionalResizePx": 7.67
+    },
+    "saliency-retarget-protect-mask": {
+      "outputGeometryPassCount": 3,
+      "caseCount": 3,
+      "subjectCount": 4,
+      "detectedSubjectCount": 4,
+      "meanSubjectPixelRetentionRatio": 1,
+      "meanAbsoluteBBoxAspectChangePercent": 0,
+      "meanCentroidOffsetFromProportionalResizePx": 8.08
+    }
+  },
+  "fixtures": [
+    {
+      "id": "centered-subject",
+      "input": {
+        "path": "fixtures/inputs/centered-subject-input.png",
+        "width": 192,
+        "height": 128,
+        "pngSha256": "bc58089c89a0a46a48d5ae8ea44988930bbbfc361ddfdad2dc66a6fff99fb7dc",
+        "rgbaSha256": "ae51ac74881dd12ffefd0f607834c81f96f1d929c9d1016fc4429832a333afc6"
+      },
+      "subjectMask": {
+        "path": "fixtures/inputs/centered-subject-mask.png",
+        "pngSha256": "0ede67f9a4217188b260ca1fe1de27ffb76eb502b434e4dbd4d5d7dbf8e5117d",
+        "rgbaSha256": "e89909ae16435408ab98dd71fb75c44878fc05fba43a9c6fac261e9804adeb1d"
+      },
+      "target": {
+        "width": 128,
+        "height": 128
+      },
+      "expectations": [
+        "Each output should be exactly 128x128.",
+        "Every annotated subject should remain detectable and inside the output frame.",
+        "Report each subject bounding-box aspect change, pixel retention, and centroid against the source annotation."
+      ],
+      "methods": [
+        {
+          "method": "lanczos3-resize",
+          "artifact": {
+            "path": "artifacts/centered-subject-lanczos3-resize.png",
+            "width": 128,
+            "height": 128,
+            "sizeBytes": 33388,
+            "pngSha256": "bde71f11c4f6153fbbd87d4effa83adabc5ad910312cdea75be399226a10ba8d",
+            "rgbaSha256": "5b3e426751e39a12cd257de96192002285e11395e6ba1645439041e87e6fa48d"
+          },
+          "passesTargetGeometry": true,
+          "opaquePixelCount": 16384,
+          "allSubjectsDetected": true,
+          "objects": [
+            {
+              "id": "subject-a",
+              "sourceBBox": {
+                "x": 68,
+                "y": 24,
+                "width": 56,
+                "height": 80
+              },
+              "annotatedInputPixels": 4480,
+              "measuredOutputPixels": 3040,
+              "outputPixelRetentionRatio": 0.6786,
+              "expectedUniformResizePixelRatio": 0.6667,
+              "expectedCenterCropAreaRetentionRatio": 1,
+              "outputBBox": {
+                "x": 45,
+                "y": 24,
+                "width": 38,
+                "height": 80
+              },
+              "outputCentroid": {
+                "x": 63.5,
+                "y": 63.5
+              },
+              "outputBBoxAspectRatio": 0.475,
+              "sourceBBoxAspectRatio": 0.7,
+              "bboxAspectChangePercent": -32.14,
+              "centroidOffsetFromProportionalResizePx": -0.17,
+              "detected": true
+            }
+          ]
+        },
+        {
+          "method": "center-crop",
+          "artifact": {
+            "path": "artifacts/centered-subject-center-crop.png",
+            "width": 128,
+            "height": 128,
+            "sizeBytes": 32210,
+            "pngSha256": "aed69a24ea2281add46c3475964b3331c4f2c7336da7c290104b4a17bb6d0ff0",
+            "rgbaSha256": "b2752ecc2d3ad458f936e1a4916571f3c8a5b16f43d14c9efd80a03a171381f1"
+          },
+          "passesTargetGeometry": true,
+          "opaquePixelCount": 16384,
+          "allSubjectsDetected": true,
+          "objects": [
+            {
+              "id": "subject-a",
+              "sourceBBox": {
+                "x": 68,
+                "y": 24,
+                "width": 56,
+                "height": 80
+              },
+              "annotatedInputPixels": 4480,
+              "measuredOutputPixels": 4480,
+              "outputPixelRetentionRatio": 1,
+              "expectedUniformResizePixelRatio": 0.6667,
+              "expectedCenterCropAreaRetentionRatio": 1,
+              "outputBBox": {
+                "x": 36,
+                "y": 24,
+                "width": 56,
+                "height": 80
+              },
+              "outputCentroid": {
+                "x": 63.5,
+                "y": 63.5
+              },
+              "outputBBoxAspectRatio": 0.7,
+              "sourceBBoxAspectRatio": 0.7,
+              "bboxAspectChangePercent": 0,
+              "centroidOffsetFromProportionalResizePx": -0.17,
+              "detected": true
+            }
+          ]
+        },
+        {
+          "method": "saliency-retarget",
+          "artifact": {
+            "path": "artifacts/centered-subject-saliency-retarget.png",
+            "width": 128,
+            "height": 128,
+            "sizeBytes": 18142,
+            "pngSha256": "b4d1d25843c9fc311e354190418aa2d8ee4e8b69cc9d2dca092b6ceee944a2a1",
+            "rgbaSha256": "7b0471b746f6c301e2a438aaa9861d4a22186466f065b96a7331c695e98d04be"
+          },
+          "passesTargetGeometry": true,
+          "opaquePixelCount": 16384,
+          "allSubjectsDetected": true,
+          "objects": [
+            {
+              "id": "subject-a",
+              "sourceBBox": {
+                "x": 68,
+                "y": 24,
+                "width": 56,
+                "height": 80
+              },
+              "annotatedInputPixels": 4480,
+              "measuredOutputPixels": 6720,
+              "outputPixelRetentionRatio": 1.5,
+              "expectedUniformResizePixelRatio": 0.6667,
+              "expectedCenterCropAreaRetentionRatio": 1,
+              "outputBBox": {
+                "x": 29,
+                "y": 16,
+                "width": 70,
+                "height": 96
+              },
+              "outputCentroid": {
+                "x": 63.5,
+                "y": 63.5
+              },
+              "outputBBoxAspectRatio": 0.7292,
+              "sourceBBoxAspectRatio": 0.7,
+              "bboxAspectChangePercent": 4.17,
+              "centroidOffsetFromProportionalResizePx": -0.17,
+              "detected": true
+            }
+          ]
+        },
+        {
+          "method": "saliency-retarget-protect-mask",
+          "artifact": {
+            "path": "artifacts/centered-subject-saliency-retarget-protect-mask.png",
+            "width": 128,
+            "height": 128,
+            "sizeBytes": 21345,
+            "pngSha256": "f83ef10252ca0d42dc7f626cb520b7d84e49a1aff54eb6e1a457a5f95a077e3c",
+            "rgbaSha256": "1479f93860a2679b92af62a8ae7d118ae9aeffc07067942a522d1fbb518378c7"
+          },
+          "passesTargetGeometry": true,
+          "opaquePixelCount": 16384,
+          "allSubjectsDetected": true,
+          "objects": [
+            {
+              "id": "subject-a",
+              "sourceBBox": {
+                "x": 68,
+                "y": 24,
+                "width": 56,
+                "height": 80
+              },
+              "annotatedInputPixels": 4480,
+              "measuredOutputPixels": 4480,
+              "outputPixelRetentionRatio": 1,
+              "expectedUniformResizePixelRatio": 0.6667,
+              "expectedCenterCropAreaRetentionRatio": 1,
+              "outputBBox": {
+                "x": 43,
+                "y": 24,
+                "width": 56,
+                "height": 80
+              },
+              "outputCentroid": {
+                "x": 70.5,
+                "y": 63.5
+              },
+              "outputBBoxAspectRatio": 0.7,
+              "sourceBBoxAspectRatio": 0.7,
+              "bboxAspectChangePercent": 0,
+              "centroidOffsetFromProportionalResizePx": 6.83,
+              "detected": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "left-subject",
+      "input": {
+        "path": "fixtures/inputs/left-subject-input.png",
+        "width": 192,
+        "height": 128,
+        "pngSha256": "ebea4807bf0df62623f6860691a39175b1e9f9b26cac75b7634aea4f86c1221d",
+        "rgbaSha256": "ffa1bed1a32fba26f79c4a880b1e0d2c49fad5d472985327bb191b12dad1917d"
+      },
+      "subjectMask": {
+        "path": "fixtures/inputs/left-subject-mask.png",
+        "pngSha256": "26e59b673ea77c77ea7e58620f24326bcdb6c8f005699fa01beeb8539aced1de",
+        "rgbaSha256": "2500b7c699eef5dec19e9c13cc5d7afdb038ba4f64c426cb696d1f2024ae2746"
+      },
+      "target": {
+        "width": 128,
+        "height": 128
+      },
+      "expectations": [
+        "Each output should be exactly 128x128.",
+        "Every annotated subject should remain detectable and inside the output frame.",
+        "Report each subject bounding-box aspect change, pixel retention, and centroid against the source annotation."
+      ],
+      "methods": [
+        {
+          "method": "lanczos3-resize",
+          "artifact": {
+            "path": "artifacts/left-subject-lanczos3-resize.png",
+            "width": 128,
+            "height": 128,
+            "sizeBytes": 32749,
+            "pngSha256": "71feafea03ecc33160c79932e24370a282272c7be73f48a7f4ec41b6c505f17f",
+            "rgbaSha256": "3d2f2658b020db924021f849ea20dea1a4f0cddf7ea5cba6495930a3850ac64f"
+          },
+          "passesTargetGeometry": true,
+          "opaquePixelCount": 16384,
+          "allSubjectsDetected": true,
+          "objects": [
+            {
+              "id": "subject-a",
+              "sourceBBox": {
+                "x": 12,
+                "y": 24,
+                "width": 50,
+                "height": 80
+              },
+              "annotatedInputPixels": 4000,
+              "measuredOutputPixels": 2640,
+              "outputPixelRetentionRatio": 0.66,
+              "expectedUniformResizePixelRatio": 0.6667,
+              "expectedCenterCropAreaRetentionRatio": 0.6,
+              "outputBBox": {
+                "x": 8,
+                "y": 24,
+                "width": 33,
+                "height": 80
+              },
+              "outputCentroid": {
+                "x": 24,
+                "y": 63.5
+              },
+              "outputBBoxAspectRatio": 0.4125,
+              "sourceBBoxAspectRatio": 0.625,
+              "bboxAspectChangePercent": -34,
+              "centroidOffsetFromProportionalResizePx": -0.33,
+              "detected": true
+            }
+          ]
+        },
+        {
+          "method": "center-crop",
+          "artifact": {
+            "path": "artifacts/left-subject-center-crop.png",
+            "width": 128,
+            "height": 128,
+            "sizeBytes": 34621,
+            "pngSha256": "56123599b3982efe486f7fbc4bd6f014780a3a29e3685f945db9891b27c0835e",
+            "rgbaSha256": "88a3acb77a2c640209e97d5f0893c4d76b66e17defc4b7ad5c1010ad0635073b"
+          },
+          "passesTargetGeometry": true,
+          "opaquePixelCount": 16384,
+          "allSubjectsDetected": true,
+          "objects": [
+            {
+              "id": "subject-a",
+              "sourceBBox": {
+                "x": 12,
+                "y": 24,
+                "width": 50,
+                "height": 80
+              },
+              "annotatedInputPixels": 4000,
+              "measuredOutputPixels": 2400,
+              "outputPixelRetentionRatio": 0.6,
+              "expectedUniformResizePixelRatio": 0.6667,
+              "expectedCenterCropAreaRetentionRatio": 0.6,
+              "outputBBox": {
+                "x": 0,
+                "y": 24,
+                "width": 30,
+                "height": 80
+              },
+              "outputCentroid": {
+                "x": 14.5,
+                "y": 63.5
+              },
+              "outputBBoxAspectRatio": 0.375,
+              "sourceBBoxAspectRatio": 0.625,
+              "bboxAspectChangePercent": -40,
+              "centroidOffsetFromProportionalResizePx": -9.83,
+              "detected": true
+            }
+          ]
+        },
+        {
+          "method": "saliency-retarget",
+          "artifact": {
+            "path": "artifacts/left-subject-saliency-retarget.png",
+            "width": 128,
+            "height": 128,
+            "sizeBytes": 19817,
+            "pngSha256": "f97ed0c930224e08af6b066e56888fc5941a94b856f7691b3bcdb13226a921a8",
+            "rgbaSha256": "43ea53c9950079b23dbb395cd874dc8a706461153145d51652a543c06672fab0"
+          },
+          "passesTargetGeometry": true,
+          "opaquePixelCount": 16384,
+          "allSubjectsDetected": true,
+          "objects": [
+            {
+              "id": "subject-a",
+              "sourceBBox": {
+                "x": 12,
+                "y": 24,
+                "width": 50,
+                "height": 80
+              },
+              "annotatedInputPixels": 4000,
+              "measuredOutputPixels": 6336,
+              "outputPixelRetentionRatio": 1.584,
+              "expectedUniformResizePixelRatio": 0.6667,
+              "expectedCenterCropAreaRetentionRatio": 0.6,
+              "outputBBox": {
+                "x": 9,
+                "y": 16,
+                "width": 66,
+                "height": 96
+              },
+              "outputCentroid": {
+                "x": 41.5,
+                "y": 63.5
+              },
+              "outputBBoxAspectRatio": 0.6875,
+              "sourceBBoxAspectRatio": 0.625,
+              "bboxAspectChangePercent": 10,
+              "centroidOffsetFromProportionalResizePx": 17.17,
+              "detected": true
+            }
+          ]
+        },
+        {
+          "method": "saliency-retarget-protect-mask",
+          "artifact": {
+            "path": "artifacts/left-subject-saliency-retarget-protect-mask.png",
+            "width": 128,
+            "height": 128,
+            "sizeBytes": 21826,
+            "pngSha256": "ec19e63c1a0dd05a35b1b2adefe8cf05071b532ca63aa4184769601cc24b1193",
+            "rgbaSha256": "a396bb148f0d62c25574ff843266b0d0d929c92c12557466e79cf9748d61a1f8"
+          },
+          "passesTargetGeometry": true,
+          "opaquePixelCount": 16384,
+          "allSubjectsDetected": true,
+          "objects": [
+            {
+              "id": "subject-a",
+              "sourceBBox": {
+                "x": 12,
+                "y": 24,
+                "width": 50,
+                "height": 80
+              },
+              "annotatedInputPixels": 4000,
+              "measuredOutputPixels": 4000,
+              "outputPixelRetentionRatio": 1,
+              "expectedUniformResizePixelRatio": 0.6667,
+              "expectedCenterCropAreaRetentionRatio": 0.6,
+              "outputBBox": {
+                "x": 14,
+                "y": 24,
+                "width": 50,
+                "height": 80
+              },
+              "outputCentroid": {
+                "x": 38.5,
+                "y": 63.5
+              },
+              "outputBBoxAspectRatio": 0.625,
+              "sourceBBoxAspectRatio": 0.625,
+              "bboxAspectChangePercent": 0,
+              "centroidOffsetFromProportionalResizePx": 14.17,
+              "detected": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "edge-pair",
+      "input": {
+        "path": "fixtures/inputs/edge-pair-input.png",
+        "width": 192,
+        "height": 128,
+        "pngSha256": "2b14795139a2ac2776d7e46a522c1c86e24f6f22db001feb2e08fa4db0395373",
+        "rgbaSha256": "a5d48a68b3e9ba43b4e13f51cd37730c0fe8a930d4ef1308087da588939e4cf0"
+      },
+      "subjectMask": {
+        "path": "fixtures/inputs/edge-pair-mask.png",
+        "pngSha256": "1997e31cbd671465165e4d6fba805bb2124195c33273c4906d08ca9a730ff2a6",
+        "rgbaSha256": "389371096493651fdd35b7e7564f92e9ae9326ba598f6f76be6024492c3ecdcd"
+      },
+      "target": {
+        "width": 128,
+        "height": 128
+      },
+      "expectations": [
+        "Each output should be exactly 128x128.",
+        "Every annotated subject should remain detectable and inside the output frame.",
+        "Report each subject bounding-box aspect change, pixel retention, and centroid against the source annotation."
+      ],
+      "methods": [
+        {
+          "method": "lanczos3-resize",
+          "artifact": {
+            "path": "artifacts/edge-pair-lanczos3-resize.png",
+            "width": 128,
+            "height": 128,
+            "sizeBytes": 33987,
+            "pngSha256": "ed011b82c68c913700f25eef065047a15f73cc365aec89bd126a3a9a3be23431",
+            "rgbaSha256": "f34f3ad43b2c17dc67ee68d6e88f6fddbe8960ba7061d91d5f01ec9c6f7dfe57"
+          },
+          "passesTargetGeometry": true,
+          "opaquePixelCount": 16384,
+          "allSubjectsDetected": true,
+          "objects": [
+            {
+              "id": "subject-a",
+              "sourceBBox": {
+                "x": 10,
+                "y": 28,
+                "width": 50,
+                "height": 72
+              },
+              "annotatedInputPixels": 3600,
+              "measuredOutputPixels": 2376,
+              "outputPixelRetentionRatio": 0.66,
+              "expectedUniformResizePixelRatio": 0.6667,
+              "expectedCenterCropAreaRetentionRatio": 0.56,
+              "outputBBox": {
+                "x": 7,
+                "y": 28,
+                "width": 33,
+                "height": 72
+              },
+              "outputCentroid": {
+                "x": 23,
+                "y": 63.5
+              },
+              "outputBBoxAspectRatio": 0.4583,
+              "sourceBBoxAspectRatio": 0.6944,
+              "bboxAspectChangePercent": -34,
+              "centroidOffsetFromProportionalResizePx": 0,
+              "detected": true
+            },
+            {
+              "id": "subject-b",
+              "sourceBBox": {
+                "x": 132,
+                "y": 28,
+                "width": 50,
+                "height": 72
+              },
+              "annotatedInputPixels": 3600,
+              "measuredOutputPixels": 2376,
+              "outputPixelRetentionRatio": 0.66,
+              "expectedUniformResizePixelRatio": 0.6667,
+              "expectedCenterCropAreaRetentionRatio": 0.56,
+              "outputBBox": {
+                "x": 88,
+                "y": 28,
+                "width": 33,
+                "height": 72
+              },
+              "outputCentroid": {
+                "x": 104,
+                "y": 63.5
+              },
+              "outputBBoxAspectRatio": 0.4583,
+              "sourceBBoxAspectRatio": 0.6944,
+              "bboxAspectChangePercent": -34,
+              "centroidOffsetFromProportionalResizePx": -0.33,
+              "detected": true
+            }
+          ]
+        },
+        {
+          "method": "center-crop",
+          "artifact": {
+            "path": "artifacts/edge-pair-center-crop.png",
+            "width": 128,
+            "height": 128,
+            "sizeBytes": 33114,
+            "pngSha256": "7d1758e3c4db27f902e695eb921905adbc3e154e836c32a10268bebbeaf9699a",
+            "rgbaSha256": "10bbac454794f4e7f25d98331e2791f0bc2fad4abc01172193f3a7fcb6697fa8"
+          },
+          "passesTargetGeometry": true,
+          "opaquePixelCount": 16384,
+          "allSubjectsDetected": true,
+          "objects": [
+            {
+              "id": "subject-a",
+              "sourceBBox": {
+                "x": 10,
+                "y": 28,
+                "width": 50,
+                "height": 72
+              },
+              "annotatedInputPixels": 3600,
+              "measuredOutputPixels": 2016,
+              "outputPixelRetentionRatio": 0.56,
+              "expectedUniformResizePixelRatio": 0.6667,
+              "expectedCenterCropAreaRetentionRatio": 0.56,
+              "outputBBox": {
+                "x": 0,
+                "y": 28,
+                "width": 28,
+                "height": 72
+              },
+              "outputCentroid": {
+                "x": 13.5,
+                "y": 63.5
+              },
+              "outputBBoxAspectRatio": 0.3889,
+              "sourceBBoxAspectRatio": 0.6944,
+              "bboxAspectChangePercent": -44,
+              "centroidOffsetFromProportionalResizePx": -9.5,
+              "detected": true
+            },
+            {
+              "id": "subject-b",
+              "sourceBBox": {
+                "x": 132,
+                "y": 28,
+                "width": 50,
+                "height": 72
+              },
+              "annotatedInputPixels": 3600,
+              "measuredOutputPixels": 2016,
+              "outputPixelRetentionRatio": 0.56,
+              "expectedUniformResizePixelRatio": 0.6667,
+              "expectedCenterCropAreaRetentionRatio": 0.56,
+              "outputBBox": {
+                "x": 100,
+                "y": 28,
+                "width": 28,
+                "height": 72
+              },
+              "outputCentroid": {
+                "x": 113.5,
+                "y": 63.5
+              },
+              "outputBBoxAspectRatio": 0.3889,
+              "sourceBBoxAspectRatio": 0.6944,
+              "bboxAspectChangePercent": -44,
+              "centroidOffsetFromProportionalResizePx": 9.17,
+              "detected": true
+            }
+          ]
+        },
+        {
+          "method": "saliency-retarget",
+          "artifact": {
+            "path": "artifacts/edge-pair-saliency-retarget.png",
+            "width": 128,
+            "height": 128,
+            "sizeBytes": 24336,
+            "pngSha256": "021f110dc66e7d15146ca75e0066d2cd55d487b606623cbc6a4cf7179e5e27e5",
+            "rgbaSha256": "9f9729965fa42663cbd0fc0727276478588301a60d0e8bcb77a0567c61257ea0"
+          },
+          "passesTargetGeometry": true,
+          "opaquePixelCount": 16384,
+          "allSubjectsDetected": true,
+          "objects": [
+            {
+              "id": "subject-a",
+              "sourceBBox": {
+                "x": 10,
+                "y": 28,
+                "width": 50,
+                "height": 72
+              },
+              "annotatedInputPixels": 3600,
+              "measuredOutputPixels": 3811,
+              "outputPixelRetentionRatio": 1.0586,
+              "expectedUniformResizePixelRatio": 0.6667,
+              "expectedCenterCropAreaRetentionRatio": 0.56,
+              "outputBBox": {
+                "x": 4,
+                "y": 12,
+                "width": 37,
+                "height": 103
+              },
+              "outputCentroid": {
+                "x": 22,
+                "y": 63
+              },
+              "outputBBoxAspectRatio": 0.3592,
+              "sourceBBoxAspectRatio": 0.6944,
+              "bboxAspectChangePercent": -48.27,
+              "centroidOffsetFromProportionalResizePx": -1,
+              "detected": true
+            },
+            {
+              "id": "subject-b",
+              "sourceBBox": {
+                "x": 132,
+                "y": 28,
+                "width": 50,
+                "height": 72
+              },
+              "annotatedInputPixels": 3600,
+              "measuredOutputPixels": 6283,
+              "outputPixelRetentionRatio": 1.7453,
+              "expectedUniformResizePixelRatio": 0.6667,
+              "expectedCenterCropAreaRetentionRatio": 0.56,
+              "outputBBox": {
+                "x": 62,
+                "y": 12,
+                "width": 61,
+                "height": 103
+              },
+              "outputCentroid": {
+                "x": 92,
+                "y": 63
+              },
+              "outputBBoxAspectRatio": 0.5922,
+              "sourceBBoxAspectRatio": 0.6944,
+              "bboxAspectChangePercent": -14.72,
+              "centroidOffsetFromProportionalResizePx": -12.33,
+              "detected": true
+            }
+          ]
+        },
+        {
+          "method": "saliency-retarget-protect-mask",
+          "artifact": {
+            "path": "artifacts/edge-pair-saliency-retarget-protect-mask.png",
+            "width": 128,
+            "height": 128,
+            "sizeBytes": 25858,
+            "pngSha256": "69ce059abfaededa18a10fb4ac1a3906bad75ca87f2fc0958d330ee182598ac6",
+            "rgbaSha256": "4f7b9ec915d49fb3473c4076ce9320b59c459f8a2ff72920dbf102391491c9d2"
+          },
+          "passesTargetGeometry": true,
+          "opaquePixelCount": 16384,
+          "allSubjectsDetected": true,
+          "objects": [
+            {
+              "id": "subject-a",
+              "sourceBBox": {
+                "x": 10,
+                "y": 28,
+                "width": 50,
+                "height": 72
+              },
+              "annotatedInputPixels": 3600,
+              "measuredOutputPixels": 3600,
+              "outputPixelRetentionRatio": 1,
+              "expectedUniformResizePixelRatio": 0.6667,
+              "expectedCenterCropAreaRetentionRatio": 0.56,
+              "outputBBox": {
+                "x": 4,
+                "y": 28,
+                "width": 50,
+                "height": 72
+              },
+              "outputCentroid": {
+                "x": 28.5,
+                "y": 63.5
+              },
+              "outputBBoxAspectRatio": 0.6944,
+              "sourceBBoxAspectRatio": 0.6944,
+              "bboxAspectChangePercent": 0,
+              "centroidOffsetFromProportionalResizePx": 5.5,
+              "detected": true
+            },
+            {
+              "id": "subject-b",
+              "sourceBBox": {
+                "x": 132,
+                "y": 28,
+                "width": 50,
+                "height": 72
+              },
+              "annotatedInputPixels": 3600,
+              "measuredOutputPixels": 3600,
+              "outputPixelRetentionRatio": 1,
+              "expectedUniformResizePixelRatio": 0.6667,
+              "expectedCenterCropAreaRetentionRatio": 0.56,
+              "outputBBox": {
+                "x": 74,
+                "y": 28,
+                "width": 50,
+                "height": 72
+              },
+              "outputCentroid": {
+                "x": 98.5,
+                "y": 63.5
+              },
+              "outputBBoxAspectRatio": 0.6944,
+              "sourceBBoxAspectRatio": 0.6944,
+              "bboxAspectChangePercent": 0,
+              "centroidOffsetFromProportionalResizePx": -5.83,
+              "detected": true
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

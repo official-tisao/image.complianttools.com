@@ -1,0 +1,117 @@
+{
+  "batchcomplete": "",
+  "query": {
+    "normalized": [
+      {
+        "from": "File:Landscape_Dordogne_Château_de_Hautefort_18.jpg",
+        "to": "File:Landscape Dordogne Château de Hautefort 18.jpg"
+      }
+    ],
+    "pages": {
+      "28444954": {
+        "pageid": 28444954,
+        "ns": 6,
+        "title": "File:Landscape Dordogne Château de Hautefort 18.jpg",
+        "imagerepository": "local",
+        "imageinfo": [
+          {
+            "size": 2140794,
+            "width": 4592,
+            "height": 3056,
+            "url": "https://upload.wikimedia.org/wikipedia/commons/4/4d/Landscape_Dordogne_Ch%C3%A2teau_de_Hautefort_18.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+            "descriptionurl": "https://commons.wikimedia.org/wiki/File:Landscape_Dordogne_Ch%C3%A2teau_de_Hautefort_18.jpg",
+            "descriptionshorturl": "https://commons.wikimedia.org/w/index.php?curid=28444954",
+            "extmetadata": {
+              "DateTime": {
+                "value": "2013-09-21 17:29:21",
+                "source": "mediawiki-metadata",
+                "hidden": ""
+              },
+              "ObjectName": {
+                "value": "Landscape Dordogne Château de Hautefort 18",
+                "source": "mediawiki-metadata"
+              },
+              "CommonsMetadataExtension": {
+                "value": 1.2,
+                "source": "extension",
+                "hidden": ""
+              },
+              "Categories": {
+                "value": "Taken with Sony DSLR-A550|CC-Zero|Hautefort|Self-published work|Landscapes of Dordogne|Files with coordinates missing SDC location of creation|France photographs taken on 2013-08-13",
+                "source": "commons-categories",
+                "hidden": ""
+              },
+              "Assessments": {
+                "value": "quality",
+                "source": "commons-categories",
+                "hidden": ""
+              },
+              "GPSLatitude": {
+                "value": "45.261295",
+                "source": "commons-desc-page"
+              },
+              "GPSLongitude": {
+                "value": "1.138201",
+                "source": "commons-desc-page"
+              },
+              "GPSMapDatum": {
+                "value": "WGS-84",
+                "source": "commons-desc-page",
+                "hidden": ""
+              },
+              "ImageDescription": {
+                "value": "Landscape of Dordogne, from Hautefort.",
+                "source": "commons-desc-page"
+              },
+              "DateTimeOriginal": {
+                "value": "2013-08-13 18:32:54",
+                "source": "commons-desc-page"
+              },
+              "Credit": {
+                "value": "<span class=\"int-own-work\" lang=\"en\">Own work</span>",
+                "source": "commons-desc-page"
+              },
+              "Artist": {
+                "value": "<a href=\"//commons.wikimedia.org/wiki/User:Jebulon\" title=\"User:Jebulon\">Jebulon</a>",
+                "source": "commons-desc-page"
+              },
+              "LicenseShortName": {
+                "value": "CC0",
+                "source": "commons-desc-page",
+                "hidden": ""
+              },
+              "UsageTerms": {
+                "value": "Creative Commons Zero, Public Domain Dedication",
+                "source": "commons-desc-page"
+              },
+              "AttributionRequired": {
+                "value": "false",
+                "source": "commons-desc-page",
+                "hidden": ""
+              },
+              "LicenseUrl": {
+                "value": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+                "source": "commons-desc-page"
+              },
+              "Copyrighted": {
+                "value": "True",
+                "source": "commons-desc-page",
+                "hidden": ""
+              },
+              "Restrictions": {
+                "value": "",
+                "source": "commons-desc-page",
+                "hidden": ""
+              },
+              "License": {
+                "value": "cc0",
+                "source": "commons-templates",
+                "hidden": ""
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}

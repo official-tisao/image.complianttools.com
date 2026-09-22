@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { allowAllNetwork, denyAllNetwork } from './support/network.js';
+import { allowAllNetwork, denyAllNetwork, LOCAL_ORIGIN } from './support/network.js';
 
 async function pngFixture(page: import('@playwright/test').Page): Promise<Buffer> {
   const bytes = await page.evaluate(async () => {
@@ -37,11 +37,13 @@ test('encodes lossy and lossless raster JPEG XL then decodes real output to PNG 
   page,
   context,
 }) => {
+  // This round trip runs two encodes, two decodes, and an offline decode in one test.
+  test.setTimeout(60_000);
   const crossOrigin: string[] = [];
   const localRequests: string[] = [];
   page.on('request', (request) => {
     const url = new URL(request.url());
-    if (url.origin !== 'http://127.0.0.1:4173') crossOrigin.push(request.url());
+    if (url.origin !== LOCAL_ORIGIN) crossOrigin.push(request.url());
     else localRequests.push(url.pathname);
   });
   await page.goto('/jxl-converter');
@@ -105,7 +107,7 @@ test('reports malformed JPEG XL with a typed remedy and no network fallback', as
   const crossOrigin: string[] = [];
   page.on('request', (request) => {
     const url = new URL(request.url());
-    if (url.origin !== 'http://127.0.0.1:4173') crossOrigin.push(request.url());
+    if (url.origin !== LOCAL_ORIGIN) crossOrigin.push(request.url());
   });
   await page.goto('/jxl-converter');
   await page.waitForLoadState('networkidle');

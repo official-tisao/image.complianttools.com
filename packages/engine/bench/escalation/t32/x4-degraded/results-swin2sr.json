@@ -1,0 +1,1346 @@
+{
+  "schemaVersion": 1,
+  "benchmark": "P4-21 T32 ONNX Community Swin2SR q4f16 x4 candidate on CC0-derived synthetic degradation fixtures",
+  "evaluationOnly": true,
+  "assetId": "swin2sr-realworld-x4-q4f16-onnx-9b3baf0",
+  "model": {
+    "filename": "model_q4f16.onnx",
+    "sizeBytes": 15249949,
+    "sha256": "94561159849a4d3145daf15d2a54dd6ef7cbd9cf7b9e99525d78a494f9556d0d",
+    "repositoryRevision": "9b3baf051f6708d0b697580489e4415b64c7378e",
+    "license": "Apache-2.0 (publisher-declared model repository metadata)",
+    "licenseEvidenceUrl": "https://huggingface.co/onnx-community/swin2SR-realworld-sr-x4-64-bsrgan-psnr-ONNX",
+    "baseModel": {
+      "repositoryUrl": "https://huggingface.co/caidas/swin2SR-realworld-sr-x4-64-bsrgan-psnr",
+      "license": "Apache-2.0 (publisher-declared model card metadata)",
+      "licenseEvidenceUrl": "https://huggingface.co/caidas/swin2SR-realworld-sr-x4-64-bsrgan-psnr",
+      "useCaseEvidence": "The publisher describes this as a real-world image super-resolution model with x4 output.",
+      "trainingDataProvenance": "Not established by the reviewed model cards."
+    },
+    "scale": 4,
+    "windowMultiple": 8
+  },
+  "corpus": {
+    "fixtureCount": 16,
+    "sourceCount": 4,
+    "fixtureManifestSha256": "480e699b2ecbdb84f99e22598b1d4739fcd73bf06061cb34413cdb58d80f17df",
+    "sourceManifestSha256": "2eccd74e8dc2d4d57492ffb95717c9efcfc398010b0c7354af6705545ecfe6c5",
+    "categories": [
+      "clean-x4",
+      "blur-x4",
+      "jpeg-q45-x4",
+      "blur-grain-jpeg-q45-x4"
+    ]
+  },
+  "runtime": {
+    "python": "3.12.2",
+    "onnxruntime": "1.20.1",
+    "numpy": "2.5.3",
+    "pillow": "12.3.0",
+    "provider": "CPUExecutionProvider",
+    "providers": [
+      "CPUExecutionProvider"
+    ],
+    "intraOpThreads": 1,
+    "interOpThreads": 1
+  },
+  "methodology": {
+    "input": "Read the exact PNG fixtures; pad bottom/right with reflection to an 8-pixel window multiple; normalize RGB to float32 [0,1]; transpose HWC to NCHW; run the pinned x4 model; crop only the padded output; clamp/round to 8-bit RGB.",
+    "comparison": "The exact engine Tier 1 Lanczos3 output and the candidate model receive the same saved input PNG. PSNR/SSIM definitions are the same as the paired Real-ESRGAN benchmark.",
+    "latency": "One warmup plus three timed CPU inference calls per fixture. This CPU runtime does not establish browser WASM/WebGPU latency; the separate browser smoke is recorded in docs/model-assets.json.",
+    "limits": "Four CC0 photos and four generated degradation recipes are a small synthetic set, not actual camera captures or a representative restoration corpus. The candidate remains evaluation-only; model-card Apache declaration is recorded, no separate per-file license notice was found, and training-data provenance is unspecified."
+  },
+  "aggregateQuality": {
+    "tier1Lanczos3": {
+      "fixtureCount": 16,
+      "meanPsnrRgbDb": 25.5075,
+      "meanSsimLuminanceGaussian11x11": 0.635145
+    },
+    "swin2srQ4f16": {
+      "fixtureCount": 16,
+      "meanPsnrRgbDb": 25.6881,
+      "meanSsimLuminanceGaussian11x11": 0.666381
+    }
+  },
+  "latency": {
+    "sessionRunMedianMs": 3131.935,
+    "sessionRunP95MsNearestRank": 4365.515,
+    "sampleCount": 48
+  },
+  "byDegradation": {
+    "clean-x4": {
+      "fixtureCount": 4,
+      "methods": {
+        "tier1Lanczos3": {
+          "meanPsnrRgbDb": 26.8904,
+          "meanSsimLuminanceGaussian11x11": 0.691665
+        },
+        "swin2srQ4f16": {
+          "meanPsnrRgbDb": 26.6188,
+          "meanSsimLuminanceGaussian11x11": 0.715851
+        }
+      }
+    },
+    "blur-x4": {
+      "fixtureCount": 4,
+      "methods": {
+        "tier1Lanczos3": {
+          "meanPsnrRgbDb": 26.3953,
+          "meanSsimLuminanceGaussian11x11": 0.668802
+        },
+        "swin2srQ4f16": {
+          "meanPsnrRgbDb": 26.6667,
+          "meanSsimLuminanceGaussian11x11": 0.709285
+        }
+      }
+    },
+    "jpeg-q45-x4": {
+      "fixtureCount": 4,
+      "methods": {
+        "tier1Lanczos3": {
+          "meanPsnrRgbDb": 24.4877,
+          "meanSsimLuminanceGaussian11x11": 0.596256
+        },
+        "swin2srQ4f16": {
+          "meanPsnrRgbDb": 24.7295,
+          "meanSsimLuminanceGaussian11x11": 0.624426
+        }
+      }
+    },
+    "blur-grain-jpeg-q45-x4": {
+      "fixtureCount": 4,
+      "methods": {
+        "tier1Lanczos3": {
+          "meanPsnrRgbDb": 24.2566,
+          "meanSsimLuminanceGaussian11x11": 0.583857
+        },
+        "swin2srQ4f16": {
+          "meanPsnrRgbDb": 24.7373,
+          "meanSsimLuminanceGaussian11x11": 0.61596
+        }
+      }
+    }
+  },
+  "fixtures": [
+    {
+      "id": "landscape-dordogne-clean-x4",
+      "degradationCase": "clean-x4",
+      "sourceAssetId": "landscape-dordogne",
+      "sourceSha256": "c3e2eef6af01a10882c83f71ff849d2ffb95220aad0e70e98daf6cf27e1975b7",
+      "degradation": {
+        "resize": "Lanczos3 x4 reduction"
+      },
+      "reference": {
+        "path": "artifacts/landscape-dordogne-reference.png",
+        "width": 256,
+        "height": 168,
+        "pngSha256": "3522a9a1b634638895ca38fc9a10adb9915db7adf25ef81239c4cf60ef3b2134"
+      },
+      "input": {
+        "path": "artifacts/landscape-dordogne-clean-x4-input.png",
+        "width": 64,
+        "height": 42,
+        "pngSha256": "25cbe0e4c107ac632ca3175a73fe169e524363b94627d9c5b86f2b52d69907ff"
+      },
+      "tier1Lanczos3": {
+        "path": "artifacts/landscape-dordogne-clean-x4-tier1-lanczos3.png",
+        "width": 256,
+        "height": 168,
+        "pngSha256": "f05bccc1c87d9300e7e38358afccfbd587aac0cd4869f0e88a63c55deecedaf2"
+      },
+      "modelInput": {
+        "tensorShape": [
+          1,
+          3,
+          48,
+          64
+        ],
+        "reflectPadBottomRight": {
+          "bottom": 6,
+          "right": 0
+        },
+        "paddedInputArtifact": {
+          "path": "artifacts/swin2sr-q4f16/landscape-dordogne-clean-x4-swin2sr-padded-input.png",
+          "width": 64,
+          "height": 48,
+          "pngSha256": "dfd0b428688f40cad8e49ea70fc236019867cdedfe684e7887369b3e45092d1a",
+          "rgbaSha256": "4e212e1b33f01c7a60f974536ddcb5c0414b1e9f7a6beba03b57fe8dbb636d2a"
+        }
+      },
+      "modelOutput": {
+        "path": "artifacts/swin2sr-q4f16/landscape-dordogne-clean-x4-swin2sr-q4f16-x4.png",
+        "width": 256,
+        "height": 168,
+        "pngSha256": "71051e8b1c8b966ba925c551c38c66a3c780596fe7c265c18e7a144d0ab6848f",
+        "rgbaSha256": "53a908b8d775ed042b63f2f88a56f4faa6a4d90c810b23114815c571b073d649"
+      },
+      "quality": {
+        "tier1Lanczos3": {
+          "psnrRgbDb": 23.1451,
+          "ssimLuminanceGaussian11x11": 0.593695
+        },
+        "swin2srQ4f16": {
+          "psnrRgbDb": 22.7072,
+          "ssimLuminanceGaussian11x11": 0.613406
+        }
+      },
+      "latency": {
+        "samplesMs": [
+          3148.186,
+          3172.208,
+          3276.314
+        ],
+        "medianMs": 3172.208,
+        "p95MsNearestRank": 3276.314,
+        "warmups": 1,
+        "measuredRuns": 3,
+        "scope": "ONNX Runtime CPU session.run only; excludes fixture decode, window padding, tensor preparation, cropping, output conversion, metrics, and file writes."
+      }
+    },
+    {
+      "id": "landscape-dordogne-blur-x4",
+      "degradationCase": "blur-x4",
+      "sourceAssetId": "landscape-dordogne",
+      "sourceSha256": "c3e2eef6af01a10882c83f71ff849d2ffb95220aad0e70e98daf6cf27e1975b7",
+      "degradation": {
+        "blur": "three-pass box approximation of Gaussian, radius 1 at reference size",
+        "resize": "Lanczos3 x4 reduction"
+      },
+      "reference": {
+        "path": "artifacts/landscape-dordogne-reference.png",
+        "width": 256,
+        "height": 168,
+        "pngSha256": "3522a9a1b634638895ca38fc9a10adb9915db7adf25ef81239c4cf60ef3b2134"
+      },
+      "input": {
+        "path": "artifacts/landscape-dordogne-blur-x4-input.png",
+        "width": 64,
+        "height": 42,
+        "pngSha256": "46ee09de6c84d7c07338df1837051f6ec8275cd45aea3b44beb17ae271251f80"
+      },
+      "tier1Lanczos3": {
+        "path": "artifacts/landscape-dordogne-blur-x4-tier1-lanczos3.png",
+        "width": 256,
+        "height": 168,
+        "pngSha256": "88bfe2f82aedad98cce1a22fdeaa340cafd7374e38a80b7ee6b1e25e249ad45a"
+      },
+      "modelInput": {
+        "tensorShape": [
+          1,
+          3,
+          48,
+          64
+        ],
+        "reflectPadBottomRight": {
+          "bottom": 6,
+          "right": 0
+        },
+        "paddedInputArtifact": {
+          "path": "artifacts/swin2sr-q4f16/landscape-dordogne-blur-x4-swin2sr-padded-input.png",
+          "width": 64,
+          "height": 48,
+          "pngSha256": "39e81f48446439333e88faa053acd1f1b164630bd337b853256ba1afba69d96c",
+          "rgbaSha256": "a5a65ad83fb5c84a708e70a9a1725fec45890be2614b50b15a394aecd99b8a86"
+        }
+      },
+      "modelOutput": {
+        "path": "artifacts/swin2sr-q4f16/landscape-dordogne-blur-x4-swin2sr-q4f16-x4.png",
+        "width": 256,
+        "height": 168,
+        "pngSha256": "8a58441adc1dfe1063edbac6cf31298769e4830e183e81d54fa4e04895ed3c03",
+        "rgbaSha256": "723064b6870cd0017dc639d020bd95bdd47dccd42b9683d0cc9653840eea35c2"
+      },
+      "quality": {
+        "tier1Lanczos3": {
+          "psnrRgbDb": 22.812,
+          "ssimLuminanceGaussian11x11": 0.561557
+        },
+        "swin2srQ4f16": {
+          "psnrRgbDb": 22.7345,
+          "ssimLuminanceGaussian11x11": 0.604317
+        }
+      },
+      "latency": {
+        "samplesMs": [
+          3164.507,
+          3238.375,
+          3164.263
+        ],
+        "medianMs": 3164.507,
+        "p95MsNearestRank": 3238.375,
+        "warmups": 1,
+        "measuredRuns": 3,
+        "scope": "ONNX Runtime CPU session.run only; excludes fixture decode, window padding, tensor preparation, cropping, output conversion, metrics, and file writes."
+      }
+    },
+    {
+      "id": "landscape-dordogne-jpeg-q45-x4",
+      "degradationCase": "jpeg-q45-x4",
+      "sourceAssetId": "landscape-dordogne",
+      "sourceSha256": "c3e2eef6af01a10882c83f71ff849d2ffb95220aad0e70e98daf6cf27e1975b7",
+      "degradation": {
+        "resize": "Lanczos3 x4 reduction",
+        "jpegQuality": 45
+      },
+      "reference": {
+        "path": "artifacts/landscape-dordogne-reference.png",
+        "width": 256,
+        "height": 168,
+        "pngSha256": "3522a9a1b634638895ca38fc9a10adb9915db7adf25ef81239c4cf60ef3b2134"
+      },
+      "input": {
+        "path": "artifacts/landscape-dordogne-jpeg-q45-x4-input.png",
+        "width": 64,
+        "height": 42,
+        "pngSha256": "0a7b393aeb85da294504a05eb51cec4687930d0c6a0472ab24a7d5307b9e2947"
+      },
+      "tier1Lanczos3": {
+        "path": "artifacts/landscape-dordogne-jpeg-q45-x4-tier1-lanczos3.png",
+        "width": 256,
+        "height": 168,
+        "pngSha256": "0651308dad72446e15f0273f777cc7e23841d37238f905caf6245a41dd9e4cd2"
+      },
+      "modelInput": {
+        "tensorShape": [
+          1,
+          3,
+          48,
+          64
+        ],
+        "reflectPadBottomRight": {
+          "bottom": 6,
+          "right": 0
+        },
+        "paddedInputArtifact": {
+          "path": "artifacts/swin2sr-q4f16/landscape-dordogne-jpeg-q45-x4-swin2sr-padded-input.png",
+          "width": 64,
+          "height": 48,
+          "pngSha256": "bd97ef60db30ed26020ea9a2ae52b2d436095ce0ccf43f28518d3ac01edeec52",
+          "rgbaSha256": "bd30a4b7b1410713a26ff99260b6aa1ccbd4865c9896ea3c9e72b004784f9b96"
+        }
+      },
+      "modelOutput": {
+        "path": "artifacts/swin2sr-q4f16/landscape-dordogne-jpeg-q45-x4-swin2sr-q4f16-x4.png",
+        "width": 256,
+        "height": 168,
+        "pngSha256": "045e5b5dec181e876e7407c406507d4e4d67ea10ffe7c4f2065d9b4a98e45234",
+        "rgbaSha256": "de0f9e8003659ece850c96fba8576536abf2caf5edd9bce4d1e4e915a221541f"
+      },
+      "quality": {
+        "tier1Lanczos3": {
+          "psnrRgbDb": 21.3507,
+          "ssimLuminanceGaussian11x11": 0.476671
+        },
+        "swin2srQ4f16": {
+          "psnrRgbDb": 21.4705,
+          "ssimLuminanceGaussian11x11": 0.5046
+        }
+      },
+      "latency": {
+        "samplesMs": [
+          3076.675,
+          3236.259,
+          3101.877
+        ],
+        "medianMs": 3101.877,
+        "p95MsNearestRank": 3236.259,
+        "warmups": 1,
+        "measuredRuns": 3,
+        "scope": "ONNX Runtime CPU session.run only; excludes fixture decode, window padding, tensor preparation, cropping, output conversion, metrics, and file writes."
+      }
+    },
+    {
+      "id": "landscape-dordogne-blur-grain-jpeg-q45-x4",
+      "degradationCase": "blur-grain-jpeg-q45-x4",
+      "sourceAssetId": "landscape-dordogne",
+      "sourceSha256": "c3e2eef6af01a10882c83f71ff849d2ffb95220aad0e70e98daf6cf27e1975b7",
+      "degradation": {
+        "blur": "three-pass box approximation of Gaussian, radius 1 at reference size",
+        "resize": "Lanczos3 x4 reduction",
+        "deterministicGrain": "amount 12, per-channel",
+        "jpegQuality": 45
+      },
+      "reference": {
+        "path": "artifacts/landscape-dordogne-reference.png",
+        "width": 256,
+        "height": 168,
+        "pngSha256": "3522a9a1b634638895ca38fc9a10adb9915db7adf25ef81239c4cf60ef3b2134"
+      },
+      "input": {
+        "path": "artifacts/landscape-dordogne-blur-grain-jpeg-q45-x4-input.png",
+        "width": 64,
+        "height": 42,
+        "pngSha256": "898fe8b2f32bdf750353ab0f96e7d4b335ff6934fc98ebeb0fa4ce0885c52bdb"
+      },
+      "tier1Lanczos3": {
+        "path": "artifacts/landscape-dordogne-blur-grain-jpeg-q45-x4-tier1-lanczos3.png",
+        "width": 256,
+        "height": 168,
+        "pngSha256": "e4e048667cd1b83ddc4bb76367c8bee61bc4b5f623d516e23044144d693cd896"
+      },
+      "modelInput": {
+        "tensorShape": [
+          1,
+          3,
+          48,
+          64
+        ],
+        "reflectPadBottomRight": {
+          "bottom": 6,
+          "right": 0
+        },
+        "paddedInputArtifact": {
+          "path": "artifacts/swin2sr-q4f16/landscape-dordogne-blur-grain-jpeg-q45-x4-swin2sr-padded-input.png",
+          "width": 64,
+          "height": 48,
+          "pngSha256": "cd832fac78e083b68b5cf70b713f509753df5b37b717c7c06ef2e691cf05d8bf",
+          "rgbaSha256": "04f29465e4d85dc810e9954585e0d6a3e33f7897c4e6d2dd814b0f58383f1526"
+        }
+      },
+      "modelOutput": {
+        "path": "artifacts/swin2sr-q4f16/landscape-dordogne-blur-grain-jpeg-q45-x4-swin2sr-q4f16-x4.png",
+        "width": 256,
+        "height": 168,
+        "pngSha256": "48d13cb305c1316500d10d6f73cff4c4aa9e22c14d1f2acdef32cda84855b890",
+        "rgbaSha256": "cade1c9df294d4fdb0f57ae539bea6154022029cbc48b2290f9e0acf93f109ba"
+      },
+      "quality": {
+        "tier1Lanczos3": {
+          "psnrRgbDb": 21.111,
+          "ssimLuminanceGaussian11x11": 0.454647
+        },
+        "swin2srQ4f16": {
+          "psnrRgbDb": 21.3933,
+          "ssimLuminanceGaussian11x11": 0.49317
+        }
+      },
+      "latency": {
+        "samplesMs": [
+          3157.919,
+          3040.547,
+          3110.414
+        ],
+        "medianMs": 3110.414,
+        "p95MsNearestRank": 3157.919,
+        "warmups": 1,
+        "measuredRuns": 3,
+        "scope": "ONNX Runtime CPU session.run only; excludes fixture decode, window padding, tensor preparation, cropping, output conversion, metrics, and file writes."
+      }
+    },
+    {
+      "id": "oak-leaves-clean-x4",
+      "degradationCase": "clean-x4",
+      "sourceAssetId": "oak-leaves",
+      "sourceSha256": "71c0f2fb2fa89385955bca609cf9983d493137a81879005143606d0fa74d2802",
+      "degradation": {
+        "resize": "Lanczos3 x4 reduction"
+      },
+      "reference": {
+        "path": "artifacts/oak-leaves-reference.png",
+        "width": 256,
+        "height": 192,
+        "pngSha256": "afdbb84313810df61368a0836a1b2c582084bcce1cf20e6005b8810a2872d19f"
+      },
+      "input": {
+        "path": "artifacts/oak-leaves-clean-x4-input.png",
+        "width": 64,
+        "height": 48,
+        "pngSha256": "5c187e0790bee6e9f450771120661560405770a24777a142dc61bc4a17bcbd5c"
+      },
+      "tier1Lanczos3": {
+        "path": "artifacts/oak-leaves-clean-x4-tier1-lanczos3.png",
+        "width": 256,
+        "height": 192,
+        "pngSha256": "73171022d39b6eb4dd6f2eacf0b8018a932af1070f01f3f4b41e06a893c36a28"
+      },
+      "modelInput": {
+        "tensorShape": [
+          1,
+          3,
+          48,
+          64
+        ],
+        "reflectPadBottomRight": {
+          "bottom": 0,
+          "right": 0
+        },
+        "paddedInputArtifact": {
+          "path": "artifacts/swin2sr-q4f16/oak-leaves-clean-x4-swin2sr-padded-input.png",
+          "width": 64,
+          "height": 48,
+          "pngSha256": "fc3627b30063abc4adcfb890fb589b61f6d36e1564b4d142bdbcb843362d7f25",
+          "rgbaSha256": "6ec360b33bebaf2f8e58d9b2029d3c33f2b32adcc241155255459703e6687de8"
+        }
+      },
+      "modelOutput": {
+        "path": "artifacts/swin2sr-q4f16/oak-leaves-clean-x4-swin2sr-q4f16-x4.png",
+        "width": 256,
+        "height": 192,
+        "pngSha256": "5f7b0b57a79919462963e4a997af263f113fb51c0c2f30bd49d23d4fde8a7b72",
+        "rgbaSha256": "ccf80fa3dac672c5798a319748ee10de55f9ed8bb1603ee7dfa213359a50dfe9"
+      },
+      "quality": {
+        "tier1Lanczos3": {
+          "psnrRgbDb": 27.7435,
+          "ssimLuminanceGaussian11x11": 0.872281
+        },
+        "swin2srQ4f16": {
+          "psnrRgbDb": 26.6834,
+          "ssimLuminanceGaussian11x11": 0.881448
+        }
+      },
+      "latency": {
+        "samplesMs": [
+          3124.344,
+          3139.74,
+          3110.179
+        ],
+        "medianMs": 3124.344,
+        "p95MsNearestRank": 3139.74,
+        "warmups": 1,
+        "measuredRuns": 3,
+        "scope": "ONNX Runtime CPU session.run only; excludes fixture decode, window padding, tensor preparation, cropping, output conversion, metrics, and file writes."
+      }
+    },
+    {
+      "id": "oak-leaves-blur-x4",
+      "degradationCase": "blur-x4",
+      "sourceAssetId": "oak-leaves",
+      "sourceSha256": "71c0f2fb2fa89385955bca609cf9983d493137a81879005143606d0fa74d2802",
+      "degradation": {
+        "blur": "three-pass box approximation of Gaussian, radius 1 at reference size",
+        "resize": "Lanczos3 x4 reduction"
+      },
+      "reference": {
+        "path": "artifacts/oak-leaves-reference.png",
+        "width": 256,
+        "height": 192,
+        "pngSha256": "afdbb84313810df61368a0836a1b2c582084bcce1cf20e6005b8810a2872d19f"
+      },
+      "input": {
+        "path": "artifacts/oak-leaves-blur-x4-input.png",
+        "width": 64,
+        "height": 48,
+        "pngSha256": "9825710009d00fea2db2ca117099ea9fe530cb4b14e05d9a88df2a4155c13268"
+      },
+      "tier1Lanczos3": {
+        "path": "artifacts/oak-leaves-blur-x4-tier1-lanczos3.png",
+        "width": 256,
+        "height": 192,
+        "pngSha256": "6bcef2229e7e9fd45f537ad45bbb4b7da55aa2c0c6bec548997fd5a7e67f0868"
+      },
+      "modelInput": {
+        "tensorShape": [
+          1,
+          3,
+          48,
+          64
+        ],
+        "reflectPadBottomRight": {
+          "bottom": 0,
+          "right": 0
+        },
+        "paddedInputArtifact": {
+          "path": "artifacts/swin2sr-q4f16/oak-leaves-blur-x4-swin2sr-padded-input.png",
+          "width": 64,
+          "height": 48,
+          "pngSha256": "da196fec5da0e887b4ac8cdf995e19043439cbdd0056d4c6e8706075b070567c",
+          "rgbaSha256": "b5805bd7173e8f8ea404d2bc0617ae425a70c567c141fa80be69957fc6e7aa4b"
+        }
+      },
+      "modelOutput": {
+        "path": "artifacts/swin2sr-q4f16/oak-leaves-blur-x4-swin2sr-q4f16-x4.png",
+        "width": 256,
+        "height": 192,
+        "pngSha256": "fda1df1e0220b71e8c7ee8621201bc71b9170c1c8590f74d934391614ccfd99e",
+        "rgbaSha256": "5a237bb24912c0bd07b98e1ad29d76eb57d705be1dbadbb1c63090a90af78c1d"
+      },
+      "quality": {
+        "tier1Lanczos3": {
+          "psnrRgbDb": 26.9649,
+          "ssimLuminanceGaussian11x11": 0.851474
+        },
+        "swin2srQ4f16": {
+          "psnrRgbDb": 26.6933,
+          "ssimLuminanceGaussian11x11": 0.877229
+        }
+      },
+      "latency": {
+        "samplesMs": [
+          3055.796,
+          3209.989,
+          3129.563
+        ],
+        "medianMs": 3129.563,
+        "p95MsNearestRank": 3209.989,
+        "warmups": 1,
+        "measuredRuns": 3,
+        "scope": "ONNX Runtime CPU session.run only; excludes fixture decode, window padding, tensor preparation, cropping, output conversion, metrics, and file writes."
+      }
+    },
+    {
+      "id": "oak-leaves-jpeg-q45-x4",
+      "degradationCase": "jpeg-q45-x4",
+      "sourceAssetId": "oak-leaves",
+      "sourceSha256": "71c0f2fb2fa89385955bca609cf9983d493137a81879005143606d0fa74d2802",
+      "degradation": {
+        "resize": "Lanczos3 x4 reduction",
+        "jpegQuality": 45
+      },
+      "reference": {
+        "path": "artifacts/oak-leaves-reference.png",
+        "width": 256,
+        "height": 192,
+        "pngSha256": "afdbb84313810df61368a0836a1b2c582084bcce1cf20e6005b8810a2872d19f"
+      },
+      "input": {
+        "path": "artifacts/oak-leaves-jpeg-q45-x4-input.png",
+        "width": 64,
+        "height": 48,
+        "pngSha256": "7ba6e259db2d233a8b1dbc888cfe77e80b3102880022de4ea9c5b16984dd7e87"
+      },
+      "tier1Lanczos3": {
+        "path": "artifacts/oak-leaves-jpeg-q45-x4-tier1-lanczos3.png",
+        "width": 256,
+        "height": 192,
+        "pngSha256": "4310d676880acba4ecb5185adaa5967be83e71717e5ee822244f3a3ade2db56c"
+      },
+      "modelInput": {
+        "tensorShape": [
+          1,
+          3,
+          48,
+          64
+        ],
+        "reflectPadBottomRight": {
+          "bottom": 0,
+          "right": 0
+        },
+        "paddedInputArtifact": {
+          "path": "artifacts/swin2sr-q4f16/oak-leaves-jpeg-q45-x4-swin2sr-padded-input.png",
+          "width": 64,
+          "height": 48,
+          "pngSha256": "51ffc3184098d7326883f8ae5d45a6b726f4837a8774ddcd7c64bfca999b1673",
+          "rgbaSha256": "b0584eeae9c4d0434155a5084b539c68ee3cd9e44a4c26a336d9a0b697001ce2"
+        }
+      },
+      "modelOutput": {
+        "path": "artifacts/swin2sr-q4f16/oak-leaves-jpeg-q45-x4-swin2sr-q4f16-x4.png",
+        "width": 256,
+        "height": 192,
+        "pngSha256": "4985f25ee752548ffaf9c708b9bdebf46dd2e32e0475e8d3ca3a028185ecaad3",
+        "rgbaSha256": "05c3b5a9bb3471cf445a4364a8679c2b7e2bdbca36a2d7ef3f74155fd149f09a"
+      },
+      "quality": {
+        "tier1Lanczos3": {
+          "psnrRgbDb": 23.8798,
+          "ssimLuminanceGaussian11x11": 0.75919
+        },
+        "swin2srQ4f16": {
+          "psnrRgbDb": 24.2372,
+          "ssimLuminanceGaussian11x11": 0.793536
+        }
+      },
+      "latency": {
+        "samplesMs": [
+          3025.363,
+          3070.968,
+          3093.243
+        ],
+        "medianMs": 3070.968,
+        "p95MsNearestRank": 3093.243,
+        "warmups": 1,
+        "measuredRuns": 3,
+        "scope": "ONNX Runtime CPU session.run only; excludes fixture decode, window padding, tensor preparation, cropping, output conversion, metrics, and file writes."
+      }
+    },
+    {
+      "id": "oak-leaves-blur-grain-jpeg-q45-x4",
+      "degradationCase": "blur-grain-jpeg-q45-x4",
+      "sourceAssetId": "oak-leaves",
+      "sourceSha256": "71c0f2fb2fa89385955bca609cf9983d493137a81879005143606d0fa74d2802",
+      "degradation": {
+        "blur": "three-pass box approximation of Gaussian, radius 1 at reference size",
+        "resize": "Lanczos3 x4 reduction",
+        "deterministicGrain": "amount 12, per-channel",
+        "jpegQuality": 45
+      },
+      "reference": {
+        "path": "artifacts/oak-leaves-reference.png",
+        "width": 256,
+        "height": 192,
+        "pngSha256": "afdbb84313810df61368a0836a1b2c582084bcce1cf20e6005b8810a2872d19f"
+      },
+      "input": {
+        "path": "artifacts/oak-leaves-blur-grain-jpeg-q45-x4-input.png",
+        "width": 64,
+        "height": 48,
+        "pngSha256": "c2b7d5b23ddada514ef432b4cb0fc3901cf015b64ee1fd7a1970e1c28a17f6bd"
+      },
+      "tier1Lanczos3": {
+        "path": "artifacts/oak-leaves-blur-grain-jpeg-q45-x4-tier1-lanczos3.png",
+        "width": 256,
+        "height": 192,
+        "pngSha256": "0e5588e67034325519ebb3732af054b0ec2921c1ad9d9bb26157d1d2894b2d0e"
+      },
+      "modelInput": {
+        "tensorShape": [
+          1,
+          3,
+          48,
+          64
+        ],
+        "reflectPadBottomRight": {
+          "bottom": 0,
+          "right": 0
+        },
+        "paddedInputArtifact": {
+          "path": "artifacts/swin2sr-q4f16/oak-leaves-blur-grain-jpeg-q45-x4-swin2sr-padded-input.png",
+          "width": 64,
+          "height": 48,
+          "pngSha256": "b899601b76acf1b8d0a3244f3decede69f06080250103012b03f8b8b3fe5d1ee",
+          "rgbaSha256": "558dd2c0f4031a2a9ab9f218422f9f0a589d3511763dae867046a17b31119d87"
+        }
+      },
+      "modelOutput": {
+        "path": "artifacts/swin2sr-q4f16/oak-leaves-blur-grain-jpeg-q45-x4-swin2sr-q4f16-x4.png",
+        "width": 256,
+        "height": 192,
+        "pngSha256": "d601f53cb6db3f43f159fe42e04614c459c4be1ed092ca507ec7c4675896388e",
+        "rgbaSha256": "9d9e63ac8db8d8b79a20b3cb89791ff7ac17eb24028a985a722c18e6e6dbe179"
+      },
+      "quality": {
+        "tier1Lanczos3": {
+          "psnrRgbDb": 23.6736,
+          "ssimLuminanceGaussian11x11": 0.746985
+        },
+        "swin2srQ4f16": {
+          "psnrRgbDb": 24.1758,
+          "ssimLuminanceGaussian11x11": 0.787643
+        }
+      },
+      "latency": {
+        "samplesMs": [
+          3134.308,
+          3110.94,
+          3323.428
+        ],
+        "medianMs": 3134.308,
+        "p95MsNearestRank": 3323.428,
+        "warmups": 1,
+        "measuredRuns": 3,
+        "scope": "ONNX Runtime CPU session.run only; excludes fixture decode, window padding, tensor preparation, cropping, output conversion, metrics, and file writes."
+      }
+    },
+    {
+      "id": "gold-weight-clean-x4",
+      "degradationCase": "clean-x4",
+      "sourceAssetId": "gold-weight",
+      "sourceSha256": "575c3663c372bb43e7da86a253cd9cb3602211bc39e3756332ca682963beb351",
+      "degradation": {
+        "resize": "Lanczos3 x4 reduction"
+      },
+      "reference": {
+        "path": "artifacts/gold-weight-reference.png",
+        "width": 256,
+        "height": 228,
+        "pngSha256": "2e30cab9de942469e9025617b8d4fb90bc277adb5f8948398c9f93c00ceb7c83"
+      },
+      "input": {
+        "path": "artifacts/gold-weight-clean-x4-input.png",
+        "width": 64,
+        "height": 57,
+        "pngSha256": "000fd0d63e86e2a46cd9a48271abe6d17630892c1717a6c45bb01e7ed974c052"
+      },
+      "tier1Lanczos3": {
+        "path": "artifacts/gold-weight-clean-x4-tier1-lanczos3.png",
+        "width": 256,
+        "height": 228,
+        "pngSha256": "308a409f5b48f499c33ef33dc5c7a70e88b32009933378e0e2b259fb2a087038"
+      },
+      "modelInput": {
+        "tensorShape": [
+          1,
+          3,
+          64,
+          64
+        ],
+        "reflectPadBottomRight": {
+          "bottom": 7,
+          "right": 0
+        },
+        "paddedInputArtifact": {
+          "path": "artifacts/swin2sr-q4f16/gold-weight-clean-x4-swin2sr-padded-input.png",
+          "width": 64,
+          "height": 64,
+          "pngSha256": "7644932dc5cb95800935a461ad4e157c8ff8132e50c295a4f9abd9c015f45a1d",
+          "rgbaSha256": "8bde8dd1ce6486b91427205caf7768f5150706a70ecac519285e5b6179e245a6"
+        }
+      },
+      "modelOutput": {
+        "path": "artifacts/swin2sr-q4f16/gold-weight-clean-x4-swin2sr-q4f16-x4.png",
+        "width": 256,
+        "height": 228,
+        "pngSha256": "5a837c3f3944e3068830d9367d5aed4460657a5eeeb714e50bc23df961d67df3",
+        "rgbaSha256": "bd31aac8ada3a32d7893e70e12bd29c755391244ab726a7932c75a7b7736c4c3"
+      },
+      "quality": {
+        "tier1Lanczos3": {
+          "psnrRgbDb": 30.7426,
+          "ssimLuminanceGaussian11x11": 0.857906
+        },
+        "swin2srQ4f16": {
+          "psnrRgbDb": 31.0308,
+          "ssimLuminanceGaussian11x11": 0.881944
+        }
+      },
+      "latency": {
+        "samplesMs": [
+          4251.51,
+          4365.515,
+          4182.666
+        ],
+        "medianMs": 4251.51,
+        "p95MsNearestRank": 4365.515,
+        "warmups": 1,
+        "measuredRuns": 3,
+        "scope": "ONNX Runtime CPU session.run only; excludes fixture decode, window padding, tensor preparation, cropping, output conversion, metrics, and file writes."
+      }
+    },
+    {
+      "id": "gold-weight-blur-x4",
+      "degradationCase": "blur-x4",
+      "sourceAssetId": "gold-weight",
+      "sourceSha256": "575c3663c372bb43e7da86a253cd9cb3602211bc39e3756332ca682963beb351",
+      "degradation": {
+        "blur": "three-pass box approximation of Gaussian, radius 1 at reference size",
+        "resize": "Lanczos3 x4 reduction"
+      },
+      "reference": {
+        "path": "artifacts/gold-weight-reference.png",
+        "width": 256,
+        "height": 228,
+        "pngSha256": "2e30cab9de942469e9025617b8d4fb90bc277adb5f8948398c9f93c00ceb7c83"
+      },
+      "input": {
+        "path": "artifacts/gold-weight-blur-x4-input.png",
+        "width": 64,
+        "height": 57,
+        "pngSha256": "bb660481ad0fc1d847400f6669798bde4ab63907c89b428c33d6f5c1af36892e"
+      },
+      "tier1Lanczos3": {
+        "path": "artifacts/gold-weight-blur-x4-tier1-lanczos3.png",
+        "width": 256,
+        "height": 228,
+        "pngSha256": "da8b6ae920289b2cfbe22c501dd9e1e53d906d68c21cbaa74e6d895fba4022d6"
+      },
+      "modelInput": {
+        "tensorShape": [
+          1,
+          3,
+          64,
+          64
+        ],
+        "reflectPadBottomRight": {
+          "bottom": 7,
+          "right": 0
+        },
+        "paddedInputArtifact": {
+          "path": "artifacts/swin2sr-q4f16/gold-weight-blur-x4-swin2sr-padded-input.png",
+          "width": 64,
+          "height": 64,
+          "pngSha256": "3fd3b243fd9e318ebea7986e8842273d59541d49a26fd98d47bb238e2fcce5de",
+          "rgbaSha256": "9bfafb887407ba3d348e07ad6fc66e5bdef36686fb82dcbe29d15d49f57900dc"
+        }
+      },
+      "modelOutput": {
+        "path": "artifacts/swin2sr-q4f16/gold-weight-blur-x4-swin2sr-q4f16-x4.png",
+        "width": 256,
+        "height": 228,
+        "pngSha256": "76a9f2cad953ebc72cf6a6f11b04b1e52d8cc3e34a6cc9cc3d87457d3f2c0768",
+        "rgbaSha256": "646901d6f189971507425a8c035671043f4ee94c21bbb9f356a7127b39bd02c8"
+      },
+      "quality": {
+        "tier1Lanczos3": {
+          "psnrRgbDb": 30.0391,
+          "ssimLuminanceGaussian11x11": 0.84619
+        },
+        "swin2srQ4f16": {
+          "psnrRgbDb": 31.2086,
+          "ssimLuminanceGaussian11x11": 0.880911
+        }
+      },
+      "latency": {
+        "samplesMs": [
+          4270.931,
+          4365.958,
+          4194.942
+        ],
+        "medianMs": 4270.931,
+        "p95MsNearestRank": 4365.958,
+        "warmups": 1,
+        "measuredRuns": 3,
+        "scope": "ONNX Runtime CPU session.run only; excludes fixture decode, window padding, tensor preparation, cropping, output conversion, metrics, and file writes."
+      }
+    },
+    {
+      "id": "gold-weight-jpeg-q45-x4",
+      "degradationCase": "jpeg-q45-x4",
+      "sourceAssetId": "gold-weight",
+      "sourceSha256": "575c3663c372bb43e7da86a253cd9cb3602211bc39e3756332ca682963beb351",
+      "degradation": {
+        "resize": "Lanczos3 x4 reduction",
+        "jpegQuality": 45
+      },
+      "reference": {
+        "path": "artifacts/gold-weight-reference.png",
+        "width": 256,
+        "height": 228,
+        "pngSha256": "2e30cab9de942469e9025617b8d4fb90bc277adb5f8948398c9f93c00ceb7c83"
+      },
+      "input": {
+        "path": "artifacts/gold-weight-jpeg-q45-x4-input.png",
+        "width": 64,
+        "height": 57,
+        "pngSha256": "afd7c224ad62e2c714f9356e11e2e2d0e328991e95ba1c2a61080578fe4134bf"
+      },
+      "tier1Lanczos3": {
+        "path": "artifacts/gold-weight-jpeg-q45-x4-tier1-lanczos3.png",
+        "width": 256,
+        "height": 228,
+        "pngSha256": "143cec64848fa93110b075d6cf1ce5a53a8bd73ffa7da7ba13cd92f4a7adf19f"
+      },
+      "modelInput": {
+        "tensorShape": [
+          1,
+          3,
+          64,
+          64
+        ],
+        "reflectPadBottomRight": {
+          "bottom": 7,
+          "right": 0
+        },
+        "paddedInputArtifact": {
+          "path": "artifacts/swin2sr-q4f16/gold-weight-jpeg-q45-x4-swin2sr-padded-input.png",
+          "width": 64,
+          "height": 64,
+          "pngSha256": "37ccdc6c266b6fcfaf7becd707ab69d2060befb9739128fac396db9962aa1fac",
+          "rgbaSha256": "4decb4c523eadc4001c6bf6761b7bb1b1d0e3b7889178ad1894ecc0e0979da65"
+        }
+      },
+      "modelOutput": {
+        "path": "artifacts/swin2sr-q4f16/gold-weight-jpeg-q45-x4-swin2sr-q4f16-x4.png",
+        "width": 256,
+        "height": 228,
+        "pngSha256": "a85bfccc4397a1b7284c6a56fdcca1e0e5b650e5ca581856f9123c17a7930a58",
+        "rgbaSha256": "2967abbb9883894c276762e1ef149de753e26946c2abb574dd965934a8dfa04b"
+      },
+      "quality": {
+        "tier1Lanczos3": {
+          "psnrRgbDb": 27.77,
+          "ssimLuminanceGaussian11x11": 0.79193
+        },
+        "swin2srQ4f16": {
+          "psnrRgbDb": 28.8443,
+          "ssimLuminanceGaussian11x11": 0.839425
+        }
+      },
+      "latency": {
+        "samplesMs": [
+          4283.021,
+          4179.166,
+          4329.127
+        ],
+        "medianMs": 4283.021,
+        "p95MsNearestRank": 4329.127,
+        "warmups": 1,
+        "measuredRuns": 3,
+        "scope": "ONNX Runtime CPU session.run only; excludes fixture decode, window padding, tensor preparation, cropping, output conversion, metrics, and file writes."
+      }
+    },
+    {
+      "id": "gold-weight-blur-grain-jpeg-q45-x4",
+      "degradationCase": "blur-grain-jpeg-q45-x4",
+      "sourceAssetId": "gold-weight",
+      "sourceSha256": "575c3663c372bb43e7da86a253cd9cb3602211bc39e3756332ca682963beb351",
+      "degradation": {
+        "blur": "three-pass box approximation of Gaussian, radius 1 at reference size",
+        "resize": "Lanczos3 x4 reduction",
+        "deterministicGrain": "amount 12, per-channel",
+        "jpegQuality": 45
+      },
+      "reference": {
+        "path": "artifacts/gold-weight-reference.png",
+        "width": 256,
+        "height": 228,
+        "pngSha256": "2e30cab9de942469e9025617b8d4fb90bc277adb5f8948398c9f93c00ceb7c83"
+      },
+      "input": {
+        "path": "artifacts/gold-weight-blur-grain-jpeg-q45-x4-input.png",
+        "width": 64,
+        "height": 57,
+        "pngSha256": "ba181c70c3ddcc686eb8f5523c422cb94a94e145de3b12be74998d339bc2c20e"
+      },
+      "tier1Lanczos3": {
+        "path": "artifacts/gold-weight-blur-grain-jpeg-q45-x4-tier1-lanczos3.png",
+        "width": 256,
+        "height": 228,
+        "pngSha256": "0fc412fb94e9826bf4e3221a06174238d3e5f299f2bef1d928e0f547b0f287dc"
+      },
+      "modelInput": {
+        "tensorShape": [
+          1,
+          3,
+          64,
+          64
+        ],
+        "reflectPadBottomRight": {
+          "bottom": 7,
+          "right": 0
+        },
+        "paddedInputArtifact": {
+          "path": "artifacts/swin2sr-q4f16/gold-weight-blur-grain-jpeg-q45-x4-swin2sr-padded-input.png",
+          "width": 64,
+          "height": 64,
+          "pngSha256": "63cf54b2b82ad027e4e70c074b141c8eed78858a101732fbd0920a5d9a4e4207",
+          "rgbaSha256": "3b98d59d56461dd4ecaf4c51d6fe120f8608278d5104659aa8dfa825aaa9ed50"
+        }
+      },
+      "modelOutput": {
+        "path": "artifacts/swin2sr-q4f16/gold-weight-blur-grain-jpeg-q45-x4-swin2sr-q4f16-x4.png",
+        "width": 256,
+        "height": 228,
+        "pngSha256": "c4d3e723fc2ae3bc90926879b2e40144eaf52a88431634b4df04798cd9e908c7",
+        "rgbaSha256": "d98116ae51e79aceab36726a9339e0232651be1c37b950d15e8c0d27fc81eb2d"
+      },
+      "quality": {
+        "tier1Lanczos3": {
+          "psnrRgbDb": 27.3727,
+          "ssimLuminanceGaussian11x11": 0.784395
+        },
+        "swin2srQ4f16": {
+          "psnrRgbDb": 28.7686,
+          "ssimLuminanceGaussian11x11": 0.829497
+        }
+      },
+      "latency": {
+        "samplesMs": [
+          4330.035,
+          4218.281,
+          4373.249
+        ],
+        "medianMs": 4330.035,
+        "p95MsNearestRank": 4373.249,
+        "warmups": 1,
+        "measuredRuns": 3,
+        "scope": "ONNX Runtime CPU session.run only; excludes fixture decode, window padding, tensor preparation, cropping, output conversion, metrics, and file writes."
+      }
+    },
+    {
+      "id": "rome-map-clean-x4",
+      "degradationCase": "clean-x4",
+      "sourceAssetId": "rome-map",
+      "sourceSha256": "4f86a0ae3baa75bd29b690ef005e40029327824ec49f5241fd102e3a06126065",
+      "degradation": {
+        "resize": "Lanczos3 x4 reduction"
+      },
+      "reference": {
+        "path": "artifacts/rome-map-reference.png",
+        "width": 252,
+        "height": 160,
+        "pngSha256": "ed993f4d62c4cd1cdb459764406d8fcd6706d580026b2b3036138f006a0e2a41"
+      },
+      "input": {
+        "path": "artifacts/rome-map-clean-x4-input.png",
+        "width": 63,
+        "height": 40,
+        "pngSha256": "93dd74a8e6b0b7cce847c19331dbcee6d98cac0f81e5a6ae68eb5736d068070f"
+      },
+      "tier1Lanczos3": {
+        "path": "artifacts/rome-map-clean-x4-tier1-lanczos3.png",
+        "width": 252,
+        "height": 160,
+        "pngSha256": "932e36d9fffa52c9704fa8b9c19aba69d346bba3ad5b92d0d103ed08de529dd5"
+      },
+      "modelInput": {
+        "tensorShape": [
+          1,
+          3,
+          40,
+          64
+        ],
+        "reflectPadBottomRight": {
+          "bottom": 0,
+          "right": 1
+        },
+        "paddedInputArtifact": {
+          "path": "artifacts/swin2sr-q4f16/rome-map-clean-x4-swin2sr-padded-input.png",
+          "width": 64,
+          "height": 40,
+          "pngSha256": "dc104651881d047030ccdf0197b5eb603f771b73271c4c42b949442a012c2527",
+          "rgbaSha256": "b2baa812eeb260bc4ba50615debbeb0771c55f78099ceb6ded4e9a995c7a2465"
+        }
+      },
+      "modelOutput": {
+        "path": "artifacts/swin2sr-q4f16/rome-map-clean-x4-swin2sr-q4f16-x4.png",
+        "width": 252,
+        "height": 160,
+        "pngSha256": "d46ae98e27d67f4f5f0820cc4ba11c7b5b69b2a4aa898f1e8a2e4ad6ad516826",
+        "rgbaSha256": "2e0e91049b18e9f6f6c9bc3d119ead966e6429efaf351aafe8758ac166003046"
+      },
+      "quality": {
+        "tier1Lanczos3": {
+          "psnrRgbDb": 25.9306,
+          "ssimLuminanceGaussian11x11": 0.44278
+        },
+        "swin2srQ4f16": {
+          "psnrRgbDb": 26.0539,
+          "ssimLuminanceGaussian11x11": 0.486606
+        }
+      },
+      "latency": {
+        "samplesMs": [
+          2524.357,
+          2522.031,
+          2579.542
+        ],
+        "medianMs": 2524.357,
+        "p95MsNearestRank": 2579.542,
+        "warmups": 1,
+        "measuredRuns": 3,
+        "scope": "ONNX Runtime CPU session.run only; excludes fixture decode, window padding, tensor preparation, cropping, output conversion, metrics, and file writes."
+      }
+    },
+    {
+      "id": "rome-map-blur-x4",
+      "degradationCase": "blur-x4",
+      "sourceAssetId": "rome-map",
+      "sourceSha256": "4f86a0ae3baa75bd29b690ef005e40029327824ec49f5241fd102e3a06126065",
+      "degradation": {
+        "blur": "three-pass box approximation of Gaussian, radius 1 at reference size",
+        "resize": "Lanczos3 x4 reduction"
+      },
+      "reference": {
+        "path": "artifacts/rome-map-reference.png",
+        "width": 252,
+        "height": 160,
+        "pngSha256": "ed993f4d62c4cd1cdb459764406d8fcd6706d580026b2b3036138f006a0e2a41"
+      },
+      "input": {
+        "path": "artifacts/rome-map-blur-x4-input.png",
+        "width": 63,
+        "height": 40,
+        "pngSha256": "a1e86ba5c518119874794eb9f8ede238379d85bba6ced03b39c95370c80f1577"
+      },
+      "tier1Lanczos3": {
+        "path": "artifacts/rome-map-blur-x4-tier1-lanczos3.png",
+        "width": 252,
+        "height": 160,
+        "pngSha256": "82a284741fbf181db5c17b57bbe2e505e25bce7b66ee0b2e8edf0c81aaffc832"
+      },
+      "modelInput": {
+        "tensorShape": [
+          1,
+          3,
+          40,
+          64
+        ],
+        "reflectPadBottomRight": {
+          "bottom": 0,
+          "right": 1
+        },
+        "paddedInputArtifact": {
+          "path": "artifacts/swin2sr-q4f16/rome-map-blur-x4-swin2sr-padded-input.png",
+          "width": 64,
+          "height": 40,
+          "pngSha256": "5f85f473d19f28342e50185e96cd640d386b2f1b4cee314194a3a541eb27bef9",
+          "rgbaSha256": "604770ed1ee451021708f3de283acce53e09624288440f394b00f0172bb4bb69"
+        }
+      },
+      "modelOutput": {
+        "path": "artifacts/swin2sr-q4f16/rome-map-blur-x4-swin2sr-q4f16-x4.png",
+        "width": 252,
+        "height": 160,
+        "pngSha256": "cea44ba62df3946c435b925fa2318da3f2eff05ad1138b534765bf4755804b91",
+        "rgbaSha256": "d587729d493f9e0987e0853c46b0afb37f72bf618cb3dad3902d4daa6db4da14"
+      },
+      "quality": {
+        "tier1Lanczos3": {
+          "psnrRgbDb": 25.7652,
+          "ssimLuminanceGaussian11x11": 0.415988
+        },
+        "swin2srQ4f16": {
+          "psnrRgbDb": 26.0303,
+          "ssimLuminanceGaussian11x11": 0.474684
+        }
+      },
+      "latency": {
+        "samplesMs": [
+          2575.681,
+          2575.008,
+          2509.009
+        ],
+        "medianMs": 2575.008,
+        "p95MsNearestRank": 2575.681,
+        "warmups": 1,
+        "measuredRuns": 3,
+        "scope": "ONNX Runtime CPU session.run only; excludes fixture decode, window padding, tensor preparation, cropping, output conversion, metrics, and file writes."
+      }
+    },
+    {
+      "id": "rome-map-jpeg-q45-x4",
+      "degradationCase": "jpeg-q45-x4",
+      "sourceAssetId": "rome-map",
+      "sourceSha256": "4f86a0ae3baa75bd29b690ef005e40029327824ec49f5241fd102e3a06126065",
+      "degradation": {
+        "resize": "Lanczos3 x4 reduction",
+        "jpegQuality": 45
+      },
+      "reference": {
+        "path": "artifacts/rome-map-reference.png",
+        "width": 252,
+        "height": 160,
+        "pngSha256": "ed993f4d62c4cd1cdb459764406d8fcd6706d580026b2b3036138f006a0e2a41"
+      },
+      "input": {
+        "path": "artifacts/rome-map-jpeg-q45-x4-input.png",
+        "width": 63,
+        "height": 40,
+        "pngSha256": "7e2878aefa8a463ed4550dd4d9b4e7cc6be4aab5f1828fd6171f4ee45a80f386"
+      },
+      "tier1Lanczos3": {
+        "path": "artifacts/rome-map-jpeg-q45-x4-tier1-lanczos3.png",
+        "width": 252,
+        "height": 160,
+        "pngSha256": "9fd3b9fa5ee817705ad65227d8a24e6938241701dc795ff25651eeeb517295c9"
+      },
+      "modelInput": {
+        "tensorShape": [
+          1,
+          3,
+          40,
+          64
+        ],
+        "reflectPadBottomRight": {
+          "bottom": 0,
+          "right": 1
+        },
+        "paddedInputArtifact": {
+          "path": "artifacts/swin2sr-q4f16/rome-map-jpeg-q45-x4-swin2sr-padded-input.png",
+          "width": 64,
+          "height": 40,
+          "pngSha256": "ab4397db9e536765b7c1c2e32a8407cdad7077c9cc8f7ffb35b82c3002f8e777",
+          "rgbaSha256": "afaa51d39222d8240216e73a069713187373b580f69f77b9fe22d737c43e368d"
+        }
+      },
+      "modelOutput": {
+        "path": "artifacts/swin2sr-q4f16/rome-map-jpeg-q45-x4-swin2sr-q4f16-x4.png",
+        "width": 252,
+        "height": 160,
+        "pngSha256": "9142781678a80586adb9411535d5b48ad1d081f3e2486c822d4452d7f598ec7f",
+        "rgbaSha256": "af0495211e7287a32ac1b44b9317c4a9866b361e203d6b0771b38cc6ef756f8f"
+      },
+      "quality": {
+        "tier1Lanczos3": {
+          "psnrRgbDb": 24.9503,
+          "ssimLuminanceGaussian11x11": 0.357233
+        },
+        "swin2srQ4f16": {
+          "psnrRgbDb": 24.366,
+          "ssimLuminanceGaussian11x11": 0.360143
+        }
+      },
+      "latency": {
+        "samplesMs": [
+          2490.988,
+          2515.404,
+          2540.763
+        ],
+        "medianMs": 2515.404,
+        "p95MsNearestRank": 2540.763,
+        "warmups": 1,
+        "measuredRuns": 3,
+        "scope": "ONNX Runtime CPU session.run only; excludes fixture decode, window padding, tensor preparation, cropping, output conversion, metrics, and file writes."
+      }
+    },
+    {
+      "id": "rome-map-blur-grain-jpeg-q45-x4",
+      "degradationCase": "blur-grain-jpeg-q45-x4",
+      "sourceAssetId": "rome-map",
+      "sourceSha256": "4f86a0ae3baa75bd29b690ef005e40029327824ec49f5241fd102e3a06126065",
+      "degradation": {
+        "blur": "three-pass box approximation of Gaussian, radius 1 at reference size",
+        "resize": "Lanczos3 x4 reduction",
+        "deterministicGrain": "amount 12, per-channel",
+        "jpegQuality": 45
+      },
+      "reference": {
+        "path": "artifacts/rome-map-reference.png",
+        "width": 252,
+        "height": 160,
+        "pngSha256": "ed993f4d62c4cd1cdb459764406d8fcd6706d580026b2b3036138f006a0e2a41"
+      },
+      "input": {
+        "path": "artifacts/rome-map-blur-grain-jpeg-q45-x4-input.png",
+        "width": 63,
+        "height": 40,
+        "pngSha256": "4ea0a3de6214d2557ea417d2094bcf23b495cd773cb27d9c8d5af7eb216d5fc3"
+      },
+      "tier1Lanczos3": {
+        "path": "artifacts/rome-map-blur-grain-jpeg-q45-x4-tier1-lanczos3.png",
+        "width": 252,
+        "height": 160,
+        "pngSha256": "dec78c2b2c9436d64d1ce3a6b85e2282fb75f1ef95649f5d23495f759bfb1817"
+      },
+      "modelInput": {
+        "tensorShape": [
+          1,
+          3,
+          40,
+          64
+        ],
+        "reflectPadBottomRight": {
+          "bottom": 0,
+          "right": 1
+        },
+        "paddedInputArtifact": {
+          "path": "artifacts/swin2sr-q4f16/rome-map-blur-grain-jpeg-q45-x4-swin2sr-padded-input.png",
+          "width": 64,
+          "height": 40,
+          "pngSha256": "3121acef7ad3f43e49e61e8fb12d81212eb9618f56347533e7b8485e3f3df008",
+          "rgbaSha256": "5782e46f91fc851f4b3f384fb3a89c3ca4fca30e47c625155d2283f2aca844a1"
+        }
+      },
+      "modelOutput": {
+        "path": "artifacts/swin2sr-q4f16/rome-map-blur-grain-jpeg-q45-x4-swin2sr-q4f16-x4.png",
+        "width": 252,
+        "height": 160,
+        "pngSha256": "7b916a0dc1c0664fe3128e0ef1731344135db68b99ded05dac10c78d909fa851",
+        "rgbaSha256": "5d9b848b8ced1f29d7464b8f7163b600a8b0cbc423544ce5a6baf7bcd35c66d9"
+      },
+      "quality": {
+        "tier1Lanczos3": {
+          "psnrRgbDb": 24.8692,
+          "ssimLuminanceGaussian11x11": 0.349399
+        },
+        "swin2srQ4f16": {
+          "psnrRgbDb": 24.6116,
+          "ssimLuminanceGaussian11x11": 0.353529
+        }
+      },
+      "latency": {
+        "samplesMs": [
+          2579.629,
+          2525.562,
+          2620.374
+        ],
+        "medianMs": 2579.629,
+        "p95MsNearestRank": 2620.374,
+        "warmups": 1,
+        "measuredRuns": 3,
+        "scope": "ONNX Runtime CPU session.run only; excludes fixture decode, window padding, tensor preparation, cropping, output conversion, metrics, and file writes."
+      }
+    }
+  ]
+}

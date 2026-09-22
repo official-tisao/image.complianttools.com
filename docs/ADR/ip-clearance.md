@@ -28,23 +28,23 @@ This is an engineering screening record, not a freedom-to-operate opinion or leg
 
 ## Algorithms and formats
 
-| Item                                          | Decision                                 | Shipping fallback or constraint                                        |
-| --------------------------------------------- | ---------------------------------------- | ---------------------------------------------------------------------- |
-| PatchMatch                                    | Excluded                                 | Exemplar synthesis from older prior art                                |
-| Seam carving                                  | Excluded                                 | Saliency-weighted continuous warp                                      |
-| Guided filter                                 | Excluded                                 | Joint bilateral filter plus alpha-band refinement                      |
-| Dark-channel-prior dehaze                     | Excluded                                 | Retinex/MSRCR and local tone mapping                                   |
-| Non-local means                               | Awaiting counsel; fallback shipping      | Bilateral and BayesShrink only                                         |
-| Criminisi inpainting                          | Design around                            | Efros–Leung plus quilting with independent priority design             |
-| GrabCut                                       | Awaiting counsel; fallback shipping      | Colour range, watershed, and independent iterative colour models       |
-| Poisson blending                              | Awaiting counsel; fallback shipping      | Laplacian-pyramid blending                                             |
-| Closed-form matting                           | Awaiting counsel; fallback shipping      | Joint-bilateral alpha refinement                                       |
-| Simplex noise                                 | Excluded                                 | OpenSimplex2                                                           |
-| LZW, S3TC/DXT, baseline JPEG/PNG/GIF/BMP/TIFF | Approved as expired/clear                | Implement against published formats                                    |
-| WebP/VP8 and JPEG XL                          | Approved with upstream grants            | Use pinned permissive implementations                                  |
-| AV1/AVIF                                      | Approved with dispute disclosed          | Use pinned AOMedia implementation; do not call patent position settled |
-| HEVC/HEIC                                     | Encode excluded                          | Platform decode only                                                   |
-| QR Code                                       | Approved with stated standard constraint | In-house ISO/IEC 18004 encoder or cleared MIT dependency               |
+| Item                                          | Decision                                 | Shipping fallback or constraint                                                                                                                                             |
+| --------------------------------------------- | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| PatchMatch                                    | Excluded                                 | Exemplar synthesis from older prior art                                                                                                                                     |
+| Seam carving                                  | Excluded                                 | Saliency-weighted continuous warp                                                                                                                                           |
+| Guided filter                                 | Excluded                                 | Joint bilateral filter plus alpha-band refinement                                                                                                                           |
+| Dark-channel-prior dehaze                     | Excluded                                 | Retinex/MSRCR and local tone mapping                                                                                                                                        |
+| Non-local means                               | Awaiting counsel; fallback shipping      | Bilateral and BayesShrink only                                                                                                                                              |
+| Criminisi inpainting                          | Design around                            | Efros–Leung plus quilting with independent priority design                                                                                                                  |
+| GrabCut                                       | Awaiting counsel; fallback shipping      | Colour range, watershed, and independent iterative colour models                                                                                                            |
+| Poisson blending                              | Awaiting counsel; fallback planned       | Full Laplacian-pyramid blend is the cleared target; the current function named for it is only a simplified per-pixel alpha blend and does not complete the planned fallback |
+| Closed-form matting                           | Awaiting counsel; fallback shipping      | Joint-bilateral alpha refinement                                                                                                                                            |
+| Simplex noise                                 | Excluded                                 | OpenSimplex2                                                                                                                                                                |
+| LZW, S3TC/DXT, baseline JPEG/PNG/GIF/BMP/TIFF | Approved as expired/clear                | Implement against published formats                                                                                                                                         |
+| WebP/VP8 and JPEG XL                          | Approved with upstream grants            | Use pinned permissive implementations                                                                                                                                       |
+| AV1/AVIF                                      | Approved with dispute disclosed          | Use pinned AOMedia implementation; do not call patent position settled                                                                                                      |
+| HEVC/HEIC                                     | Encode excluded                          | Platform decode only                                                                                                                                                        |
+| QR Code                                       | Approved with stated standard constraint | In-house ISO/IEC 18004 encoder or cleared MIT dependency                                                                                                                    |
 
 ## Trademark and asset substitutions
 
@@ -107,8 +107,8 @@ surface a format-specific reason for both decode and encode; neither format is o
 | `libarchive.js` | Excluded until pinned and RAR provenance is verified; CBZ-only fallback |
 | `dxf-parser` | Approved at 1.1.2 — MIT verified from the installed manifest and bundled licence 2026-08-22. Its sole runtime dependency, `loglevel` 1.9.2, is also MIT with an installed bundled licence. |
 | OpenCV | Excluded until pinned and verified; algorithm review remains separate |
-| `onnxruntime-web` | Excluded until pinned and verified |
-| `tesseract.js` | Excluded until pinned and verified |
+| `onnxruntime-web` | Approved at 1.30.0 — MIT verified from the installed manifest and licence files on 2026-09-19; exact direct and transitive versions are lockfile-pinned and pass `verify:licenses`. Runtime is lazy-loaded by the engine; its WebAssembly files are covered by the package's MIT licence and recorded by the generated third-party licence inventory. |
+| `tesseract.js` | Approved at 7.0.0 — Apache-2.0 verified from the installed manifest and generated transitive licence register on 2026-09-19. Its `tesseract.js-core@7.0.0` runtime is also lockfile-pinned and covered by the verifier. OCR language data remains separately governed by exact asset records. |
 | `@mediapipe/tasks-vision` | Excluded until pinned and verified |
 | `exifr` | Excluded until pinned and verified |
 | `piexifjs` | Excluded until pinned and verified |
@@ -119,14 +119,14 @@ surface a format-specific reason for both decode and encode; neither format is o
 
 ## Model and data assets
 
-| Item                    | Decision                                                                                       |
-| ----------------------- | ---------------------------------------------------------------------------------------------- |
-| Tesseract language data | Excluded until every exact file hash and per-language licence is registered                    |
-| MediaPipe `.task` files | Excluded until exact model-card terms and hashes are registered                                |
-| Segmentation weights    | RMBG-1.4 denied; all alternatives excluded until exact weight terms and hashes are registered  |
-| Real-ESRGAN weights     | Community fine-tunes excluded; original weights excluded until exact release/hash verification |
-| OpenSimplex2            | Excluded until the exact source revision/public-domain statement is registered                 |
-| Fixture corpus          | Only self-generated or individually registered CC0 fixtures allowed                            |
+| Item                               | Decision                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Tesseract language and helper data | All 163 recursive `.traineddata` tree entries at official `tessdata_fast` commit `87416418657359cb625c412a48b6e1d6d41c29bd` are registered individually by exact path, SHA-256, source, and Apache-2.0 evidence in `docs/static-assets.json`: 123 language/variant model binaries, one deprecated `frk` alias pointer, 37 script model binaries, and two helpers. The helpers include `osd` for orientation/script detection and `equ` for equations. Hausa (`hau`) is absent from the pinned upstream snapshot.                                                                           |
+| MediaPipe `.task` files            | Excluded until exact model-card terms and hashes are registered                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| Segmentation weights               | RMBG-1.4 denied; all alternatives excluded until exact weight terms and hashes are registered                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| Real-ESRGAN weights                | The exact official x2 `v0.2.1` and x4 `v0.1.0` source checkpoints are registered in `docs/model-assets.json`. Per owner direction, the upstream BSD-3 label is accepted for these official `.pth` files with asset-level terms risk; this is not a separate upstream statement about the files. The selected ONNX exports have publisher-declared BSD-3 model-card evidence, exact pinned bytes, CPU parity checks, and x2/x4 Chromium WASM smokes. The browser opt-in download and runtime configuration are implemented; the checked Hugging Face host passed full CORS transfer and hash verification. Community fine-tunes remain excluded. Third-party host persistence, production deployment, representative performance/quality, cache/offline route behavior, and full STCC remain open, independent of the source-weight risk decision. |
+| OpenSimplex2                       | Excluded until the exact source revision/public-domain statement is registered                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| Fixture corpus                     | Only self-generated or individually registered CC0 fixtures allowed                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 
 ## Formerly open items
 
@@ -151,6 +151,52 @@ surface a format-specific reason for both decode and encode; neither format is o
 | Asset                                                       | Exact version / source                                                                                           | SHA-256                                                            | Size         | Licence evidence                                                                                                                                                                                                                                           | Decision                                                                                                                                                                                                             | Registration date |
 | ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
 | `haarcascade_frontalface_default.xml` (OpenCV cascade DATA) | OpenCV 4.9.0; `https://github.com/opencv/opencv/raw/4.9.0/data/haarcascades/haarcascade_frontalface_default.xml` | `0f7d4527844eb514d4a4948e822da90fbb16a34a0bbbbc6adc6498747a5aafb0` | 930127 bytes | Intel Open Source Computer Vision Library Agreement embedded in XML header (permissive / BSD-3-Clause equivalent); author attribution to Rainer Lienhart inside file. Source-level OpenCV licence (Apache-2.0 since 4.5.0) does NOT govern this DATA file. | Cleared for Tier 1 Viola-Jones reference use. Algorithm (Viola-Jones) is public-domain (expired patents, §25.3.2). This is a DATA-asset clearance only; does NOT clear any `.task`, `.onnx`, or other model weights. | 2026-09-17        |
+
+## Registered OCR language assets (T62 / P4-20)
+
+The complete individually registered `tessdata_fast` set contains 163 recursive tree entries at
+upstream commit `87416418657359cb625c412a48b6e1d6d41c29bd`: 123 language/variant model binaries,
+one deprecated `frk` alias pointer to `deu_latf`, 37 script model binaries, and two root helper
+binaries (`equ` and `osd`). The pointer's 20-byte payload is included in the 700,353,193-byte total.
+The table below preserves the eight files used for the initial browser-accuracy smoke;
+the per-file source, licence URL, SHA-256, and check date for every model are in
+`docs/static-assets.json`.
+
+| File                  |            Size | SHA-256                                                            | Decision                                                          |
+| --------------------- | --------------: | ------------------------------------------------------------------ | ----------------------------------------------------------------- |
+| `eng.traineddata`     | 4,113,088 bytes | `7d4322bd2a7749724879683fc3912cb542f19906c83bcc1a52132556427170b2` | Apache-2.0; exact upstream file and repository licence registered |
+| `fra.traineddata`     | 1,130,365 bytes | `ced037562e8c80c13122dece28dd477d399af80911a28791a66a63ac1e3445ca` | Apache-2.0; exact upstream file and repository licence registered |
+| `spa.traineddata`     | 2,294,433 bytes | `6f2e04d02774a18f01bed44b1111f2cd7f3ba7ac9dc4373cd3f898a40ea6b464` | Apache-2.0; exact upstream file and repository licence registered |
+| `hin.traineddata`     | 1,122,751 bytes | `4c73ffc59d497c186b19d1e90f5d721d678ea6b2e277b719bee4e2af12271825` | Apache-2.0; exact upstream file and repository licence registered |
+| `chi_sim.traineddata` | 2,469,156 bytes | `a5fcb6f0db1e1d6d8522f39db4e848f05984669172e584e8d76b6b3141e1f730` | Apache-2.0; exact upstream file and repository licence registered |
+| `deu.traineddata`     | 1,525,436 bytes | `19d219bbb6672c869d20a9636c6816a81eb9a71796cb93ebe0cb1530e2cdb22d` | Apache-2.0; exact upstream file and repository licence registered |
+| `jpn.traineddata`     | 2,471,260 bytes | `1f5de9236d2e85f5fdf4b3c500f2d4926f8d9449f28f5394472d9e8d83b91b4d` | Apache-2.0; exact upstream file and repository licence registered |
+| `ita.traineddata`     | 2,701,314 bytes | `b8f89e1e785118dac4d51ae042c029a64edb5c3ee42ef73027a6d412748d8827` | Apache-2.0; exact upstream file and repository licence registered |
+
+The eight hashes above identify the initial measurement subset. Asset clearance applies to each of
+the 163 files only as individually registered in `docs/static-assets.json`. Runtime worker/WASM
+assets have separate rows in the same register; accuracy is not implied for unmeasured languages or
+helpers.
+
+## Registered Real-ESRGAN source checkpoints (T32)
+
+| File                    | Official release |             Size | SHA-256                                                            | Decision                                                                                             |
+| ----------------------- | ---------------- | ---------------: | ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
+| `RealESRGAN_x4plus.pth` | `v0.1.0`         | 67,040,989 bytes | `4fa0d38905f75ac06eb49a7951b426670021be3018265fd191d2125df9d682f1` | BSD-3-Clause label accepted per project-owner direction; exact official source checkpoint registered |
+| `RealESRGAN_x2plus.pth` | `v0.2.1`         | 67,061,725 bytes | `49fafd45f8fd7aa8d31ab2a22d14d91b536c34494a5cfe31eb5d89c2fa266abb` | BSD-3-Clause label accepted per project-owner direction; exact official source checkpoint registered |
+
+The owner decision accepts the asset-level terms risk for only these official checkpoints; the release
+files do not carry separate licence text. It is not a separate upstream statement about the files.
+These rows clear the source checkpoints as assets only. The separately registered ONNX exports are
+served from `fernandotonon/QtMeshEditor-models` at immutable Hugging Face revision
+`d14119a40dfeef208e4e724dfaceb2640d2df95b`. The dedicated model card declares BSD-3-Clause for both
+exports and credits xinntao; exact file sizes, hashes, source URLs, model-card evidence, and parity
+results are registered in `docs/model-assets.json`. Both files passed CPU parity against their exact
+registered `.pth` checkpoints, and Chromium 151 WASM smoke tests passed for x2 and x4, including an
+x4 corpus input. The Hugging Face project is external and its future availability is not guaranteed;
+primary and fallback origins are runtime-configurable, and each download is still byte/hash checked.
+The Tier 2 route is opt-in and does not bundle either model. Its STCC and representative real-photo
+quality/performance evidence remain separate gates.
 
 ### Clearance rationale (P4-17 / T57)
 

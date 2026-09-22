@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { allowAllNetwork, denyAllNetwork } from './support/network.js';
+import { allowAllNetwork, denyAllNetwork, LOCAL_ORIGIN } from './support/network.js';
 
 async function pngFixture(page: import('@playwright/test').Page): Promise<Buffer> {
   return Buffer.from(
@@ -31,8 +31,7 @@ test('traces configured raster input into the exact previewed SVG locally', asyn
   const crossOrigin: string[] = [];
   page.on('request', (request) => {
     const url = new URL(request.url());
-    if (url.protocol === 'http:' && url.origin !== 'http://127.0.0.1:4173')
-      crossOrigin.push(url.href);
+    if (url.protocol === 'http:' && url.origin !== LOCAL_ORIGIN) crossOrigin.push(url.href);
   });
   await page.goto('/image-to-svg');
   await page.waitForLoadState('networkidle');

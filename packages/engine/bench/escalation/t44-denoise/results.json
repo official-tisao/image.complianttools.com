@@ -1,0 +1,1744 @@
+{
+  "schemaVersion": 1,
+  "benchmark": "P4-21 T44 production denoise API comparison on deterministic synthetic corruption of registered CC0 image crops",
+  "fixtureManifest": "fixtures/manifest.json",
+  "supportedProductionMethods": [
+    "median",
+    "bilateral"
+  ],
+  "unsupportedMethodCheck": {
+    "method": "nlm",
+    "result": "rejected with documented production error"
+  },
+  "timing": {
+    "warmupRunsPerCaseAndMethod": 2,
+    "measuredRunsPerCaseAndMethod": 8,
+    "scope": "applyDenoise call only; excludes decode, fixture generation, metric calculation, and PNG encoding",
+    "environment": {
+      "node": "v22.22.0",
+      "platform": "win32",
+      "architecture": "x64",
+      "operatingSystem": "Windows_NT 10.0.26100",
+      "cpu": "Intel(R) Core(TM) i7-10750H CPU @ 2.60GHz",
+      "logicalCpuCount": 12
+    }
+  },
+  "metricDefinitions": {
+    "psnrRgbDb": "Full-image RGB PSNR against the exact clean derived fixture; alpha excluded.",
+    "ssimRec601Gaussian7x7": "Mean local SSIM on Rec.601 luminance with a normalized 7x7 Gaussian window, sigma 1.2, and edge replication."
+  },
+  "aggregation": [
+    {
+      "noiseId": "gaussian-sigma12",
+      "method": "median",
+      "fixtureCount": 4,
+      "meanNoisyInputPsnrRgbDb": 26.6612,
+      "meanPsnrRgbDb": 26.9342,
+      "meanPsnrChangeDb": 0.2729,
+      "meanNoisyInputSsim": 0.782717,
+      "meanSsimRec601Gaussian7x7": 0.721378,
+      "meanSsimChange": -0.061339,
+      "medianLatencyMs": 47.457,
+      "p95LatencyMs": 81.23
+    },
+    {
+      "noiseId": "gaussian-sigma12",
+      "method": "bilateral",
+      "fixtureCount": 4,
+      "meanNoisyInputPsnrRgbDb": 26.6612,
+      "meanPsnrRgbDb": 31.3289,
+      "meanPsnrChangeDb": 4.6677,
+      "meanNoisyInputSsim": 0.782717,
+      "meanSsimRec601Gaussian7x7": 0.857216,
+      "meanSsimChange": 0.074499,
+      "medianLatencyMs": 25.418,
+      "p95LatencyMs": 33.875
+    },
+    {
+      "noiseId": "gaussian-sigma24",
+      "method": "median",
+      "fixtureCount": 4,
+      "meanNoisyInputPsnrRgbDb": 20.7268,
+      "meanPsnrRgbDb": 24.5996,
+      "meanPsnrChangeDb": 3.8728,
+      "meanNoisyInputSsim": 0.532434,
+      "meanSsimRec601Gaussian7x7": 0.63108,
+      "meanSsimChange": 0.098647,
+      "medianLatencyMs": 52.7,
+      "p95LatencyMs": 84.312
+    },
+    {
+      "noiseId": "gaussian-sigma24",
+      "method": "bilateral",
+      "fixtureCount": 4,
+      "meanNoisyInputPsnrRgbDb": 20.7268,
+      "meanPsnrRgbDb": 26.6549,
+      "meanPsnrChangeDb": 5.9281,
+      "meanNoisyInputSsim": 0.532434,
+      "meanSsimRec601Gaussian7x7": 0.672433,
+      "meanSsimChange": 0.139999,
+      "medianLatencyMs": 25.788,
+      "p95LatencyMs": 36.281
+    },
+    {
+      "noiseId": "impulse-2pct",
+      "method": "median",
+      "fixtureCount": 4,
+      "meanNoisyInputPsnrRgbDb": 22.0323,
+      "meanPsnrRgbDb": 28.4268,
+      "meanPsnrChangeDb": 6.3945,
+      "meanNoisyInputSsim": 0.723381,
+      "meanSsimRec601Gaussian7x7": 0.768963,
+      "meanSsimChange": 0.045582,
+      "medianLatencyMs": 53.838,
+      "p95LatencyMs": 78.227
+    },
+    {
+      "noiseId": "impulse-2pct",
+      "method": "bilateral",
+      "fixtureCount": 4,
+      "meanNoisyInputPsnrRgbDb": 22.0323,
+      "meanPsnrRgbDb": 21.8018,
+      "meanPsnrChangeDb": -0.2306,
+      "meanNoisyInputSsim": 0.723381,
+      "meanSsimRec601Gaussian7x7": 0.6218,
+      "meanSsimChange": -0.101581,
+      "medianLatencyMs": 24.205,
+      "p95LatencyMs": 33.119
+    }
+  ],
+  "fixtureResults": [
+    {
+      "id": "gold-weight-gaussian-sigma12",
+      "sourceId": "gold-weight",
+      "source": {
+        "id": "gold-weight",
+        "title": "Gold Weight (abrammuo): Geometric",
+        "creator": "Asante goldsmith, unidentified",
+        "license": "CC0-1.0",
+        "licenseEvidence": "Cleveland Museum of Art Open Access API: share_license_status=CC0",
+        "sourceUrl": "https://openaccess-cdn.clevelandart.org/1969.265/1969.265_print.jpg",
+        "sourcePageUrl": "https://clevelandart.org/art/1969.265",
+        "imagePath": "../fixtures/cc0/gold-weight.jpg",
+        "imageBytes": 3330155,
+        "imageSha256": "575c3663c372bb43e7da86a253cd9cb3602211bc39e3756332ca682963beb351",
+        "metadataPath": "../fixtures/cc0/gold-weight.metadata.json",
+        "metadataSha256": "a7a15d396f58877f0fa73f5feb705b790710fe81c1ea63b94c1a120ecb70928e",
+        "dimensions": {
+          "width": 2619,
+          "height": 2338
+        }
+      },
+      "noise": {
+        "id": "gaussian-sigma12",
+        "kind": "gaussian",
+        "sigma": 12
+      },
+      "dimensions": {
+        "width": 128,
+        "height": 128
+      },
+      "derivation": {
+        "decoder": "@jsquash/jpeg decoder pinned by pnpm-lock.yaml; decoded to 8-bit sRGB RGBA.",
+        "resizer": "Production resizeRaster Lanczos3 from the exact registered source crop.",
+        "outputDimensions": {
+          "width": 128,
+          "height": 128
+        },
+        "noise": {
+          "id": "gaussian-sigma12",
+          "kind": "gaussian",
+          "sigma": 12,
+          "seedAlgorithm": "first uint32 from SHA-256 of the versioned fixture ID"
+        },
+        "alpha": "Preserved unchanged from the clean reference."
+      },
+      "reference": {
+        "path": "fixtures/gold-weight-gaussian-sigma12-reference.png",
+        "width": 128,
+        "height": 128,
+        "pngBytes": 44478,
+        "pngSha256": "7b00eed600f09ac98f32f19e6bfc016fac7c6ca1453dc03d8092568e193348c1",
+        "rgbaSha256": "2c619d3eba3b33f7f84fe01ed4b1b090a2c85c7fb5bc96d91f71db13bf59c835"
+      },
+      "noisyInput": {
+        "path": "fixtures/gold-weight-gaussian-sigma12-input.png",
+        "width": 128,
+        "height": 128,
+        "pngBytes": 53729,
+        "pngSha256": "5a45e50544e811f0e9e8eae04d07e934fe09c9245aabc9e99dc58c3da8422ba1",
+        "rgbaSha256": "5527351bd322ca2e3106561763904685552642143cb838c03d34057d0786ecb9"
+      },
+      "noisyInputMetrics": {
+        "psnrRgbDb": 26.4797,
+        "ssimRec601Gaussian7x7": 0.807495
+      },
+      "methods": [
+        {
+          "method": "median",
+          "options": {
+            "strength": 50
+          },
+          "output": {
+            "path": "artifacts/gold-weight-gaussian-sigma12-median.png",
+            "width": 128,
+            "height": 128,
+            "pngBytes": 35999,
+            "pngSha256": "635b8a4da3bc083636cd7a5cfdd5a8fb12cd7d4719218de7649e68cb79b19764",
+            "rgbaSha256": "c273cf5df8af8f6a216f4c4467cb3b5ec29c806be6551fd12abf71ed9906f50b"
+          },
+          "metrics": {
+            "psnrRgbDb": 28.8203,
+            "ssimRec601Gaussian7x7": 0.747809
+          },
+          "latency": {
+            "warmupRuns": 2,
+            "measuredRuns": 8,
+            "samplesMs": [
+              81.23,
+              72.188,
+              65.77,
+              86.499,
+              69.489,
+              78.683,
+              76.436,
+              58.894
+            ],
+            "medianMs": 72.188,
+            "p95Ms": 86.499
+          }
+        },
+        {
+          "method": "bilateral",
+          "options": {
+            "strength": 50
+          },
+          "output": {
+            "path": "artifacts/gold-weight-gaussian-sigma12-bilateral.png",
+            "width": 128,
+            "height": 128,
+            "pngBytes": 36969,
+            "pngSha256": "a7cc762b3e6606074508d6cef890903354141109f119000255749322d32bf958",
+            "rgbaSha256": "99154617b0e5967e6b3718fc0cdc3c50ee4f015ffcbcb70fd440e17f95802570"
+          },
+          "metrics": {
+            "psnrRgbDb": 30.7167,
+            "ssimRec601Gaussian7x7": 0.812689
+          },
+          "latency": {
+            "warmupRuns": 2,
+            "measuredRuns": 8,
+            "samplesMs": [
+              32.445,
+              30.901,
+              33.875,
+              30.305,
+              29.004,
+              32.711,
+              30.813,
+              44.704
+            ],
+            "medianMs": 30.901,
+            "p95Ms": 44.704
+          }
+        }
+      ]
+    },
+    {
+      "id": "gold-weight-gaussian-sigma24",
+      "sourceId": "gold-weight",
+      "source": {
+        "id": "gold-weight",
+        "title": "Gold Weight (abrammuo): Geometric",
+        "creator": "Asante goldsmith, unidentified",
+        "license": "CC0-1.0",
+        "licenseEvidence": "Cleveland Museum of Art Open Access API: share_license_status=CC0",
+        "sourceUrl": "https://openaccess-cdn.clevelandart.org/1969.265/1969.265_print.jpg",
+        "sourcePageUrl": "https://clevelandart.org/art/1969.265",
+        "imagePath": "../fixtures/cc0/gold-weight.jpg",
+        "imageBytes": 3330155,
+        "imageSha256": "575c3663c372bb43e7da86a253cd9cb3602211bc39e3756332ca682963beb351",
+        "metadataPath": "../fixtures/cc0/gold-weight.metadata.json",
+        "metadataSha256": "a7a15d396f58877f0fa73f5feb705b790710fe81c1ea63b94c1a120ecb70928e",
+        "dimensions": {
+          "width": 2619,
+          "height": 2338
+        }
+      },
+      "noise": {
+        "id": "gaussian-sigma24",
+        "kind": "gaussian",
+        "sigma": 24
+      },
+      "dimensions": {
+        "width": 128,
+        "height": 128
+      },
+      "derivation": {
+        "decoder": "@jsquash/jpeg decoder pinned by pnpm-lock.yaml; decoded to 8-bit sRGB RGBA.",
+        "resizer": "Production resizeRaster Lanczos3 from the exact registered source crop.",
+        "outputDimensions": {
+          "width": 128,
+          "height": 128
+        },
+        "noise": {
+          "id": "gaussian-sigma24",
+          "kind": "gaussian",
+          "sigma": 24,
+          "seedAlgorithm": "first uint32 from SHA-256 of the versioned fixture ID"
+        },
+        "alpha": "Preserved unchanged from the clean reference."
+      },
+      "reference": {
+        "path": "fixtures/gold-weight-gaussian-sigma24-reference.png",
+        "width": 128,
+        "height": 128,
+        "pngBytes": 44478,
+        "pngSha256": "7b00eed600f09ac98f32f19e6bfc016fac7c6ca1453dc03d8092568e193348c1",
+        "rgbaSha256": "2c619d3eba3b33f7f84fe01ed4b1b090a2c85c7fb5bc96d91f71db13bf59c835"
+      },
+      "noisyInput": {
+        "path": "fixtures/gold-weight-gaussian-sigma24-input.png",
+        "width": 128,
+        "height": 128,
+        "pngBytes": 61638,
+        "pngSha256": "7f074ba0d0686ed5feaaf9e7c234fca3f021d413d61481d4b0383cffc5720519",
+        "rgbaSha256": "9743aa0931a9411180a091805d7311f3ba75cbcf15efaa331188234c75dd31f8"
+      },
+      "noisyInputMetrics": {
+        "psnrRgbDb": 20.5023,
+        "ssimRec601Gaussian7x7": 0.540414
+      },
+      "methods": [
+        {
+          "method": "median",
+          "options": {
+            "strength": 50
+          },
+          "output": {
+            "path": "artifacts/gold-weight-gaussian-sigma24-median.png",
+            "width": 128,
+            "height": 128,
+            "pngBytes": 39632,
+            "pngSha256": "8109b20a25e7ce5f6118a11ebc599f8bf49bc6859c9704edd93f0c4930a760ae",
+            "rgbaSha256": "98723e6377222bc0bd3cab9ef9ad6bf1c242b5f3075af8cb49b1f834bd40dc31"
+          },
+          "metrics": {
+            "psnrRgbDb": 26.0196,
+            "ssimRec601Gaussian7x7": 0.667368
+          },
+          "latency": {
+            "warmupRuns": 2,
+            "measuredRuns": 8,
+            "samplesMs": [
+              51.946,
+              72.796,
+              80.282,
+              84.312,
+              71.432,
+              57.334,
+              48.287,
+              53.552
+            ],
+            "medianMs": 57.334,
+            "p95Ms": 84.312
+          }
+        },
+        {
+          "method": "bilateral",
+          "options": {
+            "strength": 50
+          },
+          "output": {
+            "path": "artifacts/gold-weight-gaussian-sigma24-bilateral.png",
+            "width": 128,
+            "height": 128,
+            "pngBytes": 44488,
+            "pngSha256": "77fa34ec6b174b1cb9df23be0785d895d010afb7f184dbb37bf6ddc1a9f64b35",
+            "rgbaSha256": "cc9f0f09b4aad9c73113c9233dc9ebbf64c2dfdcdb563198dee7c7fafc26482d"
+          },
+          "metrics": {
+            "psnrRgbDb": 26.5981,
+            "ssimRec601Gaussian7x7": 0.651424
+          },
+          "latency": {
+            "warmupRuns": 2,
+            "measuredRuns": 8,
+            "samplesMs": [
+              28.626,
+              24.956,
+              22.281,
+              26.714,
+              25.788,
+              22.015,
+              25.141,
+              28.829
+            ],
+            "medianMs": 25.141,
+            "p95Ms": 28.829
+          }
+        }
+      ]
+    },
+    {
+      "id": "gold-weight-impulse-2pct",
+      "sourceId": "gold-weight",
+      "source": {
+        "id": "gold-weight",
+        "title": "Gold Weight (abrammuo): Geometric",
+        "creator": "Asante goldsmith, unidentified",
+        "license": "CC0-1.0",
+        "licenseEvidence": "Cleveland Museum of Art Open Access API: share_license_status=CC0",
+        "sourceUrl": "https://openaccess-cdn.clevelandart.org/1969.265/1969.265_print.jpg",
+        "sourcePageUrl": "https://clevelandart.org/art/1969.265",
+        "imagePath": "../fixtures/cc0/gold-weight.jpg",
+        "imageBytes": 3330155,
+        "imageSha256": "575c3663c372bb43e7da86a253cd9cb3602211bc39e3756332ca682963beb351",
+        "metadataPath": "../fixtures/cc0/gold-weight.metadata.json",
+        "metadataSha256": "a7a15d396f58877f0fa73f5feb705b790710fe81c1ea63b94c1a120ecb70928e",
+        "dimensions": {
+          "width": 2619,
+          "height": 2338
+        }
+      },
+      "noise": {
+        "id": "impulse-2pct",
+        "kind": "impulse",
+        "density": 0.02
+      },
+      "dimensions": {
+        "width": 128,
+        "height": 128
+      },
+      "derivation": {
+        "decoder": "@jsquash/jpeg decoder pinned by pnpm-lock.yaml; decoded to 8-bit sRGB RGBA.",
+        "resizer": "Production resizeRaster Lanczos3 from the exact registered source crop.",
+        "outputDimensions": {
+          "width": 128,
+          "height": 128
+        },
+        "noise": {
+          "id": "impulse-2pct",
+          "kind": "impulse",
+          "density": 0.02,
+          "seedAlgorithm": "first uint32 from SHA-256 of the versioned fixture ID"
+        },
+        "alpha": "Preserved unchanged from the clean reference."
+      },
+      "reference": {
+        "path": "fixtures/gold-weight-impulse-2pct-reference.png",
+        "width": 128,
+        "height": 128,
+        "pngBytes": 44478,
+        "pngSha256": "7b00eed600f09ac98f32f19e6bfc016fac7c6ca1453dc03d8092568e193348c1",
+        "rgbaSha256": "2c619d3eba3b33f7f84fe01ed4b1b090a2c85c7fb5bc96d91f71db13bf59c835"
+      },
+      "noisyInput": {
+        "path": "fixtures/gold-weight-impulse-2pct-input.png",
+        "width": 128,
+        "height": 128,
+        "pngBytes": 45803,
+        "pngSha256": "70f29c439a14a80896f86ff7a7196598bc67e06be16e906eda73b5dd9f0230db",
+        "rgbaSha256": "10ea401f52a6f60a462965d21ec8c0b5fd05b20c99530d27e2d6efba50812ef2"
+      },
+      "noisyInputMetrics": {
+        "psnrRgbDb": 22.707,
+        "ssimRec601Gaussian7x7": 0.716098
+      },
+      "methods": [
+        {
+          "method": "median",
+          "options": {
+            "strength": 50
+          },
+          "output": {
+            "path": "artifacts/gold-weight-impulse-2pct-median.png",
+            "width": 128,
+            "height": 128,
+            "pngBytes": 33476,
+            "pngSha256": "f41a2a5aa0770b30a5563f055f5ef9d95c400cf6f345ca0a90635dd32215fe03",
+            "rgbaSha256": "e3e83a9a9ae7baab4409b42d49ced3f8e795535dbb4bfc2b1284bec8029df912"
+          },
+          "metrics": {
+            "psnrRgbDb": 30.5851,
+            "ssimRec601Gaussian7x7": 0.790853
+          },
+          "latency": {
+            "warmupRuns": 2,
+            "measuredRuns": 8,
+            "samplesMs": [
+              60.315,
+              55.488,
+              60.743,
+              64.089,
+              64.356,
+              63.478,
+              78.402,
+              76.5
+            ],
+            "medianMs": 63.478,
+            "p95Ms": 78.402
+          }
+        },
+        {
+          "method": "bilateral",
+          "options": {
+            "strength": 50
+          },
+          "output": {
+            "path": "artifacts/gold-weight-impulse-2pct-bilateral.png",
+            "width": 128,
+            "height": 128,
+            "pngBytes": 34817,
+            "pngSha256": "a51ccb350e12404952c37f8d4ae50e5863a5a9b1f869e69bd66dbf928644e7ad",
+            "rgbaSha256": "21cc5af4794fe5d8f0456d411d430ffae68f1346ea09cb2d446d5c1d76ed0521"
+          },
+          "metrics": {
+            "psnrRgbDb": 22.2413,
+            "ssimRec601Gaussian7x7": 0.563659
+          },
+          "latency": {
+            "warmupRuns": 2,
+            "measuredRuns": 8,
+            "samplesMs": [
+              31.456,
+              29.766,
+              29.388,
+              28.719,
+              25.364,
+              25.68,
+              28.383,
+              23.783
+            ],
+            "medianMs": 28.383,
+            "p95Ms": 31.456
+          }
+        }
+      ]
+    },
+    {
+      "id": "landscape-dordogne-gaussian-sigma12",
+      "sourceId": "landscape-dordogne",
+      "source": {
+        "id": "landscape-dordogne",
+        "title": "Landscape Dordogne Château de Hautefort 18",
+        "creator": "Jebulon",
+        "license": "CC0-1.0",
+        "licenseEvidence": "Commons imageinfo extmetadata: LicenseShortName=CC0; LicenseUrl=https://creativecommons.org/publicdomain/zero/1.0/",
+        "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/4/4d/Landscape_Dordogne_Ch%C3%A2teau_de_Hautefort_18.jpg",
+        "sourcePageUrl": "https://commons.wikimedia.org/wiki/File:Landscape_Dordogne_Ch%C3%A2teau_de_Hautefort_18.jpg",
+        "imagePath": "../fixtures/cc0/landscape-dordogne.jpg",
+        "imageBytes": 2140794,
+        "imageSha256": "c3e2eef6af01a10882c83f71ff849d2ffb95220aad0e70e98daf6cf27e1975b7",
+        "metadataPath": "../fixtures/cc0/landscape-dordogne.metadata.json",
+        "metadataSha256": "a00d556a2800aa055d7cea0b052b4166e5e42d9c1f7b4a29a3ab6034aa6d676e",
+        "dimensions": {
+          "width": 4592,
+          "height": 3056
+        }
+      },
+      "noise": {
+        "id": "gaussian-sigma12",
+        "kind": "gaussian",
+        "sigma": 12
+      },
+      "dimensions": {
+        "width": 128,
+        "height": 128
+      },
+      "derivation": {
+        "decoder": "@jsquash/jpeg decoder pinned by pnpm-lock.yaml; decoded to 8-bit sRGB RGBA.",
+        "resizer": "Production resizeRaster Lanczos3 from the exact registered source crop.",
+        "outputDimensions": {
+          "width": 128,
+          "height": 128
+        },
+        "noise": {
+          "id": "gaussian-sigma12",
+          "kind": "gaussian",
+          "sigma": 12,
+          "seedAlgorithm": "first uint32 from SHA-256 of the versioned fixture ID"
+        },
+        "alpha": "Preserved unchanged from the clean reference."
+      },
+      "reference": {
+        "path": "fixtures/landscape-dordogne-gaussian-sigma12-reference.png",
+        "width": 128,
+        "height": 128,
+        "pngBytes": 33627,
+        "pngSha256": "663bfb408e3b611ec9789736487201b36ecc813f081fbd05efdd26b3f4ef11d6",
+        "rgbaSha256": "2a6b5a9d6f1f55c14649fea7d4192b42bbd4e6a2637f0944e6a020e29c662180"
+      },
+      "noisyInput": {
+        "path": "fixtures/landscape-dordogne-gaussian-sigma12-input.png",
+        "width": 128,
+        "height": 128,
+        "pngBytes": 52200,
+        "pngSha256": "3ea6308d383ef1c52459ee7fc1a8b21d3b468d699452b10f4a3f0f23559e5e53",
+        "rgbaSha256": "6d288d211ad6672c3a926d0e6fb667213e425ae3bf0bec04a844abdd5d6e58cf"
+      },
+      "noisyInputMetrics": {
+        "psnrRgbDb": 26.6422,
+        "ssimRec601Gaussian7x7": 0.738844
+      },
+      "methods": [
+        {
+          "method": "median",
+          "options": {
+            "strength": 50
+          },
+          "output": {
+            "path": "artifacts/landscape-dordogne-gaussian-sigma12-median.png",
+            "width": 128,
+            "height": 128,
+            "pngBytes": 33782,
+            "pngSha256": "b0c003696504a14ab48ac3d322e23537a84ff1033c5f8d536d35f8df841517f2",
+            "rgbaSha256": "1cfc301b9414ef0341cabb70eeffcaa8857373d342a9f1c1e2668986d4b6e031"
+          },
+          "metrics": {
+            "psnrRgbDb": 30.6308,
+            "ssimRec601Gaussian7x7": 0.837796
+          },
+          "latency": {
+            "warmupRuns": 2,
+            "measuredRuns": 8,
+            "samplesMs": [
+              36.947,
+              47.457,
+              52.424,
+              37.381,
+              39.433,
+              48.739,
+              38.979,
+              53.073
+            ],
+            "medianMs": 39.433,
+            "p95Ms": 53.073
+          }
+        },
+        {
+          "method": "bilateral",
+          "options": {
+            "strength": 50
+          },
+          "output": {
+            "path": "artifacts/landscape-dordogne-gaussian-sigma12-bilateral.png",
+            "width": 128,
+            "height": 128,
+            "pngBytes": 32746,
+            "pngSha256": "bdc2ad41f5751d8267eaf67a4675307e8367e237dfbe4246805b46f307e3b247",
+            "rgbaSha256": "251e4fbf607c45ff23cc540e6b5d3a077c935026a7531d13f2485139200dec86"
+          },
+          "metrics": {
+            "psnrRgbDb": 32.6317,
+            "ssimRec601Gaussian7x7": 0.877818
+          },
+          "latency": {
+            "warmupRuns": 2,
+            "measuredRuns": 8,
+            "samplesMs": [
+              24.131,
+              23.342,
+              27.751,
+              23.912,
+              28.438,
+              19.849,
+              20.808,
+              22.55
+            ],
+            "medianMs": 23.342,
+            "p95Ms": 28.438
+          }
+        }
+      ]
+    },
+    {
+      "id": "landscape-dordogne-gaussian-sigma24",
+      "sourceId": "landscape-dordogne",
+      "source": {
+        "id": "landscape-dordogne",
+        "title": "Landscape Dordogne Château de Hautefort 18",
+        "creator": "Jebulon",
+        "license": "CC0-1.0",
+        "licenseEvidence": "Commons imageinfo extmetadata: LicenseShortName=CC0; LicenseUrl=https://creativecommons.org/publicdomain/zero/1.0/",
+        "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/4/4d/Landscape_Dordogne_Ch%C3%A2teau_de_Hautefort_18.jpg",
+        "sourcePageUrl": "https://commons.wikimedia.org/wiki/File:Landscape_Dordogne_Ch%C3%A2teau_de_Hautefort_18.jpg",
+        "imagePath": "../fixtures/cc0/landscape-dordogne.jpg",
+        "imageBytes": 2140794,
+        "imageSha256": "c3e2eef6af01a10882c83f71ff849d2ffb95220aad0e70e98daf6cf27e1975b7",
+        "metadataPath": "../fixtures/cc0/landscape-dordogne.metadata.json",
+        "metadataSha256": "a00d556a2800aa055d7cea0b052b4166e5e42d9c1f7b4a29a3ab6034aa6d676e",
+        "dimensions": {
+          "width": 4592,
+          "height": 3056
+        }
+      },
+      "noise": {
+        "id": "gaussian-sigma24",
+        "kind": "gaussian",
+        "sigma": 24
+      },
+      "dimensions": {
+        "width": 128,
+        "height": 128
+      },
+      "derivation": {
+        "decoder": "@jsquash/jpeg decoder pinned by pnpm-lock.yaml; decoded to 8-bit sRGB RGBA.",
+        "resizer": "Production resizeRaster Lanczos3 from the exact registered source crop.",
+        "outputDimensions": {
+          "width": 128,
+          "height": 128
+        },
+        "noise": {
+          "id": "gaussian-sigma24",
+          "kind": "gaussian",
+          "sigma": 24,
+          "seedAlgorithm": "first uint32 from SHA-256 of the versioned fixture ID"
+        },
+        "alpha": "Preserved unchanged from the clean reference."
+      },
+      "reference": {
+        "path": "fixtures/landscape-dordogne-gaussian-sigma24-reference.png",
+        "width": 128,
+        "height": 128,
+        "pngBytes": 33627,
+        "pngSha256": "663bfb408e3b611ec9789736487201b36ecc813f081fbd05efdd26b3f4ef11d6",
+        "rgbaSha256": "2a6b5a9d6f1f55c14649fea7d4192b42bbd4e6a2637f0944e6a020e29c662180"
+      },
+      "noisyInput": {
+        "path": "fixtures/landscape-dordogne-gaussian-sigma24-input.png",
+        "width": 128,
+        "height": 128,
+        "pngBytes": 60991,
+        "pngSha256": "581fe8e358855830e5d39fabd9ed69fb8971d59462f728852550f3eb6f0d2dc7",
+        "rgbaSha256": "04f3995c04bd24e3e4f4a913f660217146b8aea7e626f30c772af6a7fad6499f"
+      },
+      "noisyInputMetrics": {
+        "psnrRgbDb": 20.7167,
+        "ssimRec601Gaussian7x7": 0.466155
+      },
+      "methods": [
+        {
+          "method": "median",
+          "options": {
+            "strength": 50
+          },
+          "output": {
+            "path": "artifacts/landscape-dordogne-gaussian-sigma24-median.png",
+            "width": 128,
+            "height": 128,
+            "pngBytes": 38522,
+            "pngSha256": "a1fd17ce1768ad5dce25b8c8ae3a4db32e462fa952f30b5f466f180d21a79527",
+            "rgbaSha256": "bdddc60ffafda6fd92f166b8edd2c6f86bb58847c26122e56b2bf8f303359adf"
+          },
+          "metrics": {
+            "psnrRgbDb": 26.9259,
+            "ssimRec601Gaussian7x7": 0.719514
+          },
+          "latency": {
+            "warmupRuns": 2,
+            "measuredRuns": 8,
+            "samplesMs": [
+              51.119,
+              47.514,
+              64.497,
+              54.762,
+              52.993,
+              48.282,
+              44.508,
+              57.24
+            ],
+            "medianMs": 51.119,
+            "p95Ms": 64.497
+          }
+        },
+        {
+          "method": "bilateral",
+          "options": {
+            "strength": 50
+          },
+          "output": {
+            "path": "artifacts/landscape-dordogne-gaussian-sigma24-bilateral.png",
+            "width": 128,
+            "height": 128,
+            "pngBytes": 42075,
+            "pngSha256": "1ef14e0c0e9b4955fdc221a600401e0764b3f3b32c4373c20f9e007ec578adaa",
+            "rgbaSha256": "9e5a8196dac3bad4847cae51977fe26b4cd0c393ed1b6b1fb7f6e9820d89e11b"
+          },
+          "metrics": {
+            "psnrRgbDb": 27.6047,
+            "ssimRec601Gaussian7x7": 0.649317
+          },
+          "latency": {
+            "warmupRuns": 2,
+            "measuredRuns": 8,
+            "samplesMs": [
+              27.203,
+              27.824,
+              25.426,
+              23.548,
+              30.078,
+              28.865,
+              27.492,
+              24.955
+            ],
+            "medianMs": 27.203,
+            "p95Ms": 30.078
+          }
+        }
+      ]
+    },
+    {
+      "id": "landscape-dordogne-impulse-2pct",
+      "sourceId": "landscape-dordogne",
+      "source": {
+        "id": "landscape-dordogne",
+        "title": "Landscape Dordogne Château de Hautefort 18",
+        "creator": "Jebulon",
+        "license": "CC0-1.0",
+        "licenseEvidence": "Commons imageinfo extmetadata: LicenseShortName=CC0; LicenseUrl=https://creativecommons.org/publicdomain/zero/1.0/",
+        "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/4/4d/Landscape_Dordogne_Ch%C3%A2teau_de_Hautefort_18.jpg",
+        "sourcePageUrl": "https://commons.wikimedia.org/wiki/File:Landscape_Dordogne_Ch%C3%A2teau_de_Hautefort_18.jpg",
+        "imagePath": "../fixtures/cc0/landscape-dordogne.jpg",
+        "imageBytes": 2140794,
+        "imageSha256": "c3e2eef6af01a10882c83f71ff849d2ffb95220aad0e70e98daf6cf27e1975b7",
+        "metadataPath": "../fixtures/cc0/landscape-dordogne.metadata.json",
+        "metadataSha256": "a00d556a2800aa055d7cea0b052b4166e5e42d9c1f7b4a29a3ab6034aa6d676e",
+        "dimensions": {
+          "width": 4592,
+          "height": 3056
+        }
+      },
+      "noise": {
+        "id": "impulse-2pct",
+        "kind": "impulse",
+        "density": 0.02
+      },
+      "dimensions": {
+        "width": 128,
+        "height": 128
+      },
+      "derivation": {
+        "decoder": "@jsquash/jpeg decoder pinned by pnpm-lock.yaml; decoded to 8-bit sRGB RGBA.",
+        "resizer": "Production resizeRaster Lanczos3 from the exact registered source crop.",
+        "outputDimensions": {
+          "width": 128,
+          "height": 128
+        },
+        "noise": {
+          "id": "impulse-2pct",
+          "kind": "impulse",
+          "density": 0.02,
+          "seedAlgorithm": "first uint32 from SHA-256 of the versioned fixture ID"
+        },
+        "alpha": "Preserved unchanged from the clean reference."
+      },
+      "reference": {
+        "path": "fixtures/landscape-dordogne-impulse-2pct-reference.png",
+        "width": 128,
+        "height": 128,
+        "pngBytes": 33627,
+        "pngSha256": "663bfb408e3b611ec9789736487201b36ecc813f081fbd05efdd26b3f4ef11d6",
+        "rgbaSha256": "2a6b5a9d6f1f55c14649fea7d4192b42bbd4e6a2637f0944e6a020e29c662180"
+      },
+      "noisyInput": {
+        "path": "fixtures/landscape-dordogne-impulse-2pct-input.png",
+        "width": 128,
+        "height": 128,
+        "pngBytes": 35402,
+        "pngSha256": "067c1c273316ea6be8532bc1cd3ef40b81ef2130ce9de3a344c10046ab0507a6",
+        "rgbaSha256": "af1bdd8cfed11ab95d65869b30a06bd8ef15527b3acede21e556b24e0025f8b7"
+      },
+      "noisyInputMetrics": {
+        "psnrRgbDb": 21.7821,
+        "ssimRec601Gaussian7x7": 0.690999
+      },
+      "methods": [
+        {
+          "method": "median",
+          "options": {
+            "strength": 50
+          },
+          "output": {
+            "path": "artifacts/landscape-dordogne-impulse-2pct-median.png",
+            "width": 128,
+            "height": 128,
+            "pngBytes": 26147,
+            "pngSha256": "d447d850469454e8466484def0001f57ba3a0adb6cd5260290c6b8d3e82de097",
+            "rgbaSha256": "a099132e2677410dacd74afef481bb366550485aed6c4cf1501a19ce6de130a6"
+          },
+          "metrics": {
+            "psnrRgbDb": 33.4491,
+            "ssimRec601Gaussian7x7": 0.901463
+          },
+          "latency": {
+            "warmupRuns": 2,
+            "measuredRuns": 8,
+            "samplesMs": [
+              53.979,
+              51.473,
+              37.03,
+              39.807,
+              35.676,
+              32.869,
+              53.637,
+              40.007
+            ],
+            "medianMs": 39.807,
+            "p95Ms": 53.979
+          }
+        },
+        {
+          "method": "bilateral",
+          "options": {
+            "strength": 50
+          },
+          "output": {
+            "path": "artifacts/landscape-dordogne-impulse-2pct-bilateral.png",
+            "width": 128,
+            "height": 128,
+            "pngBytes": 27527,
+            "pngSha256": "017d7e8bd460b5dfd20941c59b16670ffbfa3e4ea298caea09071af304c879e6",
+            "rgbaSha256": "239961d4a2c8d90d8ebfd52f672bca15c6262d3558daa955a3e7ebd8a138b322"
+          },
+          "metrics": {
+            "psnrRgbDb": 21.6337,
+            "ssimRec601Gaussian7x7": 0.61765
+          },
+          "latency": {
+            "warmupRuns": 2,
+            "measuredRuns": 8,
+            "samplesMs": [
+              19.181,
+              15.235,
+              16.816,
+              18.38,
+              15.525,
+              15.357,
+              22.512,
+              15.007
+            ],
+            "medianMs": 15.525,
+            "p95Ms": 22.512
+          }
+        }
+      ]
+    },
+    {
+      "id": "oak-leaves-gaussian-sigma12",
+      "sourceId": "oak-leaves",
+      "source": {
+        "id": "oak-leaves",
+        "title": "New oak leaves with female flowers",
+        "creator": "W.carter",
+        "license": "CC0-1.0",
+        "licenseEvidence": "Commons imageinfo extmetadata: LicenseShortName=CC0; LicenseUrl=https://creativecommons.org/publicdomain/zero/1.0/",
+        "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/8/83/New_oak_leaves_with_female_flowers.jpg",
+        "sourcePageUrl": "https://commons.wikimedia.org/wiki/File:New_oak_leaves_with_female_flowers.jpg",
+        "imagePath": "../fixtures/cc0/oak-leaves.jpg",
+        "imageBytes": 5671146,
+        "imageSha256": "71c0f2fb2fa89385955bca609cf9983d493137a81879005143606d0fa74d2802",
+        "metadataPath": "../fixtures/cc0/oak-leaves.metadata.json",
+        "metadataSha256": "68de096c7215cedd551c66b4c77b281eb48d478105fba0254394bd83c880b2cb",
+        "dimensions": {
+          "width": 3720,
+          "height": 2790
+        }
+      },
+      "noise": {
+        "id": "gaussian-sigma12",
+        "kind": "gaussian",
+        "sigma": 12
+      },
+      "dimensions": {
+        "width": 128,
+        "height": 128
+      },
+      "derivation": {
+        "decoder": "@jsquash/jpeg decoder pinned by pnpm-lock.yaml; decoded to 8-bit sRGB RGBA.",
+        "resizer": "Production resizeRaster Lanczos3 from the exact registered source crop.",
+        "outputDimensions": {
+          "width": 128,
+          "height": 128
+        },
+        "noise": {
+          "id": "gaussian-sigma12",
+          "kind": "gaussian",
+          "sigma": 12,
+          "seedAlgorithm": "first uint32 from SHA-256 of the versioned fixture ID"
+        },
+        "alpha": "Preserved unchanged from the clean reference."
+      },
+      "reference": {
+        "path": "fixtures/oak-leaves-gaussian-sigma12-reference.png",
+        "width": 128,
+        "height": 128,
+        "pngBytes": 42165,
+        "pngSha256": "492e733af6c81fa1af58701b000e7fed114080f774960d4a2126e952881fee68",
+        "rgbaSha256": "0e9a3fa39d2c31fd46837ec100a90fd314798ac9cc7f8941fa984f6c72f56bae"
+      },
+      "noisyInput": {
+        "path": "fixtures/oak-leaves-gaussian-sigma12-input.png",
+        "width": 128,
+        "height": 128,
+        "pngBytes": 52037,
+        "pngSha256": "489b9842528153b80a9c20f12f0b14388e7f63c3b757ed3aebb0c53c704ffa83",
+        "rgbaSha256": "5e9a4dd66203a3cebf6bcd3604500826b491d0d7cedc825ee3359d37a702e0b1"
+      },
+      "noisyInputMetrics": {
+        "psnrRgbDb": 26.9806,
+        "ssimRec601Gaussian7x7": 0.769542
+      },
+      "methods": [
+        {
+          "method": "median",
+          "options": {
+            "strength": 50
+          },
+          "output": {
+            "path": "artifacts/oak-leaves-gaussian-sigma12-median.png",
+            "width": 128,
+            "height": 128,
+            "pngBytes": 35262,
+            "pngSha256": "a3e15c0dde2efe45a89a0f4d0565ea3db254ee8ba991884b08c26048d3859858",
+            "rgbaSha256": "561f96932f4bfd17266c7938371cd778e2f0368b81918d6e2d1c5e7ca88c7c82"
+          },
+          "metrics": {
+            "psnrRgbDb": 28.4128,
+            "ssimRec601Gaussian7x7": 0.730842
+          },
+          "latency": {
+            "warmupRuns": 2,
+            "measuredRuns": 8,
+            "samplesMs": [
+              33.768,
+              37.008,
+              39.293,
+              42.573,
+              36.011,
+              35.163,
+              35.366,
+              33.136
+            ],
+            "medianMs": 35.366,
+            "p95Ms": 42.573
+          }
+        },
+        {
+          "method": "bilateral",
+          "options": {
+            "strength": 50
+          },
+          "output": {
+            "path": "artifacts/oak-leaves-gaussian-sigma12-bilateral.png",
+            "width": 128,
+            "height": 128,
+            "pngBytes": 34976,
+            "pngSha256": "757cb7630606f4a6d22ac5712ac9d24c63cb31b75ebe695d9cccab9b5720dcbe",
+            "rgbaSha256": "46af89ef8c0ff8d6a51c3d1cd8eded004c7643ad81862ec9d70977b146658f8b"
+          },
+          "metrics": {
+            "psnrRgbDb": 31.3567,
+            "ssimRec601Gaussian7x7": 0.835236
+          },
+          "latency": {
+            "warmupRuns": 2,
+            "measuredRuns": 8,
+            "samplesMs": [
+              19.071,
+              25.571,
+              21.063,
+              19.309,
+              18.041,
+              17.324,
+              17.45,
+              21.044
+            ],
+            "medianMs": 19.071,
+            "p95Ms": 25.571
+          }
+        }
+      ]
+    },
+    {
+      "id": "oak-leaves-gaussian-sigma24",
+      "sourceId": "oak-leaves",
+      "source": {
+        "id": "oak-leaves",
+        "title": "New oak leaves with female flowers",
+        "creator": "W.carter",
+        "license": "CC0-1.0",
+        "licenseEvidence": "Commons imageinfo extmetadata: LicenseShortName=CC0; LicenseUrl=https://creativecommons.org/publicdomain/zero/1.0/",
+        "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/8/83/New_oak_leaves_with_female_flowers.jpg",
+        "sourcePageUrl": "https://commons.wikimedia.org/wiki/File:New_oak_leaves_with_female_flowers.jpg",
+        "imagePath": "../fixtures/cc0/oak-leaves.jpg",
+        "imageBytes": 5671146,
+        "imageSha256": "71c0f2fb2fa89385955bca609cf9983d493137a81879005143606d0fa74d2802",
+        "metadataPath": "../fixtures/cc0/oak-leaves.metadata.json",
+        "metadataSha256": "68de096c7215cedd551c66b4c77b281eb48d478105fba0254394bd83c880b2cb",
+        "dimensions": {
+          "width": 3720,
+          "height": 2790
+        }
+      },
+      "noise": {
+        "id": "gaussian-sigma24",
+        "kind": "gaussian",
+        "sigma": 24
+      },
+      "dimensions": {
+        "width": 128,
+        "height": 128
+      },
+      "derivation": {
+        "decoder": "@jsquash/jpeg decoder pinned by pnpm-lock.yaml; decoded to 8-bit sRGB RGBA.",
+        "resizer": "Production resizeRaster Lanczos3 from the exact registered source crop.",
+        "outputDimensions": {
+          "width": 128,
+          "height": 128
+        },
+        "noise": {
+          "id": "gaussian-sigma24",
+          "kind": "gaussian",
+          "sigma": 24,
+          "seedAlgorithm": "first uint32 from SHA-256 of the versioned fixture ID"
+        },
+        "alpha": "Preserved unchanged from the clean reference."
+      },
+      "reference": {
+        "path": "fixtures/oak-leaves-gaussian-sigma24-reference.png",
+        "width": 128,
+        "height": 128,
+        "pngBytes": 42165,
+        "pngSha256": "492e733af6c81fa1af58701b000e7fed114080f774960d4a2126e952881fee68",
+        "rgbaSha256": "0e9a3fa39d2c31fd46837ec100a90fd314798ac9cc7f8941fa984f6c72f56bae"
+      },
+      "noisyInput": {
+        "path": "fixtures/oak-leaves-gaussian-sigma24-input.png",
+        "width": 128,
+        "height": 128,
+        "pngBytes": 59117,
+        "pngSha256": "283efe7b3286a54cefbea0080ff536474a45aa21a3659e6fec69a17f8d6e8dbb",
+        "rgbaSha256": "d2f19b4ef653f8cb5482892ba510938d0f04f00c0aa6dcc1815543990a9108b7"
+      },
+      "noisyInputMetrics": {
+        "psnrRgbDb": 21.1044,
+        "ssimRec601Gaussian7x7": 0.49234
+      },
+      "methods": [
+        {
+          "method": "median",
+          "options": {
+            "strength": 50
+          },
+          "output": {
+            "path": "artifacts/oak-leaves-gaussian-sigma24-median.png",
+            "width": 128,
+            "height": 128,
+            "pngBytes": 38711,
+            "pngSha256": "6f04e4178ad0e1d3fae6160c778488ecf2e75b46efbdff69f997036c7e38cf19",
+            "rgbaSha256": "636b2ff6f60c27badf614243b7497661b8ad5d5cad8a337b25e2cae786dca122"
+          },
+          "metrics": {
+            "psnrRgbDb": 26.0397,
+            "ssimRec601Gaussian7x7": 0.636075
+          },
+          "latency": {
+            "warmupRuns": 2,
+            "measuredRuns": 8,
+            "samplesMs": [
+              44.056,
+              40.032,
+              34.901,
+              34.244,
+              42.872,
+              34.693,
+              33.2,
+              42.248
+            ],
+            "medianMs": 34.901,
+            "p95Ms": 44.056
+          }
+        },
+        {
+          "method": "bilateral",
+          "options": {
+            "strength": 50
+          },
+          "output": {
+            "path": "artifacts/oak-leaves-gaussian-sigma24-bilateral.png",
+            "width": 128,
+            "height": 128,
+            "pngBytes": 42820,
+            "pngSha256": "63189d4f5273cb2def6334c15fafa146ffb2698ba4155b047127bed142f22b81",
+            "rgbaSha256": "027e7034a59a8b9b4c2f3e052ed68669fe1ff0d5ff765a413093a423c81bbea8"
+          },
+          "metrics": {
+            "psnrRgbDb": 26.8037,
+            "ssimRec601Gaussian7x7": 0.642681
+          },
+          "latency": {
+            "warmupRuns": 2,
+            "measuredRuns": 8,
+            "samplesMs": [
+              20.662,
+              23.689,
+              22.033,
+              25.731,
+              23.737,
+              20.725,
+              18.65,
+              18.455
+            ],
+            "medianMs": 20.725,
+            "p95Ms": 25.731
+          }
+        }
+      ]
+    },
+    {
+      "id": "oak-leaves-impulse-2pct",
+      "sourceId": "oak-leaves",
+      "source": {
+        "id": "oak-leaves",
+        "title": "New oak leaves with female flowers",
+        "creator": "W.carter",
+        "license": "CC0-1.0",
+        "licenseEvidence": "Commons imageinfo extmetadata: LicenseShortName=CC0; LicenseUrl=https://creativecommons.org/publicdomain/zero/1.0/",
+        "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/8/83/New_oak_leaves_with_female_flowers.jpg",
+        "sourcePageUrl": "https://commons.wikimedia.org/wiki/File:New_oak_leaves_with_female_flowers.jpg",
+        "imagePath": "../fixtures/cc0/oak-leaves.jpg",
+        "imageBytes": 5671146,
+        "imageSha256": "71c0f2fb2fa89385955bca609cf9983d493137a81879005143606d0fa74d2802",
+        "metadataPath": "../fixtures/cc0/oak-leaves.metadata.json",
+        "metadataSha256": "68de096c7215cedd551c66b4c77b281eb48d478105fba0254394bd83c880b2cb",
+        "dimensions": {
+          "width": 3720,
+          "height": 2790
+        }
+      },
+      "noise": {
+        "id": "impulse-2pct",
+        "kind": "impulse",
+        "density": 0.02
+      },
+      "dimensions": {
+        "width": 128,
+        "height": 128
+      },
+      "derivation": {
+        "decoder": "@jsquash/jpeg decoder pinned by pnpm-lock.yaml; decoded to 8-bit sRGB RGBA.",
+        "resizer": "Production resizeRaster Lanczos3 from the exact registered source crop.",
+        "outputDimensions": {
+          "width": 128,
+          "height": 128
+        },
+        "noise": {
+          "id": "impulse-2pct",
+          "kind": "impulse",
+          "density": 0.02,
+          "seedAlgorithm": "first uint32 from SHA-256 of the versioned fixture ID"
+        },
+        "alpha": "Preserved unchanged from the clean reference."
+      },
+      "reference": {
+        "path": "fixtures/oak-leaves-impulse-2pct-reference.png",
+        "width": 128,
+        "height": 128,
+        "pngBytes": 42165,
+        "pngSha256": "492e733af6c81fa1af58701b000e7fed114080f774960d4a2126e952881fee68",
+        "rgbaSha256": "0e9a3fa39d2c31fd46837ec100a90fd314798ac9cc7f8941fa984f6c72f56bae"
+      },
+      "noisyInput": {
+        "path": "fixtures/oak-leaves-impulse-2pct-input.png",
+        "width": 128,
+        "height": 128,
+        "pngBytes": 43231,
+        "pngSha256": "96a9a5436079b08e030d58d6d900fb0b2bb609a4a626cd550d6e9001f6318686",
+        "rgbaSha256": "39677d0798ef6f710fbba5ffb41ac2392f165dfc35a5e7f46b6482c82bb9790c"
+      },
+      "noisyInputMetrics": {
+        "psnrRgbDb": 21.6046,
+        "ssimRec601Gaussian7x7": 0.692377
+      },
+      "methods": [
+        {
+          "method": "median",
+          "options": {
+            "strength": 50
+          },
+          "output": {
+            "path": "artifacts/oak-leaves-impulse-2pct-median.png",
+            "width": 128,
+            "height": 128,
+            "pngBytes": 31696,
+            "pngSha256": "e3b027e9a8685ab61b3854c797b075d997652e5bfee3b722e7a9d17d48b62ed1",
+            "rgbaSha256": "b30f649c1061f973efa3c6161c52ed31663af920763f0d67ae63dc451d02f588"
+          },
+          "metrics": {
+            "psnrRgbDb": 29.7395,
+            "ssimRec601Gaussian7x7": 0.779156
+          },
+          "latency": {
+            "warmupRuns": 2,
+            "measuredRuns": 8,
+            "samplesMs": [
+              48.747,
+              53.838,
+              49.007,
+              47.848,
+              51.217,
+              51.803,
+              51.081,
+              45.542
+            ],
+            "medianMs": 49.007,
+            "p95Ms": 53.838
+          }
+        },
+        {
+          "method": "bilateral",
+          "options": {
+            "strength": 50
+          },
+          "output": {
+            "path": "artifacts/oak-leaves-impulse-2pct-bilateral.png",
+            "width": 128,
+            "height": 128,
+            "pngBytes": 32833,
+            "pngSha256": "5ce48630d4a45f9a3a8ebcc6fa192841cf6af154d9f82213a53f7539013b44c1",
+            "rgbaSha256": "28e128efa313be79a3c1655e61de7433fda302f509814d5ceaaac0c93f1f5129"
+          },
+          "metrics": {
+            "psnrRgbDb": 21.399,
+            "ssimRec601Gaussian7x7": 0.569835
+          },
+          "latency": {
+            "warmupRuns": 2,
+            "measuredRuns": 8,
+            "samplesMs": [
+              23.165,
+              24.205,
+              22.196,
+              20.265,
+              20.338,
+              25.087,
+              23.649,
+              20.148
+            ],
+            "medianMs": 22.196,
+            "p95Ms": 25.087
+          }
+        }
+      ]
+    },
+    {
+      "id": "rome-map-gaussian-sigma12",
+      "sourceId": "rome-map",
+      "source": {
+        "id": "rome-map",
+        "title": "La Pianta Grande di Roma",
+        "creator": "Giovanni Battista Nolli and collaborators",
+        "license": "CC0-1.0",
+        "licenseEvidence": "Cleveland Museum of Art Open Access API: share_license_status=CC0",
+        "sourceUrl": "https://openaccess-cdn.clevelandart.org/2020.276.15/2020.276.15_print.jpg",
+        "sourcePageUrl": "https://clevelandart.org/art/2020.276.15",
+        "imagePath": "../fixtures/cc0/rome-map.jpg",
+        "imageBytes": 3948980,
+        "imageSha256": "4f86a0ae3baa75bd29b690ef005e40029327824ec49f5241fd102e3a06126065",
+        "metadataPath": "../fixtures/cc0/rome-map.metadata.json",
+        "metadataSha256": "d3c8ec700a20ab96be384047944ff1d67115c636c9fc9bf96be76fe3e06daf08",
+        "dimensions": {
+          "width": 3400,
+          "height": 2176
+        }
+      },
+      "noise": {
+        "id": "gaussian-sigma12",
+        "kind": "gaussian",
+        "sigma": 12
+      },
+      "dimensions": {
+        "width": 128,
+        "height": 128
+      },
+      "derivation": {
+        "decoder": "@jsquash/jpeg decoder pinned by pnpm-lock.yaml; decoded to 8-bit sRGB RGBA.",
+        "resizer": "Production resizeRaster Lanczos3 from the exact registered source crop.",
+        "outputDimensions": {
+          "width": 128,
+          "height": 128
+        },
+        "noise": {
+          "id": "gaussian-sigma12",
+          "kind": "gaussian",
+          "sigma": 12,
+          "seedAlgorithm": "first uint32 from SHA-256 of the versioned fixture ID"
+        },
+        "alpha": "Preserved unchanged from the clean reference."
+      },
+      "reference": {
+        "path": "fixtures/rome-map-gaussian-sigma12-reference.png",
+        "width": 128,
+        "height": 128,
+        "pngBytes": 47801,
+        "pngSha256": "58f97b7169203b00a24a55974cd2119a66ac02a60ea7e524bbb7e1f645d0b33f",
+        "rgbaSha256": "da6e1ab5521011522e214579a9ef27c36a0f68c33190628e4b0e2781feb87097"
+      },
+      "noisyInput": {
+        "path": "fixtures/rome-map-gaussian-sigma12-input.png",
+        "width": 128,
+        "height": 128,
+        "pngBytes": 57955,
+        "pngSha256": "154a87fcd95f6dadbdf146a54146b454de1a5aa494e0ad8f9d7c5b9f37183bbf",
+        "rgbaSha256": "38e3bf532b0ffe13cc29c9bf40602aeeeaa9d05ab08fa6d67c9f27e4d7955ce7"
+      },
+      "noisyInputMetrics": {
+        "psnrRgbDb": 26.5425,
+        "ssimRec601Gaussian7x7": 0.814987
+      },
+      "methods": [
+        {
+          "method": "median",
+          "options": {
+            "strength": 50
+          },
+          "output": {
+            "path": "artifacts/rome-map-gaussian-sigma12-median.png",
+            "width": 128,
+            "height": 128,
+            "pngBytes": 36744,
+            "pngSha256": "49ea418c0e7f942955f7b5da06fbee89b18f85568d303723906d0840670fd01d",
+            "rgbaSha256": "7695a53c1b024594e31b9066177f267ccf75a976055488906f6ebe86d65709cf"
+          },
+          "metrics": {
+            "psnrRgbDb": 19.8728,
+            "ssimRec601Gaussian7x7": 0.569064
+          },
+          "latency": {
+            "warmupRuns": 2,
+            "measuredRuns": 8,
+            "samplesMs": [
+              48.892,
+              51.107,
+              47.887,
+              45.207,
+              46.031,
+              47.21,
+              56.702,
+              57.261
+            ],
+            "medianMs": 47.887,
+            "p95Ms": 57.261
+          }
+        },
+        {
+          "method": "bilateral",
+          "options": {
+            "strength": 50
+          },
+          "output": {
+            "path": "artifacts/rome-map-gaussian-sigma12-bilateral.png",
+            "width": 128,
+            "height": 128,
+            "pngBytes": 42349,
+            "pngSha256": "c6c8ff62eaa3ec16bbe7efbbf2d47e207b274b6753ad78e4cd91df3967424a2f",
+            "rgbaSha256": "10f03fd4692a018177447f1acb044cd51c15819e70bacfaee5a77d27ac7f702f"
+          },
+          "metrics": {
+            "psnrRgbDb": 30.6106,
+            "ssimRec601Gaussian7x7": 0.903122
+          },
+          "latency": {
+            "warmupRuns": 2,
+            "measuredRuns": 8,
+            "samplesMs": [
+              25.858,
+              26.137,
+              25.418,
+              23.984,
+              27.749,
+              24.839,
+              32.915,
+              32.715
+            ],
+            "medianMs": 25.858,
+            "p95Ms": 32.915
+          }
+        }
+      ]
+    },
+    {
+      "id": "rome-map-gaussian-sigma24",
+      "sourceId": "rome-map",
+      "source": {
+        "id": "rome-map",
+        "title": "La Pianta Grande di Roma",
+        "creator": "Giovanni Battista Nolli and collaborators",
+        "license": "CC0-1.0",
+        "licenseEvidence": "Cleveland Museum of Art Open Access API: share_license_status=CC0",
+        "sourceUrl": "https://openaccess-cdn.clevelandart.org/2020.276.15/2020.276.15_print.jpg",
+        "sourcePageUrl": "https://clevelandart.org/art/2020.276.15",
+        "imagePath": "../fixtures/cc0/rome-map.jpg",
+        "imageBytes": 3948980,
+        "imageSha256": "4f86a0ae3baa75bd29b690ef005e40029327824ec49f5241fd102e3a06126065",
+        "metadataPath": "../fixtures/cc0/rome-map.metadata.json",
+        "metadataSha256": "d3c8ec700a20ab96be384047944ff1d67115c636c9fc9bf96be76fe3e06daf08",
+        "dimensions": {
+          "width": 3400,
+          "height": 2176
+        }
+      },
+      "noise": {
+        "id": "gaussian-sigma24",
+        "kind": "gaussian",
+        "sigma": 24
+      },
+      "dimensions": {
+        "width": 128,
+        "height": 128
+      },
+      "derivation": {
+        "decoder": "@jsquash/jpeg decoder pinned by pnpm-lock.yaml; decoded to 8-bit sRGB RGBA.",
+        "resizer": "Production resizeRaster Lanczos3 from the exact registered source crop.",
+        "outputDimensions": {
+          "width": 128,
+          "height": 128
+        },
+        "noise": {
+          "id": "gaussian-sigma24",
+          "kind": "gaussian",
+          "sigma": 24,
+          "seedAlgorithm": "first uint32 from SHA-256 of the versioned fixture ID"
+        },
+        "alpha": "Preserved unchanged from the clean reference."
+      },
+      "reference": {
+        "path": "fixtures/rome-map-gaussian-sigma24-reference.png",
+        "width": 128,
+        "height": 128,
+        "pngBytes": 47801,
+        "pngSha256": "58f97b7169203b00a24a55974cd2119a66ac02a60ea7e524bbb7e1f645d0b33f",
+        "rgbaSha256": "da6e1ab5521011522e214579a9ef27c36a0f68c33190628e4b0e2781feb87097"
+      },
+      "noisyInput": {
+        "path": "fixtures/rome-map-gaussian-sigma24-input.png",
+        "width": 128,
+        "height": 128,
+        "pngBytes": 64183,
+        "pngSha256": "6f57b91dd0f335e1b2ae42494a390eb79861a9945e75a14d3576c3f12c2626f2",
+        "rgbaSha256": "edaab74ec884b5553094f667baa0297d100561ddc019e372974163086e82dc9e"
+      },
+      "noisyInputMetrics": {
+        "psnrRgbDb": 20.5837,
+        "ssimRec601Gaussian7x7": 0.630826
+      },
+      "methods": [
+        {
+          "method": "median",
+          "options": {
+            "strength": 50
+          },
+          "output": {
+            "path": "artifacts/rome-map-gaussian-sigma24-median.png",
+            "width": 128,
+            "height": 128,
+            "pngBytes": 41090,
+            "pngSha256": "8307cce0ca495f654e476abdd8787eb317c9b793d88157dbf96cafec66a6de72",
+            "rgbaSha256": "06185692f1e8c39ef7d01414ae579e6ee5e5550fbe8bac16b6417010a4390de3"
+          },
+          "metrics": {
+            "psnrRgbDb": 19.4131,
+            "ssimRec601Gaussian7x7": 0.501364
+          },
+          "latency": {
+            "warmupRuns": 2,
+            "measuredRuns": 8,
+            "samplesMs": [
+              52.7,
+              51.214,
+              53.55,
+              55.736,
+              75.872,
+              77.821,
+              90.795,
+              82.942
+            ],
+            "medianMs": 55.736,
+            "p95Ms": 90.795
+          }
+        },
+        {
+          "method": "bilateral",
+          "options": {
+            "strength": 50
+          },
+          "output": {
+            "path": "artifacts/rome-map-gaussian-sigma24-bilateral.png",
+            "width": 128,
+            "height": 128,
+            "pngBytes": 49804,
+            "pngSha256": "97fe4e37778dd16b197fe996c23493b40bd93e0696626068a13a8f525a0b81f5",
+            "rgbaSha256": "ae1b25ce7709ba366c49bb272cb06d63b5db71de0f59308aae2b006cdefcf9f1"
+          },
+          "metrics": {
+            "psnrRgbDb": 25.6132,
+            "ssimRec601Gaussian7x7": 0.74631
+          },
+          "latency": {
+            "warmupRuns": 2,
+            "measuredRuns": 8,
+            "samplesMs": [
+              33.195,
+              34.21,
+              39.022,
+              32.515,
+              36.281,
+              25.99,
+              29.229,
+              33.907
+            ],
+            "medianMs": 33.195,
+            "p95Ms": 39.022
+          }
+        }
+      ]
+    },
+    {
+      "id": "rome-map-impulse-2pct",
+      "sourceId": "rome-map",
+      "source": {
+        "id": "rome-map",
+        "title": "La Pianta Grande di Roma",
+        "creator": "Giovanni Battista Nolli and collaborators",
+        "license": "CC0-1.0",
+        "licenseEvidence": "Cleveland Museum of Art Open Access API: share_license_status=CC0",
+        "sourceUrl": "https://openaccess-cdn.clevelandart.org/2020.276.15/2020.276.15_print.jpg",
+        "sourcePageUrl": "https://clevelandart.org/art/2020.276.15",
+        "imagePath": "../fixtures/cc0/rome-map.jpg",
+        "imageBytes": 3948980,
+        "imageSha256": "4f86a0ae3baa75bd29b690ef005e40029327824ec49f5241fd102e3a06126065",
+        "metadataPath": "../fixtures/cc0/rome-map.metadata.json",
+        "metadataSha256": "d3c8ec700a20ab96be384047944ff1d67115c636c9fc9bf96be76fe3e06daf08",
+        "dimensions": {
+          "width": 3400,
+          "height": 2176
+        }
+      },
+      "noise": {
+        "id": "impulse-2pct",
+        "kind": "impulse",
+        "density": 0.02
+      },
+      "dimensions": {
+        "width": 128,
+        "height": 128
+      },
+      "derivation": {
+        "decoder": "@jsquash/jpeg decoder pinned by pnpm-lock.yaml; decoded to 8-bit sRGB RGBA.",
+        "resizer": "Production resizeRaster Lanczos3 from the exact registered source crop.",
+        "outputDimensions": {
+          "width": 128,
+          "height": 128
+        },
+        "noise": {
+          "id": "impulse-2pct",
+          "kind": "impulse",
+          "density": 0.02,
+          "seedAlgorithm": "first uint32 from SHA-256 of the versioned fixture ID"
+        },
+        "alpha": "Preserved unchanged from the clean reference."
+      },
+      "reference": {
+        "path": "fixtures/rome-map-impulse-2pct-reference.png",
+        "width": 128,
+        "height": 128,
+        "pngBytes": 47801,
+        "pngSha256": "58f97b7169203b00a24a55974cd2119a66ac02a60ea7e524bbb7e1f645d0b33f",
+        "rgbaSha256": "da6e1ab5521011522e214579a9ef27c36a0f68c33190628e4b0e2781feb87097"
+      },
+      "noisyInput": {
+        "path": "fixtures/rome-map-impulse-2pct-input.png",
+        "width": 128,
+        "height": 128,
+        "pngBytes": 48895,
+        "pngSha256": "34cea145b33923b4aa4264b78322d39e96f9b4572a2d96ca9443f14876f986a5",
+        "rgbaSha256": "959c64165de927193a2a902a557329491fae0fe5b45c6fa1b9cfe9cd77915b09"
+      },
+      "noisyInputMetrics": {
+        "psnrRgbDb": 22.0356,
+        "ssimRec601Gaussian7x7": 0.794051
+      },
+      "methods": [
+        {
+          "method": "median",
+          "options": {
+            "strength": 50
+          },
+          "output": {
+            "path": "artifacts/rome-map-impulse-2pct-median.png",
+            "width": 128,
+            "height": 128,
+            "pngBytes": 31472,
+            "pngSha256": "327a18042003d8ce02ae6ce19c3a542a698b57a038f115794c286c2882625ec0",
+            "rgbaSha256": "03516ffdeee21fef466814fc8cdc746b09c153115bbbe2093cf90a7e1a6c0e9f"
+          },
+          "metrics": {
+            "psnrRgbDb": 19.9335,
+            "ssimRec601Gaussian7x7": 0.60438
+          },
+          "latency": {
+            "warmupRuns": 2,
+            "measuredRuns": 8,
+            "samplesMs": [
+              65.147,
+              78.227,
+              75.937,
+              67.638,
+              60.499,
+              60.465,
+              61.478,
+              53.348
+            ],
+            "medianMs": 61.478,
+            "p95Ms": 78.227
+          }
+        },
+        {
+          "method": "bilateral",
+          "options": {
+            "strength": 50
+          },
+          "output": {
+            "path": "artifacts/rome-map-impulse-2pct-bilateral.png",
+            "width": 128,
+            "height": 128,
+            "pngBytes": 38067,
+            "pngSha256": "74e9d36a386ea4d31911925829217da7733030af2458fab219fc0f153d1feb0c",
+            "rgbaSha256": "50303bbddc1ec746e37a07575ae198ebd7a03cfa531b1310be86fbbfa46c70c1"
+          },
+          "metrics": {
+            "psnrRgbDb": 21.9331,
+            "ssimRec601Gaussian7x7": 0.736055
+          },
+          "latency": {
+            "warmupRuns": 2,
+            "measuredRuns": 8,
+            "samplesMs": [
+              33.119,
+              30.411,
+              29.074,
+              31.48,
+              27.696,
+              43.9,
+              28.589,
+              31.95
+            ],
+            "medianMs": 30.411,
+            "p95Ms": 43.9
+          }
+        }
+      ]
+    }
+  ]
+}

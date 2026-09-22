@@ -1,0 +1,191 @@
+{
+  "schemaVersion": 1,
+  "generator": "generate-fixtures.mjs",
+  "fixtureCount": 4,
+  "fixtures": [
+    {
+      "id": "opaque-staircase-palette",
+      "description": "Opaque stepped diamond icon with a five-colour palette and hard pixel edges.",
+      "path": "fixtures/opaque-staircase-palette.json",
+      "width": 16,
+      "height": 16,
+      "focusPixel": null,
+      "sourceGenerated": true,
+      "rgbaBytes": 1024,
+      "paletteRgba": [
+        [
+          13,
+          19,
+          38,
+          255
+        ],
+        [
+          206,
+          67,
+          82,
+          255
+        ],
+        [
+          244,
+          159,
+          66,
+          255
+        ],
+        [
+          255,
+          235,
+          177,
+          255
+        ],
+        [
+          37,
+          40,
+          75,
+          255
+        ]
+      ],
+      "rgbaSha256": "9e00b9e623fd9d67dcc35a3f73ff9e8035a7350d2dc1f781d6929eb158788c8c"
+    },
+    {
+      "id": "transparent-outline-sprite",
+      "description": "Transparent background with a hard-edged three-colour diamond sprite.",
+      "path": "fixtures/transparent-outline-sprite.json",
+      "width": 16,
+      "height": 16,
+      "focusPixel": null,
+      "sourceGenerated": true,
+      "rgbaBytes": 1024,
+      "paletteRgba": [
+        [
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          220,
+          69,
+          84,
+          255
+        ],
+        [
+          247,
+          172,
+          60,
+          255
+        ],
+        [
+          28,
+          34,
+          58,
+          255
+        ]
+      ],
+      "rgbaSha256": "be5b213b12830c61966bc3950e429e0b88b7bf6219bfa59613ca5efc6af1ea5c"
+    },
+    {
+      "id": "transparent-pocket-mixed-palette",
+      "description": "Transparent centre surrounded by eight distinct opaque colours; no colour is dominant.",
+      "path": "fixtures/transparent-pocket-mixed-palette.json",
+      "width": 3,
+      "height": 3,
+      "focusPixel": {
+        "x": 1,
+        "y": 1
+      },
+      "sourceGenerated": true,
+      "rgbaBytes": 36,
+      "paletteRgba": [
+        [
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          130,
+          50,
+          220,
+          255
+        ],
+        [
+          20,
+          210,
+          220,
+          255
+        ],
+        [
+          220,
+          30,
+          210,
+          255
+        ],
+        [
+          240,
+          120,
+          20,
+          255
+        ],
+        [
+          240,
+          210,
+          20,
+          255
+        ],
+        [
+          240,
+          40,
+          40,
+          255
+        ],
+        [
+          30,
+          210,
+          70,
+          255
+        ],
+        [
+          30,
+          70,
+          240,
+          255
+        ]
+      ],
+      "rgbaSha256": "dd521d3f045c519ab86d3aa5cf77386c265c7932d4c9a02f0352d9b79d708bb9"
+    },
+    {
+      "id": "transparent-pocket-clear-dominance",
+      "description": "Transparent centre with seven red and one blue opaque neighbours; red is the strict majority.",
+      "path": "fixtures/transparent-pocket-clear-dominance.json",
+      "width": 3,
+      "height": 3,
+      "focusPixel": {
+        "x": 1,
+        "y": 1
+      },
+      "sourceGenerated": true,
+      "rgbaBytes": 36,
+      "paletteRgba": [
+        [
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          220,
+          50,
+          60,
+          255
+        ],
+        [
+          30,
+          80,
+          230,
+          255
+        ]
+      ],
+      "rgbaSha256": "677ed772d6cc54f043a54d1174da94e6495f622a68ae8efb5874e6e8f3684698"
+    }
+  ]
+}

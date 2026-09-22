@@ -1,0 +1,42 @@
+{
+  "id": "opaque-staircase-palette",
+  "description": "Opaque stepped diamond icon with a five-colour palette and hard pixel edges.",
+  "width": 16,
+  "height": 16,
+  "focusPixel": null,
+  "sourceGenerated": true,
+  "rgbaSha256": "9e00b9e623fd9d67dcc35a3f73ff9e8035a7350d2dc1f781d6929eb158788c8c",
+  "rgbaBase64": "DRMm/w0TJv8NEyb/DRMm/w0TJv8NEyb/DRMm/yUoS/8NEyb/DRMm/w0TJv8NEyb/DRMm/w0TJv8NEyb/DRMm/w0TJv8NEyb/DRMm/w0TJv8NEyb/DRMm/yUoS/8lKEv/JShL/w0TJv8NEyb/DRMm/w0TJv8NEyb/DRMm/w0TJv8NEyb/DRMm/w0TJv8NEyb/DRMm/yUoS/8lKEv/zkNS/yUoS/8lKEv/DRMm/w0TJv8NEyb/DRMm/w0TJv8NEyb/DRMm/w0TJv8NEyb/DRMm/yUoS/8lKEv/zkNS/85DUv/OQ1L/JShL/yUoS/8NEyb/DRMm/w0TJv8NEyb/DRMm/w0TJv8NEyb/DRMm/yUoS/8lKEv/zkNS/85DUv/0n0L/zkNS/85DUv8lKEv/JShL/w0TJv8NEyb/DRMm/w0TJv8NEyb/DRMm/yUoS/8lKEv/zkNS/85DUv/0n0L/9J9C//SfQv/OQ1L/zkNS/yUoS/8lKEv/DRMm/w0TJv8NEyb/DRMm/yUoS/8lKEv/zkNS/85DUv/0n0L/9J9C///rsf/0n0L/9J9C/85DUv/OQ1L/JShL/yUoS/8NEyb/DRMm/yUoS/8lKEv/zkNS/85DUv/0n0L/9J9C///rsf//67H//+ux//SfQv/0n0L/zkNS/85DUv8lKEv/JShL/w0TJv8NEyb/JShL/yUoS//OQ1L/zkNS//SfQv/0n0L//+ux//SfQv/0n0L/zkNS/85DUv8lKEv/JShL/w0TJv8NEyb/DRMm/w0TJv8lKEv/JShL/85DUv/OQ1L/9J9C//SfQv/0n0L/zkNS/85DUv8lKEv/JShL/w0TJv8NEyb/DRMm/w0TJv8NEyb/DRMm/yUoS/8lKEv/zkNS/85DUv/0n0L/zkNS/85DUv8lKEv/JShL/w0TJv8NEyb/DRMm/w0TJv8NEyb/DRMm/w0TJv8NEyb/JShL/yUoS//OQ1L/zkNS/85DUv8lKEv/JShL/w0TJv8NEyb/DRMm/w0TJv8NEyb/DRMm/w0TJv8NEyb/DRMm/w0TJv8lKEv/JShL/85DUv8lKEv/JShL/w0TJv8NEyb/DRMm/w0TJv8NEyb/DRMm/w0TJv8NEyb/DRMm/w0TJv8NEyb/DRMm/yUoS/8lKEv/JShL/w0TJv8NEyb/DRMm/w0TJv8NEyb/DRMm/w0TJv8NEyb/DRMm/w0TJv8NEyb/DRMm/w0TJv8NEyb/JShL/w0TJv8NEyb/DRMm/w0TJv8NEyb/DRMm/w0TJv8NEyb/DRMm/w0TJv8NEyb/DRMm/w0TJv8NEyb/DRMm/w0TJv8NEyb/DRMm/w0TJv8NEyb/DRMm/w0TJv8NEyb/DRMm/w==",
+  "paletteRgba": [
+    [
+      13,
+      19,
+      38,
+      255
+    ],
+    [
+      206,
+      67,
+      82,
+      255
+    ],
+    [
+      244,
+      159,
+      66,
+      255
+    ],
+    [
+      255,
+      235,
+      177,
+      255
+    ],
+    [
+      37,
+      40,
+      75,
+      255
+    ]
+  ]
+}

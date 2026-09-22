@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { allowAllNetwork, denyAllNetwork } from './support/network.js';
+import { allowAllNetwork, denyAllNetwork, LOCAL_ORIGIN } from './support/network.js';
 
 async function pngFixture(page: import('@playwright/test').Page): Promise<Buffer> {
   const bytes = await page.evaluate(async () => {
@@ -41,9 +41,8 @@ test('encodes lossy and lossless AVIF then decodes the real output to PNG locall
   const localRequests: string[] = [];
   page.on('request', (request) => {
     const url = new URL(request.url());
-    if (url.origin !== 'http://127.0.0.1:4173' && url.protocol !== 'blob:')
-      crossOrigin.push(request.url());
-    if (url.origin === 'http://127.0.0.1:4173') localRequests.push(url.pathname);
+    if (url.origin !== LOCAL_ORIGIN && url.protocol !== 'blob:') crossOrigin.push(request.url());
+    if (url.origin === LOCAL_ORIGIN) localRequests.push(url.pathname);
   });
   await page.goto('/avif-converter');
   await page.waitForLoadState('networkidle');
@@ -178,7 +177,7 @@ test('reports malformed AVIF with a typed remedy and no network fallback', async
   const crossOrigin: string[] = [];
   page.on('request', (request) => {
     const url = new URL(request.url());
-    if (url.origin !== 'http://127.0.0.1:4173') crossOrigin.push(request.url());
+    if (url.origin !== LOCAL_ORIGIN) crossOrigin.push(request.url());
   });
   await page.goto('/avif-converter');
   await page.waitForLoadState('networkidle');

@@ -1,0 +1,1026 @@
+{
+  "schemaVersion": 1,
+  "benchmark": "P4-21 T32 Real-ESRGAN x4plus on CC0-derived synthetic x4 degradation fixtures",
+  "model": {
+    "assetId": "realesrgan-x4plus-v0.1.0",
+    "sourceFilename": "RealESRGAN_x4plus.pth",
+    "sourceSizeBytes": 67040989,
+    "sourceSha256": "4fa0d38905f75ac06eb49a7951b426670021be3018265fd191d2125df9d682f1",
+    "onnxFilename": "RealESRGAN_x4plus.onnx",
+    "onnxSizeBytes": 67051647,
+    "onnxSha256": "890dbcfb92e7fee06ab00d16daa15f98ca3b57e3145d068d2eacfc4625a57d73",
+    "onnxOpset": 17,
+    "conversionTool": "packages/engine/bench/escalation/t32/conversion/convert.py"
+  },
+  "corpus": {
+    "fixtureCount": 16,
+    "sourceCount": 4,
+    "fixtureManifestSha256": "480e699b2ecbdb84f99e22598b1d4739fcd73bf06061cb34413cdb58d80f17df",
+    "sourceManifestSha256": "2eccd74e8dc2d4d57492ffb95717c9efcfc398010b0c7354af6705545ecfe6c5",
+    "categories": [
+      "clean-x4",
+      "blur-x4",
+      "jpeg-q45-x4",
+      "blur-grain-jpeg-q45-x4"
+    ]
+  },
+  "runtime": {
+    "python": "3.12.2",
+    "onnxruntime": "1.20.1",
+    "numpy": "2.5.3",
+    "pillow": "12.3.0",
+    "provider": "CPUExecutionProvider",
+    "providers": [
+      "CPUExecutionProvider"
+    ],
+    "intraOpThreads": 1,
+    "interOpThreads": 1
+  },
+  "methodology": {
+    "modelInput": "Read each exact x4 input PNG, convert RGB to float32 [0,1], transpose HWC to NCHW, run the registered Real-ESRGAN x4plus ONNX model, clamp to [0,1], round to 8-bit RGB, and save as lossless RGBA PNG.",
+    "quality": "PSNR uses exact RGB channel MSE. SSIM uses Rec.601 luminance, an 11x11 Gaussian window (sigma 1.5), constants C1=(0.01*255)^2 and C2=(0.03*255)^2, edge-clamped extension, and full-resolution centers.",
+    "latency": "One warmup plus 3 timed inference runs per fixture; CPU ONNX Runtime session.run only. p95 across 48 individual runs uses nearest-rank; runtimes are not directly comparable to browser WASM or WebGPU.",
+    "limits": "These are controlled synthetic degradations of four individually registered CC0 source images, not real camera captures or a statistically representative restoration benchmark. Results support only the listed x4 synthetic cases."
+  },
+  "aggregateQuality": {
+    "tier1Lanczos3": {
+      "sampleCount": 16,
+      "meanPsnrRgbDb": 25.5075,
+      "meanSsimLuminanceGaussian11x11": 0.635145
+    },
+    "realEsrganX4plus": {
+      "sampleCount": 16,
+      "meanPsnrRgbDb": 22.9689,
+      "meanSsimLuminanceGaussian11x11": 0.591359
+    }
+  },
+  "latency": {
+    "sessionRunMedianMs": 1599.945,
+    "sessionRunP95MsNearestRank": 2044.836,
+    "sampleCount": 48
+  },
+  "byDegradation": {
+    "clean-x4": {
+      "fixtureCount": 4,
+      "tier1Lanczos3": {
+        "meanPsnrRgbDb": 26.8904,
+        "meanSsimLuminanceGaussian11x11": 0.691665
+      },
+      "realEsrganX4plus": {
+        "meanPsnrRgbDb": 23.5754,
+        "meanSsimLuminanceGaussian11x11": 0.638591
+      }
+    },
+    "blur-x4": {
+      "fixtureCount": 4,
+      "tier1Lanczos3": {
+        "meanPsnrRgbDb": 26.3953,
+        "meanSsimLuminanceGaussian11x11": 0.668802
+      },
+      "realEsrganX4plus": {
+        "meanPsnrRgbDb": 23.7071,
+        "meanSsimLuminanceGaussian11x11": 0.636356
+      }
+    },
+    "jpeg-q45-x4": {
+      "fixtureCount": 4,
+      "tier1Lanczos3": {
+        "meanPsnrRgbDb": 24.4877,
+        "meanSsimLuminanceGaussian11x11": 0.596256
+      },
+      "realEsrganX4plus": {
+        "meanPsnrRgbDb": 22.4081,
+        "meanSsimLuminanceGaussian11x11": 0.555468
+      }
+    },
+    "blur-grain-jpeg-q45-x4": {
+      "fixtureCount": 4,
+      "tier1Lanczos3": {
+        "meanPsnrRgbDb": 24.2566,
+        "meanSsimLuminanceGaussian11x11": 0.583857
+      },
+      "realEsrganX4plus": {
+        "meanPsnrRgbDb": 22.185,
+        "meanSsimLuminanceGaussian11x11": 0.535022
+      }
+    }
+  },
+  "fixtures": [
+    {
+      "id": "landscape-dordogne-clean-x4",
+      "degradationCase": "clean-x4",
+      "sourceAssetId": "landscape-dordogne",
+      "sourceSha256": "c3e2eef6af01a10882c83f71ff849d2ffb95220aad0e70e98daf6cf27e1975b7",
+      "degradation": {
+        "resize": "Lanczos3 x4 reduction"
+      },
+      "reference": {
+        "path": "artifacts/landscape-dordogne-reference.png",
+        "width": 256,
+        "height": 168,
+        "pngSha256": "3522a9a1b634638895ca38fc9a10adb9915db7adf25ef81239c4cf60ef3b2134"
+      },
+      "input": {
+        "path": "artifacts/landscape-dordogne-clean-x4-input.png",
+        "width": 64,
+        "height": 42,
+        "pngSha256": "25cbe0e4c107ac632ca3175a73fe169e524363b94627d9c5b86f2b52d69907ff"
+      },
+      "tier1Lanczos3": {
+        "path": "artifacts/landscape-dordogne-clean-x4-tier1-lanczos3.png",
+        "width": 256,
+        "height": 168,
+        "pngSha256": "f05bccc1c87d9300e7e38358afccfbd587aac0cd4869f0e88a63c55deecedaf2"
+      },
+      "modelOutput": {
+        "path": "artifacts/landscape-dordogne-clean-x4-realesrgan-x4plus.png",
+        "width": 256,
+        "height": 168,
+        "pngSha256": "22102160f446b90a42ddc804fc2fea8bad6108bcb3bd21c4ce119c1440f93400",
+        "rgbaSha256": "8f7f28887a737559226f58acb1841e7974ca883e72f5a8eabcfc08eea1c8c68d"
+      },
+      "quality": {
+        "tier1Lanczos3": {
+          "psnrRgbDb": 23.1451,
+          "ssimLuminanceGaussian11x11": 0.593695
+        },
+        "realEsrganX4plus": {
+          "psnrRgbDb": 20.3773,
+          "ssimLuminanceGaussian11x11": 0.509106
+        }
+      },
+      "latency": {
+        "samplesMs": [
+          1174.948,
+          1146.118,
+          1361.592
+        ],
+        "medianMs": 1174.948,
+        "p95MsNearestRank": 1361.592,
+        "warmups": 1,
+        "measuredRuns": 3,
+        "scope": "ONNX Runtime CPU session.run only; excludes PNG decode, tensor preparation, output conversion, metrics, and file writes."
+      }
+    },
+    {
+      "id": "landscape-dordogne-blur-x4",
+      "degradationCase": "blur-x4",
+      "sourceAssetId": "landscape-dordogne",
+      "sourceSha256": "c3e2eef6af01a10882c83f71ff849d2ffb95220aad0e70e98daf6cf27e1975b7",
+      "degradation": {
+        "blur": "three-pass box approximation of Gaussian, radius 1 at reference size",
+        "resize": "Lanczos3 x4 reduction"
+      },
+      "reference": {
+        "path": "artifacts/landscape-dordogne-reference.png",
+        "width": 256,
+        "height": 168,
+        "pngSha256": "3522a9a1b634638895ca38fc9a10adb9915db7adf25ef81239c4cf60ef3b2134"
+      },
+      "input": {
+        "path": "artifacts/landscape-dordogne-blur-x4-input.png",
+        "width": 64,
+        "height": 42,
+        "pngSha256": "46ee09de6c84d7c07338df1837051f6ec8275cd45aea3b44beb17ae271251f80"
+      },
+      "tier1Lanczos3": {
+        "path": "artifacts/landscape-dordogne-blur-x4-tier1-lanczos3.png",
+        "width": 256,
+        "height": 168,
+        "pngSha256": "88bfe2f82aedad98cce1a22fdeaa340cafd7374e38a80b7ee6b1e25e249ad45a"
+      },
+      "modelOutput": {
+        "path": "artifacts/landscape-dordogne-blur-x4-realesrgan-x4plus.png",
+        "width": 256,
+        "height": 168,
+        "pngSha256": "06813d1216ccd58bef7d768e78b7ff054238c2d20e5bf584e8125d0cf50cb4a1",
+        "rgbaSha256": "3b0ec145ab191b0cef5173a59661b70cf1e11c7b842d10b1859ddab2e547e683"
+      },
+      "quality": {
+        "tier1Lanczos3": {
+          "psnrRgbDb": 22.812,
+          "ssimLuminanceGaussian11x11": 0.561557
+        },
+        "realEsrganX4plus": {
+          "psnrRgbDb": 20.3828,
+          "ssimLuminanceGaussian11x11": 0.504461
+        }
+      },
+      "latency": {
+        "samplesMs": [
+          1507.223,
+          1488.572,
+          1462.676
+        ],
+        "medianMs": 1488.572,
+        "p95MsNearestRank": 1507.223,
+        "warmups": 1,
+        "measuredRuns": 3,
+        "scope": "ONNX Runtime CPU session.run only; excludes PNG decode, tensor preparation, output conversion, metrics, and file writes."
+      }
+    },
+    {
+      "id": "landscape-dordogne-jpeg-q45-x4",
+      "degradationCase": "jpeg-q45-x4",
+      "sourceAssetId": "landscape-dordogne",
+      "sourceSha256": "c3e2eef6af01a10882c83f71ff849d2ffb95220aad0e70e98daf6cf27e1975b7",
+      "degradation": {
+        "resize": "Lanczos3 x4 reduction",
+        "jpegQuality": 45
+      },
+      "reference": {
+        "path": "artifacts/landscape-dordogne-reference.png",
+        "width": 256,
+        "height": 168,
+        "pngSha256": "3522a9a1b634638895ca38fc9a10adb9915db7adf25ef81239c4cf60ef3b2134"
+      },
+      "input": {
+        "path": "artifacts/landscape-dordogne-jpeg-q45-x4-input.png",
+        "width": 64,
+        "height": 42,
+        "pngSha256": "0a7b393aeb85da294504a05eb51cec4687930d0c6a0472ab24a7d5307b9e2947"
+      },
+      "tier1Lanczos3": {
+        "path": "artifacts/landscape-dordogne-jpeg-q45-x4-tier1-lanczos3.png",
+        "width": 256,
+        "height": 168,
+        "pngSha256": "0651308dad72446e15f0273f777cc7e23841d37238f905caf6245a41dd9e4cd2"
+      },
+      "modelOutput": {
+        "path": "artifacts/landscape-dordogne-jpeg-q45-x4-realesrgan-x4plus.png",
+        "width": 256,
+        "height": 168,
+        "pngSha256": "e8b184ae485f6064a912cdea4d1e20a1d3a553692fc9667dd374fcab086a026a",
+        "rgbaSha256": "34b4c8108eb8cecdb8d686e94abdd367b873996fc9a2de6be38cdcd6828b3dfd"
+      },
+      "quality": {
+        "tier1Lanczos3": {
+          "psnrRgbDb": 21.3507,
+          "ssimLuminanceGaussian11x11": 0.476671
+        },
+        "realEsrganX4plus": {
+          "psnrRgbDb": 19.4491,
+          "ssimLuminanceGaussian11x11": 0.420692
+        }
+      },
+      "latency": {
+        "samplesMs": [
+          1540.48,
+          1542.141,
+          1535.447
+        ],
+        "medianMs": 1540.48,
+        "p95MsNearestRank": 1542.141,
+        "warmups": 1,
+        "measuredRuns": 3,
+        "scope": "ONNX Runtime CPU session.run only; excludes PNG decode, tensor preparation, output conversion, metrics, and file writes."
+      }
+    },
+    {
+      "id": "landscape-dordogne-blur-grain-jpeg-q45-x4",
+      "degradationCase": "blur-grain-jpeg-q45-x4",
+      "sourceAssetId": "landscape-dordogne",
+      "sourceSha256": "c3e2eef6af01a10882c83f71ff849d2ffb95220aad0e70e98daf6cf27e1975b7",
+      "degradation": {
+        "blur": "three-pass box approximation of Gaussian, radius 1 at reference size",
+        "resize": "Lanczos3 x4 reduction",
+        "deterministicGrain": "amount 12, per-channel",
+        "jpegQuality": 45
+      },
+      "reference": {
+        "path": "artifacts/landscape-dordogne-reference.png",
+        "width": 256,
+        "height": 168,
+        "pngSha256": "3522a9a1b634638895ca38fc9a10adb9915db7adf25ef81239c4cf60ef3b2134"
+      },
+      "input": {
+        "path": "artifacts/landscape-dordogne-blur-grain-jpeg-q45-x4-input.png",
+        "width": 64,
+        "height": 42,
+        "pngSha256": "898fe8b2f32bdf750353ab0f96e7d4b335ff6934fc98ebeb0fa4ce0885c52bdb"
+      },
+      "tier1Lanczos3": {
+        "path": "artifacts/landscape-dordogne-blur-grain-jpeg-q45-x4-tier1-lanczos3.png",
+        "width": 256,
+        "height": 168,
+        "pngSha256": "e4e048667cd1b83ddc4bb76367c8bee61bc4b5f623d516e23044144d693cd896"
+      },
+      "modelOutput": {
+        "path": "artifacts/landscape-dordogne-blur-grain-jpeg-q45-x4-realesrgan-x4plus.png",
+        "width": 256,
+        "height": 168,
+        "pngSha256": "fbf8ad2a4b3ebde2e74b02e9b8e8dbd33d38129e1592cb9785a39d046475bfe9",
+        "rgbaSha256": "85bf0b92ec017c68031531fff20be59214ebd0e3e7d9f937158e48f581a7a230"
+      },
+      "quality": {
+        "tier1Lanczos3": {
+          "psnrRgbDb": 21.111,
+          "ssimLuminanceGaussian11x11": 0.454647
+        },
+        "realEsrganX4plus": {
+          "psnrRgbDb": 19.3318,
+          "ssimLuminanceGaussian11x11": 0.406915
+        }
+      },
+      "latency": {
+        "samplesMs": [
+          1498.199,
+          1532.14,
+          1473.38
+        ],
+        "medianMs": 1498.199,
+        "p95MsNearestRank": 1532.14,
+        "warmups": 1,
+        "measuredRuns": 3,
+        "scope": "ONNX Runtime CPU session.run only; excludes PNG decode, tensor preparation, output conversion, metrics, and file writes."
+      }
+    },
+    {
+      "id": "oak-leaves-clean-x4",
+      "degradationCase": "clean-x4",
+      "sourceAssetId": "oak-leaves",
+      "sourceSha256": "71c0f2fb2fa89385955bca609cf9983d493137a81879005143606d0fa74d2802",
+      "degradation": {
+        "resize": "Lanczos3 x4 reduction"
+      },
+      "reference": {
+        "path": "artifacts/oak-leaves-reference.png",
+        "width": 256,
+        "height": 192,
+        "pngSha256": "afdbb84313810df61368a0836a1b2c582084bcce1cf20e6005b8810a2872d19f"
+      },
+      "input": {
+        "path": "artifacts/oak-leaves-clean-x4-input.png",
+        "width": 64,
+        "height": 48,
+        "pngSha256": "5c187e0790bee6e9f450771120661560405770a24777a142dc61bc4a17bcbd5c"
+      },
+      "tier1Lanczos3": {
+        "path": "artifacts/oak-leaves-clean-x4-tier1-lanczos3.png",
+        "width": 256,
+        "height": 192,
+        "pngSha256": "73171022d39b6eb4dd6f2eacf0b8018a932af1070f01f3f4b41e06a893c36a28"
+      },
+      "modelOutput": {
+        "path": "artifacts/oak-leaves-clean-x4-realesrgan-x4plus.png",
+        "width": 256,
+        "height": 192,
+        "pngSha256": "94fcf6c46e415ad9f3e9f0c09a8f1e3ff2ee8f86ac0b452a26aa0f40d18fdbd8",
+        "rgbaSha256": "97d49ce9f760b612166d2f054651e378b07322b6589268b38bde0ad377fd6289"
+      },
+      "quality": {
+        "tier1Lanczos3": {
+          "psnrRgbDb": 27.7435,
+          "ssimLuminanceGaussian11x11": 0.872281
+        },
+        "realEsrganX4plus": {
+          "psnrRgbDb": 25.6984,
+          "ssimLuminanceGaussian11x11": 0.84949
+        }
+      },
+      "latency": {
+        "samplesMs": [
+          1755.559,
+          1687.416,
+          1684.693
+        ],
+        "medianMs": 1687.416,
+        "p95MsNearestRank": 1755.559,
+        "warmups": 1,
+        "measuredRuns": 3,
+        "scope": "ONNX Runtime CPU session.run only; excludes PNG decode, tensor preparation, output conversion, metrics, and file writes."
+      }
+    },
+    {
+      "id": "oak-leaves-blur-x4",
+      "degradationCase": "blur-x4",
+      "sourceAssetId": "oak-leaves",
+      "sourceSha256": "71c0f2fb2fa89385955bca609cf9983d493137a81879005143606d0fa74d2802",
+      "degradation": {
+        "blur": "three-pass box approximation of Gaussian, radius 1 at reference size",
+        "resize": "Lanczos3 x4 reduction"
+      },
+      "reference": {
+        "path": "artifacts/oak-leaves-reference.png",
+        "width": 256,
+        "height": 192,
+        "pngSha256": "afdbb84313810df61368a0836a1b2c582084bcce1cf20e6005b8810a2872d19f"
+      },
+      "input": {
+        "path": "artifacts/oak-leaves-blur-x4-input.png",
+        "width": 64,
+        "height": 48,
+        "pngSha256": "9825710009d00fea2db2ca117099ea9fe530cb4b14e05d9a88df2a4155c13268"
+      },
+      "tier1Lanczos3": {
+        "path": "artifacts/oak-leaves-blur-x4-tier1-lanczos3.png",
+        "width": 256,
+        "height": 192,
+        "pngSha256": "6bcef2229e7e9fd45f537ad45bbb4b7da55aa2c0c6bec548997fd5a7e67f0868"
+      },
+      "modelOutput": {
+        "path": "artifacts/oak-leaves-blur-x4-realesrgan-x4plus.png",
+        "width": 256,
+        "height": 192,
+        "pngSha256": "8a1f1a104e9dfda3b8ebb9c853c482d12c231645b6479be59559a6a42e9d25bf",
+        "rgbaSha256": "53f13598b654590cfc3955ecc4bc6cb6093efb7cdb64b61347463d0ac75e29f1"
+      },
+      "quality": {
+        "tier1Lanczos3": {
+          "psnrRgbDb": 26.9649,
+          "ssimLuminanceGaussian11x11": 0.851474
+        },
+        "realEsrganX4plus": {
+          "psnrRgbDb": 25.8168,
+          "ssimLuminanceGaussian11x11": 0.846708
+        }
+      },
+      "latency": {
+        "samplesMs": [
+          1714.404,
+          1764.543,
+          1690.86
+        ],
+        "medianMs": 1714.404,
+        "p95MsNearestRank": 1764.543,
+        "warmups": 1,
+        "measuredRuns": 3,
+        "scope": "ONNX Runtime CPU session.run only; excludes PNG decode, tensor preparation, output conversion, metrics, and file writes."
+      }
+    },
+    {
+      "id": "oak-leaves-jpeg-q45-x4",
+      "degradationCase": "jpeg-q45-x4",
+      "sourceAssetId": "oak-leaves",
+      "sourceSha256": "71c0f2fb2fa89385955bca609cf9983d493137a81879005143606d0fa74d2802",
+      "degradation": {
+        "resize": "Lanczos3 x4 reduction",
+        "jpegQuality": 45
+      },
+      "reference": {
+        "path": "artifacts/oak-leaves-reference.png",
+        "width": 256,
+        "height": 192,
+        "pngSha256": "afdbb84313810df61368a0836a1b2c582084bcce1cf20e6005b8810a2872d19f"
+      },
+      "input": {
+        "path": "artifacts/oak-leaves-jpeg-q45-x4-input.png",
+        "width": 64,
+        "height": 48,
+        "pngSha256": "7ba6e259db2d233a8b1dbc888cfe77e80b3102880022de4ea9c5b16984dd7e87"
+      },
+      "tier1Lanczos3": {
+        "path": "artifacts/oak-leaves-jpeg-q45-x4-tier1-lanczos3.png",
+        "width": 256,
+        "height": 192,
+        "pngSha256": "4310d676880acba4ecb5185adaa5967be83e71717e5ee822244f3a3ade2db56c"
+      },
+      "modelOutput": {
+        "path": "artifacts/oak-leaves-jpeg-q45-x4-realesrgan-x4plus.png",
+        "width": 256,
+        "height": 192,
+        "pngSha256": "02fad9b306a23dfc61336562913d89f5f3349d9622b44ee7da27a371abbdf036",
+        "rgbaSha256": "64f8c0918e27ac03fdcd58080f515ba105dd3a64de86577988cec5654c2e4807"
+      },
+      "quality": {
+        "tier1Lanczos3": {
+          "psnrRgbDb": 23.8798,
+          "ssimLuminanceGaussian11x11": 0.75919
+        },
+        "realEsrganX4plus": {
+          "psnrRgbDb": 23.3188,
+          "ssimLuminanceGaussian11x11": 0.763543
+        }
+      },
+      "latency": {
+        "samplesMs": [
+          1757.196,
+          1714.287,
+          1744.594
+        ],
+        "medianMs": 1744.594,
+        "p95MsNearestRank": 1757.196,
+        "warmups": 1,
+        "measuredRuns": 3,
+        "scope": "ONNX Runtime CPU session.run only; excludes PNG decode, tensor preparation, output conversion, metrics, and file writes."
+      }
+    },
+    {
+      "id": "oak-leaves-blur-grain-jpeg-q45-x4",
+      "degradationCase": "blur-grain-jpeg-q45-x4",
+      "sourceAssetId": "oak-leaves",
+      "sourceSha256": "71c0f2fb2fa89385955bca609cf9983d493137a81879005143606d0fa74d2802",
+      "degradation": {
+        "blur": "three-pass box approximation of Gaussian, radius 1 at reference size",
+        "resize": "Lanczos3 x4 reduction",
+        "deterministicGrain": "amount 12, per-channel",
+        "jpegQuality": 45
+      },
+      "reference": {
+        "path": "artifacts/oak-leaves-reference.png",
+        "width": 256,
+        "height": 192,
+        "pngSha256": "afdbb84313810df61368a0836a1b2c582084bcce1cf20e6005b8810a2872d19f"
+      },
+      "input": {
+        "path": "artifacts/oak-leaves-blur-grain-jpeg-q45-x4-input.png",
+        "width": 64,
+        "height": 48,
+        "pngSha256": "c2b7d5b23ddada514ef432b4cb0fc3901cf015b64ee1fd7a1970e1c28a17f6bd"
+      },
+      "tier1Lanczos3": {
+        "path": "artifacts/oak-leaves-blur-grain-jpeg-q45-x4-tier1-lanczos3.png",
+        "width": 256,
+        "height": 192,
+        "pngSha256": "0e5588e67034325519ebb3732af054b0ec2921c1ad9d9bb26157d1d2894b2d0e"
+      },
+      "modelOutput": {
+        "path": "artifacts/oak-leaves-blur-grain-jpeg-q45-x4-realesrgan-x4plus.png",
+        "width": 256,
+        "height": 192,
+        "pngSha256": "75906dd5d8d0886fcd5ccf01fc9a1fb638f049b5b9414242d6c2607a03c9ac16",
+        "rgbaSha256": "58257176e90b805cb36e79c10b0c065308eeca65a1a4f24875647944a06ee1ae"
+      },
+      "quality": {
+        "tier1Lanczos3": {
+          "psnrRgbDb": 23.6736,
+          "ssimLuminanceGaussian11x11": 0.746985
+        },
+        "realEsrganX4plus": {
+          "psnrRgbDb": 23.3848,
+          "ssimLuminanceGaussian11x11": 0.763602
+        }
+      },
+      "latency": {
+        "samplesMs": [
+          1657.748,
+          1689.675,
+          1721.045
+        ],
+        "medianMs": 1689.675,
+        "p95MsNearestRank": 1721.045,
+        "warmups": 1,
+        "measuredRuns": 3,
+        "scope": "ONNX Runtime CPU session.run only; excludes PNG decode, tensor preparation, output conversion, metrics, and file writes."
+      }
+    },
+    {
+      "id": "gold-weight-clean-x4",
+      "degradationCase": "clean-x4",
+      "sourceAssetId": "gold-weight",
+      "sourceSha256": "575c3663c372bb43e7da86a253cd9cb3602211bc39e3756332ca682963beb351",
+      "degradation": {
+        "resize": "Lanczos3 x4 reduction"
+      },
+      "reference": {
+        "path": "artifacts/gold-weight-reference.png",
+        "width": 256,
+        "height": 228,
+        "pngSha256": "2e30cab9de942469e9025617b8d4fb90bc277adb5f8948398c9f93c00ceb7c83"
+      },
+      "input": {
+        "path": "artifacts/gold-weight-clean-x4-input.png",
+        "width": 64,
+        "height": 57,
+        "pngSha256": "000fd0d63e86e2a46cd9a48271abe6d17630892c1717a6c45bb01e7ed974c052"
+      },
+      "tier1Lanczos3": {
+        "path": "artifacts/gold-weight-clean-x4-tier1-lanczos3.png",
+        "width": 256,
+        "height": 228,
+        "pngSha256": "308a409f5b48f499c33ef33dc5c7a70e88b32009933378e0e2b259fb2a087038"
+      },
+      "modelOutput": {
+        "path": "artifacts/gold-weight-clean-x4-realesrgan-x4plus.png",
+        "width": 256,
+        "height": 228,
+        "pngSha256": "82b80366b92a521669ff819b682183e40cce1d2e9dbbf5201e02157310718322",
+        "rgbaSha256": "44f3777fbd033e3784dfdc370ec5080ff6548bd6c9d8483fcdf447e61bec4179"
+      },
+      "quality": {
+        "tier1Lanczos3": {
+          "psnrRgbDb": 30.7426,
+          "ssimLuminanceGaussian11x11": 0.857906
+        },
+        "realEsrganX4plus": {
+          "psnrRgbDb": 27.3705,
+          "ssimLuminanceGaussian11x11": 0.846715
+        }
+      },
+      "latency": {
+        "samplesMs": [
+          1985.671,
+          2081.197,
+          2015.46
+        ],
+        "medianMs": 2015.46,
+        "p95MsNearestRank": 2081.197,
+        "warmups": 1,
+        "measuredRuns": 3,
+        "scope": "ONNX Runtime CPU session.run only; excludes PNG decode, tensor preparation, output conversion, metrics, and file writes."
+      }
+    },
+    {
+      "id": "gold-weight-blur-x4",
+      "degradationCase": "blur-x4",
+      "sourceAssetId": "gold-weight",
+      "sourceSha256": "575c3663c372bb43e7da86a253cd9cb3602211bc39e3756332ca682963beb351",
+      "degradation": {
+        "blur": "three-pass box approximation of Gaussian, radius 1 at reference size",
+        "resize": "Lanczos3 x4 reduction"
+      },
+      "reference": {
+        "path": "artifacts/gold-weight-reference.png",
+        "width": 256,
+        "height": 228,
+        "pngSha256": "2e30cab9de942469e9025617b8d4fb90bc277adb5f8948398c9f93c00ceb7c83"
+      },
+      "input": {
+        "path": "artifacts/gold-weight-blur-x4-input.png",
+        "width": 64,
+        "height": 57,
+        "pngSha256": "bb660481ad0fc1d847400f6669798bde4ab63907c89b428c33d6f5c1af36892e"
+      },
+      "tier1Lanczos3": {
+        "path": "artifacts/gold-weight-blur-x4-tier1-lanczos3.png",
+        "width": 256,
+        "height": 228,
+        "pngSha256": "da8b6ae920289b2cfbe22c501dd9e1e53d906d68c21cbaa74e6d895fba4022d6"
+      },
+      "modelOutput": {
+        "path": "artifacts/gold-weight-blur-x4-realesrgan-x4plus.png",
+        "width": 256,
+        "height": 228,
+        "pngSha256": "6a2f2910f27a5696c344ca607fd653057877546c0fc7ec17634be18aa3b136fa",
+        "rgbaSha256": "7c3dc9e1c97953bb00e0c45bba925e781e8f2df6fb16f097bd4fac5d0ea62707"
+      },
+      "quality": {
+        "tier1Lanczos3": {
+          "psnrRgbDb": 30.0391,
+          "ssimLuminanceGaussian11x11": 0.84619
+        },
+        "realEsrganX4plus": {
+          "psnrRgbDb": 27.6852,
+          "ssimLuminanceGaussian11x11": 0.84574
+        }
+      },
+      "latency": {
+        "samplesMs": [
+          2064.208,
+          1934.64,
+          1989.287
+        ],
+        "medianMs": 1989.287,
+        "p95MsNearestRank": 2064.208,
+        "warmups": 1,
+        "measuredRuns": 3,
+        "scope": "ONNX Runtime CPU session.run only; excludes PNG decode, tensor preparation, output conversion, metrics, and file writes."
+      }
+    },
+    {
+      "id": "gold-weight-jpeg-q45-x4",
+      "degradationCase": "jpeg-q45-x4",
+      "sourceAssetId": "gold-weight",
+      "sourceSha256": "575c3663c372bb43e7da86a253cd9cb3602211bc39e3756332ca682963beb351",
+      "degradation": {
+        "resize": "Lanczos3 x4 reduction",
+        "jpegQuality": 45
+      },
+      "reference": {
+        "path": "artifacts/gold-weight-reference.png",
+        "width": 256,
+        "height": 228,
+        "pngSha256": "2e30cab9de942469e9025617b8d4fb90bc277adb5f8948398c9f93c00ceb7c83"
+      },
+      "input": {
+        "path": "artifacts/gold-weight-jpeg-q45-x4-input.png",
+        "width": 64,
+        "height": 57,
+        "pngSha256": "afd7c224ad62e2c714f9356e11e2e2d0e328991e95ba1c2a61080578fe4134bf"
+      },
+      "tier1Lanczos3": {
+        "path": "artifacts/gold-weight-jpeg-q45-x4-tier1-lanczos3.png",
+        "width": 256,
+        "height": 228,
+        "pngSha256": "143cec64848fa93110b075d6cf1ce5a53a8bd73ffa7da7ba13cd92f4a7adf19f"
+      },
+      "modelOutput": {
+        "path": "artifacts/gold-weight-jpeg-q45-x4-realesrgan-x4plus.png",
+        "width": 256,
+        "height": 228,
+        "pngSha256": "2b2b9e45309b7275368e1620a172ee79e0ca6402e2c1d148d387102bbac3e215",
+        "rgbaSha256": "88f409d8a74d7e32291cc80bbd0c5f504dafededd4826bea66230f82b6b0b2d5"
+      },
+      "quality": {
+        "tier1Lanczos3": {
+          "psnrRgbDb": 27.77,
+          "ssimLuminanceGaussian11x11": 0.79193
+        },
+        "realEsrganX4plus": {
+          "psnrRgbDb": 25.8575,
+          "ssimLuminanceGaussian11x11": 0.799515
+        }
+      },
+      "latency": {
+        "samplesMs": [
+          2044.836,
+          1989.874,
+          2023.049
+        ],
+        "medianMs": 2023.049,
+        "p95MsNearestRank": 2044.836,
+        "warmups": 1,
+        "measuredRuns": 3,
+        "scope": "ONNX Runtime CPU session.run only; excludes PNG decode, tensor preparation, output conversion, metrics, and file writes."
+      }
+    },
+    {
+      "id": "gold-weight-blur-grain-jpeg-q45-x4",
+      "degradationCase": "blur-grain-jpeg-q45-x4",
+      "sourceAssetId": "gold-weight",
+      "sourceSha256": "575c3663c372bb43e7da86a253cd9cb3602211bc39e3756332ca682963beb351",
+      "degradation": {
+        "blur": "three-pass box approximation of Gaussian, radius 1 at reference size",
+        "resize": "Lanczos3 x4 reduction",
+        "deterministicGrain": "amount 12, per-channel",
+        "jpegQuality": 45
+      },
+      "reference": {
+        "path": "artifacts/gold-weight-reference.png",
+        "width": 256,
+        "height": 228,
+        "pngSha256": "2e30cab9de942469e9025617b8d4fb90bc277adb5f8948398c9f93c00ceb7c83"
+      },
+      "input": {
+        "path": "artifacts/gold-weight-blur-grain-jpeg-q45-x4-input.png",
+        "width": 64,
+        "height": 57,
+        "pngSha256": "ba181c70c3ddcc686eb8f5523c422cb94a94e145de3b12be74998d339bc2c20e"
+      },
+      "tier1Lanczos3": {
+        "path": "artifacts/gold-weight-blur-grain-jpeg-q45-x4-tier1-lanczos3.png",
+        "width": 256,
+        "height": 228,
+        "pngSha256": "0fc412fb94e9826bf4e3221a06174238d3e5f299f2bef1d928e0f547b0f287dc"
+      },
+      "modelOutput": {
+        "path": "artifacts/gold-weight-blur-grain-jpeg-q45-x4-realesrgan-x4plus.png",
+        "width": 256,
+        "height": 228,
+        "pngSha256": "187af371261f3c144b0f533b2b9ce1d6caa0934f8a482a127080db077271c5e0",
+        "rgbaSha256": "1a9f124926d1b817c14fe08150bfc35114aab473715d7f90a9d9bd398b51f817"
+      },
+      "quality": {
+        "tier1Lanczos3": {
+          "psnrRgbDb": 27.3727,
+          "ssimLuminanceGaussian11x11": 0.784395
+        },
+        "realEsrganX4plus": {
+          "psnrRgbDb": 26.1468,
+          "ssimLuminanceGaussian11x11": 0.787511
+        }
+      },
+      "latency": {
+        "samplesMs": [
+          2036.693,
+          2017.319,
+          2042.049
+        ],
+        "medianMs": 2036.693,
+        "p95MsNearestRank": 2042.049,
+        "warmups": 1,
+        "measuredRuns": 3,
+        "scope": "ONNX Runtime CPU session.run only; excludes PNG decode, tensor preparation, output conversion, metrics, and file writes."
+      }
+    },
+    {
+      "id": "rome-map-clean-x4",
+      "degradationCase": "clean-x4",
+      "sourceAssetId": "rome-map",
+      "sourceSha256": "4f86a0ae3baa75bd29b690ef005e40029327824ec49f5241fd102e3a06126065",
+      "degradation": {
+        "resize": "Lanczos3 x4 reduction"
+      },
+      "reference": {
+        "path": "artifacts/rome-map-reference.png",
+        "width": 252,
+        "height": 160,
+        "pngSha256": "ed993f4d62c4cd1cdb459764406d8fcd6706d580026b2b3036138f006a0e2a41"
+      },
+      "input": {
+        "path": "artifacts/rome-map-clean-x4-input.png",
+        "width": 63,
+        "height": 40,
+        "pngSha256": "93dd74a8e6b0b7cce847c19331dbcee6d98cac0f81e5a6ae68eb5736d068070f"
+      },
+      "tier1Lanczos3": {
+        "path": "artifacts/rome-map-clean-x4-tier1-lanczos3.png",
+        "width": 252,
+        "height": 160,
+        "pngSha256": "932e36d9fffa52c9704fa8b9c19aba69d346bba3ad5b92d0d103ed08de529dd5"
+      },
+      "modelOutput": {
+        "path": "artifacts/rome-map-clean-x4-realesrgan-x4plus.png",
+        "width": 252,
+        "height": 160,
+        "pngSha256": "529e602587b96ba47f26321f0d03b329a29ffecb90b1ec63dba65f22e6d322d4",
+        "rgbaSha256": "4b12b587d49218975632188fc87614212793cdd56952aee16b7f747805afd762"
+      },
+      "quality": {
+        "tier1Lanczos3": {
+          "psnrRgbDb": 25.9306,
+          "ssimLuminanceGaussian11x11": 0.44278
+        },
+        "realEsrganX4plus": {
+          "psnrRgbDb": 20.8552,
+          "ssimLuminanceGaussian11x11": 0.349052
+        }
+      },
+      "latency": {
+        "samplesMs": [
+          1334.559,
+          1366.837,
+          1388.09
+        ],
+        "medianMs": 1366.837,
+        "p95MsNearestRank": 1388.09,
+        "warmups": 1,
+        "measuredRuns": 3,
+        "scope": "ONNX Runtime CPU session.run only; excludes PNG decode, tensor preparation, output conversion, metrics, and file writes."
+      }
+    },
+    {
+      "id": "rome-map-blur-x4",
+      "degradationCase": "blur-x4",
+      "sourceAssetId": "rome-map",
+      "sourceSha256": "4f86a0ae3baa75bd29b690ef005e40029327824ec49f5241fd102e3a06126065",
+      "degradation": {
+        "blur": "three-pass box approximation of Gaussian, radius 1 at reference size",
+        "resize": "Lanczos3 x4 reduction"
+      },
+      "reference": {
+        "path": "artifacts/rome-map-reference.png",
+        "width": 252,
+        "height": 160,
+        "pngSha256": "ed993f4d62c4cd1cdb459764406d8fcd6706d580026b2b3036138f006a0e2a41"
+      },
+      "input": {
+        "path": "artifacts/rome-map-blur-x4-input.png",
+        "width": 63,
+        "height": 40,
+        "pngSha256": "a1e86ba5c518119874794eb9f8ede238379d85bba6ced03b39c95370c80f1577"
+      },
+      "tier1Lanczos3": {
+        "path": "artifacts/rome-map-blur-x4-tier1-lanczos3.png",
+        "width": 252,
+        "height": 160,
+        "pngSha256": "82a284741fbf181db5c17b57bbe2e505e25bce7b66ee0b2e8edf0c81aaffc832"
+      },
+      "modelOutput": {
+        "path": "artifacts/rome-map-blur-x4-realesrgan-x4plus.png",
+        "width": 252,
+        "height": 160,
+        "pngSha256": "ca4c5247a8df9d1a271a5c761a0f3275ccb12b56806ad5c4fba741240ed37884",
+        "rgbaSha256": "3ccf20cfd909b98c7769bf661a10033fc6c91bb7178743973151ee59ad649c7c"
+      },
+      "quality": {
+        "tier1Lanczos3": {
+          "psnrRgbDb": 25.7652,
+          "ssimLuminanceGaussian11x11": 0.415988
+        },
+        "realEsrganX4plus": {
+          "psnrRgbDb": 20.9435,
+          "ssimLuminanceGaussian11x11": 0.348515
+        }
+      },
+      "latency": {
+        "samplesMs": [
+          1376.938,
+          1405.097,
+          1360.045
+        ],
+        "medianMs": 1376.938,
+        "p95MsNearestRank": 1405.097,
+        "warmups": 1,
+        "measuredRuns": 3,
+        "scope": "ONNX Runtime CPU session.run only; excludes PNG decode, tensor preparation, output conversion, metrics, and file writes."
+      }
+    },
+    {
+      "id": "rome-map-jpeg-q45-x4",
+      "degradationCase": "jpeg-q45-x4",
+      "sourceAssetId": "rome-map",
+      "sourceSha256": "4f86a0ae3baa75bd29b690ef005e40029327824ec49f5241fd102e3a06126065",
+      "degradation": {
+        "resize": "Lanczos3 x4 reduction",
+        "jpegQuality": 45
+      },
+      "reference": {
+        "path": "artifacts/rome-map-reference.png",
+        "width": 252,
+        "height": 160,
+        "pngSha256": "ed993f4d62c4cd1cdb459764406d8fcd6706d580026b2b3036138f006a0e2a41"
+      },
+      "input": {
+        "path": "artifacts/rome-map-jpeg-q45-x4-input.png",
+        "width": 63,
+        "height": 40,
+        "pngSha256": "7e2878aefa8a463ed4550dd4d9b4e7cc6be4aab5f1828fd6171f4ee45a80f386"
+      },
+      "tier1Lanczos3": {
+        "path": "artifacts/rome-map-jpeg-q45-x4-tier1-lanczos3.png",
+        "width": 252,
+        "height": 160,
+        "pngSha256": "9fd3b9fa5ee817705ad65227d8a24e6938241701dc795ff25651eeeb517295c9"
+      },
+      "modelOutput": {
+        "path": "artifacts/rome-map-jpeg-q45-x4-realesrgan-x4plus.png",
+        "width": 252,
+        "height": 160,
+        "pngSha256": "83bfb78af733ecdb1144a6f4efce4cb857785083d33dedc5c1903a745d451482",
+        "rgbaSha256": "e934cf815d392ee8d43cbefc3f715c6e4084415d9bc6e435b25a799b3922b1ad"
+      },
+      "quality": {
+        "tier1Lanczos3": {
+          "psnrRgbDb": 24.9503,
+          "ssimLuminanceGaussian11x11": 0.357233
+        },
+        "realEsrganX4plus": {
+          "psnrRgbDb": 21.0071,
+          "ssimLuminanceGaussian11x11": 0.23812
+        }
+      },
+      "latency": {
+        "samplesMs": [
+          1403.416,
+          1323.201,
+          1375.484
+        ],
+        "medianMs": 1375.484,
+        "p95MsNearestRank": 1403.416,
+        "warmups": 1,
+        "measuredRuns": 3,
+        "scope": "ONNX Runtime CPU session.run only; excludes PNG decode, tensor preparation, output conversion, metrics, and file writes."
+      }
+    },
+    {
+      "id": "rome-map-blur-grain-jpeg-q45-x4",
+      "degradationCase": "blur-grain-jpeg-q45-x4",
+      "sourceAssetId": "rome-map",
+      "sourceSha256": "4f86a0ae3baa75bd29b690ef005e40029327824ec49f5241fd102e3a06126065",
+      "degradation": {
+        "blur": "three-pass box approximation of Gaussian, radius 1 at reference size",
+        "resize": "Lanczos3 x4 reduction",
+        "deterministicGrain": "amount 12, per-channel",
+        "jpegQuality": 45
+      },
+      "reference": {
+        "path": "artifacts/rome-map-reference.png",
+        "width": 252,
+        "height": 160,
+        "pngSha256": "ed993f4d62c4cd1cdb459764406d8fcd6706d580026b2b3036138f006a0e2a41"
+      },
+      "input": {
+        "path": "artifacts/rome-map-blur-grain-jpeg-q45-x4-input.png",
+        "width": 63,
+        "height": 40,
+        "pngSha256": "4ea0a3de6214d2557ea417d2094bcf23b495cd773cb27d9c8d5af7eb216d5fc3"
+      },
+      "tier1Lanczos3": {
+        "path": "artifacts/rome-map-blur-grain-jpeg-q45-x4-tier1-lanczos3.png",
+        "width": 252,
+        "height": 160,
+        "pngSha256": "dec78c2b2c9436d64d1ce3a6b85e2282fb75f1ef95649f5d23495f759bfb1817"
+      },
+      "modelOutput": {
+        "path": "artifacts/rome-map-blur-grain-jpeg-q45-x4-realesrgan-x4plus.png",
+        "width": 252,
+        "height": 160,
+        "pngSha256": "8fb8f320f8a3529862326e1d71570f7c33fd4842c8ab8ecb5e8a40d7d0229cdd",
+        "rgbaSha256": "314faae4dc3ba6436f21dfeb045c67c85139b6ca47e9b88dd43d69d1dfc2b7ba"
+      },
+      "quality": {
+        "tier1Lanczos3": {
+          "psnrRgbDb": 24.8692,
+          "ssimLuminanceGaussian11x11": 0.349399
+        },
+        "realEsrganX4plus": {
+          "psnrRgbDb": 19.8765,
+          "ssimLuminanceGaussian11x11": 0.182059
+        }
+      },
+      "latency": {
+        "samplesMs": [
+          1399.184,
+          1309.977,
+          1386.549
+        ],
+        "medianMs": 1386.549,
+        "p95MsNearestRank": 1399.184,
+        "warmups": 1,
+        "measuredRuns": 3,
+        "scope": "ONNX Runtime CPU session.run only; excludes PNG decode, tensor preparation, output conversion, metrics, and file writes."
+      }
+    }
+  ]
+}

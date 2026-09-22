@@ -1,0 +1,659 @@
+{
+  "schemaVersion": 1,
+  "benchmark": "P4-21 T44 denoise on deterministic synthetic noise derived from registered CC0 images",
+  "generatedAt": "reproducible; no wall-clock timestamp",
+  "sourceCorpusManifest": "../fixtures/cc0/manifest.json",
+  "sourceCorpusLicense": "CC0-1.0, individually registered and metadata-hash verified",
+  "outputDimensions": {
+    "width": 128,
+    "height": 128
+  },
+  "sourceCropPixels": {
+    "width": 256,
+    "height": 256
+  },
+  "fixtures": {
+    "count": 12,
+    "artifactsPerCase": 2,
+    "entries": [
+      {
+        "id": "gold-weight-gaussian-sigma12",
+        "sourceId": "gold-weight",
+        "cropPixelsInSource": {
+          "x": 1010,
+          "y": 790,
+          "width": 256,
+          "height": 256
+        },
+        "derivation": {
+          "decoder": "@jsquash/jpeg decoder pinned by pnpm-lock.yaml; decoded to 8-bit sRGB RGBA.",
+          "resizer": "Production resizeRaster Lanczos3 from the exact registered source crop.",
+          "outputDimensions": {
+            "width": 128,
+            "height": 128
+          },
+          "noise": {
+            "id": "gaussian-sigma12",
+            "kind": "gaussian",
+            "sigma": 12,
+            "seedAlgorithm": "first uint32 from SHA-256 of the versioned fixture ID"
+          },
+          "alpha": "Preserved unchanged from the clean reference."
+        },
+        "seed": 1109778939,
+        "noise": {
+          "id": "gaussian-sigma12",
+          "kind": "gaussian",
+          "sigma": 12
+        },
+        "reference": {
+          "path": "fixtures/gold-weight-gaussian-sigma12-reference.png",
+          "width": 128,
+          "height": 128,
+          "pngBytes": 44478,
+          "pngSha256": "7b00eed600f09ac98f32f19e6bfc016fac7c6ca1453dc03d8092568e193348c1",
+          "rgbaSha256": "2c619d3eba3b33f7f84fe01ed4b1b090a2c85c7fb5bc96d91f71db13bf59c835"
+        },
+        "input": {
+          "path": "fixtures/gold-weight-gaussian-sigma12-input.png",
+          "width": 128,
+          "height": 128,
+          "pngBytes": 53729,
+          "pngSha256": "5a45e50544e811f0e9e8eae04d07e934fe09c9245aabc9e99dc58c3da8422ba1",
+          "rgbaSha256": "5527351bd322ca2e3106561763904685552642143cb838c03d34057d0786ecb9"
+        }
+      },
+      {
+        "id": "gold-weight-gaussian-sigma24",
+        "sourceId": "gold-weight",
+        "cropPixelsInSource": {
+          "x": 1010,
+          "y": 790,
+          "width": 256,
+          "height": 256
+        },
+        "derivation": {
+          "decoder": "@jsquash/jpeg decoder pinned by pnpm-lock.yaml; decoded to 8-bit sRGB RGBA.",
+          "resizer": "Production resizeRaster Lanczos3 from the exact registered source crop.",
+          "outputDimensions": {
+            "width": 128,
+            "height": 128
+          },
+          "noise": {
+            "id": "gaussian-sigma24",
+            "kind": "gaussian",
+            "sigma": 24,
+            "seedAlgorithm": "first uint32 from SHA-256 of the versioned fixture ID"
+          },
+          "alpha": "Preserved unchanged from the clean reference."
+        },
+        "seed": 1208127004,
+        "noise": {
+          "id": "gaussian-sigma24",
+          "kind": "gaussian",
+          "sigma": 24
+        },
+        "reference": {
+          "path": "fixtures/gold-weight-gaussian-sigma24-reference.png",
+          "width": 128,
+          "height": 128,
+          "pngBytes": 44478,
+          "pngSha256": "7b00eed600f09ac98f32f19e6bfc016fac7c6ca1453dc03d8092568e193348c1",
+          "rgbaSha256": "2c619d3eba3b33f7f84fe01ed4b1b090a2c85c7fb5bc96d91f71db13bf59c835"
+        },
+        "input": {
+          "path": "fixtures/gold-weight-gaussian-sigma24-input.png",
+          "width": 128,
+          "height": 128,
+          "pngBytes": 61638,
+          "pngSha256": "7f074ba0d0686ed5feaaf9e7c234fca3f021d413d61481d4b0383cffc5720519",
+          "rgbaSha256": "9743aa0931a9411180a091805d7311f3ba75cbcf15efaa331188234c75dd31f8"
+        }
+      },
+      {
+        "id": "gold-weight-impulse-2pct",
+        "sourceId": "gold-weight",
+        "cropPixelsInSource": {
+          "x": 1010,
+          "y": 790,
+          "width": 256,
+          "height": 256
+        },
+        "derivation": {
+          "decoder": "@jsquash/jpeg decoder pinned by pnpm-lock.yaml; decoded to 8-bit sRGB RGBA.",
+          "resizer": "Production resizeRaster Lanczos3 from the exact registered source crop.",
+          "outputDimensions": {
+            "width": 128,
+            "height": 128
+          },
+          "noise": {
+            "id": "impulse-2pct",
+            "kind": "impulse",
+            "density": 0.02,
+            "seedAlgorithm": "first uint32 from SHA-256 of the versioned fixture ID"
+          },
+          "alpha": "Preserved unchanged from the clean reference."
+        },
+        "seed": 2245851558,
+        "noise": {
+          "id": "impulse-2pct",
+          "kind": "impulse",
+          "density": 0.02
+        },
+        "reference": {
+          "path": "fixtures/gold-weight-impulse-2pct-reference.png",
+          "width": 128,
+          "height": 128,
+          "pngBytes": 44478,
+          "pngSha256": "7b00eed600f09ac98f32f19e6bfc016fac7c6ca1453dc03d8092568e193348c1",
+          "rgbaSha256": "2c619d3eba3b33f7f84fe01ed4b1b090a2c85c7fb5bc96d91f71db13bf59c835"
+        },
+        "input": {
+          "path": "fixtures/gold-weight-impulse-2pct-input.png",
+          "width": 128,
+          "height": 128,
+          "pngBytes": 45803,
+          "pngSha256": "70f29c439a14a80896f86ff7a7196598bc67e06be16e906eda73b5dd9f0230db",
+          "rgbaSha256": "10ea401f52a6f60a462965d21ec8c0b5fd05b20c99530d27e2d6efba50812ef2"
+        }
+      },
+      {
+        "id": "landscape-dordogne-gaussian-sigma12",
+        "sourceId": "landscape-dordogne",
+        "cropPixelsInSource": {
+          "x": 2050,
+          "y": 1260,
+          "width": 256,
+          "height": 256
+        },
+        "derivation": {
+          "decoder": "@jsquash/jpeg decoder pinned by pnpm-lock.yaml; decoded to 8-bit sRGB RGBA.",
+          "resizer": "Production resizeRaster Lanczos3 from the exact registered source crop.",
+          "outputDimensions": {
+            "width": 128,
+            "height": 128
+          },
+          "noise": {
+            "id": "gaussian-sigma12",
+            "kind": "gaussian",
+            "sigma": 12,
+            "seedAlgorithm": "first uint32 from SHA-256 of the versioned fixture ID"
+          },
+          "alpha": "Preserved unchanged from the clean reference."
+        },
+        "seed": 251743408,
+        "noise": {
+          "id": "gaussian-sigma12",
+          "kind": "gaussian",
+          "sigma": 12
+        },
+        "reference": {
+          "path": "fixtures/landscape-dordogne-gaussian-sigma12-reference.png",
+          "width": 128,
+          "height": 128,
+          "pngBytes": 33627,
+          "pngSha256": "663bfb408e3b611ec9789736487201b36ecc813f081fbd05efdd26b3f4ef11d6",
+          "rgbaSha256": "2a6b5a9d6f1f55c14649fea7d4192b42bbd4e6a2637f0944e6a020e29c662180"
+        },
+        "input": {
+          "path": "fixtures/landscape-dordogne-gaussian-sigma12-input.png",
+          "width": 128,
+          "height": 128,
+          "pngBytes": 52200,
+          "pngSha256": "3ea6308d383ef1c52459ee7fc1a8b21d3b468d699452b10f4a3f0f23559e5e53",
+          "rgbaSha256": "6d288d211ad6672c3a926d0e6fb667213e425ae3bf0bec04a844abdd5d6e58cf"
+        }
+      },
+      {
+        "id": "landscape-dordogne-gaussian-sigma24",
+        "sourceId": "landscape-dordogne",
+        "cropPixelsInSource": {
+          "x": 2050,
+          "y": 1260,
+          "width": 256,
+          "height": 256
+        },
+        "derivation": {
+          "decoder": "@jsquash/jpeg decoder pinned by pnpm-lock.yaml; decoded to 8-bit sRGB RGBA.",
+          "resizer": "Production resizeRaster Lanczos3 from the exact registered source crop.",
+          "outputDimensions": {
+            "width": 128,
+            "height": 128
+          },
+          "noise": {
+            "id": "gaussian-sigma24",
+            "kind": "gaussian",
+            "sigma": 24,
+            "seedAlgorithm": "first uint32 from SHA-256 of the versioned fixture ID"
+          },
+          "alpha": "Preserved unchanged from the clean reference."
+        },
+        "seed": 2630681733,
+        "noise": {
+          "id": "gaussian-sigma24",
+          "kind": "gaussian",
+          "sigma": 24
+        },
+        "reference": {
+          "path": "fixtures/landscape-dordogne-gaussian-sigma24-reference.png",
+          "width": 128,
+          "height": 128,
+          "pngBytes": 33627,
+          "pngSha256": "663bfb408e3b611ec9789736487201b36ecc813f081fbd05efdd26b3f4ef11d6",
+          "rgbaSha256": "2a6b5a9d6f1f55c14649fea7d4192b42bbd4e6a2637f0944e6a020e29c662180"
+        },
+        "input": {
+          "path": "fixtures/landscape-dordogne-gaussian-sigma24-input.png",
+          "width": 128,
+          "height": 128,
+          "pngBytes": 60991,
+          "pngSha256": "581fe8e358855830e5d39fabd9ed69fb8971d59462f728852550f3eb6f0d2dc7",
+          "rgbaSha256": "04f3995c04bd24e3e4f4a913f660217146b8aea7e626f30c772af6a7fad6499f"
+        }
+      },
+      {
+        "id": "landscape-dordogne-impulse-2pct",
+        "sourceId": "landscape-dordogne",
+        "cropPixelsInSource": {
+          "x": 2050,
+          "y": 1260,
+          "width": 256,
+          "height": 256
+        },
+        "derivation": {
+          "decoder": "@jsquash/jpeg decoder pinned by pnpm-lock.yaml; decoded to 8-bit sRGB RGBA.",
+          "resizer": "Production resizeRaster Lanczos3 from the exact registered source crop.",
+          "outputDimensions": {
+            "width": 128,
+            "height": 128
+          },
+          "noise": {
+            "id": "impulse-2pct",
+            "kind": "impulse",
+            "density": 0.02,
+            "seedAlgorithm": "first uint32 from SHA-256 of the versioned fixture ID"
+          },
+          "alpha": "Preserved unchanged from the clean reference."
+        },
+        "seed": 4090453672,
+        "noise": {
+          "id": "impulse-2pct",
+          "kind": "impulse",
+          "density": 0.02
+        },
+        "reference": {
+          "path": "fixtures/landscape-dordogne-impulse-2pct-reference.png",
+          "width": 128,
+          "height": 128,
+          "pngBytes": 33627,
+          "pngSha256": "663bfb408e3b611ec9789736487201b36ecc813f081fbd05efdd26b3f4ef11d6",
+          "rgbaSha256": "2a6b5a9d6f1f55c14649fea7d4192b42bbd4e6a2637f0944e6a020e29c662180"
+        },
+        "input": {
+          "path": "fixtures/landscape-dordogne-impulse-2pct-input.png",
+          "width": 128,
+          "height": 128,
+          "pngBytes": 35402,
+          "pngSha256": "067c1c273316ea6be8532bc1cd3ef40b81ef2130ce9de3a344c10046ab0507a6",
+          "rgbaSha256": "af1bdd8cfed11ab95d65869b30a06bd8ef15527b3acede21e556b24e0025f8b7"
+        }
+      },
+      {
+        "id": "oak-leaves-gaussian-sigma12",
+        "sourceId": "oak-leaves",
+        "cropPixelsInSource": {
+          "x": 1700,
+          "y": 1080,
+          "width": 256,
+          "height": 256
+        },
+        "derivation": {
+          "decoder": "@jsquash/jpeg decoder pinned by pnpm-lock.yaml; decoded to 8-bit sRGB RGBA.",
+          "resizer": "Production resizeRaster Lanczos3 from the exact registered source crop.",
+          "outputDimensions": {
+            "width": 128,
+            "height": 128
+          },
+          "noise": {
+            "id": "gaussian-sigma12",
+            "kind": "gaussian",
+            "sigma": 12,
+            "seedAlgorithm": "first uint32 from SHA-256 of the versioned fixture ID"
+          },
+          "alpha": "Preserved unchanged from the clean reference."
+        },
+        "seed": 873017275,
+        "noise": {
+          "id": "gaussian-sigma12",
+          "kind": "gaussian",
+          "sigma": 12
+        },
+        "reference": {
+          "path": "fixtures/oak-leaves-gaussian-sigma12-reference.png",
+          "width": 128,
+          "height": 128,
+          "pngBytes": 42165,
+          "pngSha256": "492e733af6c81fa1af58701b000e7fed114080f774960d4a2126e952881fee68",
+          "rgbaSha256": "0e9a3fa39d2c31fd46837ec100a90fd314798ac9cc7f8941fa984f6c72f56bae"
+        },
+        "input": {
+          "path": "fixtures/oak-leaves-gaussian-sigma12-input.png",
+          "width": 128,
+          "height": 128,
+          "pngBytes": 52037,
+          "pngSha256": "489b9842528153b80a9c20f12f0b14388e7f63c3b757ed3aebb0c53c704ffa83",
+          "rgbaSha256": "5e9a4dd66203a3cebf6bcd3604500826b491d0d7cedc825ee3359d37a702e0b1"
+        }
+      },
+      {
+        "id": "oak-leaves-gaussian-sigma24",
+        "sourceId": "oak-leaves",
+        "cropPixelsInSource": {
+          "x": 1700,
+          "y": 1080,
+          "width": 256,
+          "height": 256
+        },
+        "derivation": {
+          "decoder": "@jsquash/jpeg decoder pinned by pnpm-lock.yaml; decoded to 8-bit sRGB RGBA.",
+          "resizer": "Production resizeRaster Lanczos3 from the exact registered source crop.",
+          "outputDimensions": {
+            "width": 128,
+            "height": 128
+          },
+          "noise": {
+            "id": "gaussian-sigma24",
+            "kind": "gaussian",
+            "sigma": 24,
+            "seedAlgorithm": "first uint32 from SHA-256 of the versioned fixture ID"
+          },
+          "alpha": "Preserved unchanged from the clean reference."
+        },
+        "seed": 4197933932,
+        "noise": {
+          "id": "gaussian-sigma24",
+          "kind": "gaussian",
+          "sigma": 24
+        },
+        "reference": {
+          "path": "fixtures/oak-leaves-gaussian-sigma24-reference.png",
+          "width": 128,
+          "height": 128,
+          "pngBytes": 42165,
+          "pngSha256": "492e733af6c81fa1af58701b000e7fed114080f774960d4a2126e952881fee68",
+          "rgbaSha256": "0e9a3fa39d2c31fd46837ec100a90fd314798ac9cc7f8941fa984f6c72f56bae"
+        },
+        "input": {
+          "path": "fixtures/oak-leaves-gaussian-sigma24-input.png",
+          "width": 128,
+          "height": 128,
+          "pngBytes": 59117,
+          "pngSha256": "283efe7b3286a54cefbea0080ff536474a45aa21a3659e6fec69a17f8d6e8dbb",
+          "rgbaSha256": "d2f19b4ef653f8cb5482892ba510938d0f04f00c0aa6dcc1815543990a9108b7"
+        }
+      },
+      {
+        "id": "oak-leaves-impulse-2pct",
+        "sourceId": "oak-leaves",
+        "cropPixelsInSource": {
+          "x": 1700,
+          "y": 1080,
+          "width": 256,
+          "height": 256
+        },
+        "derivation": {
+          "decoder": "@jsquash/jpeg decoder pinned by pnpm-lock.yaml; decoded to 8-bit sRGB RGBA.",
+          "resizer": "Production resizeRaster Lanczos3 from the exact registered source crop.",
+          "outputDimensions": {
+            "width": 128,
+            "height": 128
+          },
+          "noise": {
+            "id": "impulse-2pct",
+            "kind": "impulse",
+            "density": 0.02,
+            "seedAlgorithm": "first uint32 from SHA-256 of the versioned fixture ID"
+          },
+          "alpha": "Preserved unchanged from the clean reference."
+        },
+        "seed": 3792909412,
+        "noise": {
+          "id": "impulse-2pct",
+          "kind": "impulse",
+          "density": 0.02
+        },
+        "reference": {
+          "path": "fixtures/oak-leaves-impulse-2pct-reference.png",
+          "width": 128,
+          "height": 128,
+          "pngBytes": 42165,
+          "pngSha256": "492e733af6c81fa1af58701b000e7fed114080f774960d4a2126e952881fee68",
+          "rgbaSha256": "0e9a3fa39d2c31fd46837ec100a90fd314798ac9cc7f8941fa984f6c72f56bae"
+        },
+        "input": {
+          "path": "fixtures/oak-leaves-impulse-2pct-input.png",
+          "width": 128,
+          "height": 128,
+          "pngBytes": 43231,
+          "pngSha256": "96a9a5436079b08e030d58d6d900fb0b2bb609a4a626cd550d6e9001f6318686",
+          "rgbaSha256": "39677d0798ef6f710fbba5ffb41ac2392f165dfc35a5e7f46b6482c82bb9790c"
+        }
+      },
+      {
+        "id": "rome-map-gaussian-sigma12",
+        "sourceId": "rome-map",
+        "cropPixelsInSource": {
+          "x": 1420,
+          "y": 640,
+          "width": 256,
+          "height": 256
+        },
+        "derivation": {
+          "decoder": "@jsquash/jpeg decoder pinned by pnpm-lock.yaml; decoded to 8-bit sRGB RGBA.",
+          "resizer": "Production resizeRaster Lanczos3 from the exact registered source crop.",
+          "outputDimensions": {
+            "width": 128,
+            "height": 128
+          },
+          "noise": {
+            "id": "gaussian-sigma12",
+            "kind": "gaussian",
+            "sigma": 12,
+            "seedAlgorithm": "first uint32 from SHA-256 of the versioned fixture ID"
+          },
+          "alpha": "Preserved unchanged from the clean reference."
+        },
+        "seed": 3915503808,
+        "noise": {
+          "id": "gaussian-sigma12",
+          "kind": "gaussian",
+          "sigma": 12
+        },
+        "reference": {
+          "path": "fixtures/rome-map-gaussian-sigma12-reference.png",
+          "width": 128,
+          "height": 128,
+          "pngBytes": 47801,
+          "pngSha256": "58f97b7169203b00a24a55974cd2119a66ac02a60ea7e524bbb7e1f645d0b33f",
+          "rgbaSha256": "da6e1ab5521011522e214579a9ef27c36a0f68c33190628e4b0e2781feb87097"
+        },
+        "input": {
+          "path": "fixtures/rome-map-gaussian-sigma12-input.png",
+          "width": 128,
+          "height": 128,
+          "pngBytes": 57955,
+          "pngSha256": "154a87fcd95f6dadbdf146a54146b454de1a5aa494e0ad8f9d7c5b9f37183bbf",
+          "rgbaSha256": "38e3bf532b0ffe13cc29c9bf40602aeeeaa9d05ab08fa6d67c9f27e4d7955ce7"
+        }
+      },
+      {
+        "id": "rome-map-gaussian-sigma24",
+        "sourceId": "rome-map",
+        "cropPixelsInSource": {
+          "x": 1420,
+          "y": 640,
+          "width": 256,
+          "height": 256
+        },
+        "derivation": {
+          "decoder": "@jsquash/jpeg decoder pinned by pnpm-lock.yaml; decoded to 8-bit sRGB RGBA.",
+          "resizer": "Production resizeRaster Lanczos3 from the exact registered source crop.",
+          "outputDimensions": {
+            "width": 128,
+            "height": 128
+          },
+          "noise": {
+            "id": "gaussian-sigma24",
+            "kind": "gaussian",
+            "sigma": 24,
+            "seedAlgorithm": "first uint32 from SHA-256 of the versioned fixture ID"
+          },
+          "alpha": "Preserved unchanged from the clean reference."
+        },
+        "seed": 2133327673,
+        "noise": {
+          "id": "gaussian-sigma24",
+          "kind": "gaussian",
+          "sigma": 24
+        },
+        "reference": {
+          "path": "fixtures/rome-map-gaussian-sigma24-reference.png",
+          "width": 128,
+          "height": 128,
+          "pngBytes": 47801,
+          "pngSha256": "58f97b7169203b00a24a55974cd2119a66ac02a60ea7e524bbb7e1f645d0b33f",
+          "rgbaSha256": "da6e1ab5521011522e214579a9ef27c36a0f68c33190628e4b0e2781feb87097"
+        },
+        "input": {
+          "path": "fixtures/rome-map-gaussian-sigma24-input.png",
+          "width": 128,
+          "height": 128,
+          "pngBytes": 64183,
+          "pngSha256": "6f57b91dd0f335e1b2ae42494a390eb79861a9945e75a14d3576c3f12c2626f2",
+          "rgbaSha256": "edaab74ec884b5553094f667baa0297d100561ddc019e372974163086e82dc9e"
+        }
+      },
+      {
+        "id": "rome-map-impulse-2pct",
+        "sourceId": "rome-map",
+        "cropPixelsInSource": {
+          "x": 1420,
+          "y": 640,
+          "width": 256,
+          "height": 256
+        },
+        "derivation": {
+          "decoder": "@jsquash/jpeg decoder pinned by pnpm-lock.yaml; decoded to 8-bit sRGB RGBA.",
+          "resizer": "Production resizeRaster Lanczos3 from the exact registered source crop.",
+          "outputDimensions": {
+            "width": 128,
+            "height": 128
+          },
+          "noise": {
+            "id": "impulse-2pct",
+            "kind": "impulse",
+            "density": 0.02,
+            "seedAlgorithm": "first uint32 from SHA-256 of the versioned fixture ID"
+          },
+          "alpha": "Preserved unchanged from the clean reference."
+        },
+        "seed": 906490672,
+        "noise": {
+          "id": "impulse-2pct",
+          "kind": "impulse",
+          "density": 0.02
+        },
+        "reference": {
+          "path": "fixtures/rome-map-impulse-2pct-reference.png",
+          "width": 128,
+          "height": 128,
+          "pngBytes": 47801,
+          "pngSha256": "58f97b7169203b00a24a55974cd2119a66ac02a60ea7e524bbb7e1f645d0b33f",
+          "rgbaSha256": "da6e1ab5521011522e214579a9ef27c36a0f68c33190628e4b0e2781feb87097"
+        },
+        "input": {
+          "path": "fixtures/rome-map-impulse-2pct-input.png",
+          "width": 128,
+          "height": 128,
+          "pngBytes": 48895,
+          "pngSha256": "34cea145b33923b4aa4264b78322d39e96f9b4572a2d96ca9443f14876f986a5",
+          "rgbaSha256": "959c64165de927193a2a902a557329491fae0fe5b45c6fa1b9cfe9cd77915b09"
+        }
+      }
+    ]
+  },
+  "sources": [
+    {
+      "id": "gold-weight",
+      "title": "Gold Weight (abrammuo): Geometric",
+      "creator": "Asante goldsmith, unidentified",
+      "license": "CC0-1.0",
+      "licenseEvidence": "Cleveland Museum of Art Open Access API: share_license_status=CC0",
+      "sourceUrl": "https://openaccess-cdn.clevelandart.org/1969.265/1969.265_print.jpg",
+      "sourcePageUrl": "https://clevelandart.org/art/1969.265",
+      "imagePath": "../fixtures/cc0/gold-weight.jpg",
+      "imageBytes": 3330155,
+      "imageSha256": "575c3663c372bb43e7da86a253cd9cb3602211bc39e3756332ca682963beb351",
+      "metadataPath": "../fixtures/cc0/gold-weight.metadata.json",
+      "metadataSha256": "a7a15d396f58877f0fa73f5feb705b790710fe81c1ea63b94c1a120ecb70928e",
+      "dimensions": {
+        "width": 2619,
+        "height": 2338
+      }
+    },
+    {
+      "id": "landscape-dordogne",
+      "title": "Landscape Dordogne Château de Hautefort 18",
+      "creator": "Jebulon",
+      "license": "CC0-1.0",
+      "licenseEvidence": "Commons imageinfo extmetadata: LicenseShortName=CC0; LicenseUrl=https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/4/4d/Landscape_Dordogne_Ch%C3%A2teau_de_Hautefort_18.jpg",
+      "sourcePageUrl": "https://commons.wikimedia.org/wiki/File:Landscape_Dordogne_Ch%C3%A2teau_de_Hautefort_18.jpg",
+      "imagePath": "../fixtures/cc0/landscape-dordogne.jpg",
+      "imageBytes": 2140794,
+      "imageSha256": "c3e2eef6af01a10882c83f71ff849d2ffb95220aad0e70e98daf6cf27e1975b7",
+      "metadataPath": "../fixtures/cc0/landscape-dordogne.metadata.json",
+      "metadataSha256": "a00d556a2800aa055d7cea0b052b4166e5e42d9c1f7b4a29a3ab6034aa6d676e",
+      "dimensions": {
+        "width": 4592,
+        "height": 3056
+      }
+    },
+    {
+      "id": "oak-leaves",
+      "title": "New oak leaves with female flowers",
+      "creator": "W.carter",
+      "license": "CC0-1.0",
+      "licenseEvidence": "Commons imageinfo extmetadata: LicenseShortName=CC0; LicenseUrl=https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/8/83/New_oak_leaves_with_female_flowers.jpg",
+      "sourcePageUrl": "https://commons.wikimedia.org/wiki/File:New_oak_leaves_with_female_flowers.jpg",
+      "imagePath": "../fixtures/cc0/oak-leaves.jpg",
+      "imageBytes": 5671146,
+      "imageSha256": "71c0f2fb2fa89385955bca609cf9983d493137a81879005143606d0fa74d2802",
+      "metadataPath": "../fixtures/cc0/oak-leaves.metadata.json",
+      "metadataSha256": "68de096c7215cedd551c66b4c77b281eb48d478105fba0254394bd83c880b2cb",
+      "dimensions": {
+        "width": 3720,
+        "height": 2790
+      }
+    },
+    {
+      "id": "rome-map",
+      "title": "La Pianta Grande di Roma",
+      "creator": "Giovanni Battista Nolli and collaborators",
+      "license": "CC0-1.0",
+      "licenseEvidence": "Cleveland Museum of Art Open Access API: share_license_status=CC0",
+      "sourceUrl": "https://openaccess-cdn.clevelandart.org/2020.276.15/2020.276.15_print.jpg",
+      "sourcePageUrl": "https://clevelandart.org/art/2020.276.15",
+      "imagePath": "../fixtures/cc0/rome-map.jpg",
+      "imageBytes": 3948980,
+      "imageSha256": "4f86a0ae3baa75bd29b690ef005e40029327824ec49f5241fd102e3a06126065",
+      "metadataPath": "../fixtures/cc0/rome-map.metadata.json",
+      "metadataSha256": "d3c8ec700a20ab96be384047944ff1d67115c636c9fc9bf96be76fe3e06daf08",
+      "dimensions": {
+        "width": 3400,
+        "height": 2176
+      }
+    }
+  ]
+}

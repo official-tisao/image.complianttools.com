@@ -14,10 +14,15 @@
 **/coverage
 **/.turbo
 .cache
+apps/web/build
+**/.lvgl
 
-# The web app's static build is what the container serves; allow it through.
-!apps/web/build
-!apps/web/build/**
+# OCR language/script/helper files are fetched directly by the browser from the
+# pinned upstream CDN and cached by the browser. Exclude local caches, retaining
+# only the CDN-blocked model required for Cyrillic OCR.
+apps/web/static/tessdata/*.traineddata
+apps/web/static/tessdata/script/*.traineddata
+!apps/web/static/tessdata/script/Cyrillic.traineddata
 
 # Editor / OS noise
 **/.vscode

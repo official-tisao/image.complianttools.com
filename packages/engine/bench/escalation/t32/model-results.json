@@ -1,0 +1,251 @@
+{
+  "schemaVersion": 1,
+  "benchmark": "P4-21 T32 Real-ESRGAN x2plus scale-2 reconstruction",
+  "model": {
+    "assetId": "realesrgan-x2plus-v0.2.1",
+    "sourceFilename": "RealESRGAN_x2plus.pth",
+    "sourceSizeBytes": 67061725,
+    "sourceSha256": "49fafd45f8fd7aa8d31ab2a22d14d91b536c34494a5cfe31eb5d89c2fa266abb",
+    "onnxFilename": "RealESRGAN_x2plus.onnx",
+    "onnxSizeBytes": 67076002,
+    "onnxSha256": "472e38432b5d27aaa238ca9ceebc6491a82923c67076e3dc770ab2219861ad18",
+    "opset": 17,
+    "basicSRCommit": "651835a1b9d38dbbdaf45750f56906be2364f01a"
+  },
+  "corpus": {
+    "fixtureCount": 4,
+    "manifestSha256": "2eccd74e8dc2d4d57492ffb95717c9efcfc398010b0c7354af6705545ecfe6c5",
+    "tier1ReportSha256": "9b38d881f282ea8664e99fce914a9869163987db3bab95ddd57c1e0537a7aa28"
+  },
+  "runtime": {
+    "python": "3.12.2",
+    "onnxruntime": "1.20.1",
+    "provider": "CPUExecutionProvider",
+    "providers": [
+      "CPUExecutionProvider"
+    ],
+    "intraOpThreads": 1,
+    "interOpThreads": 1
+  },
+  "methodology": {
+    "input": "Read the exact low-resolution PNGs recorded in t32/results.json; convert to RGB; normalize float32 RGB to [0,1]; transpose to NCHW. For x2 pixel-unshuffle divisibility, reflect-pad only the bottom/right to even dimensions, run ONNX, then crop to the original scale-2 dimensions.",
+    "output": "Clamp model output to [0,1], round to 8-bit RGB, save as lossless 8-bit RGBA PNG with alpha 255.",
+    "psnr": "Exact 8-bit RGB channel MSE against the reduced reference; PSNR=10*log10(255^2/MSE).",
+    "ssim": "Mean local SSIM of Rec.601 luminance, using an 11x11 Gaussian window (sigma 1.5), constants C1=(0.01*255)^2 and C2=(0.03*255)^2, clamped-edge extension, and full-resolution window centers.",
+    "latencyComparison": "CPU ONNX Runtime latency is not directly comparable with the prior Tier 1 Node.js CPU latency because the runtimes, execution kernels, and preprocessing paths differ. Both reports state their own timing boundary."
+  },
+  "aggregateQuality": {
+    "meanPsnrRgbDb": 26.637,
+    "meanSsimLuminanceGaussian11x11": 0.765509
+  },
+  "fixtures": [
+    {
+      "id": "landscape-dordogne",
+      "input": {
+        "path": "artifacts/landscape-dordogne-low-resolution.png",
+        "pngSha256": "7470f1b6cec31e8505158c46e4f484a74349c2cf4c8dabc485ac7085cfbed811",
+        "width": 128,
+        "height": 85,
+        "tensorShape": [
+          1,
+          3,
+          86,
+          128
+        ],
+        "normalizedRgbRange": [
+          0.0,
+          1.0
+        ],
+        "reflectPadBottomRight": {
+          "bottom": 1,
+          "right": 0
+        }
+      },
+      "reference": {
+        "path": "artifacts/landscape-dordogne-reference.png",
+        "pngSha256": "497c07b5d0f8b6b053dc2bfb3295219b169781557e366fe4f97844a37af05fba",
+        "width": 256,
+        "height": 170
+      },
+      "output": {
+        "path": "artifacts/landscape-dordogne-realesrgan-x2plus.png",
+        "pngSha256": "ed539633be49645db812e5b97426c18a5bec876a75423fad8087f99d8c3b8066",
+        "rgbaSha256": "147f952cd3b45a784d29a9d43b7c0233acad24d155c1ef9683cd971ca82c50e2",
+        "width": 256,
+        "height": 170
+      },
+      "quality": {
+        "psnrRgbDb": 22.5816,
+        "ssimLuminanceGaussian11x11": 0.676846
+      },
+      "latency": {
+        "samplesMs": [
+          2235.18,
+          2205.651,
+          2300.894
+        ],
+        "medianMs": 2235.18,
+        "p95MsNearestRank": 2300.894,
+        "warmups": 1,
+        "measuredRuns": 3,
+        "scope": "ORT session.run only; excludes PNG decode, tensor preparation, output conversion, metrics, and file writes."
+      }
+    },
+    {
+      "id": "oak-leaves",
+      "input": {
+        "path": "artifacts/oak-leaves-low-resolution.png",
+        "pngSha256": "5dfd3b64092a00acab217f1ab54c908f01729382056a7840be2c0245a243a37b",
+        "width": 128,
+        "height": 96,
+        "tensorShape": [
+          1,
+          3,
+          96,
+          128
+        ],
+        "normalizedRgbRange": [
+          0.0,
+          1.0
+        ],
+        "reflectPadBottomRight": {
+          "bottom": 0,
+          "right": 0
+        }
+      },
+      "reference": {
+        "path": "artifacts/oak-leaves-reference.png",
+        "pngSha256": "afdbb84313810df61368a0836a1b2c582084bcce1cf20e6005b8810a2872d19f",
+        "width": 256,
+        "height": 192
+      },
+      "output": {
+        "path": "artifacts/oak-leaves-realesrgan-x2plus.png",
+        "pngSha256": "5b5ce1e37c202800b342482bdb35a7aa80e139db4ed515cabab4257f34288be1",
+        "rgbaSha256": "20dc6c7eb31d5f3bd1d2caa15bd3062694c950d55042d5a7b863d6a11f762229",
+        "width": 256,
+        "height": 192
+      },
+      "quality": {
+        "psnrRgbDb": 29.035,
+        "ssimLuminanceGaussian11x11": 0.926601
+      },
+      "latency": {
+        "samplesMs": [
+          2468.471,
+          1823.544,
+          2220.877
+        ],
+        "medianMs": 2220.877,
+        "p95MsNearestRank": 2468.471,
+        "warmups": 1,
+        "measuredRuns": 3,
+        "scope": "ORT session.run only; excludes PNG decode, tensor preparation, output conversion, metrics, and file writes."
+      }
+    },
+    {
+      "id": "gold-weight",
+      "input": {
+        "path": "artifacts/gold-weight-low-resolution.png",
+        "pngSha256": "42b7780fae477fdd6dbdeb9dfe684a1cdfc50a2ba859a5d182c1fec03da77944",
+        "width": 128,
+        "height": 114,
+        "tensorShape": [
+          1,
+          3,
+          114,
+          128
+        ],
+        "normalizedRgbRange": [
+          0.0,
+          1.0
+        ],
+        "reflectPadBottomRight": {
+          "bottom": 0,
+          "right": 0
+        }
+      },
+      "reference": {
+        "path": "artifacts/gold-weight-reference.png",
+        "pngSha256": "2e30cab9de942469e9025617b8d4fb90bc277adb5f8948398c9f93c00ceb7c83",
+        "width": 256,
+        "height": 228
+      },
+      "output": {
+        "path": "artifacts/gold-weight-realesrgan-x2plus.png",
+        "pngSha256": "30a74039246590343df39bce7b92eae00b2079532faf1052a74f83a991a4916c",
+        "rgbaSha256": "2afaf82ce389f8e456ced384286e77ba14fd6ca0c361a2ebda0f053a8dd35d66",
+        "width": 256,
+        "height": 228
+      },
+      "quality": {
+        "psnrRgbDb": 28.8928,
+        "ssimLuminanceGaussian11x11": 0.882044
+      },
+      "latency": {
+        "samplesMs": [
+          2494.195,
+          2570.941,
+          2370.515
+        ],
+        "medianMs": 2494.195,
+        "p95MsNearestRank": 2570.941,
+        "warmups": 1,
+        "measuredRuns": 3,
+        "scope": "ORT session.run only; excludes PNG decode, tensor preparation, output conversion, metrics, and file writes."
+      }
+    },
+    {
+      "id": "rome-map",
+      "input": {
+        "path": "artifacts/rome-map-low-resolution.png",
+        "pngSha256": "5dc937cdde47fbb178285369fe4948ea2af9f6e17b7fb6944a7200d56bc1f7f2",
+        "width": 128,
+        "height": 82,
+        "tensorShape": [
+          1,
+          3,
+          82,
+          128
+        ],
+        "normalizedRgbRange": [
+          0.0,
+          1.0
+        ],
+        "reflectPadBottomRight": {
+          "bottom": 0,
+          "right": 0
+        }
+      },
+      "reference": {
+        "path": "artifacts/rome-map-reference.png",
+        "pngSha256": "847af3448398e172b610615d9389b14dfc52d32811f5728aa35173eba5f624e3",
+        "width": 256,
+        "height": 164
+      },
+      "output": {
+        "path": "artifacts/rome-map-realesrgan-x2plus.png",
+        "pngSha256": "646771aa2ee408cc61f5e026a073ff8157337d1fe63217232c5927bf7c865ab5",
+        "rgbaSha256": "d0a20c0c066faf20cd12956e19b696f640e55c0684df83241abb033d4a28077d",
+        "width": 256,
+        "height": 164
+      },
+      "quality": {
+        "psnrRgbDb": 26.0386,
+        "ssimLuminanceGaussian11x11": 0.576543
+      },
+      "latency": {
+        "samplesMs": [
+          2284.227,
+          2018.508,
+          2109.798
+        ],
+        "medianMs": 2109.798,
+        "p95MsNearestRank": 2284.227,
+        "warmups": 1,
+        "measuredRuns": 3,
+        "scope": "ORT session.run only; excludes PNG decode, tensor preparation, output conversion, metrics, and file writes."
+      }
+    }
+  ]
+}

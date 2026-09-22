@@ -1,7 +1,7 @@
 import type { BrowserContext } from '@playwright/test';
 
 const EVERY_REQUEST = '**/*';
-const LOCAL_ORIGIN = 'http://127.0.0.1:4173';
+export const LOCAL_ORIGIN = `http://127.0.0.1:${process.env.PLAYWRIGHT_PORT ?? '4173'}`;
 
 /**
  * Deny the page every request that would leave this machine, proving a tool completes without any

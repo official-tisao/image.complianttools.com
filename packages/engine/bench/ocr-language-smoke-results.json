@@ -1,0 +1,484 @@
+{
+  "generatedAt": "2026-09-21T13:03:54.039Z",
+  "environment": {
+    "browser": "151.0.7922.34",
+    "server": "Local Vite test server",
+    "fixtureMethod": "Decode the exact checked-in self-generated PNG fixtures; no scanned or third-party samples.",
+    "fixtureManifest": {
+      "path": "packages/engine/bench/fixtures/ocr-language/manifest.json",
+      "sha256": "cf7c244148a6c07d3c52bb0c22faeacbe3107fdf2cc8ec5adbc3ac01fddf790f",
+      "renderer": {
+        "browser": "Chromium 151.0.7922.34",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.7922.34 Safari/537.36",
+        "method": "Canvas 2D, white background, #111 text, centered, 48 CSS px, PNG encoded losslessly.",
+        "dimensions": {
+          "width": 1200,
+          "height": 160
+        }
+      }
+    },
+    "runtimeRequests": [
+      {
+        "url": "/tessdata/eng.traineddata",
+        "method": "HEAD"
+      },
+      {
+        "url": "/ocr-runtime/v7.0.0/worker.min.js",
+        "method": "GET"
+      },
+      {
+        "url": "/ocr-runtime/v7.0.0/tesseract-core-relaxedsimd-lstm.wasm.js",
+        "method": "GET"
+      },
+      {
+        "url": "/tessdata/eng.traineddata",
+        "method": "GET"
+      },
+      {
+        "url": "/tessdata/fra.traineddata",
+        "method": "HEAD"
+      },
+      {
+        "url": "/ocr-runtime/v7.0.0/worker.min.js",
+        "method": "GET"
+      },
+      {
+        "url": "/ocr-runtime/v7.0.0/tesseract-core-relaxedsimd-lstm.wasm.js",
+        "method": "GET"
+      },
+      {
+        "url": "/tessdata/fra.traineddata",
+        "method": "GET"
+      },
+      {
+        "url": "/tessdata/spa.traineddata",
+        "method": "HEAD"
+      },
+      {
+        "url": "/ocr-runtime/v7.0.0/worker.min.js",
+        "method": "GET"
+      },
+      {
+        "url": "/ocr-runtime/v7.0.0/tesseract-core-relaxedsimd-lstm.wasm.js",
+        "method": "GET"
+      },
+      {
+        "url": "/tessdata/spa.traineddata",
+        "method": "GET"
+      },
+      {
+        "url": "/tessdata/hin.traineddata",
+        "method": "HEAD"
+      },
+      {
+        "url": "/ocr-runtime/v7.0.0/worker.min.js",
+        "method": "GET"
+      },
+      {
+        "url": "/ocr-runtime/v7.0.0/tesseract-core-relaxedsimd-lstm.wasm.js",
+        "method": "GET"
+      },
+      {
+        "url": "/tessdata/hin.traineddata",
+        "method": "GET"
+      },
+      {
+        "url": "/tessdata/chi_sim.traineddata",
+        "method": "HEAD"
+      },
+      {
+        "url": "/ocr-runtime/v7.0.0/worker.min.js",
+        "method": "GET"
+      },
+      {
+        "url": "/ocr-runtime/v7.0.0/tesseract-core-relaxedsimd-lstm.wasm.js",
+        "method": "GET"
+      },
+      {
+        "url": "/tessdata/chi_sim.traineddata",
+        "method": "GET"
+      },
+      {
+        "url": "/tessdata/deu.traineddata",
+        "method": "HEAD"
+      },
+      {
+        "url": "/ocr-runtime/v7.0.0/worker.min.js",
+        "method": "GET"
+      },
+      {
+        "url": "/ocr-runtime/v7.0.0/tesseract-core-relaxedsimd-lstm.wasm.js",
+        "method": "GET"
+      },
+      {
+        "url": "/tessdata/deu.traineddata",
+        "method": "GET"
+      },
+      {
+        "url": "/tessdata/jpn.traineddata",
+        "method": "HEAD"
+      },
+      {
+        "url": "/ocr-runtime/v7.0.0/worker.min.js",
+        "method": "GET"
+      },
+      {
+        "url": "/ocr-runtime/v7.0.0/tesseract-core-relaxedsimd-lstm.wasm.js",
+        "method": "GET"
+      },
+      {
+        "url": "/tessdata/jpn.traineddata",
+        "method": "GET"
+      },
+      {
+        "url": "/tessdata/ita.traineddata",
+        "method": "HEAD"
+      },
+      {
+        "url": "/ocr-runtime/v7.0.0/worker.min.js",
+        "method": "GET"
+      },
+      {
+        "url": "/ocr-runtime/v7.0.0/tesseract-core-relaxedsimd-lstm.wasm.js",
+        "method": "GET"
+      },
+      {
+        "url": "/tessdata/ita.traineddata",
+        "method": "GET"
+      },
+      {
+        "url": "/tessdata/osd.traineddata",
+        "method": "HEAD"
+      },
+      {
+        "url": "/ocr-runtime/v7.0.0/worker.min.js",
+        "method": "GET"
+      },
+      {
+        "url": "/ocr-runtime/v7.0.0/tesseract-core-relaxedsimd.wasm.js",
+        "method": "GET"
+      },
+      {
+        "url": "/tessdata/osd.traineddata",
+        "method": "GET"
+      },
+      {
+        "url": "/tessdata/eng.traineddata",
+        "method": "HEAD"
+      },
+      {
+        "url": "/tessdata/equ.traineddata",
+        "method": "HEAD"
+      },
+      {
+        "url": "/ocr-runtime/v7.0.0/worker.min.js",
+        "method": "GET"
+      },
+      {
+        "url": "/ocr-runtime/v7.0.0/tesseract-core-relaxedsimd-lstm.wasm.js",
+        "method": "GET"
+      },
+      {
+        "url": "/tessdata/eng.traineddata",
+        "method": "GET"
+      },
+      {
+        "url": "/tessdata/equ.traineddata",
+        "method": "GET"
+      },
+      {
+        "url": "/tessdata/deu_latf.traineddata",
+        "method": "HEAD"
+      },
+      {
+        "url": "/ocr-runtime/v7.0.0/worker.min.js",
+        "method": "GET"
+      },
+      {
+        "url": "/ocr-runtime/v7.0.0/tesseract-core-relaxedsimd-lstm.wasm.js",
+        "method": "GET"
+      },
+      {
+        "url": "/tessdata/deu_latf.traineddata",
+        "method": "GET"
+      }
+    ],
+    "runtimeExternalOrigins": [],
+    "pageErrors": []
+  },
+  "metrics": "Unicode-codepoint CER after NFC normalization and whitespace collapse; exact match uses the same normalization.",
+  "summary": {
+    "languages": 8,
+    "errors": 0,
+    "exactMatches": 7,
+    "meanCharacterErrorRate": 0.007352941176470588
+  },
+  "helperSmoke": {
+    "orientation": {
+      "requestedMode": "helper",
+      "helper": "osd",
+      "inputClockwiseRotationDegrees": 90,
+      "dimensions": {
+        "width": 280,
+        "height": 1800
+      },
+      "output": {
+        "type": "ocr-helper-result",
+        "jobId": "smoke-helper-osd",
+        "helperResult": {
+          "helper": "osd",
+          "script": "Cyrillic",
+          "scriptConfidence": 0,
+          "orientationDegrees": 270,
+          "orientationConfidence": 1.4367523193359375
+        }
+      }
+    },
+    "equation": {
+      "requestedMode": "helper",
+      "helper": "equ",
+      "dimensions": {
+        "width": 1200,
+        "height": 300
+      },
+      "output": {
+        "type": "ocr-helper-result",
+        "jobId": "smoke-helper-equ",
+        "helperResult": {
+          "helper": "equ",
+          "text": "E = mc?\n1+1=2\na’ + b* = C7\n",
+          "confidence": 72
+        }
+      }
+    },
+    "deprecatedAlias": {
+      "requestedLanguage": "frk",
+      "expectedWorkerModel": "deu_latf",
+      "dimensions": {
+        "width": 1200,
+        "height": 160
+      },
+      "output": {
+        "type": "ocr-result",
+        "jobId": "smoke-language-frk-alias",
+        "result": {
+          "text": "Fünf Süße Apfel 123\n",
+          "confidence": 81,
+          "language": "frk",
+          "words": [
+            {
+              "text": "Fünf",
+              "confidence": 96,
+              "bbox": {
+                "x": 271,
+                "y": 47,
+                "w": 151,
+                "h": 56
+              }
+            },
+            {
+              "text": "Süße",
+              "confidence": 48,
+              "bbox": {
+                "x": 438,
+                "y": 47,
+                "w": 155,
+                "h": 56
+              }
+            },
+            {
+              "text": "Apfel",
+              "confidence": 87,
+              "bbox": {
+                "x": 613,
+                "y": 37,
+                "w": 171,
+                "h": 81
+              }
+            },
+            {
+              "text": "123",
+              "confidence": 96,
+              "bbox": {
+                "x": 811,
+                "y": 49,
+                "w": 116,
+                "h": 54
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  "results": [
+    {
+      "language": "eng",
+      "groundTruth": "THE QUICK BROWN FOX 123",
+      "inputSha256": "7c4425a91d8b2a5a1c87a62da97e36dcf41d6227cf698a5b59ca365234afc122",
+      "fixturePath": "packages/engine/bench/fixtures/ocr-language/eng.png",
+      "fixturePngSha256": "3b2ab2cf93a2255c728d12023915f40fe82557c703053a4d6e07787aa90ade47",
+      "dimensions": {
+        "width": 1200,
+        "height": 160
+      },
+      "fontStack": "Arial, sans-serif",
+      "output": {
+        "type": "ocr-result",
+        "language": "eng",
+        "text": "THE QUICK BROWN FOX 123\n",
+        "confidence": 96
+      },
+      "error": null,
+      "characterErrorRate": 0,
+      "exactMatch": true
+    },
+    {
+      "language": "fra",
+      "groundTruth": "École française, ça va ? 123",
+      "inputSha256": "6155155e38c4293ca1263a753f301e085e418c95a303c482049984e4f221b43e",
+      "fixturePath": "packages/engine/bench/fixtures/ocr-language/fra.png",
+      "fixturePngSha256": "9723a6aa992b30084aebf695a5f0466493f381ae87c8eeb7e999a44610732626",
+      "dimensions": {
+        "width": 1200,
+        "height": 160
+      },
+      "fontStack": "Arial, sans-serif",
+      "output": {
+        "type": "ocr-result",
+        "language": "fra",
+        "text": "École française, ça va ? 123\n",
+        "confidence": 94
+      },
+      "error": null,
+      "characterErrorRate": 0,
+      "exactMatch": true
+    },
+    {
+      "language": "spa",
+      "groundTruth": "¡Árbol, niño y café! 123",
+      "inputSha256": "e5b5893a68e8dea86e78f195a2c663bce64c160dc1de6ff6697bc705a9b53ca6",
+      "fixturePath": "packages/engine/bench/fixtures/ocr-language/spa.png",
+      "fixturePngSha256": "b11a71ba0317f9d50ca91a9da96c38f3f5f80b1f0025506afbf363b5554a9278",
+      "dimensions": {
+        "width": 1200,
+        "height": 160
+      },
+      "fontStack": "Arial, sans-serif",
+      "output": {
+        "type": "ocr-result",
+        "language": "spa",
+        "text": "¡Árbol, niño y café! 123\n",
+        "confidence": 95
+      },
+      "error": null,
+      "characterErrorRate": 0,
+      "exactMatch": true
+    },
+    {
+      "language": "hin",
+      "groundTruth": "नमस्ते दुनिया 123",
+      "inputSha256": "3e24a6e67eaf3d85293727bc8b0ece24a559bdbf0f01e42e7cbf4c4fd0243aad",
+      "fixturePath": "packages/engine/bench/fixtures/ocr-language/hin.png",
+      "fixturePngSha256": "f9abe1c97f75de30fb520403a7073694b88f211a18b95b2b09baa2f4dfb91001",
+      "dimensions": {
+        "width": 1200,
+        "height": 160
+      },
+      "fontStack": "Nirmala UI, Noto Sans Devanagari, sans-serif",
+      "output": {
+        "type": "ocr-result",
+        "language": "hin",
+        "text": "नमस्ते दुनिया 423\n",
+        "confidence": 59
+      },
+      "error": null,
+      "characterErrorRate": 0.058823529411764705,
+      "exactMatch": false
+    },
+    {
+      "language": "chi_sim",
+      "groundTruth": "你好世界 123",
+      "inputSha256": "6c249fbdd808b179356ebe5fcfdefefb7082bcc51a90f5fc03392383c2ec5bd4",
+      "fixturePath": "packages/engine/bench/fixtures/ocr-language/chi_sim.png",
+      "fixturePngSha256": "676f6293dda0ba37d2904230f2457b7e8da0954ba48821c5dad258f2b692640f",
+      "dimensions": {
+        "width": 1200,
+        "height": 160
+      },
+      "fontStack": "Microsoft YaHei, Noto Sans CJK SC, sans-serif",
+      "output": {
+        "type": "ocr-result",
+        "language": "chi_sim",
+        "text": "你好世界 123\n",
+        "confidence": 95
+      },
+      "error": null,
+      "characterErrorRate": 0,
+      "exactMatch": true
+    },
+    {
+      "language": "deu",
+      "groundTruth": "Fünf süße Äpfel 123",
+      "inputSha256": "2c76345fe3f39a69b4a2ebc605d7e508a1bed1becf32814a74e46c6581a37505",
+      "fixturePath": "packages/engine/bench/fixtures/ocr-language/deu.png",
+      "fixturePngSha256": "dd602dd9c6ab44ce3d411bd5c162ecaba4c65cd456cf0b44cba4c27d318b4bce",
+      "dimensions": {
+        "width": 1200,
+        "height": 160
+      },
+      "fontStack": "Arial, sans-serif",
+      "output": {
+        "type": "ocr-result",
+        "language": "deu",
+        "text": "Fünf süße Äpfel 123\n",
+        "confidence": 96
+      },
+      "error": null,
+      "characterErrorRate": 0,
+      "exactMatch": true
+    },
+    {
+      "language": "jpn",
+      "groundTruth": "こんにちは世界 123",
+      "inputSha256": "bbc5fcf24c651667f21e57403826c9897130c7c01fdb45d70d0e836036f49688",
+      "fixturePath": "packages/engine/bench/fixtures/ocr-language/jpn.png",
+      "fixturePngSha256": "84ad24b9485351e7233c6bb6712d92b8dbd4cf37fc6c97b936a8324031ae2fb9",
+      "dimensions": {
+        "width": 1200,
+        "height": 160
+      },
+      "fontStack": "Yu Gothic, Noto Sans CJK JP, sans-serif",
+      "output": {
+        "type": "ocr-result",
+        "language": "jpn",
+        "text": "こんにちは世界 123\n",
+        "confidence": 91
+      },
+      "error": null,
+      "characterErrorRate": 0,
+      "exactMatch": true
+    },
+    {
+      "language": "ita",
+      "groundTruth": "Città italiana, caffè 123",
+      "inputSha256": "81303b47e0758472d6066f5cceeb3f0ee3eb1f4885f01f95ad134d471b7416fa",
+      "fixturePath": "packages/engine/bench/fixtures/ocr-language/ita.png",
+      "fixturePngSha256": "8a19450be01b68fd509bd47f8030b0594be793b78c16c5d032f7807c88ab3202",
+      "dimensions": {
+        "width": 1200,
+        "height": 160
+      },
+      "fontStack": "Arial, sans-serif",
+      "output": {
+        "type": "ocr-result",
+        "language": "ita",
+        "text": "Città italiana, caffè 123\n",
+        "confidence": 96
+      },
+      "error": null,
+      "characterErrorRate": 0,
+      "exactMatch": true
+    }
+  ]
+}
