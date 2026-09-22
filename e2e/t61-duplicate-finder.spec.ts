@@ -351,3 +351,55 @@ test('T61 scans the maximum 24-file selection within the Chromium route budget',
   console.info(`T61 24-file route latency: ${elapsedMs.toFixed(1)} ms`);
   expect(elapsedMs).toBeLessThanOrEqual(5_000);
 });
+
+test('T61 scans a local selection after a fresh-page offline reload', async ({
+  page,
+  context,
+  browserName,
+}) => {
+  test.skip(
+    browserName === 'webkit',
+    'WebKit cannot reload this local Blob/File duplicate scan flow while browser networking is offline.',
+  );
+  test.setTimeout(60_000);
+
+  const first = await generatedPng(page);
+  const changed = await generatedPng(page, { variation: 1 });
+  const uploadAndScan = async (suffix: string) => {
+    await page.getByTestId('t61-input').setInputFiles([
+      { name: `offline-original-${suffix}.png`, mimeType: 'image/png', buffer: first },
+      { name: `offline-copy-${suffix}.png`, mimeType: 'image/png', buffer: first },
+      { name: `offline-adjusted-${suffix}.png`, mimeType: 'image/png', buffer: changed },
+    ]);
+    await page.getByTestId('t61-scan').click();
+    await expect(page.getByTestId('t61-exact-group')).toHaveCount(1, { timeout: 15_000 });
+  };
+
+  await page.goto('/find-duplicates');
+  await page.locator('html[data-hydrated="true"]').waitFor();
+  await uploadAndScan('online');
+
+  await page.reload();
+  await page.locator('html[data-hydrated="true"]').waitFor();
+  await page.evaluate(async () => {
+    if (!('serviceWorker' in navigator)) throw new Error('Service workers are unavailable');
+    await navigator.serviceWorker.ready;
+    if (!navigator.serviceWorker.controller) {
+      await new Promise<void>((resolve) => {
+        navigator.serviceWorker.addEventListener('controllerchange', () => resolve(), {
+          once: true,
+        });
+      });
+    }
+  });
+
+  await context.setOffline(true);
+  try {
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.locator('html[data-hydrated="true"]').waitFor();
+    await uploadAndScan('offline');
+    await expect(page.getByTestId('t61-error')).toHaveCount(0);
+  } finally {
+    await context.setOffline(false);
+  }
+});

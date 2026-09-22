@@ -141,6 +141,7 @@ test('T81 reports the unchanged-image fallback for a uniform saliency profile', 
   page,
 }) => {
   await page.goto('/adaptive-resize');
+  await expect(page.locator('html')).toHaveAttribute('data-hydrated', 'true');
   const png = await generatedPng(page, 32, 24, 'uniform');
   await page
     .getByTestId('t81-input')
@@ -181,6 +182,63 @@ test('T81 rejects invalid dimensions and an over-constrained painted mask with r
   await expect(page.getByRole('alert')).toContainText(
     'Increase the target size or clear/reduce the protected area',
   );
+});
+
+test('T81 reports malformed and undecodable PNGs with typed remedies', async ({ page }) => {
+  await page.goto('/adaptive-resize');
+  await expect(page.locator('html')).toHaveAttribute('data-hydrated', 'true');
+  const valid = Buffer.from(await generatedPng(page, 8, 8));
+  const idatType = valid.indexOf(Buffer.from('IDAT'));
+  const iendType = valid.indexOf(Buffer.from('IEND'));
+  if (idatType < 4 || iendType < 4) throw new Error('Generated PNG has no IDAT/IEND chunk.');
+  // Keep a valid signature and IHDR, then jump straight to IEND. This reaches
+  // the route's invalid-png branch without asking a decoder to parse corrupt data.
+  const malformed = Buffer.concat([
+    valid.subarray(0, idatType - 4),
+    valid.subarray(iendType - 4, iendType + 8),
+  ]);
+  await page.getByTestId('t81-input').setInputFiles({
+    name: 'malformed.png',
+    mimeType: 'image/png',
+    buffer: malformed,
+  });
+  await expect(page.getByRole('alert')).toHaveAttribute('data-error-kind', 'invalid-png');
+  await expect(page.getByRole('alert')).toContainText('Export a valid PNG');
+
+  await page.getByTestId('t81-input').setInputFiles({
+    name: 'decode-failure.png',
+    mimeType: 'image/png',
+    buffer: await generatedPng(page, 8, 8),
+  });
+  await expect(page.getByTestId('t81-run')).toBeEnabled();
+  await page.evaluate(() => {
+    Object.defineProperty(window, 'createImageBitmap', {
+      configurable: true,
+      value: async () => {
+        throw new Error('simulated decode failure');
+      },
+    });
+  });
+  await page.getByTestId('t81-run').click();
+  await expect(page.getByRole('alert')).toHaveAttribute('data-error-kind', 'decode-failed');
+  await expect(page.getByRole('alert')).toContainText('Export a valid, non-animated PNG');
+});
+
+test('T81 reports a valid-PNG canvas failure with a typed remedy', async ({ page }) => {
+  await page.goto('/adaptive-resize');
+  await page.getByTestId('t81-input').setInputFiles({
+    name: 'canvas-failure.png',
+    mimeType: 'image/png',
+    buffer: await generatedPng(page, 8, 8),
+  });
+  await expect(page.getByTestId('t81-run')).toBeEnabled();
+  await page.evaluate(() => {
+    HTMLCanvasElement.prototype.getContext = (() =>
+      null) as typeof HTMLCanvasElement.prototype.getContext;
+  });
+  await page.getByTestId('t81-run').click();
+  await expect(page.getByRole('alert')).toHaveAttribute('data-error-kind', 'canvas-unavailable');
+  await expect(page.getByRole('alert')).toContainText('local 2D canvas support');
 });
 
 test('T81 resizes a local PNG after external network is blocked', async ({ page, context }) => {

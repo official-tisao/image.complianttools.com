@@ -347,6 +347,8 @@ test('T32 DCCI and NEDI scale PNGs in a worker, preview and download match, and 
   await expect(page.getByTestId('t32-status')).toHaveText(
     'PNG ready. Choose a method and scale factor.',
   );
+  await expect(page.getByTestId('option-t32-method').locator('select')).toHaveValue('dcci');
+  await expect(page.getByTestId('option-t32-factor').locator('select')).toHaveValue('2');
 
   for (const method of ['dcci', 'nedi'] as const) {
     await page.getByTestId('option-t32-method').locator('select').selectOption(method);

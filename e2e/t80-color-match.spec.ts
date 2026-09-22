@@ -234,6 +234,53 @@ test('T80 rejects unsupported, oversized, and animated PNG inputs with typed rec
   await expect(page.getByRole('alert')).toContainText('6 megapixels');
 });
 
+test('T80 rejects a pair over the total pixel limit before decoding', async ({ page }) => {
+  await page.goto('/color-match');
+  await expect(page.locator('html')).toHaveAttribute('data-hydrated', 'true');
+  const source = Buffer.from(await generatedPng(page, 2, 2, [20, 30, 40], [80, 90, 100]));
+  const reference = Buffer.from(source);
+  // The selection validator reads PNG dimensions before decoding, so these tiny
+  // fixtures can exercise the 8 MP aggregate guard without allocating 10 MP.
+  source.writeUInt32BE(2_500, 16);
+  source.writeUInt32BE(2_000, 20);
+  reference.writeUInt32BE(2_500, 16);
+  reference.writeUInt32BE(2_000, 20);
+  await page.getByTestId('t80-source-input').setInputFiles({
+    name: 'aggregate-source.png',
+    mimeType: 'image/png',
+    buffer: source,
+  });
+  await page.getByTestId('t80-reference-input').setInputFiles({
+    name: 'aggregate-reference.png',
+    mimeType: 'image/png',
+    buffer: reference,
+  });
+  await expect(page.getByTestId('t80-run')).toBeEnabled();
+  await page.getByTestId('t80-run').click();
+  await expect(page.getByRole('alert')).toHaveAttribute('data-error-kind', 'image-too-large');
+  await expect(page.getByRole('alert')).toContainText('8 megapixels');
+});
+
+test('T80 reports a valid-PNG canvas failure with a typed remedy', async ({ page }) => {
+  await page.goto('/color-match');
+  await waitForHydration(page);
+  const { source, reference } = await generatedPair(page);
+  await page
+    .getByTestId('t80-source-input')
+    .setInputFiles({ name: 'canvas-source.png', mimeType: 'image/png', buffer: source });
+  await page
+    .getByTestId('t80-reference-input')
+    .setInputFiles({ name: 'canvas-reference.png', mimeType: 'image/png', buffer: reference });
+  await expect(page.getByTestId('t80-run')).toBeEnabled();
+  await page.evaluate(() => {
+    HTMLCanvasElement.prototype.getContext = (() =>
+      null) as typeof HTMLCanvasElement.prototype.getContext;
+  });
+  await page.getByTestId('t80-run').click();
+  await expect(page.getByRole('alert')).toHaveAttribute('data-error-kind', 'canvas-unavailable');
+  await expect(page.getByRole('alert')).toContainText('local 2D canvas support');
+});
+
 test('T80 reports decode and worker failures with typed remedies', async ({ page }) => {
   await page.goto('/color-match');
   await waitForHydration(page);

@@ -122,6 +122,7 @@ test('T27 uses local center, thirds, and approximate saliency crops and the PNG 
     if (origin && new URL(request.url()).origin !== origin) externalRequests.push(request.url());
   });
   await page.goto('/smart-crop');
+  await page.locator('html[data-hydrated="true"]').waitFor();
   origin = new URL(page.url()).origin;
   await page.getByTestId('t27-file-input').setInputFiles({
     name: 'pattern.png',
@@ -130,6 +131,9 @@ test('T27 uses local center, thirds, and approximate saliency crops and the PNG 
   });
   await expect(page.getByTestId('t27-selected')).toContainText('4 × 2', { timeout: 15_000 });
   await expect(page.getByLabel('Crop aspect ratio')).toHaveValue('original');
+  await expect(
+    page.getByRole('group', { name: 'Crop placement' }).getByRole('button', { name: 'Center' }),
+  ).toHaveAttribute('aria-pressed', 'true');
 
   await page.getByTestId('t27-run').click();
   await expect(page.getByTestId('t27-output-dimensions')).toContainText('4 × 2');
