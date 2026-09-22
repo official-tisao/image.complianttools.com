@@ -115,6 +115,7 @@ const firstPartyControlFiles = new Set([
   '_redirects',
   'favicon.ico',
   't32-runtime-config.json',
+  'sw.js',
 ]);
 
 export async function verifyStaticAssets(): Promise<void> {

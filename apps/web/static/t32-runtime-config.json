@@ -9,5 +9,8 @@
       "primaryUrlBase64": "aHR0cHM6Ly9odWdnaW5nZmFjZS5jby9mZXJuYW5kb3Rvbm9uL1F0TWVzaEVkaXRvci1tb2RlbHMvcmVzb2x2ZS9kMTQxMTlhNDBkZmVlZjIwOGU0ZTcyNGRmYWNlYjI2NDBkMmRmOTViL1JlYWxFU1JHQU5feDRwbHVzLm9ubng=",
       "fallbackUrlBase64": ""
     }
+  },
+  "faceDetection": {
+    "yunetUrlBase64": "aHR0cHM6Ly9tZWRpYS5naXRodWJ1c2VyY29udGVudC5jb20vbWVkaWEvb3BlbmN2L29wZW5jdl96b28vNDc1MzRlMjdjOTg1MWJiMTEyOGNjYzAxMDJmMTE0NWUyN2YyM2Y5OC9tb2RlbHMvZmFjZV9kZXRlY3Rpb25feXVuZXQvZmFjZV9kZXRlY3Rpb25feXVuZXRfMjAyM21hci5vbm54"
   }
 }

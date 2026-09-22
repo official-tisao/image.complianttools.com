@@ -1,0 +1,199 @@
+{
+  "schemaVersion": 1,
+  "benchmark": "T57 real-browser inference over the generated synthetic face fixtures",
+  "scope": "Synthetic functional/edge-case behavior only; not real-photo detection accuracy.",
+  "measuredAt": "2026-09-21T20:52:35.303Z",
+  "browser": "Chromium 151.0.7922.34",
+  "runner": {
+    "node": "22.22.0",
+    "platform": "win32 x64",
+    "cpu": "Intel(R) Core(TM) i7-10750H CPU @ 2.60GHz",
+    "server": "local production preview"
+  },
+  "model": {
+    "id": "opencv-zoo-yunet-face-detection-2023mar",
+    "sourceUrl": "https://media.githubusercontent.com/media/opencv/opencv_zoo/47534e27c9851bb1128ccc0102f1145e27f23f98/models/face_detection_yunet/face_detection_yunet_2023mar.onnx",
+    "sizeBytes": 232589,
+    "sha256": "8f2383e4dd3cfbb4553ea8718107fc0423210dc964f9f4280604804ed2552fa4",
+    "license": "MIT (the upstream YuNet model directory states all files in that directory are MIT licensed)"
+  },
+  "corpus": {
+    "license": "CC0-1.0",
+    "fixtureManifestSha256": "cc9149c1449d0b1e8ff46366e04b9a3836af10ea4529d12f5dacb5617c2cafb5",
+    "fixtures": [
+      {
+        "id": "single-centered",
+        "dimensions": {
+          "width": 160,
+          "height": 160
+        },
+        "groundTruthFaceBoxes": [
+          {
+            "x": 50,
+            "y": 28,
+            "width": 60,
+            "height": 76
+          }
+        ],
+        "predictions": [
+          {
+            "x": 47,
+            "y": 27,
+            "width": 67,
+            "height": 79
+          }
+        ],
+        "notice": "Added 1 suggested region. Review and adjust them; missed faces need manual marking.",
+        "elapsedMs": 2408,
+        "matches": [
+          {
+            "prediction": {
+              "x": 47,
+              "y": 27,
+              "width": 67,
+              "height": 79
+            },
+            "groundTruthIndex": 0,
+            "iou": 0.8615152087662951
+          }
+        ],
+        "truePositives": 1,
+        "falsePositives": 0,
+        "falseNegatives": 0,
+        "scopeLimit": "One centered, front-facing synthetic face; exact box and basic blur/export behavior."
+      },
+      {
+        "id": "two-faces",
+        "dimensions": {
+          "width": 224,
+          "height": 160
+        },
+        "groundTruthFaceBoxes": [
+          {
+            "x": 24,
+            "y": 44,
+            "width": 52,
+            "height": 66
+          },
+          {
+            "x": 136,
+            "y": 30,
+            "width": 60,
+            "height": 78
+          }
+        ],
+        "predictions": [
+          {
+            "x": 131,
+            "y": 30,
+            "width": 67,
+            "height": 85
+          },
+          {
+            "x": 19,
+            "y": 42,
+            "width": 60,
+            "height": 73
+          }
+        ],
+        "notice": "Added 2 suggested regions. Review and adjust them; missed faces need manual marking.",
+        "elapsedMs": 405,
+        "matches": [
+          {
+            "prediction": {
+              "x": 131,
+              "y": 30,
+              "width": 67,
+              "height": 85
+            },
+            "groundTruthIndex": 1,
+            "iou": 0.8217734855136084
+          },
+          {
+            "prediction": {
+              "x": 19,
+              "y": 42,
+              "width": 60,
+              "height": 73
+            },
+            "groundTruthIndex": 0,
+            "iou": 0.7835616438356164
+          }
+        ],
+        "truePositives": 2,
+        "falsePositives": 0,
+        "falseNegatives": 0,
+        "scopeLimit": "Two separated synthetic faces at different scales; multiple-region mapping and ordering."
+      },
+      {
+        "id": "edge-and-small",
+        "dimensions": {
+          "width": 160,
+          "height": 144
+        },
+        "groundTruthFaceBoxes": [
+          {
+            "x": 0,
+            "y": 20,
+            "width": 40,
+            "height": 64
+          },
+          {
+            "x": 118,
+            "y": 96,
+            "width": 30,
+            "height": 38
+          }
+        ],
+        "predictions": [
+          {
+            "x": 115,
+            "y": 94,
+            "width": 35,
+            "height": 43
+          },
+          {
+            "x": 0,
+            "y": 21,
+            "width": 42,
+            "height": 67
+          }
+        ],
+        "notice": "Added 2 suggested regions. Review and adjust them; missed faces need manual marking.",
+        "elapsedMs": 342,
+        "matches": [
+          {
+            "prediction": {
+              "x": 115,
+              "y": 94,
+              "width": 35,
+              "height": 43
+            },
+            "groundTruthIndex": 1,
+            "iou": 0.7574750830564784
+          },
+          {
+            "prediction": {
+              "x": 0,
+              "y": 21,
+              "width": 42,
+              "height": 67
+            },
+            "groundTruthIndex": 0,
+            "iou": 0.8829712683952348
+          }
+        ],
+        "truePositives": 2,
+        "falsePositives": 0,
+        "falseNegatives": 0,
+        "scopeLimit": "A clipped edge face and a small face; clipping and minimum-region edge cases."
+      }
+    ]
+  },
+  "modelResponses": [
+    {
+      "url": "https://media.githubusercontent.com/media/opencv/opencv_zoo/47534e27c9851bb1128ccc0102f1145e27f23f98/models/face_detection_yunet/face_detection_yunet_2023mar.onnx",
+      "status": 200
+    }
+  ]
+}

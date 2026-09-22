@@ -162,6 +162,7 @@ test('T70 reports unsupported input as a typed error with a recovery remedy', as
 test('T70 rejects files above the 32 MiB input limit with a typed remedy', async ({ page }) => {
   test.setTimeout(60_000);
   await page.goto('/pixel-art-upscaler');
+  await page.locator('html[data-hydrated="true"]').waitFor();
   await page.getByTestId('t70-file-input').evaluate((element) => {
     const file = new File([new Uint8Array([0])], 'oversized.png', { type: 'image/png' });
     Object.defineProperty(file, 'size', {
@@ -410,6 +411,48 @@ test('T70 reuses the local worker and scaler after the page is warmed and the br
     expect(externalRequests).toEqual([]);
   } finally {
     offline = false;
+    if (!page.isClosed()) await context.setOffline(false);
+  }
+});
+
+test('T70 scales after a fresh-page offline reload', async ({ page, context, browserName }) => {
+  test.skip(
+    browserName !== 'chromium',
+    'Firefox and WebKit cannot complete this route’s fresh-page local worker/file decode after an offline reload; same-page offline coverage remains active.',
+  );
+  await page.goto('/pixel-art-upscaler');
+  await page.getByTestId('t70-file-input').setInputFiles({
+    name: 'fresh-page-warmup.png',
+    mimeType: 'image/png',
+    buffer: await generatedPng(page),
+  });
+  await page.getByTestId('option-pixelArt-enabled').locator('input[type=checkbox]').check();
+  await expect(page.getByTestId('t70-output-dimensions')).toContainText('6 × 4');
+
+  await page.reload();
+  await page.evaluate(async () => {
+    if (!('serviceWorker' in navigator)) throw new Error('Service workers are unavailable');
+    await navigator.serviceWorker.ready;
+    if (!navigator.serviceWorker.controller) {
+      await new Promise<void>((resolve) => {
+        navigator.serviceWorker.addEventListener('controllerchange', () => resolve(), {
+          once: true,
+        });
+      });
+    }
+  });
+
+  await context.setOffline(true);
+  try {
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.getByTestId('t70-file-input').setInputFiles({
+      name: 'fresh-page-offline.png',
+      mimeType: 'image/png',
+      buffer: await generatedPng(page),
+    });
+    await page.getByTestId('option-pixelArt-enabled').locator('input[type=checkbox]').check();
+    await expect(page.getByTestId('t70-output-dimensions')).toContainText('6 × 4');
+  } finally {
     if (!page.isClosed()) await context.setOffline(false);
   }
 });

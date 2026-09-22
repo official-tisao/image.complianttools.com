@@ -321,6 +321,82 @@ test('T27 measures local crop preview latency at the 12 MP input limit', async (
   expect(durationMs).toBeLessThanOrEqual(3_000);
 });
 
+test('T27 creates a warm same-page crop preview while offline', async ({ page, context }) => {
+  let origin = '';
+  const externalRequests: string[] = [];
+  page.on('request', (request) => {
+    if (origin && new URL(request.url()).origin !== origin) externalRequests.push(request.url());
+  });
+  await page.goto('/smart-crop');
+  await page.waitForLoadState('networkidle');
+  origin = new URL(page.url()).origin;
+  await page.getByTestId('t27-file-input').setInputFiles({
+    name: 'offline-crop.png',
+    mimeType: 'image/png',
+    buffer: await generatedPng(page),
+  });
+  await expect(page.getByTestId('t27-selected')).toContainText('4 × 2');
+  await expect(page.getByTestId('t27-source')).toHaveJSProperty('naturalWidth', 4);
+
+  await context.setOffline(true);
+  try {
+    await page.getByLabel('Crop aspect ratio').selectOption('square');
+    await page.getByTestId('t27-run').click();
+    await expect(page.getByTestId('t27-output-dimensions')).toContainText('2 × 2');
+    expect(externalRequests).toEqual([]);
+  } finally {
+    if (!page.isClosed()) await context.setOffline(false);
+  }
+});
+
+test('T27 creates a crop preview after a fresh-page offline reload', async ({
+  page,
+  context,
+  browserName,
+}) => {
+  test.skip(
+    browserName !== 'chromium',
+    'Firefox and WebKit cannot complete this route’s fresh-page local worker/file decode after an offline reload; same-page offline coverage remains active.',
+  );
+  await page.goto('/smart-crop');
+  await page.waitForLoadState('networkidle');
+  await page.getByTestId('t27-file-input').setInputFiles({
+    name: 'fresh-page-warmup.png',
+    mimeType: 'image/png',
+    buffer: await generatedPng(page),
+  });
+  await page.getByTestId('t27-run').click();
+  await expect(page.getByTestId('t27-output-dimensions')).toContainText('4 × 2');
+
+  await page.reload();
+  await page.evaluate(async () => {
+    if (!('serviceWorker' in navigator)) throw new Error('Service workers are unavailable');
+    await navigator.serviceWorker.ready;
+    if (!navigator.serviceWorker.controller) {
+      await new Promise<void>((resolve) => {
+        navigator.serviceWorker.addEventListener('controllerchange', () => resolve(), {
+          once: true,
+        });
+      });
+    }
+  });
+
+  await context.setOffline(true);
+  try {
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.getByTestId('t27-file-input').setInputFiles({
+      name: 'fresh-page-offline.png',
+      mimeType: 'image/png',
+      buffer: await generatedPng(page),
+    });
+    await page.getByLabel('Crop aspect ratio').selectOption('square');
+    await page.getByTestId('t27-run').click();
+    await expect(page.getByTestId('t27-output-dimensions')).toContainText('2 × 2');
+  } finally {
+    if (!page.isClosed()) await context.setOffline(false);
+  }
+});
+
 test('T27 static HTML exposes the local crop tool without JavaScript', async ({ browser }) => {
   const context = await browser.newContext({ javaScriptEnabled: false });
   const page = await context.newPage();

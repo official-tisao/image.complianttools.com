@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
+import { allowAllNetwork, denyAllNetwork } from './support/network.js';
 
 async function generatedPng(
   page: import('@playwright/test').Page,
@@ -92,9 +93,9 @@ test('T81 retargets a generated PNG, paints an approximate mask, and downloads t
     .getByTestId('t81-input')
     .setInputFiles({ name: 'fixture.png', mimeType: 'image/png', buffer: png });
   await expect(page.getByTestId('t81-run')).toBeEnabled();
-  await page.getByTestId('t81-width').fill('38');
-  await page.getByTestId('t81-height').fill('30');
-  await page.getByTestId('t81-mask-toggle').check();
+  await page.getByTestId('option-t81-width').locator('input[type="number"]').fill('38');
+  await page.getByTestId('option-t81-height').locator('input[type="number"]').fill('30');
+  await page.getByTestId('option-t81-protectEnabled').locator('input[type="checkbox"]').check();
 
   const canvas = page.getByTestId('t81-mask-canvas');
   await expect(canvas).toHaveAttribute('width', '48');
@@ -144,8 +145,8 @@ test('T81 reports the unchanged-image fallback for a uniform saliency profile', 
   await page
     .getByTestId('t81-input')
     .setInputFiles({ name: 'uniform.png', mimeType: 'image/png', buffer: png });
-  await page.getByTestId('t81-width').fill('24');
-  await page.getByTestId('t81-height').fill('18');
+  await page.getByTestId('option-t81-width').locator('input[type="number"]').fill('24');
+  await page.getByTestId('option-t81-height').locator('input[type="number"]').fill('18');
   await page.getByTestId('t81-run').click();
   await expect(page.getByRole('status')).toContainText(
     'engine returned the original image unchanged',
@@ -162,14 +163,15 @@ test('T81 rejects invalid dimensions and an over-constrained painted mask with r
   await page
     .getByTestId('t81-input')
     .setInputFiles({ name: 'fixture.png', mimeType: 'image/png', buffer: png });
-  await page.getByTestId('t81-width').fill('0');
+  await expect(page.getByTestId('t81-run')).toBeEnabled();
+  await page.getByTestId('option-t81-width').locator('input[type="number"]').fill('0');
   await page.getByTestId('t81-run').click();
   await expect(page.getByRole('alert')).toHaveAttribute('data-error-kind', 'invalid-dimensions');
   await expect(page.getByRole('alert')).toContainText('Set both target dimensions');
 
-  await page.getByTestId('t81-width').fill('1');
-  await page.getByTestId('t81-height').fill('1');
-  await page.getByTestId('t81-mask-toggle').check();
+  await page.getByTestId('option-t81-width').locator('input[type="number"]').fill('1');
+  await page.getByTestId('option-t81-height').locator('input[type="number"]').fill('1');
+  await page.getByTestId('option-t81-protectEnabled').locator('input[type="checkbox"]').check();
   const canvas = page.getByTestId('t81-mask-canvas');
   const bounds = await canvas.boundingBox();
   if (!bounds) throw new Error('The protection mask canvas is not visible.');
@@ -179,4 +181,56 @@ test('T81 rejects invalid dimensions and an over-constrained painted mask with r
   await expect(page.getByRole('alert')).toContainText(
     'Increase the target size or clear/reduce the protected area',
   );
+});
+
+test('T81 resizes a local PNG after external network is blocked', async ({ page, context }) => {
+  const externalRequests: string[] = [];
+
+  await page.goto('/adaptive-resize');
+  await expect(page.locator('html')).toHaveAttribute('data-hydrated', 'true');
+  const appOrigin = new URL(page.url()).origin;
+  page.on('request', (request) => {
+    if (new URL(request.url()).origin !== appOrigin) externalRequests.push(request.url());
+  });
+  const png = await generatedPng(page, 48, 40);
+  await denyAllNetwork(context);
+  try {
+    await page
+      .getByTestId('t81-input')
+      .setInputFiles({ name: 'offline.png', mimeType: 'image/png', buffer: png });
+    await expect(page.getByTestId('t81-run')).toBeEnabled();
+    await page.getByTestId('option-t81-width').locator('input[type="number"]').fill('38');
+    await page.getByTestId('option-t81-height').locator('input[type="number"]').fill('30');
+    await page.getByTestId('t81-run').click();
+    await expect(page.getByTestId('t81-after')).toHaveJSProperty('naturalWidth', 38);
+    await expect(page.getByTestId('t81-after')).toHaveJSProperty('naturalHeight', 30);
+    await expect(page.getByRole('status')).toContainText('Preview ready');
+    expect(externalRequests).toEqual([]);
+  } finally {
+    await allowAllNetwork(context);
+  }
+});
+
+test('T81 retargets a 320-pixel PNG within the Chromium route budget', async ({
+  page,
+  browserName,
+}) => {
+  test.skip(browserName !== 'chromium', 'The route latency budget is calibrated on Chromium.');
+  test.setTimeout(30_000);
+  await page.goto('/adaptive-resize');
+  const png = await generatedPng(page, 320, 320);
+  await page
+    .getByTestId('t81-input')
+    .setInputFiles({ name: '320px.png', mimeType: 'image/png', buffer: png });
+  await expect(page.getByTestId('t81-run')).toBeEnabled();
+  await page.getByTestId('option-t81-width').locator('input[type="number"]').fill('240');
+  await page.getByTestId('option-t81-height').locator('input[type="number"]').fill('240');
+  const startedAt = performance.now();
+  await page.getByTestId('t81-run').click();
+  await expect(page.getByTestId('t81-after')).toHaveJSProperty('naturalWidth', 240, {
+    timeout: 10_000,
+  });
+  const elapsedMs = performance.now() - startedAt;
+  console.info(`T81 320-pixel route latency: ${elapsedMs.toFixed(1)} ms`);
+  expect(elapsedMs).toBeLessThanOrEqual(3_000);
 });
