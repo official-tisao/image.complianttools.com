@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "title": "T57 synthetic face fixtures",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "releaseStatement": "Created for this project and dedicated to the public domain under CC0 1.0 Universal.",
+  "generator": "generate-fixtures.mjs",
+  "generatorSha256": "3ad57dbff15ac5ee210d23acb16e97cfd2efdbadcb17c098d1b0d6ea213522cf",
+  "recipe": {
+    "method": "Deterministic procedural rasterization with fixed geometric facial features and 4x supersampling.",
+    "supersampling": 4,
+    "colorFormat": "opaque RGBA PNG, 8-bit sRGB-like display values",
+    "randomSeed": null,
+    "thirdPartyImageSources": [],
+    "realPersonLikenesses": false
+  },
+  "fixtureCount": 3,
+  "fixtures": [
+    {
+      "id": "single-centered",
+      "path": "fixtures/single-centered.png",
+      "dimensions": {
+        "width": 160,
+        "height": 160
+      },
+      "sizeBytes": 4032,
+      "pngSha256": "68a14801a4f93003329f158404d21ad42dbdcd6016d1644347980abf3c309657",
+      "rgbaSha256": "22a5963d619352d31f9e709a1583396512df6ab0ac128e51b712b6ebb9390486",
+      "groundTruthFaceBoxes": [
+        {
+          "x": 50,
+          "y": 28,
+          "width": 60,
+          "height": 76
+        }
+      ],
+      "purpose": "One centered, front-facing synthetic face; exact box and basic blur/export behavior."
+    },
+    {
+      "id": "two-faces",
+      "path": "fixtures/two-faces.png",
+      "dimensions": {
+        "width": 224,
+        "height": 160
+      },
+      "sizeBytes": 6504,
+      "pngSha256": "daa601a6601fe6f1a22ff5bb52583338357c78b82776a2aade1d855980be07d3",
+      "rgbaSha256": "9a237bf06590b4ddf1d9ea3a1a3c59c315579d9d41f19506357778404a50a804",
+      "groundTruthFaceBoxes": [
+        {
+          "x": 24,
+          "y": 44,
+          "width": 52,
+          "height": 66
+        },
+        {
+          "x": 136,
+          "y": 30,
+          "width": 60,
+          "height": 78
+        }
+      ],
+      "purpose": "Two separated synthetic faces at different scales; multiple-region mapping and ordering."
+    },
+    {
+      "id": "edge-and-small",
+      "path": "fixtures/edge-and-small.png",
+      "dimensions": {
+        "width": 160,
+        "height": 144
+      },
+      "sizeBytes": 4182,
+      "pngSha256": "677426272f35a3c89f4f32a826c0e266f30ac64cd09295fcbbf48ddfd385911d",
+      "rgbaSha256": "c115ca47f8bc34ff9f049567621c12da9745572663f01969d09588c9699ef9d6",
+      "groundTruthFaceBoxes": [
+        {
+          "x": 0,
+          "y": 20,
+          "width": 40,
+          "height": 64
+        },
+        {
+          "x": 118,
+          "y": 96,
+          "width": 30,
+          "height": 38
+        }
+      ],
+      "purpose": "A clipped edge face and a small face; clipping and minimum-region edge cases."
+    }
+  ]
+}

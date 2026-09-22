@@ -273,7 +273,25 @@ async function resolveTessdataPath(model: string): Promise<{
     ? modelCodes.map((code) => code.slice('script/'.length)).join('+')
     : model;
   const relativeDirectory = allScripts ? 'script/' : '';
+
+  const bundledCyrillic = modelCodes.includes('script/Cyrillic');
+  if (bundledCyrillic && (await hasLocalTessdata(modelCodes))) {
+    return {
+      langPath: localAssetUrl(`${OCR_LOCAL_LANG_PATH}${relativeDirectory}`),
+      languageModel,
+    };
+  }
+
   if (await hasLocalTessdata(modelCodes)) {
+    return {
+      langPath: localAssetUrl(`${OCR_LOCAL_LANG_PATH}${relativeDirectory}`),
+      languageModel,
+    };
+  }
+
+  // Cyrillic is the one intentionally bundled traineddata file. If its
+  // offline HEAD probe cannot run, still let the local worker attempt it.
+  if (bundledCyrillic) {
     return {
       langPath: localAssetUrl(`${OCR_LOCAL_LANG_PATH}${relativeDirectory}`),
       languageModel,
@@ -282,12 +300,6 @@ async function resolveTessdataPath(model: string): Promise<{
 
   // jsDelivr currently rejects this large file with HTTP 403. It remains the one
   // deliberately bundled traineddata payload; never fall back to the same CDN URL.
-  if (modelCodes.includes('script/Cyrillic')) {
-    throw new Error(
-      'The Cyrillic script model must be available at the bundled /tessdata/script/Cyrillic.traineddata path.',
-    );
-  }
-
   // jsDelivr rejects the 89 MB Latin script model, while its exact pinned GitHub raw
   // source supports CORS/CORP. Keep it lazy, and only select this source after Latin is chosen.
   if (modelCodes.includes('script/Latin')) {

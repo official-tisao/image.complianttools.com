@@ -189,6 +189,7 @@ try {
         )
           .map((byte) => byte.toString(16).padStart(2, '0'))
           .join('');
+        const startedAt = performance.now();
         const worker = createOcrWorker();
         const progress = [];
         const jobId = `smoke-${fixture.language}`;
@@ -222,6 +223,9 @@ try {
           width: imageData.width,
           height: imageData.height,
           fontStack: fixture.font,
+          // Includes worker startup, loading the selected model from the prepared
+          // same-origin cache, and recognition; it excludes image decode/hash work.
+          durationMs: Math.round((performance.now() - startedAt) * 100) / 100,
           output,
           progress,
         };
@@ -245,6 +249,7 @@ try {
       fixturePngSha256: measured.fixturePngSha256,
       dimensions: { width: measured.width, height: measured.height },
       fontStack: measured.fontStack,
+      durationMs: measured.durationMs,
       output:
         measured.output?.type === 'ocr-result'
           ? {
@@ -386,6 +391,13 @@ try {
     };
   }, sourceUrl);
 
+  const latencies = results.map(({ durationMs }) => durationMs).sort((a, b) => a - b);
+  const medianLatencyMs =
+    latencies.length % 2 === 0
+      ? (latencies[latencies.length / 2 - 1] + latencies[latencies.length / 2]) / 2
+      : latencies[Math.floor(latencies.length / 2)];
+  const p95LatencyMs = latencies[Math.ceil(latencies.length * 0.95) - 1];
+
   const output = {
     generatedAt: new Date().toISOString(),
     environment: {
@@ -407,12 +419,16 @@ try {
     },
     metrics:
       'Unicode-codepoint CER after NFC normalization and whitespace collapse; exact match uses the same normalization.',
+    latencyMetric:
+      'Per-language wall time from OCR worker creation through the terminal result, including same-origin selected-model loading and recognition; excludes input decoding and hashing, does not model a fresh CDN transfer or full product-route latency.',
     summary: {
       languages: results.length,
       errors: results.filter((result) => result.error !== null).length,
       exactMatches: results.filter((result) => result.exactMatch).length,
       meanCharacterErrorRate:
         results.reduce((sum, result) => sum + (result.characterErrorRate ?? 0), 0) / results.length,
+      medianWorkerStartupAndRecognitionMs: medianLatencyMs,
+      p95WorkerStartupAndRecognitionMs: p95LatencyMs,
     },
     helperSmoke,
     results,
