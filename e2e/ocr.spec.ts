@@ -275,6 +275,79 @@ test('T62 bundled Cyrillic recognition survives a fresh-page offline reload', as
   }
 });
 
+test('T62 reuses a CDN-delivered language model after a fresh-page external-network block', async ({
+  page,
+  context,
+  browserName,
+}) => {
+  test.skip(
+    browserName === 'webkit',
+    'WebKit cannot reload this local Blob/File OCR flow while browser networking is offline.',
+  );
+  test.setTimeout(300_000);
+  const pinnedEnglishUrl =
+    'https://cdn.jsdelivr.net/gh/tesseract-ocr/tessdata_fast@87416418657359cb625c412a48b6e1d6d41c29bd/eng.traineddata';
+  const externalRequests: string[] = [];
+  const blockedRequests: string[] = [];
+  let offline = false;
+
+  // Force this measurement through the CDN path even when an ignored local test cache exists.
+  await page.route('**/tessdata/eng.traineddata', (route) =>
+    route.fulfill({ status: 404, contentType: 'text/plain', body: 'Not in the local cache.' }),
+  );
+  await page.route(pinnedEnglishUrl, (route) => {
+    if (offline) blockedRequests.push(route.request().url());
+    externalRequests.push(route.request().url());
+    return route.continue();
+  });
+
+  const recognizeEnglish = async (name: string) => {
+    await page.getByLabel('Choose a raster image').setInputFiles({
+      name,
+      mimeType: 'image/png',
+      buffer: await generatedTextPng(page),
+    });
+    await page.getByRole('button', { name: 'Recognize text' }).click();
+    await expect(page.getByTestId('ocr-output')).toContainText('THE QUICK BROWN FOX', {
+      timeout: 180_000,
+    });
+  };
+
+  await page.goto('/ocr');
+  await expect(page.locator('html')).toHaveAttribute('data-hydrated', 'true');
+  await recognizeEnglish('english-cdn-online.png');
+  expect(externalRequests).toContain(pinnedEnglishUrl);
+
+  // Put the page under the service worker before simulating a fresh network-blocked entry. This
+  // mirrors the bundled-model test, while the traineddata itself must come from Tesseract's cache.
+  await page.reload();
+  await expect(page.locator('html')).toHaveAttribute('data-hydrated', 'true');
+  await page.evaluate(async () => {
+    if (!('serviceWorker' in navigator)) throw new Error('Service workers are unavailable');
+    await navigator.serviceWorker.ready;
+    if (!navigator.serviceWorker.controller) {
+      await new Promise<void>((resolve) => {
+        navigator.serviceWorker.addEventListener('controllerchange', () => resolve(), {
+          once: true,
+        });
+      });
+    }
+  });
+  await recognizeEnglish('english-cdn-service-worker-warm.png');
+
+  offline = true;
+  await denyAllNetwork(context);
+  try {
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await expect(page.locator('html')).toHaveAttribute('data-hydrated', 'true');
+    await recognizeEnglish('english-cdn-offline.png');
+    expect(blockedRequests).toEqual([]);
+  } finally {
+    offline = false;
+    await allowAllNetwork(context);
+  }
+});
+
 test('T62 reports a failed pinned model download with a recovery remedy', async ({
   page,
   browserName,
