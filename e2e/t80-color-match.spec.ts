@@ -50,6 +50,10 @@ async function generatedPair(page: import('@playwright/test').Page) {
   };
 }
 
+async function waitForHydration(page: import('@playwright/test').Page) {
+  await expect(page.locator('html')).toHaveAttribute('data-hydrated', 'true');
+}
+
 async function pngWithAnimationControl(page: import('@playwright/test').Page) {
   const png = await generatedPng(page, 2, 2, [30, 50, 70], [90, 110, 130]);
   const idatType = png.indexOf(Buffer.from('IDAT'));
@@ -103,6 +107,7 @@ test('T80 locally matches a generated still-PNG pair and downloads the exact pre
   const outsideRequests: string[] = [];
   let appOrigin = '';
   await page.goto('/color-match');
+  await waitForHydration(page);
   appOrigin = new URL(page.url()).origin;
   page.on('request', (request) => {
     if (new URL(request.url()).origin !== appOrigin) outsideRequests.push(request.url());
@@ -161,6 +166,7 @@ test('T80 locally matches a generated still-PNG pair and downloads the exact pre
 
 test('T80 matching controls work with the keyboard', async ({ page }) => {
   await page.goto('/color-match');
+  await waitForHydration(page);
   const { source, reference } = await generatedPair(page);
   await page
     .getByTestId('t80-source-input')
@@ -184,6 +190,7 @@ test('T80 rejects unsupported, oversized, and animated PNG inputs with typed rec
   page,
 }) => {
   await page.goto('/color-match');
+  await expect(page.locator('html')).toHaveAttribute('data-hydrated', 'true');
   const sourceInput = page.getByTestId('t80-source-input');
   await sourceInput.setInputFiles({
     name: 'not-image.txt',
@@ -228,6 +235,7 @@ test('T80 rejects unsupported, oversized, and animated PNG inputs with typed rec
 
 test('T80 reports decode and worker failures with typed remedies', async ({ page }) => {
   await page.goto('/color-match');
+  await waitForHydration(page);
   const { source, reference } = await generatedPair(page);
   await page
     .getByTestId('t80-source-input')
@@ -235,6 +243,7 @@ test('T80 reports decode and worker failures with typed remedies', async ({ page
   await page
     .getByTestId('t80-reference-input')
     .setInputFiles({ name: 'reference.png', mimeType: 'image/png', buffer: reference });
+  await expect(page.getByTestId('t80-run')).toBeEnabled();
 
   await page.evaluate(() => {
     Object.defineProperty(window, 'createImageBitmap', {
@@ -249,12 +258,14 @@ test('T80 reports decode and worker failures with typed remedies', async ({ page
   await expect(page.getByRole('alert')).toContainText('Export a valid, non-animated PNG');
 
   await page.reload();
+  await waitForHydration(page);
   await page
     .getByTestId('t80-source-input')
     .setInputFiles({ name: 'source.png', mimeType: 'image/png', buffer: source });
   await page
     .getByTestId('t80-reference-input')
     .setInputFiles({ name: 'reference.png', mimeType: 'image/png', buffer: reference });
+  await expect(page.getByTestId('t80-run')).toBeEnabled();
   await page.evaluate(() => {
     Object.defineProperty(window, 'Worker', {
       configurable: true,
@@ -274,6 +285,7 @@ test('T80 cancellation terminates the active worker and reports recovery steps',
   page,
 }) => {
   await page.goto('/color-match');
+  await waitForHydration(page);
   const { source, reference } = await generatedPair(page);
   await page
     .getByTestId('t80-source-input')

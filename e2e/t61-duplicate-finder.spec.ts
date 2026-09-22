@@ -122,6 +122,7 @@ test('T61 finds exact copies and conservative near matches locally; review CSV d
   });
 
   await page.goto('/find-duplicates');
+  await page.locator('html[data-hydrated="true"]').waitFor();
   origin = new URL(page.url()).origin;
   const first = await generatedPng(page);
   const slightlyChanged = await generatedPng(page, { variation: 1 });
@@ -154,6 +155,7 @@ test('T61 finds exact copies and conservative near matches locally; review CSV d
 
 test('T61 reports bounded-input and decode errors with actionable remedies', async ({ page }) => {
   await page.goto('/find-duplicates');
+  await page.locator('html[data-hydrated="true"]').waitFor();
   const input = page.getByTestId('t61-input');
   await input.setInputFiles(
     Array.from({ length: 25 }, (_, index) => ({
@@ -176,6 +178,7 @@ test('T61 reports bounded-input and decode errors with actionable remedies', asy
 
 test('T61 rejects per-file and batch sizes above the advertised limits', async ({ page }) => {
   await page.goto('/find-duplicates');
+  await page.locator('html[data-hydrated="true"]').waitFor();
   const error = page.getByTestId('t61-error');
 
   await setMockFiles(page, [
@@ -198,6 +201,7 @@ test('T61 rejects per-file and batch sizes above the advertised limits', async (
 
 test('T61 rejects unsupported MIME types with a supported-format remedy', async ({ page }) => {
   await page.goto('/find-duplicates');
+  await expect(page.locator('html')).toHaveAttribute('data-hydrated', 'true');
   await page.getByTestId('t61-input').setInputFiles({
     name: 'vector.svg',
     mimeType: 'image/svg+xml',
@@ -217,6 +221,7 @@ test('T61 rejects decoded images above 24 megapixels with a resize remedy', asyn
     });
   });
   await page.goto('/find-duplicates');
+  await page.locator('html[data-hydrated="true"]').waitFor();
   const png = await generatedPng(page);
   await page.getByTestId('t61-input').setInputFiles([
     { name: 'large-a.png', mimeType: 'image/png', buffer: png },
@@ -239,6 +244,7 @@ test('T61 reports secure-hash failures with the secure-context remedy', async ({
     });
   });
   await page.goto('/find-duplicates');
+  await page.locator('html[data-hydrated="true"]').waitFor();
   const png = await generatedPng(page);
   await page.getByTestId('t61-input').setInputFiles([
     { name: 'hash-a.png', mimeType: 'image/png', buffer: png },
@@ -264,6 +270,7 @@ test('T61 supports keyboard operation and cancellation without uploading inputs'
     Object.defineProperty(subtle, 'digest', { configurable: true, value: delayedDigest });
   });
   await page.goto('/find-duplicates');
+  await page.locator('html[data-hydrated="true"]').waitFor();
   const input = page.getByTestId('t61-input');
   await input.focus();
   await expect(input).toBeFocused();

@@ -215,7 +215,74 @@ test('T62 uses the bundled Cyrillic script model from the local script directory
   expect(externalRequests).toEqual([]);
 });
 
-test('T62 reports a failed pinned model download with a recovery remedy', async ({ page }) => {
+test('T62 bundled Cyrillic recognition survives a fresh-page offline reload', async ({
+  page,
+  context,
+  browserName,
+}) => {
+  test.skip(
+    browserName === 'webkit',
+    'WebKit cannot reload this local Blob/File OCR flow while browser networking is offline.',
+  );
+  test.setTimeout(300_000);
+  const selectBundledMode = async () => {
+    const scriptMode = page.getByRole('button', { name: 'Script model', exact: true });
+    await scriptMode.click();
+    await expect(scriptMode).toHaveAttribute('aria-pressed', 'true');
+    await page.getByLabel('Script model').selectOption('script/Cyrillic');
+  };
+  const recognizeBundled = async (name: string) => {
+    await selectBundledMode();
+    await page.getByLabel('Choose a raster image').setInputFiles({
+      name,
+      mimeType: 'image/png',
+      buffer: await generatedTextPng(page),
+    });
+    await page.getByRole('button', { name: 'Recognize text' }).click();
+    await expect(page.getByTestId('ocr-result')).toContainText('script/Cyrillic', {
+      timeout: 180_000,
+    });
+  };
+
+  await page.goto('/ocr');
+  await expect(page.locator('html')).toHaveAttribute('data-hydrated', 'true');
+  await recognizeBundled('cyrillic-online.png');
+
+  await page.reload();
+  await expect(page.locator('html')).toHaveAttribute('data-hydrated', 'true');
+  await page.evaluate(async () => {
+    if (!('serviceWorker' in navigator)) throw new Error('Service workers are unavailable');
+    await navigator.serviceWorker.ready;
+    if (!navigator.serviceWorker.controller) {
+      await new Promise<void>((resolve) => {
+        navigator.serviceWorker.addEventListener('controllerchange', () => resolve(), {
+          once: true,
+        });
+      });
+    }
+  });
+  // Run once while the service worker controls the page so its cache contains
+  // the bundled model GET as well as the worker/core assets.
+  await recognizeBundled('cyrillic-service-worker-warm.png');
+
+  await context.setOffline(true);
+  try {
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await expect(page.locator('html')).toHaveAttribute('data-hydrated', 'true');
+    await recognizeBundled('cyrillic-offline.png');
+  } finally {
+    if (!page.isClosed()) await context.setOffline(false);
+  }
+});
+
+test('T62 reports a failed pinned model download with a recovery remedy', async ({
+  page,
+  browserName,
+}) => {
+  test.skip(
+    browserName === 'webkit',
+    'WebKit does not expose the intercepted cross-origin model failure to the page.',
+  );
   const pinnedEnglishUrl =
     'https://cdn.jsdelivr.net/gh/tesseract-ocr/tessdata_fast@87416418657359cb625c412a48b6e1d6d41c29bd/eng.traineddata';
   const requestedModelUrls: string[] = [];
@@ -267,7 +334,12 @@ test('T62 orientation helper returns page rotation and confidence data', async (
 test('T62 fetches only the pinned OSD model when orientation is first requested', async ({
   page,
   context,
+  browserName,
 }) => {
+  test.skip(
+    browserName === 'webkit',
+    'WebKit resolves the local fallback after the intercepted CDN miss, so it cannot verify the CDN request contract.',
+  );
   test.setTimeout(300_000);
 
   const assetRecords = JSON.parse(await readFile('docs/static-assets.json', 'utf8')) as Array<{

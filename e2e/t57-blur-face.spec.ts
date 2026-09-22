@@ -183,7 +183,12 @@ test('T57 CC0 generated face corpus preserves exact annotated boxes in manual re
 
 test('T57 fetches the registered YuNet model only after the user asks and rejects bad bytes', async ({
   page,
+  browserName,
 }) => {
+  test.skip(
+    browserName === 'webkit',
+    'WebKit does not expose the intercepted cross-origin model failure to the page.',
+  );
   const requests: string[] = [];
   page.on('request', (request) => {
     if (request.url().includes('face_detection_yunet_2023mar.onnx')) requests.push(request.url());
