@@ -114,6 +114,7 @@ export * from './schemas/t80-color-match-options.js';
 export * from './schemas/t81-adaptive-resize-options.js';
 export * from './scheduler/memory-governor.js';
 export * from './security/redaction.js';
+export * from './ai/transport.js';
 export * from './scheduler/worker-pool.js';
 export * from './types.js';
 export * from './wasm/integrity.js';
