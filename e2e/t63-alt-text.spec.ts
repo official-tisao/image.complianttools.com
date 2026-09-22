@@ -169,6 +169,15 @@ test('T63 copies the exact escaped attribute shown in the preview', async ({ pag
 test('T63 reports typed file and draft errors with remedies', async ({ page }) => {
   await page.goto('/alt-text');
   const input = page.getByTestId('t63-file-input');
+  // Firefox can expose the prerendered input for one frame before Svelte has
+  // attached its change handler. Let hydration settle before injecting a file
+  // through the DOM so this accept-filter bypass exercises the route handler.
+  await input.evaluate(
+    async () =>
+      await new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+      ),
+  );
   await input.evaluate((element) => {
     const file = new File(['not an image'], 'unsupported.txt', { type: 'text/plain' });
     const transfer = new DataTransfer();
