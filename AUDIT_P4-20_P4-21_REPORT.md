@@ -24,9 +24,9 @@ The corpus now contains measured entries for T27, T32, T57, T60, T61, T62, T66, 
 ## Current verification
 
 - `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm test:gates`, `pnpm build`, `pnpm verify:route-budgets`, `pnpm size`, engine benchmark, OCR source checks, RAW corpus, and credential-leak verification pass.
-- No-network E2E passed 6/6. The full CI-mode three-browser E2E run passed with 1,081 tests, 32 expected skips, and three tests that passed on retry under browser contention. After adding explicit hydration waits to the affected T60/T70 cases, the nine targeted regressions passed across Chromium, Firefox, and WebKit.
+- No-network E2E passed 6/6. The full CI-mode three-browser E2E run completed with 1,086 passed and 32 expected skips; a Firefox T63 unsupported-file check was stabilized with an explicit post-navigation hydration wait and its focused retry passed 3/3. The generated-control T60/T70/T80/T81 regressions remain covered by the focused cross-browser suites.
 - All four Lighthouse groups passed their 15-run assertions. The refreshed T57 production-preview smoke matched all five synthetic boxes (5 TP, 0 FP, 0 FN; IoU 0.7575–0.8830); the new first-transfer and same-session timings are recorded in the machine-readable result.
-- Embedded fixture generation and C11 `-Wall -Wextra -Werror` compilation against the pinned LVGL v8 and v9 checkouts pass. Arduino AVR Uno and ESP32 sketches also compile against the pinned board libraries.
+- Embedded fixture generation and C11 `-Wall -Wextra -Werror` compilation against the pinned LVGL v8 and v9 checkouts pass. Arduino AVR Uno and ESP32 sketches were not run on this host because `arduino-cli` is unavailable; the CI workflow remains the verification path for those board targets.
 - Docker validation could not complete because Docker Desktop returned HTTP 500 from the local daemon during container inspection; local image/Compose validation remains unverified.
 
 ---
