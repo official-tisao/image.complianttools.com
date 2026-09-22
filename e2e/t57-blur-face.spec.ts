@@ -259,6 +259,63 @@ test('T57 keeps manual blur and PNG export usable offline after a local image is
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 });
 
+test('T57 keeps the manual fixture workflow usable after a fresh-page offline reload', async ({
+  page,
+  context,
+  browserName,
+}) => {
+  test.skip(
+    browserName === 'webkit',
+    'WebKit reports an internal error when reloading this service-worker-controlled page offline.',
+  );
+  await page.goto('/blur-face');
+  await waitForHydration(page);
+  const fixture = await readFile(
+    'packages/engine/bench/escalation/t57/fixtures/single-centered.png',
+  );
+  await page.getByTestId('t57-input').setInputFiles({
+    name: 'fresh-page-warmup.png',
+    mimeType: 'image/png',
+    buffer: fixture,
+  });
+  await expect(page.getByTestId('t57-file-info')).toBeVisible();
+
+  await page.reload();
+  await waitForHydration(page);
+  await page.evaluate(async () => {
+    if (!('serviceWorker' in navigator)) throw new Error('Service workers are unavailable');
+    await navigator.serviceWorker.ready;
+    if (!navigator.serviceWorker.controller) {
+      await new Promise<void>((resolve) => {
+        navigator.serviceWorker.addEventListener('controllerchange', () => resolve(), {
+          once: true,
+        });
+      });
+    }
+  });
+
+  await context.setOffline(true);
+  try {
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await waitForHydration(page);
+    await page.getByTestId('t57-input').setInputFiles({
+      name: 'fresh-page-offline.png',
+      mimeType: 'image/png',
+      buffer: fixture,
+    });
+    await expect(page.getByTestId('t57-file-info')).toBeVisible();
+    await page.getByTestId('t57-region-x').fill('50');
+    await page.getByTestId('t57-region-y').fill('28');
+    await page.getByTestId('t57-region-width').fill('60');
+    await page.getByTestId('t57-region-height').fill('76');
+    await page.getByTestId('t57-add-coordinates').click();
+    await expect(page.getByTestId('t57-status')).toContainText('1 area will be blurred');
+    await expect(page.getByTestId('t57-download')).toBeEnabled();
+  } finally {
+    if (!page.isClosed()) await context.setOffline(false);
+  }
+});
+
 test('T57 is a no-op until a region is marked, then keyboard edits, preview and PNG export work without off-origin requests', async ({
   page,
 }) => {

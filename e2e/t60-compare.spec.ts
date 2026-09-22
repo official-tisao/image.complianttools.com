@@ -480,3 +480,58 @@ test('T60 repeats comparison after same-page worker warm-up with browser network
     await context.setOffline(false);
   }
 });
+
+test('T60 compares a local pair after a fresh-page offline reload', async ({
+  page,
+  context,
+  browserName,
+}) => {
+  test.skip(
+    browserName === 'webkit',
+    'WebKit cannot reload this local Blob/File comparison flow while browser networking is offline.',
+  );
+  test.setTimeout(60_000);
+
+  const source = await generatedPng(page, 128, 96);
+  const uploadPair = async (suffix: string) => {
+    await page.getByTestId('t60-before-input').setInputFiles({
+      name: `offline-before-${suffix}.png`,
+      mimeType: 'image/png',
+      buffer: source,
+    });
+    await page.getByTestId('t60-after-input').setInputFiles({
+      name: `offline-after-${suffix}.png`,
+      mimeType: 'image/png',
+      buffer: source,
+    });
+    await expect(page.getByTestId('t60-results')).toBeVisible({ timeout: 15_000 });
+  };
+
+  await page.goto('/compare');
+  await waitForHydration(page);
+  await uploadPair('online');
+
+  await page.reload();
+  await waitForHydration(page);
+  await page.evaluate(async () => {
+    if (!('serviceWorker' in navigator)) throw new Error('Service workers are unavailable');
+    await navigator.serviceWorker.ready;
+    if (!navigator.serviceWorker.controller) {
+      await new Promise<void>((resolve) => {
+        navigator.serviceWorker.addEventListener('controllerchange', () => resolve(), {
+          once: true,
+        });
+      });
+    }
+  });
+
+  await context.setOffline(true);
+  try {
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await waitForHydration(page);
+    await uploadPair('offline');
+    await expect(page.getByTestId('t60-verdict')).toHaveText('Nearly identical');
+  } finally {
+    await context.setOffline(false);
+  }
+});

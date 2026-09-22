@@ -1,0 +1,22 @@
+{
+  "status": "BLOCKED",
+  "fixture": {
+    "width": 8,
+    "height": 8,
+    "maskPixels": 16,
+    "rgbaSha256": "d797b1dbad341e1c3946c9ec37492f7f45b3cd126bfcce912e29100bcc5b8143"
+  },
+  "noMask": {
+    "width": 8,
+    "height": 8,
+    "byteIdentical": true
+  },
+  "masked": {
+    "width": 8,
+    "height": 8,
+    "changedChannelCount": 8,
+    "rgbaSha256": "40048d09ab287a26e32732885cf4409724616f2b02a9bcc1f7e53ddd33ed7a47"
+  },
+  "elapsedMs": 0.6311,
+  "shortfall": "expandImage does not enlarge the canvas or synthesize a new-area scene; it only inpaints a same-size mask."
+}
