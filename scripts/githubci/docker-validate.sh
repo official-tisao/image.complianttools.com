@@ -7,6 +7,7 @@ set -euo pipefail
 run_id="${GITHUBCI_RUN_ID:-githubci-$(date +%s)-${RANDOM}}"
 image="ctimg-web:${run_id}"
 container="${run_id}-web"
+env_container="${run_id}-web-env"
 compose_container="${run_id}-compose-web"
 override="$(mktemp --suffix=.yml)"
 cleanup() {
@@ -15,7 +16,7 @@ cleanup() {
     docker logs "$container" || true
     docker logs "$compose_container" || true
   fi
-  docker rm -f "$container" "$compose_container" >/dev/null 2>&1 || true
+  docker rm -f "$container" "$env_container" "$compose_container" >/dev/null 2>&1 || true
   docker network rm "${run_id}-network" >/dev/null 2>&1 || true
   docker image rm "$image" >/dev/null 2>&1 || true
   rm -f "$override"
@@ -57,6 +58,17 @@ docker run -d --name "$container" "$image"
 wait_healthy "$container"
 probe "$container"
 
+# A deployer can swap the face model origin through container runtime ENV. The
+# static runtime document carries a URL only; the container never downloads weights.
+test_yunet_url="https://static.example.invalid/models/face_detection_yunet_2023mar.onnx"
+docker run -d --name "$env_container" -e "T57_YUNET_MODEL_URL=$test_yunet_url" "$image"
+wait_healthy "$env_container"
+docker exec -e "EXPECTED_YUNET_URL=$test_yunet_url" "$env_container" sh -ec '
+  config="$(wget -qO- http://127.0.0.1/t32-runtime-config.json)"
+  expected="$(printf "%s" "$EXPECTED_YUNET_URL" | base64 | tr -d "\r\n")"
+  printf "%s" "$config" | grep -Fq "\"yunetUrlBase64\": \"$expected\""
+'
+
 # Validate the real Compose file, overriding only run-specific deployment details.
 # !reset requires Compose >=2.24.4 (included in Dockerfile.githubci).
 printf 'services:\n  web:\n    image: %s\n    container_name: %s\n    ports: !reset []\n    restart: "no"\nnetworks:\n  default:\n    name: %s-network\n' \
@@ -65,4 +77,4 @@ docker compose -p "$run_id" -f docker-compose.yml -f "$override" config -q
 docker compose -p "$run_id" -f docker-compose.yml -f "$override" up -d --no-build --pull never web
 wait_healthy "$compose_container"
 probe "$compose_container"
-echo 'DOCKER_VALIDATE_OK: image, health, HTTP, security headers, concurrent requests, Compose'
+echo 'DOCKER_VALIDATE_OK: image, health, HTTP, security headers, concurrent requests, runtime model URL, Compose'

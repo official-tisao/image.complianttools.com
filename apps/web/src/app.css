@@ -225,14 +225,12 @@ a:focus-visible {
   visibility: hidden;
 }
 .segments,
-.compare-modes,
 .canvas-tools {
   display: flex;
   gap: 4px;
   flex-wrap: wrap;
 }
 .segments button,
-.compare-modes button,
 .canvas-tools button {
   border: 1px solid #1c1a1720;
   background: transparent;
@@ -335,7 +333,7 @@ details summary {
   inset: auto 16px 16px;
   width: calc(100% - 32px);
 }
-.compare-modes {
+.compare-options {
   margin-bottom: 10px;
 }
 .canvas-tools {

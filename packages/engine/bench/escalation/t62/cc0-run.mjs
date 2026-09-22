@@ -162,6 +162,7 @@ try {
       )
         .map((byte) => byte.toString(16).padStart(2, '0'))
         .join('');
+      const startedAt = performance.now();
       const { createOcrWorker } = await import(sourceUrl);
       const worker = createOcrWorker();
       const progress = [];
@@ -188,6 +189,9 @@ try {
       });
       worker.terminate();
       return {
+        // Includes worker startup, same-origin selected-model loading, and OCR;
+        // source decode, crop, and RGBA hashing are outside this interval.
+        durationMs: Math.round((performance.now() - startedAt) * 100) / 100,
         inputSha256,
         width,
         height,
@@ -230,6 +234,7 @@ try {
       crop: sample.crop,
       cropMethod: sample.cropMethod,
       dimensions: { width: measured.width, height: measured.height },
+      durationMs: measured.durationMs,
       rgbaSha256: measured.inputSha256,
       output:
         measured.output?.type === 'ocr-result'
