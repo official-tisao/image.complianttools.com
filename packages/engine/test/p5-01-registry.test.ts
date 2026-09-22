@@ -10,8 +10,8 @@ import {
   registeredCount,
   clearRegistry,
   getProvider,
-} from '../../src/ai/registry.js';
-import { testStubAdapter } from '../../src/ai/adapters/test-stub.js';
+} from '../src/ai/registry.js';
+import { testStubAdapter } from '../src/ai/adapters/test-stub.js';
 
 describe('P5-01 capability-based registry', () => {
   beforeEach(() => {
