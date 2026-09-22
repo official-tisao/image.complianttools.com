@@ -422,7 +422,6 @@
 </script>
 
 <svelte:head>
-  <link rel="canonical" href={canonical} />
   <link rel="alternate" hreflang="en" href={`${origin}/${route}`} />
   <link rel="alternate" hreflang="en-XA" href={`${origin}/en-XA/${route}`} />
   <link rel="alternate" hreflang="ar" href={`${origin}/ar/${route}`} />

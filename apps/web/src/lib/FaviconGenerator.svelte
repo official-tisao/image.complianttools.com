@@ -17,6 +17,9 @@
   let { locale = 'en' }: { locale?: Locale } = $props();
   const t = (key: string, fallback: string, value?: string | number) =>
     translate(locale, key, fallback, value);
+  const canonical = $derived(
+    `https://image.complianttools.com${locale === 'en' ? '' : `/${locale}`}/favicon-generator`,
+  );
 
   let options = $state<FaviconToolOptions>(FaviconToolOptionsSchema.parse({}));
   let sourceFile = $state<File>();
@@ -113,6 +116,18 @@
     setTimeout(() => URL.revokeObjectURL(url), 0);
   }
 </script>
+
+<svelte:head>
+  <title>{t('favicon.title', 'Favicon Generator')}</title>
+  <meta
+    name="description"
+    content={t(
+      'favicon.description',
+      'Create a multi-resolution ICO, PNG icon set, web manifest, and HTML link snippet locally. Your image is never uploaded.',
+    )}
+  />
+  <link rel="canonical" href={canonical} />
+</svelte:head>
 
 <main lang={locale === 'en-XA' ? 'en-XA' : locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}>
   <a href={locale === 'en' ? '/convert' : `/${locale}/convert`}>{t('favicon.back', '← Convert')}</a>
