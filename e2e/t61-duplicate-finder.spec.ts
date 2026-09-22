@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
+import { allowAllNetwork, denyAllNetwork } from './support/network.js';
 
 async function generatedPng(
   page: import('@playwright/test').Page,
@@ -289,4 +290,64 @@ test('T61 supports keyboard operation and cancellation without uploading inputs'
   await page.keyboard.press('Enter');
   await expect(page.getByTestId('t61-error')).toContainText('The scan was cancelled.');
   await expect(page.getByTestId('t61-error')).toContainText('Remedy: Choose images');
+});
+
+test('T61 scans a warmed local selection while external network is blocked', async ({
+  page,
+  context,
+}) => {
+  const externalRequests: string[] = [];
+
+  await page.goto('/find-duplicates');
+  await page.locator('html[data-hydrated="true"]').waitFor();
+  const appOrigin = new URL(page.url()).origin;
+  page.on('request', (request) => {
+    if (new URL(request.url()).origin !== appOrigin) externalRequests.push(request.url());
+  });
+  const first = await generatedPng(page);
+  const changed = await generatedPng(page, { variation: 1 });
+  await denyAllNetwork(context);
+  try {
+    await page.getByTestId('t61-input').setInputFiles([
+      { name: 'offline-original.png', mimeType: 'image/png', buffer: first },
+      { name: 'offline-copy.png', mimeType: 'image/png', buffer: first },
+      { name: 'offline-adjusted.png', mimeType: 'image/png', buffer: changed },
+    ]);
+    await page.getByTestId('t61-scan').click();
+    await expect(page.getByTestId('t61-exact-group')).toHaveCount(1);
+    await expect(page.getByTestId('t61-exact-group')).toContainText('offline-copy.png');
+    await expect(page.getByTestId('t61-error')).toHaveCount(0);
+    expect(externalRequests).toEqual([]);
+  } finally {
+    await allowAllNetwork(context);
+  }
+});
+
+test('T61 scans the maximum 24-file selection within the Chromium route budget', async ({
+  page,
+  browserName,
+}) => {
+  test.skip(browserName !== 'chromium', 'The route latency budget is calibrated on Chromium.');
+  test.setTimeout(30_000);
+  await page.goto('/find-duplicates');
+  await page.locator('html[data-hydrated="true"]').waitFor();
+  const duplicate = await generatedPng(page, { width: 64, height: 48 });
+  const files = [
+    { name: 'batch-00.png', mimeType: 'image/png', buffer: duplicate },
+    { name: 'batch-01.png', mimeType: 'image/png', buffer: duplicate },
+  ];
+  for (let index = 2; index < 24; index += 1) {
+    files.push({
+      name: `batch-${String(index).padStart(2, '0')}.png`,
+      mimeType: 'image/png',
+      buffer: await generatedPng(page, { width: 64, height: 48, variation: index }),
+    });
+  }
+  await page.getByTestId('t61-input').setInputFiles(files);
+  const startedAt = performance.now();
+  await page.getByTestId('t61-scan').click();
+  await expect(page.getByTestId('t61-exact-group')).toHaveCount(1, { timeout: 10_000 });
+  const elapsedMs = performance.now() - startedAt;
+  console.info(`T61 24-file route latency: ${elapsedMs.toFixed(1)} ms`);
+  expect(elapsedMs).toBeLessThanOrEqual(5_000);
 });

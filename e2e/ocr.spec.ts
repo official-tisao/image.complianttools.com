@@ -379,6 +379,7 @@ test('T62 reports a failed pinned model download with a recovery remedy', async 
   const alert = page.getByRole('alert');
   await expect(alert).toContainText('preload the file manually', { timeout: 60_000 });
   expect(requestedModelUrls).toEqual([pinnedEnglishUrl]);
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 });
 
 test('T62 orientation helper returns page rotation and confidence data', async ({ page }) => {

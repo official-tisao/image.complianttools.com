@@ -157,6 +157,9 @@ test('T63 copies the exact escaped attribute shown in the preview', async ({ pag
     mimeType: 'image/png',
     buffer: await generatedPng(page),
   });
+  // The local decode is asynchronous. Wait for the source before asserting the
+  // editable draft and clipboard preview are enabled.
+  await expect(page.getByTestId('t63-preview-image')).toHaveJSProperty('naturalWidth', 16);
   await page.getByTestId('t63-alt-text').fill('A & useful description');
   const preview = await page.getByTestId('t63-attribute').textContent();
   const expected = 'alt="A &amp; useful description"';

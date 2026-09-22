@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
+import { allowAllNetwork, denyAllNetwork } from './support/network.js';
 
 async function generatedPng(
   page: import('@playwright/test').Page,
@@ -326,4 +327,58 @@ test('T80 cancellation terminates the active worker and reports recovery steps',
       () => (window as Window & { __t80WorkerTerminated?: boolean }).__t80WorkerTerminated,
     ),
   ).toBe(true);
+});
+
+test('T80 matches local PNGs after external network is blocked', async ({ page, context }) => {
+  const externalRequests: string[] = [];
+
+  await page.goto('/color-match');
+  await waitForHydration(page);
+  const appOrigin = new URL(page.url()).origin;
+  page.on('request', (request) => {
+    if (new URL(request.url()).origin !== appOrigin) externalRequests.push(request.url());
+  });
+  const { source, reference } = await generatedPair(page);
+  await denyAllNetwork(context);
+  try {
+    await page
+      .getByTestId('t80-source-input')
+      .setInputFiles({ name: 'offline-source.png', mimeType: 'image/png', buffer: source });
+    await page
+      .getByTestId('t80-reference-input')
+      .setInputFiles({ name: 'offline-reference.png', mimeType: 'image/png', buffer: reference });
+    await page.getByTestId('t80-run').click();
+    await expect(page.getByTestId('t80-after')).toHaveJSProperty('naturalWidth', 4);
+    await expect(page.getByRole('status')).toContainText('Preview ready');
+    expect(externalRequests).toEqual([]);
+  } finally {
+    await allowAllNetwork(context);
+  }
+});
+
+test('T80 matches an 8 MP total PNG pair within the Chromium route budget', async ({
+  page,
+  browserName,
+}) => {
+  test.skip(browserName !== 'chromium', 'The route latency budget is calibrated on Chromium.');
+  test.setTimeout(30_000);
+  await page.goto('/color-match');
+  await waitForHydration(page);
+  const source = await generatedPng(page, 2_000, 2_000, [12, 24, 36], [90, 102, 114]);
+  const reference = await generatedPng(page, 2_000, 2_000, [40, 80, 120], [140, 180, 220]);
+  await page
+    .getByTestId('t80-source-input')
+    .setInputFiles({ name: '8mp-source.png', mimeType: 'image/png', buffer: source });
+  await page
+    .getByTestId('t80-reference-input')
+    .setInputFiles({ name: '8mp-reference.png', mimeType: 'image/png', buffer: reference });
+  await expect(page.getByTestId('t80-run')).toBeEnabled();
+  const startedAt = performance.now();
+  await page.getByTestId('t80-run').click();
+  await expect(page.getByTestId('t80-after')).toHaveJSProperty('naturalWidth', 2_000, {
+    timeout: 10_000,
+  });
+  const elapsedMs = performance.now() - startedAt;
+  console.info(`T80 8 MP total route latency: ${elapsedMs.toFixed(1)} ms`);
+  expect(elapsedMs).toBeLessThanOrEqual(5_000);
 });

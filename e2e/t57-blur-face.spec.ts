@@ -256,6 +256,7 @@ test('T57 keeps manual blur and PNG export usable offline after a local image is
   await page.getByTestId('t57-download').click();
   expect((await downloadEvent).suggestedFilename()).toBe('offline-manual-blurred.png');
   expect(externalRequests).toEqual([]);
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 });
 
 test('T57 is a no-op until a region is marked, then keyboard edits, preview and PNG export work without off-origin requests', async ({

@@ -415,6 +415,48 @@ test('T70 reuses the local worker and scaler after the page is warmed and the br
   }
 });
 
+test('T70 scales after a fresh-page offline reload', async ({ page, context, browserName }) => {
+  test.skip(
+    browserName !== 'chromium',
+    'Firefox and WebKit cannot complete this route’s fresh-page local worker/file decode after an offline reload; same-page offline coverage remains active.',
+  );
+  await page.goto('/pixel-art-upscaler');
+  await page.getByTestId('t70-file-input').setInputFiles({
+    name: 'fresh-page-warmup.png',
+    mimeType: 'image/png',
+    buffer: await generatedPng(page),
+  });
+  await page.getByTestId('option-pixelArt-enabled').locator('input[type=checkbox]').check();
+  await expect(page.getByTestId('t70-output-dimensions')).toContainText('6 × 4');
+
+  await page.reload();
+  await page.evaluate(async () => {
+    if (!('serviceWorker' in navigator)) throw new Error('Service workers are unavailable');
+    await navigator.serviceWorker.ready;
+    if (!navigator.serviceWorker.controller) {
+      await new Promise<void>((resolve) => {
+        navigator.serviceWorker.addEventListener('controllerchange', () => resolve(), {
+          once: true,
+        });
+      });
+    }
+  });
+
+  await context.setOffline(true);
+  try {
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.getByTestId('t70-file-input').setInputFiles({
+      name: 'fresh-page-offline.png',
+      mimeType: 'image/png',
+      buffer: await generatedPng(page),
+    });
+    await page.getByTestId('option-pixelArt-enabled').locator('input[type=checkbox]').check();
+    await expect(page.getByTestId('t70-output-dimensions')).toContainText('6 × 4');
+  } finally {
+    if (!page.isClosed()) await context.setOffline(false);
+  }
+});
+
 test('T70 measures one-megapixel 2× processing and PNG export against the existing 12 s upscale budget', async ({
   page,
   browserName,
