@@ -138,36 +138,6 @@
   <meta property="og:description" content="Convert HEIC and HEIF to PNG locally." />
   <meta property="og:type" content="website" />
   <meta property="twitter:card" content="summary" />
-  <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "SoftwareApplication",
-      "name": "HEIC / HEIF Converter",
-      "applicationCategory": "MultimediaApplication",
-      "operatingSystem": "Any",
-      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
-    }
-  </script>
-  <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        {
-          "@type": "ListItem",
-          "position": 1,
-          "name": "Image Tools",
-          "item": "https://image.complianttools.com/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 2,
-          "name": "HEIC / HEIF Converter",
-          "item": "https://image.complianttools.com/heic-converter"
-        }
-      ]
-    }
-  </script>
 </svelte:head>
 
 <main lang={locale === 'en-XA' ? 'en-XA' : locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}>
