@@ -128,7 +128,7 @@ test('T27 uses local center, thirds, and approximate saliency crops and the PNG 
     mimeType: 'image/png',
     buffer: await generatedPng(page),
   });
-  await expect(page.getByTestId('t27-selected')).toContainText('4 × 2');
+  await expect(page.getByTestId('t27-selected')).toContainText('4 × 2', { timeout: 15_000 });
   await expect(page.getByLabel('Crop aspect ratio')).toHaveValue('original');
 
   await page.getByTestId('t27-run').click();

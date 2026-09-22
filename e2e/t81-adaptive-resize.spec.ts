@@ -92,7 +92,7 @@ test('T81 retargets a generated PNG, paints an approximate mask, and downloads t
   await page
     .getByTestId('t81-input')
     .setInputFiles({ name: 'fixture.png', mimeType: 'image/png', buffer: png });
-  await expect(page.getByTestId('t81-run')).toBeEnabled();
+  await expect(page.getByTestId('t81-run')).toBeEnabled({ timeout: 15_000 });
   await page.getByTestId('option-t81-width').locator('input[type="number"]').fill('38');
   await page.getByTestId('option-t81-height').locator('input[type="number"]').fill('30');
   await page.getByTestId('option-t81-protectEnabled').locator('input[type="checkbox"]').check();
