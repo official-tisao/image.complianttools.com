@@ -1,6 +1,6 @@
-# T57 synthetic face fixture suite
+# T57 generated fixture suite
 
-This in-repository corpus contains three deterministic synthetic face scenes released under
+This in-repository generated fixture suite contains three deterministic synthetic face scenes released under
 [CC0 1.0 Universal](LICENSE.txt). The shapes are project-generated and are not photographs or
 likenesses of real people. Each fixture records its exact visible face boxes, dimensions, PNG and
 decoded-pixel SHA-256 hashes, and a fixed generator recipe in `fixtures/manifest.json`.
