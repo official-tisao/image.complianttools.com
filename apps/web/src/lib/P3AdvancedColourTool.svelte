@@ -406,7 +406,7 @@
   {#if outputUrl}<section class="result"><figure><img data-testid="p3a-preview" src={outputUrl} alt={pseudoIf(locale, copy.preview)} /><figcaption>{pseudoIf(locale, copy.preview)}</figcaption></figure><a data-testid="p3a-download" class="button primary" href={outputUrl} download={`${kind}.png`}>{pseudoIf(locale, copy.download)}</a></section>{/if}
   {#if kind === 'color-picker' && palette.length}
     <section class="palette" data-testid="p3a-palette" aria-label={pseudoIf(locale, 'Extracted palette')}>
-      {#each palette as entry, index (index)}<div class="swatch" style={`background:rgb(${entry.r} ${entry.g} ${entry.b})`} title={`rgb(${entry.r}, ${entry.g}, ${entry.b})`}><span>{entry.r},{entry.g},{entry.b}</span></div>{/each}
+      {#each palette as entry (entry.r + ':' + entry.g + ':' + entry.b)}<div class="swatch" style={`background:rgb(${entry.r} ${entry.g} ${entry.b})`} title={`rgb(${entry.r}, ${entry.g}, ${entry.b})`}><span>{entry.r},{entry.g},{entry.b}</span></div>{/each}
     </section>
   {/if}
   <section class="tool-completion faq"><h2>{pseudoIf(locale, 'Questions about this tool')}</h2>{#each faq as item (item.question)}<details><summary>{item.question}</summary><p>{item.answer}</p></details>{/each}</section>
