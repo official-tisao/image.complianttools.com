@@ -851,7 +851,7 @@ Justification Register short.
 - **Spec:** README §17 · **Done when:** every page passes SPCC; every self-hosted command verified against the current release
 
 #### P5-15 · AI-only tools
-- [ ] T64 Generate · T65 Prompt Edit · T71 Describe — STCC
+- [~] T64 Generate · T65 Prompt Edit · T71 Describe — BYOK-only route shells are implemented with explicit consent, HTTPS endpoint validation, in-memory keys, and image payload handling; provider contracts, local descriptive skeleton, and full STCC remain open
 - [ ] T71's **local descriptive skeleton** works with no key
 - **Spec:** README §4.9 · **Done when:** Appendix A rows checked
 
@@ -1094,10 +1094,10 @@ Check a box **only when all twelve STCC items (§0.4) pass.**
 
 **Colour & adjust** — [~] T37 Adjustments `/adjust` · [~] T38 Filters `/filters` · [~] T39 Curves
 `/curves` · [~] T40 Colour Space `/color-space` · [~] T41 Threshold `/threshold` · [~] T42 Enhance
-`/enhance` · [~] T43 Sharpen/Blur `/sharpen` · [ ] T44 Denoise `/denoise` · [~] T45 Colour Picker
+`/enhance` · [~] T43 Sharpen/Blur `/sharpen` · [~] T44 Denoise `/denoise` · [~] T45 Colour Picker
 `/color-picker` · [~] T46 Recolour `/recolor` · [~] T47 Duotone `/duotone`
 
-**Annotate & create** — [ ] T48 Editor `/editor` · [~] T49 Text `/add-text` · [~] T50 Watermark
+**Annotate & create** — [~] T48 Editor `/editor` · [~] T49 Text `/add-text` · [~] T50 Watermark
 `/watermark` · [~] T51 Meme `/meme-generator` · [~] T52 Draw `/draw` · [~] T53 Signature `/signature`
 
 **Privacy & metadata** — [ ] T54 Metadata Viewer `/exif-viewer` · [ ] T55 Metadata Remover
@@ -1107,14 +1107,14 @@ Check a box **only when all twelve STCC items (§0.4) pass.**
 **Analyze** — [ ] T59 Inspector `/image-info` · [ ] T60 Compare `/compare` · [ ] T61 Duplicates
 `/find-duplicates` · [ ] T62 OCR `/ocr` · [ ] T63 Accessibility `/alt-text`
 
-**Cutout, fill, synthesis (local-first)** — [ ] T66 Remove Object `/remove-object` · [~] T67 Expand
+**Cutout, fill, synthesis (local-first)** — [~] T66 Remove Object `/remove-object` · [~] T67 Expand
 `/expand-image` · [~] T68 Remove Background `/remove-background` · [~] T69 Replace Background
 `/replace-background` · [ ] T70 Pixel-Art Upscale `/pixel-art-upscaler` · [~] T77 Cutout Refine
 `/cutout` · [~] T78 Seamless Composite `/composite` · [ ] T79 Procedural Generator `/generate` ·
 [ ] T80 Colour Match `/color-match` · [ ] T81 Adaptive Resize `/adaptive-resize`
 
-**AI-only (Tier 3)** — [ ] T64 Generate `/ai/generate` · [ ] T65 Prompt Edit `/ai/edit` ·
-[ ] T71 Describe `/ai/describe`
+**AI-only (Tier 3)** — [~] T64 Generate `/ai/generate` · [~] T65 Prompt Edit `/ai/edit` ·
+[~] T71 Describe `/ai/describe`
 
 **Batch & developer** — [~] T72 Batch `/batch` · [~] T73 Recipe `/recipe` · [~] T74 Watch `/watch` ·
 [~] T75 Codegen `/codegen` · [ ] T76 CLI & Library
@@ -1403,5 +1403,5 @@ blocked with a reason.
 - [~] W3 privacy and annotation route subsets are implemented and audited as partial; editor integration and full STCC evidence remain open.
 - [~] W4 cutout/composite routes are implemented and audited as partial; labelled corpus and full STCC evidence remain open.
 - [~] W5 batch/long-tail routes are implemented and audited as partial; full Phase 3/6 STCC evidence remains open.
-- [ ] Complete W6 and update Phase 5/7 provider and launch evidence.
+- [~] W6 BYOK route subset is implemented and audited as partial; provider registry, configured-provider contracts, local descriptive skeleton, and full Phase 5/7 evidence remain open.
 - [ ] Re-run the complete CI matrix and reconcile the final audit/register counts.
