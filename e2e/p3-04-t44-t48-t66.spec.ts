@@ -39,6 +39,7 @@ test('denoise route processes a still image without network requests', async ({ 
     mimeType: 'image/png',
     buffer: await fixture(page, [90, 90, 90]),
   });
+  await expect(page.getByTestId('local-tool-run')).toBeEnabled();
   await page.getByTestId('local-tool-run').click();
   await expect(page.getByTestId('local-tool-preview')).toBeVisible();
   expect(outside).toEqual([]);
@@ -57,6 +58,7 @@ test('layered editor composites two local layers', async ({ page }) => {
     buffer: await fixture(page, [180, 40, 20]),
   });
   await page.getByTestId('p48-opacity').fill('0.5');
+  await expect(page.getByTestId('local-tool-run')).toBeEnabled();
   await page.getByTestId('local-tool-run').click();
   await expect(page.getByTestId('local-tool-preview')).toBeVisible();
 });
@@ -68,6 +70,7 @@ test('remove-object lets the user paint a local mask before inpainting', async (
     mimeType: 'image/png',
     buffer: await fixture(page, [240, 240, 240]),
   });
+  await expect(page.getByTestId('local-tool-run')).toBeEnabled();
   const canvas = page.getByTestId('local-source-canvas');
   await expect(canvas).toBeVisible();
   await canvas.scrollIntoViewIfNeeded();
