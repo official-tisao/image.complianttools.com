@@ -179,8 +179,14 @@
           answer: 'Yes. Enable inner border to reserve pixels inside the source bounds.',
         },
       ],
-      labels: { width: 'Border width', color: 'Border colour', inner: 'Inner border' },
+      labels: {
+        enabled: 'Apply border',
+        width: 'Border width',
+        color: 'Border colour',
+        inner: 'Inner border',
+      },
       helps: {
+        enabled: 'Turn the border on after choosing an image.',
         width: 'Use a whole number of pixels.',
         color: 'Choose the border colour.',
         inner: 'Draw inside the existing image bounds.',
@@ -368,6 +374,14 @@
         help: copy.helps.flipV,
       });
     } else {
+      add('enabled', {
+        control: 'toggle',
+        group: 'Border',
+        advanced: false,
+        defaultValue: false,
+        label: copy.labels.enabled ?? 'Apply border',
+        help: copy.helps.enabled,
+      });
       add('width', {
         control: 'number',
         group: 'Border',
@@ -488,7 +502,7 @@
         applyExifOrientation: true,
       };
     return {
-      enabled: true,
+      enabled: Boolean(options.enabled),
       width: Number(options.width ?? 10),
       color: String(options.color ?? '#000000'),
       inner: Boolean(options.inner),

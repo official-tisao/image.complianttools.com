@@ -147,7 +147,7 @@
   let { kind, locale = 'en' }: { kind: Kind; locale?: Locale } = $props();
   const copy = $derived((locale === 'ar' ? COPY.ar : COPY.en)[kind]);
   const pseudo = (value: string) =>
-    `［${value.replace(/[aeiou]/giu, (letter) => ({ a: 'á', e: 'ë', i: 'ï', o: 'ô', u: 'ü' })[letter.toLowerCase()] ?? letter)} ~］`;
+    `⟦${value.replace(/[aeiou]/giu, (letter) => ({ a: 'á', e: 'ë', i: 'ï', o: 'ô', u: 'ü' })[letter.toLowerCase()] ?? letter)}⟧`;
   const t = (value: string) => (locale === 'en-XA' ? pseudo(value) : value);
   const path = $derived(locale === 'en' ? `/${kind}` : `/${locale}/${kind}`);
   const canonical = $derived(`https://image.complianttools.com${path}`);
