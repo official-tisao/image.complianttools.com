@@ -1359,3 +1359,49 @@ Every README change gets a row here, per §0.3. Newest first.
 **Total: 134 tasks across 8 phases, 81 tools, 74 format entries, 10 adapters, ~680 pages.**
 
 Start at **P0-01**.\n\n\n
+
+---
+
+## 17. Long-horizon feature-audit execution ledger (2026-09-23)
+
+The attached manual-testing report was reconciled in `docs/manual-testing-audit-reconciliation.md`.
+It produced no duplicate bug rows. Work below is grouped by shared engine/UI dependencies so that a
+route is not marked complete while its phase task, tests, STCC evidence, and audit row diverge.
+
+### 17.1 Delivery waves
+
+| Wave | Owner group | Scope | Dependency rule |
+| --- | --- | --- | --- |
+| W1 | Transform foundation | T25/T26/T28/T29/T30/T31/T33/T34/T35/T36 | Build on the existing crop/resize/rotate/flip primitives before route shells. |
+| W2 | Colour and restoration | T37/T38/T39/T40/T41/T42/T43/T44/T45/T46/T47 | Reuse one schema-driven adjustment pipeline; clearance exclusions remain explicit. |
+| W3 | Editor and annotation | T48/T49/T50/T51/T52/T53/T56/T58 | Editor canvas/layer model lands before dependent annotation and privacy routes. |
+| W4 | Cutout/composite | T67/T68/T69/T77/T78 | Use existing inpaint/alpha/composite primitives; no uncleared probabilistic model. |
+| W5 | Batch, optimize, long tail | T15/T18/T21/T22/T72/T73/T74/T75 | Recipe/batch contracts land before folder-watch and code-generation adapters. |
+| W6 | BYOK and launch | T64/T65/T71, T40/P7 pages/i18n | Provider registry and consent/error contracts precede any external AI route. |
+
+Each wave must update, in one grouped commit, the engine primitive, schema/UI metadata, route, tests,
+`feature-audit.csv`, and the corresponding plan checkboxes. A wave is pushed when its local gate is
+green; later waves may proceed only when their dependency rows are complete or explicitly marked
+blocked with a reason.
+
+### 17.2 Master integration protocol
+
+- Agents work in isolated worktrees/branches and preserve task-specific conventional commit messages.
+- The master agent reviews each completed wave, resolves conflicts by retaining both route features,
+  runs the affected unit/browser/asset gates, then creates a linear grouped commit and pushes it.
+- Existing audit rows are updated in place. A new `BUG-*` row is allowed only when the reconciliation
+  document shows that no existing row owns the defect.
+- Questions are recorded in the reconciliation document with an industry-standard default; a later
+  user answer becomes a plan/audit revision, not an untracked chat decision.
+
+### 17.3 Current execution state
+
+- [x] Pull `origin/master` and create/push `codex/feature-audit-long-horizon`.
+- [x] Reconcile the attached manual report against `feature-audit.csv`.
+- [ ] Complete W1 and update Phase 3 task/checklist evidence.
+- [ ] Complete W2 and update Phase 3 colour/adjustment evidence.
+- [ ] Complete W3 and update Phase 3 editor/annotation evidence.
+- [ ] Complete W4 and update Phase 4 cutout/composite evidence.
+- [ ] Complete W5 and update Phase 3/6 batch/long-tail evidence.
+- [ ] Complete W6 and update Phase 5/7 provider and launch evidence.
+- [ ] Re-run the complete CI matrix and reconcile the final audit/register counts.
