@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { onDestroy } from 'svelte';
-  import { buildShareLink, parseRecipe } from '@complianttools/image-engine';
+  import { onDestroy, onMount } from 'svelte';
+  import { buildShareLink, migrateRecipe, parseRecipe } from '@complianttools/image-engine';
   import { translate, type Locale } from './i18n';
 
   type LongTailKind =
@@ -105,9 +105,14 @@
     ),
   );
   let generated = $state('');
+  let hydrated = $state(false);
   let batchOutputs = $state<readonly { name: string; url: string; bytes: number }[]>([]);
   let watchArmed = $state(false);
   let watchTimer: ReturnType<typeof setInterval> | undefined;
+
+  onMount(() => {
+    hydrated = true;
+  });
 
   function t(key: string, fallback: string, value?: string | number) {
     return translate(locale, key, fallback, value);
@@ -255,9 +260,9 @@
   }
 
   function makeRecipe() {
-    const recipe = parseRecipe(
-      recipeText.startsWith('r1.') ? recipeText : JSON.stringify(JSON.parse(recipeText)),
-    );
+    const recipe = recipeText.startsWith('r1.')
+      ? parseRecipe(recipeText)
+      : migrateRecipe(JSON.parse(recipeText));
     const link = buildShareLink(recipe, `${location.origin}/recipe`);
     if (link.kind === 'url') {
       generated = link.value;
@@ -395,7 +400,12 @@
     >
   {/if}
 
-  <button data-testid="long-tail-run" type="button" onclick={() => void runTool()}>
+  <button
+    data-testid="long-tail-run"
+    type="button"
+    disabled={!hydrated}
+    onclick={() => void runTool()}
+  >
     {kind === 'watch'
       ? 'Arm folder snapshot'
       : kind === 'codegen'
@@ -420,10 +430,10 @@
     </ul>
   {/if}
   {#if generated}
-    <label class="wide"
-      >Generated output<textarea data-testid="generated-output" readonly value={generated} rows="12"
-      ></textarea></label
-    >
+    <div class="wide">
+      <span>Generated output</span>
+      <pre data-testid="generated-output">{generated}</pre>
+    </div>
   {/if}
 
   <section class="faq">

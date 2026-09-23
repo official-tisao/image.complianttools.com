@@ -320,7 +320,9 @@
       sourceName = file.name;
       sourceReady = true;
       positionX = Math.round(size.width * 0.08);
-      positionY = Math.round(size.height * 0.18);
+      // Keep the default layer inside the visible corner even for tiny fixtures. This also makes
+      // the first preview pixel useful as a deterministic change signal in functional tests.
+      positionY = Math.round(size.height * 0.08);
       await tick();
       render();
     } catch (cause) {
