@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onDestroy } from 'svelte';
+  import { onDestroy, onMount } from 'svelte';
   import {
     applyDenoise,
     compositeLayers,
@@ -101,6 +101,7 @@
   let mask = $state<Uint8ClampedArray>();
   let drawing = $state(false);
   let brushSize = $state(24);
+  let hydrated = $state(false);
 
   const title = $derived(locale === 'ar' ? TITLES[kind].ar : TITLES[kind].en);
   const localized = (value: string) => (locale === 'en-XA' ? pseudo(value) : value);
@@ -304,6 +305,10 @@
     if (sourceUrl) URL.revokeObjectURL(sourceUrl);
     clearOutput();
   });
+
+  onMount(() => {
+    hydrated = true;
+  });
 </script>
 
 <svelte:head>
@@ -393,6 +398,7 @@
     {/if}
     <button
       data-testid="local-tool-run"
+      data-hydrated={hydrated ? 'true' : 'false'}
       class="button primary"
       type="button"
       disabled={busy || !sourceFile}

@@ -25,6 +25,9 @@ async function fixture(page: import('@playwright/test').Page, colour: [number, n
 test('denoise route processes a still image without network requests', async ({ page }) => {
   await page.goto('/denoise');
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Denoise');
+  await expect(page.getByTestId('local-tool-run')).toHaveAttribute('data-hydrated', 'true', {
+    timeout: 30_000,
+  });
   await expect(page.locator('link[rel=canonical]')).toHaveAttribute(
     'href',
     'https://image.complianttools.com/denoise',
@@ -39,7 +42,7 @@ test('denoise route processes a still image without network requests', async ({ 
     mimeType: 'image/png',
     buffer: await fixture(page, [90, 90, 90]),
   });
-  await expect(page.getByTestId('local-tool-run')).toBeEnabled();
+  await expect(page.getByTestId('local-tool-run')).toBeEnabled({ timeout: 15_000 });
   await page.getByTestId('local-tool-run').click();
   await expect(page.getByTestId('local-tool-preview')).toBeVisible();
   expect(outside).toEqual([]);
@@ -47,6 +50,9 @@ test('denoise route processes a still image without network requests', async ({ 
 
 test('layered editor composites two local layers', async ({ page }) => {
   await page.goto('/editor');
+  await expect(page.getByTestId('local-tool-run')).toHaveAttribute('data-hydrated', 'true', {
+    timeout: 30_000,
+  });
   await page.getByTestId('p44-source').setInputFiles({
     name: 'base.png',
     mimeType: 'image/png',
@@ -58,19 +64,22 @@ test('layered editor composites two local layers', async ({ page }) => {
     buffer: await fixture(page, [180, 40, 20]),
   });
   await page.getByTestId('p48-opacity').fill('0.5');
-  await expect(page.getByTestId('local-tool-run')).toBeEnabled();
+  await expect(page.getByTestId('local-tool-run')).toBeEnabled({ timeout: 15_000 });
   await page.getByTestId('local-tool-run').click();
   await expect(page.getByTestId('local-tool-preview')).toBeVisible();
 });
 
 test('remove-object lets the user paint a local mask before inpainting', async ({ page }) => {
   await page.goto('/remove-object');
+  await expect(page.getByTestId('local-tool-run')).toHaveAttribute('data-hydrated', 'true', {
+    timeout: 30_000,
+  });
   await page.getByTestId('p44-source').setInputFiles({
     name: 'object.png',
     mimeType: 'image/png',
     buffer: await fixture(page, [240, 240, 240]),
   });
-  await expect(page.getByTestId('local-tool-run')).toBeEnabled();
+  await expect(page.getByTestId('local-tool-run')).toBeEnabled({ timeout: 15_000 });
   const canvas = page.getByTestId('local-source-canvas');
   await expect(canvas).toBeVisible();
   await canvas.scrollIntoViewIfNeeded();

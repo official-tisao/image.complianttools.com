@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { transportFetch } from '@complianttools/image-engine/ai/transport';
   import { translate, type Locale } from './i18n';
 
@@ -45,6 +46,7 @@
   let status = $state('');
   let error = $state('');
   let result = $state('');
+  let hydrated = $state(false);
 
   function t(key: string, fallback: string) {
     return translate(locale, key, fallback);
@@ -131,6 +133,10 @@
       busy = false;
     }
   }
+
+  onMount(() => {
+    hydrated = true;
+  });
 </script>
 
 <svelte:head>
@@ -203,8 +209,11 @@
       ><input data-testid="ai-consent" type="checkbox" bind:checked={consent} /> I understand that the
       configured provider will receive this request and any included image data.</label
     >
-    <button data-testid="ai-submit" type="submit" disabled={busy}
-      >{busy ? 'Waiting…' : copy[kind].action}</button
+    <button
+      data-testid="ai-submit"
+      data-hydrated={hydrated ? 'true' : 'false'}
+      type="submit"
+      disabled={busy}>{busy ? 'Waiting…' : copy[kind].action}</button
     >
   </form>
   {#if status}<p role="status" data-testid="ai-status">{status}</p>{/if}
