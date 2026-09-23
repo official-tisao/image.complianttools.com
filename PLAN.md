@@ -561,8 +561,8 @@ message, no remedy, work lost.
 - **Spec:** README §4.5, §25.3.3 · **Done when:** STCC; trademark/asset gates pass
 
 #### P3-11 · Privacy tools (T56, T58)
-- [ ] T56 Blur/Pixelate Region (rect, ellipse, freehand)
-- [ ] T58 Redact — **irreversible: pixels replaced, not overlaid**, with a verification pass
+- [~] T56 Blur/Pixelate Region: the local PNG route ships rectangle selection with blur, pixelate, solid, and deterministic noise effects, generated controls, and verified engine/route evidence; ellipse/freehand selection, editor integration, and full STCC remain open
+- [~] T58 Redact: the local PNG route ships rectangle-only irreversible solid/noise replacement with explicit confirmation and verified output tests; ellipse/freehand selection, editor integration, and full STCC remain open
 - **Spec:** README §4.6 · **Done when:** a test proves redacted pixels are unrecoverable from the output file
 
 #### P3-12 · Batch runner (T72)
