@@ -39,6 +39,7 @@
   let apiKey = $state('');
   let model = $state('');
   let prompt = $state('');
+  let imageFile = $state<File | undefined>();
   let consent = $state(false);
   let busy = $state(false);
   let status = $state('');
@@ -47,6 +48,20 @@
 
   function t(key: string, fallback: string) {
     return translate(locale, key, fallback);
+  }
+
+  function selectImage(event: Event) {
+    imageFile = (event.currentTarget as HTMLInputElement).files?.[0];
+    error = '';
+  }
+
+  async function encodeImage(file: File) {
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    let binary = '';
+    for (let offset = 0; offset < bytes.length; offset += 32_768) {
+      binary += String.fromCharCode(...bytes.subarray(offset, offset + 32_768));
+    }
+    return `data:${file.type || 'application/octet-stream'};base64,${btoa(binary)}`;
   }
 
   async function request() {
@@ -64,6 +79,10 @@
     if (!apiKey.trim()) {
       error =
         'credential-missing: paste a provider key for this request; it is kept in memory only.';
+      return;
+    }
+    if ((kind === 'edit' || kind === 'describe') && !imageFile) {
+      error = 'image-required: choose an image for this capability before consenting to a request.';
       return;
     }
     let parsed: URL;
@@ -85,6 +104,13 @@
             capability: kind,
             model: model.trim() || undefined,
             prompt: prompt.trim() || undefined,
+            image: imageFile
+              ? {
+                  name: imageFile.name,
+                  mimeType: imageFile.type,
+                  data: await encodeImage(imageFile),
+                }
+              : undefined,
           }),
         },
         { allowedOrigins: [parsed.origin], maxRetries: 1, timeoutMs: 30_000 },
@@ -159,6 +185,16 @@
         autocomplete="off"
       /></label
     >
+    {#if kind === 'edit' || kind === 'describe'}
+      <label
+        >Image <input
+          data-testid="ai-image"
+          type="file"
+          accept="image/*"
+          onchange={selectImage}
+        /></label
+      >
+    {/if}
     <label
       >{kind === 'describe' ? 'Question (optional)' : 'Instruction'}
       <textarea data-testid="ai-prompt" bind:value={prompt} rows="4"></textarea></label
