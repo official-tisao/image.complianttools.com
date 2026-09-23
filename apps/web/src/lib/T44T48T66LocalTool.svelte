@@ -375,7 +375,7 @@
       <label
         ><span>{localized(copy.opacity)}: {Math.round(opacity * 100)}%</span><input
           data-testid="p48-opacity"
-          type="range"
+          type="number"
           min="0"
           max="1"
           step="0.05"
