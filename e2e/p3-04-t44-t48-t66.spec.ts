@@ -70,6 +70,7 @@ test('remove-object lets the user paint a local mask before inpainting', async (
   });
   const canvas = page.getByTestId('local-source-canvas');
   await expect(canvas).toBeVisible();
+  await canvas.scrollIntoViewIfNeeded();
   const box = await canvas.boundingBox();
   if (!box) throw new Error('Source canvas has no bounds');
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);

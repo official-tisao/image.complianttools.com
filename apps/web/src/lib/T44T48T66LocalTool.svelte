@@ -209,15 +209,17 @@
     const x = Math.round(((event.clientX - bounds.left) / bounds.width) * sourceWidth);
     const y = Math.round(((event.clientY - bounds.top) / bounds.height) * sourceHeight);
     const radius = Math.max(1, Math.round((brushSize / bounds.width) * sourceWidth));
+    const nextMask = new Uint8ClampedArray(mask);
     for (let dy = -radius; dy <= radius; dy += 1) {
       for (let dx = -radius; dx <= radius; dx += 1) {
         if (dx * dx + dy * dy > radius * radius) continue;
         const px = x + dx;
         const py = y + dy;
         if (px >= 0 && py >= 0 && px < sourceWidth && py < sourceHeight)
-          mask[py * sourceWidth + px] = 255;
+          nextMask[py * sourceWidth + px] = 255;
       }
     }
+    mask = nextMask;
     redrawSource();
   }
 
@@ -416,6 +418,7 @@
         onpointermove={movePaint}
         onpointerup={stopPaint}
         onpointercancel={stopPaint}
+        onclick={(event) => paint(event as unknown as PointerEvent)}
         aria-label={localized('Source preview')}
       ></canvas>
     </section>
