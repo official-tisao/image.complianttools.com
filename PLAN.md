@@ -1080,44 +1080,44 @@ Check a box **only when all twelve STCC items (§0.4) pass.**
 [ ] T09 PDF→Image `/pdf-to-image` · [ ] T10 Image→PDF `/image-to-pdf` · [ ] T11 Favicon
 `/favicon-generator` · [ ] T12 GIF Maker `/gif-maker` · [ ] T13 Video→GIF `/video-to-gif` ·
 [ ] T14 GIF Splitter `/gif-converter` · [ ] T15 Spritesheet `/spritesheet` · [ ] T16 Embedded
-`/embedded-converter` · [ ] T17 Base64 `/base64-image` · [ ] T18 HTML→Image `/html-to-image` ·
+`/embedded-converter` · [ ] T17 Base64 `/base64-image` · [~] T18 HTML→Image `/html-to-image` ·
 [ ] T19 CBZ `/cbz-converter`
 
-**Optimize** — [x] T20 Compressor `/compress` · [ ] T21 To-Size `/compress-to-size` ·
-[ ] T22 Web Optimizer `/optimize-for-web` · [ ] T23 Lossless `/lossless-optimize`
+**Optimize** — [x] T20 Compressor `/compress` · [~] T21 To-Size `/compress-to-size` ·
+[~] T22 Web Optimizer `/optimize-for-web` · [ ] T23 Lossless `/lossless-optimize`
 
-**Transform** — [x] T24 Resizer `/resize` · [ ] T25 Bulk Resize `/bulk-resize` · [ ] T26 Crop `/crop` ·
-[ ] T27 Smart Crop `/smart-crop` · [ ] T28 Rotate `/rotate` · [ ] T29 Flip `/flip` ·
-[ ] T30 Canvas Resize `/canvas-resize` · [ ] T31 Enlarge `/enlarge` · [ ] T32 Upscale `/upscale` ·
-[ ] T33 Border `/add-border` · [ ] T34 Round Corners `/round-corners` · [ ] T35 Collage `/collage` ·
-[ ] T36 Split/Tile `/split-image`
+**Transform** — [x] T24 Resizer `/resize` · [~] T25 Bulk Resize `/bulk-resize` · [~] T26 Crop `/crop` ·
+[ ] T27 Smart Crop `/smart-crop` · [~] T28 Rotate `/rotate` · [~] T29 Flip `/flip` ·
+[~] T30 Canvas Resize `/canvas-resize` · [~] T31 Enlarge `/enlarge` · [ ] T32 Upscale `/upscale` ·
+[~] T33 Border `/add-border` · [~] T34 Round Corners `/round-corners` · [~] T35 Collage `/collage` ·
+[~] T36 Split/Tile `/split-image`
 
-**Colour & adjust** — [x] T37 Adjustments `/adjust` · [x] T38 Filters `/filters` · [ ] T39 Curves
-`/curves` · [ ] T40 Colour Space `/color-space` · [ ] T41 Threshold `/threshold` · [ ] T42 Enhance
-`/enhance` · [ ] T43 Sharpen/Blur `/sharpen` · [ ] T44 Denoise `/denoise` · [ ] T45 Colour Picker
-`/color-picker` · [ ] T46 Recolour `/recolor` · [ ] T47 Duotone `/duotone`
+**Colour & adjust** — [~] T37 Adjustments `/adjust` · [~] T38 Filters `/filters` · [~] T39 Curves
+`/curves` · [~] T40 Colour Space `/color-space` · [~] T41 Threshold `/threshold` · [~] T42 Enhance
+`/enhance` · [~] T43 Sharpen/Blur `/sharpen` · [ ] T44 Denoise `/denoise` · [~] T45 Colour Picker
+`/color-picker` · [~] T46 Recolour `/recolor` · [~] T47 Duotone `/duotone`
 
-**Annotate & create** — [ ] T48 Editor `/editor` · [ ] T49 Text `/add-text` · [ ] T50 Watermark
-`/watermark` · [ ] T51 Meme `/meme-generator` · [ ] T52 Draw `/draw` · [ ] T53 Signature `/signature`
+**Annotate & create** — [ ] T48 Editor `/editor` · [~] T49 Text `/add-text` · [~] T50 Watermark
+`/watermark` · [~] T51 Meme `/meme-generator` · [~] T52 Draw `/draw` · [~] T53 Signature `/signature`
 
 **Privacy & metadata** — [ ] T54 Metadata Viewer `/exif-viewer` · [ ] T55 Metadata Remover
-`/remove-exif` · [ ] T56 Blur Region `/blur-image` · [ ] T57 Blur Faces `/blur-face` ·
-[ ] T58 Redact `/redact`
+`/remove-exif` · [~] T56 Blur Region `/blur-image` · [ ] T57 Blur Faces `/blur-face` ·
+[~] T58 Redact `/redact`
 
 **Analyze** — [ ] T59 Inspector `/image-info` · [ ] T60 Compare `/compare` · [ ] T61 Duplicates
 `/find-duplicates` · [ ] T62 OCR `/ocr` · [ ] T63 Accessibility `/alt-text`
 
-**Cutout, fill, synthesis (local-first)** — [ ] T66 Remove Object `/remove-object` · [ ] T67 Expand
-`/expand-image` · [ ] T68 Remove Background `/remove-background` · [ ] T69 Replace Background
-`/replace-background` · [ ] T70 Pixel-Art Upscale `/pixel-art-upscaler` · [ ] T77 Cutout Refine
-`/cutout` · [ ] T78 Seamless Composite `/composite` · [ ] T79 Procedural Generator `/generate` ·
+**Cutout, fill, synthesis (local-first)** — [ ] T66 Remove Object `/remove-object` · [~] T67 Expand
+`/expand-image` · [~] T68 Remove Background `/remove-background` · [~] T69 Replace Background
+`/replace-background` · [ ] T70 Pixel-Art Upscale `/pixel-art-upscaler` · [~] T77 Cutout Refine
+`/cutout` · [~] T78 Seamless Composite `/composite` · [ ] T79 Procedural Generator `/generate` ·
 [ ] T80 Colour Match `/color-match` · [ ] T81 Adaptive Resize `/adaptive-resize`
 
 **AI-only (Tier 3)** — [ ] T64 Generate `/ai/generate` · [ ] T65 Prompt Edit `/ai/edit` ·
 [ ] T71 Describe `/ai/describe`
 
-**Batch & developer** — [ ] T72 Batch `/batch` · [ ] T73 Recipe `/recipe` · [ ] T74 Watch `/watch` ·
-[ ] T75 Codegen `/codegen` · [ ] T76 CLI & Library
+**Batch & developer** — [~] T72 Batch `/batch` · [~] T73 Recipe `/recipe` · [~] T74 Watch `/watch` ·
+[~] T75 Codegen `/codegen` · [ ] T76 CLI & Library
 
 ---
 
@@ -1398,10 +1398,10 @@ blocked with a reason.
 
 - [x] Pull `origin/master` and create/push `codex/feature-audit-long-horizon`.
 - [x] Reconcile the attached manual report against `feature-audit.csv`.
-- [ ] Complete W1 and update Phase 3 task/checklist evidence.
-- [ ] Complete W2 and update Phase 3 colour/adjustment evidence.
-- [ ] Complete W3 and update Phase 3 editor/annotation evidence.
-- [ ] Complete W4 and update Phase 4 cutout/composite evidence.
-- [ ] Complete W5 and update Phase 3/6 batch/long-tail evidence.
+- [~] W1 route subset is implemented and audited as partial; full Phase 3 STCC evidence remains open.
+- [~] W2 route subset is implemented and audited as partial; full Phase 3 colour/adjustment evidence remains open.
+- [~] W3 privacy and annotation route subsets are implemented and audited as partial; editor integration and full STCC evidence remain open.
+- [~] W4 cutout/composite routes are implemented and audited as partial; labelled corpus and full STCC evidence remain open.
+- [~] W5 batch/long-tail routes are implemented and audited as partial; full Phase 3/6 STCC evidence remains open.
 - [ ] Complete W6 and update Phase 5/7 provider and launch evidence.
 - [ ] Re-run the complete CI matrix and reconcile the final audit/register counts.
