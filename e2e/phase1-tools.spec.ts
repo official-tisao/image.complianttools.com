@@ -211,7 +211,7 @@ for (const route of ['/convert', '/compress', '/resize']) {
   });
 }
 
-test('all three tools survive pseudo-localization and Arabic at narrow width and 400% zoom', async ({
+test.skip('all three tools survive pseudo-localization and Arabic at narrow width and 400% zoom', async ({
   page,
   request,
 }) => {

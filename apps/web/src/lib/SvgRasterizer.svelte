@@ -100,6 +100,10 @@
     )}
   />
   <link rel="canonical" href={`https://image.complianttools.com${localizedPath}`} />
+  <meta property="og:title" content="SVG to PNG" />
+  <meta property="og:description" content="Rasterize SVG locally." />
+  <meta property="og:type" content="website" />
+  <meta property="twitter:card" content="summary" />
 </svelte:head>
 
 <main lang={locale === 'en-XA' ? 'en-XA' : locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}>
@@ -124,6 +128,7 @@
     <input
       type="file"
       accept="image/svg+xml,.svg"
+      tabindex="0"
       onchange={(event) => void convert(event.currentTarget.files?.[0])}
     /></label
   >

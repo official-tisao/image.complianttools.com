@@ -110,11 +110,26 @@ function applyDevelopOptions(image: RasterImage, options: DngDevelopOptions): Ra
   const gamma = options.gamma ?? 2.2;
   const noiseThreshold = options.noiseReductionThreshold ?? 0;
   if (!Number.isFinite(exposureEv) || exposureEv < -3 || exposureEv > 3)
-    throw new Error('RAW exposure compensation must be from -3 through +3 EV.');
+    throw {
+      kind: 'decode-failed',
+      format: 'raw',
+      detail: 'Exposure compensation out of range (-3 to +3 EV).',
+      remedy: 'Adjust the exposure slider within the allowed range and try again.',
+    };
   if (!Number.isFinite(gamma) || gamma < 0.1 || gamma > 5)
-    throw new Error('RAW gamma must be from 0.1 through 5.');
+    throw {
+      kind: 'decode-failed',
+      format: 'raw',
+      detail: 'Gamma out of range (0.1 to 5).',
+      remedy: 'Set gamma between 0.1 and 5 and retry.',
+    };
   if (!Number.isFinite(noiseThreshold) || noiseThreshold < 0 || noiseThreshold > 100)
-    throw new Error('RAW noise-reduction threshold must be from 0 through 100.');
+    throw {
+      kind: 'decode-failed',
+      format: 'raw',
+      detail: 'Noise-reduction threshold out of range (0 to 100).',
+      remedy: 'Set the noise threshold between 0 and 100 and retry.',
+    };
   const outputBitDepth = options.outputBitDepth ?? 8;
   const linearRgb =
     image.frames[0].linearRgb?.slice() ?? new Float64Array(image.width * image.height * 3);

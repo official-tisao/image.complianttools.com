@@ -1,4 +1,4 @@
-import type { RasterImage } from '../../types.js';
+import type { RasterImage, EngineError } from '../../types.js';
 
 export const HEIC_UNSUPPORTED_MESSAGE =
   'This browser does not provide an HEIC decoder. Open the file on a device with HEIC support or export it as JPEG.';
@@ -71,11 +71,22 @@ export async function decodeHeic(
   input: ArrayBuffer | Uint8Array,
   decoderConstructor: ImageDecoderConstructor | undefined = platform.ImageDecoder,
 ): Promise<RasterImage> {
-  if (!decoderConstructor) throw new Error(HEIC_UNSUPPORTED_MESSAGE);
+  if (!decoderConstructor)
+    throw {
+      kind: 'codec-unavailable',
+      format: 'heic',
+      reason: HEIC_UNSUPPORTED_MESSAGE,
+      remedy:
+        'Open the file on a device with HEIC support or export it as JPEG or PNG from Photos, then try again.',
+    } satisfies EngineError;
   const bytes = input instanceof Uint8Array ? input : new Uint8Array(input);
-  if (!isHeicContainer(bytes)) {
-    throw new Error('The selected file is not a valid HEIC or HEIF container.');
-  }
+  const containerError: EngineError = {
+    kind: 'decode-failed',
+    format: 'heic',
+    detail: 'The selected file is not a valid HEIC/HEIF container (bad ftyp brand or truncated).',
+    remedy: 'Convert the file with a trusted application to JPEG or PNG, then try again.',
+  };
+  if (!isHeicContainer(bytes)) throw containerError;
   const data = bytes.buffer.slice(
     bytes.byteOffset,
     bytes.byteOffset + bytes.byteLength,

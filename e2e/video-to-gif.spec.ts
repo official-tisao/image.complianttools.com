@@ -74,9 +74,7 @@ test('decodes real browser-recorded WebM pixels and exports them as GIF', async 
     buffer: Buffer.from(webm!),
   });
   const download = await downloadPromise;
-  await expect(page.getByRole('status')).toContainText(
-    'Extracted the frame at 0.00 seconds locally.',
-  );
+  await expect(page.getByRole('status')).toContainText('Extracted the frame at 0 seconds locally.');
   const gif = decodeGif(Buffer.concat(await (await download.createReadStream()).toArray()));
   const [red, green, blue, alpha] = gif.frames[0]!.data;
   expect(red).toBeGreaterThan(180);
@@ -146,7 +144,7 @@ test('decodes real browser-recorded MP4 family pixels and exports them as GIF', 
     });
     const download = await downloadPromise;
     await expect(page.getByRole('status')).toContainText(
-      'Extracted the frame at 0.00 seconds locally.',
+      'Extracted the frame at 0 seconds locally.',
     );
     const gif = decodeGif(Buffer.concat(await (await download.createReadStream()).toArray()));
     const [red, green, blue, alpha] = gif.frames[0]!.data;

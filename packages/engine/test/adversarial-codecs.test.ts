@@ -278,4 +278,29 @@ describe('Phase 2 adversarial codec corpus', () => {
       remedy: expect.any(String),
     });
   });
+
+  it('rejects non-HEIC/HEIF containers with typed remedy (bad brand, truncated)', async () => {
+    // Bad brand: not heic/heif — just a generic ftyp with unknown brand
+    const badBrand = new Uint8Array(16);
+    badBrand.set([0, 0, 0, 16]); // size = 16
+    badBrand.set([0x66, 0x74, 0x79, 0x70], 4); // 'ftyp'
+    badBrand.set([0x61, 0x76, 0x69, 0x31], 8); // 'avi1' — not HEIC
+    await expect(
+      within(decodeWithTypedErrors('heic', () => decodeHeic(badBrand.buffer))),
+    ).rejects.toMatchObject({
+      kind: 'decode-failed',
+      format: 'heic',
+      remedy: expect.any(String),
+    });
+
+    // Truncated container: too short to read brands
+    const truncated = new Uint8Array([0, 0, 0, 8, 0x66, 0x74, 0x79, 0x70]);
+    await expect(
+      within(decodeWithTypedErrors('heic', () => decodeHeic(truncated.buffer))),
+    ).rejects.toMatchObject({
+      kind: 'decode-failed',
+      format: 'heic',
+      remedy: expect.any(String),
+    });
+  });
 });

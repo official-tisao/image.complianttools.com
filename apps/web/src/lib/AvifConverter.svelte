@@ -125,11 +125,12 @@
 
 <svelte:head>
   <title>{t('avif.title', 'AVIF Converter')} — Image Compliant Tools</title>
-  <meta
-    name="description"
-    content={t('avif.metaDescription', 'Encode images as AVIF or decode AVIF to PNG locally.')}
-  />
+  <meta name="description" content="Encode images as AVIF or decode AVIF to PNG locally." />
   <link rel="canonical" href={`https://image.complianttools.com${localizedPath}`} />
+  <meta property="og:title" content="AVIF Converter" />
+  <meta property="og:description" content="Encode AVIF or decode AVIF to PNG locally." />
+  <meta property="og:type" content="website" />
+  <meta property="twitter:card" content="summary" />
 </svelte:head>
 
 <main lang={locale === 'en-XA' ? 'en-XA' : locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}>

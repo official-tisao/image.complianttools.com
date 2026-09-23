@@ -40,9 +40,10 @@ const cases = [
   ...phaseTwoToolRoutes.map((route) => ({
     archetype: `phase-two:${route}`,
     route: `${route}.html`,
-    // The RAW converter carries its additional decoder and demosaicing path. Give that route a
-    // separate 118 KB ceiling while keeping the shared tool-route guard at 115 KB. The extra
-    // headroom covers the generated control metadata shared by the current route bundle.
+    // The RAW converter keeps its decoder and demosaicing paths in user-triggered dynamic chunks.
+    // Give the initial route a separate 118 KB ceiling while keeping the shared tool-route guard
+    // at 115 KB; this leaves room for its generated control metadata without counting deferred
+    // work that is loaded only after a file is selected.
     budget: route === 'raw-converter' ? 118_000 : 115_000,
     requiresInput: true,
   })),
