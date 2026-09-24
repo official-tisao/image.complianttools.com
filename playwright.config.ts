@@ -17,6 +17,7 @@ const tessdataPrefetch =
     : 'node scripts/ensure-ocr-tessdata.mjs eng osd && ';
 
 export default defineConfig({
+  fullyParallel: false,
   testDir: './e2e',
   forbidOnly: true,
   retries: process.env.CI ? 2 : 0,

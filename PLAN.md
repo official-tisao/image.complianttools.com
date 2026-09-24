@@ -93,7 +93,7 @@ Update these counts as you go. They are the honest status of the project at a gl
 
 | Artefact | Target | Done |
 | --- | :-: | :-: |
-| Tools (Appendix A) | 81 | 5 |
+| Tools (Appendix A) | 81 | 3 |
 | Formats (Appendix B) | 82 | 81 |
 | AI adapters (Appendix C) | 10 | 0 |
 | Clearance items (Appendix D) | 31 | 0 |
@@ -561,8 +561,8 @@ message, no remedy, work lost.
 - **Spec:** README §4.5, §25.3.3 · **Done when:** STCC; trademark/asset gates pass
 
 #### P3-11 · Privacy tools (T56, T58)
-- [ ] T56 Blur/Pixelate Region (rect, ellipse, freehand)
-- [ ] T58 Redact — **irreversible: pixels replaced, not overlaid**, with a verification pass
+- [~] T56 Blur/Pixelate Region: the local PNG route ships rectangle selection with blur, pixelate, solid, and deterministic noise effects, generated controls, and verified engine/route evidence; ellipse/freehand selection, editor integration, and full STCC remain open
+- [~] T58 Redact: the local PNG route ships rectangle-only irreversible solid/noise replacement with explicit confirmation and verified output tests; ellipse/freehand selection, editor integration, and full STCC remain open
 - **Spec:** README §4.6 · **Done when:** a test proves redacted pixels are unrecoverable from the output file
 
 #### P3-12 · Batch runner (T72)
@@ -851,7 +851,7 @@ Justification Register short.
 - **Spec:** README §17 · **Done when:** every page passes SPCC; every self-hosted command verified against the current release
 
 #### P5-15 · AI-only tools
-- [ ] T64 Generate · T65 Prompt Edit · T71 Describe — STCC
+- [~] T64 Generate · T65 Prompt Edit · T71 Describe — BYOK-only route shells are implemented with explicit consent, HTTPS endpoint validation, in-memory keys, and image payload handling; provider contracts, local descriptive skeleton, and full STCC remain open
 - [ ] T71's **local descriptive skeleton** works with no key
 - **Spec:** README §4.9 · **Done when:** Appendix A rows checked
 
@@ -1080,44 +1080,44 @@ Check a box **only when all twelve STCC items (§0.4) pass.**
 [ ] T09 PDF→Image `/pdf-to-image` · [ ] T10 Image→PDF `/image-to-pdf` · [ ] T11 Favicon
 `/favicon-generator` · [ ] T12 GIF Maker `/gif-maker` · [ ] T13 Video→GIF `/video-to-gif` ·
 [ ] T14 GIF Splitter `/gif-converter` · [ ] T15 Spritesheet `/spritesheet` · [ ] T16 Embedded
-`/embedded-converter` · [ ] T17 Base64 `/base64-image` · [ ] T18 HTML→Image `/html-to-image` ·
+`/embedded-converter` · [ ] T17 Base64 `/base64-image` · [~] T18 HTML→Image `/html-to-image` ·
 [ ] T19 CBZ `/cbz-converter`
 
-**Optimize** — [x] T20 Compressor `/compress` · [ ] T21 To-Size `/compress-to-size` ·
-[ ] T22 Web Optimizer `/optimize-for-web` · [ ] T23 Lossless `/lossless-optimize`
+**Optimize** — [x] T20 Compressor `/compress` · [~] T21 To-Size `/compress-to-size` ·
+[~] T22 Web Optimizer `/optimize-for-web` · [ ] T23 Lossless `/lossless-optimize`
 
-**Transform** — [x] T24 Resizer `/resize` · [ ] T25 Bulk Resize `/bulk-resize` · [ ] T26 Crop `/crop` ·
-[ ] T27 Smart Crop `/smart-crop` · [ ] T28 Rotate `/rotate` · [ ] T29 Flip `/flip` ·
-[ ] T30 Canvas Resize `/canvas-resize` · [ ] T31 Enlarge `/enlarge` · [ ] T32 Upscale `/upscale` ·
-[ ] T33 Border `/add-border` · [ ] T34 Round Corners `/round-corners` · [ ] T35 Collage `/collage` ·
-[ ] T36 Split/Tile `/split-image`
+**Transform** — [x] T24 Resizer `/resize` · [~] T25 Bulk Resize `/bulk-resize` · [~] T26 Crop `/crop` ·
+[ ] T27 Smart Crop `/smart-crop` · [~] T28 Rotate `/rotate` · [~] T29 Flip `/flip` ·
+[~] T30 Canvas Resize `/canvas-resize` · [~] T31 Enlarge `/enlarge` · [ ] T32 Upscale `/upscale` ·
+[~] T33 Border `/add-border` · [~] T34 Round Corners `/round-corners` · [~] T35 Collage `/collage` ·
+[~] T36 Split/Tile `/split-image`
 
-**Colour & adjust** — [x] T37 Adjustments `/adjust` · [x] T38 Filters `/filters` · [ ] T39 Curves
-`/curves` · [ ] T40 Colour Space `/color-space` · [ ] T41 Threshold `/threshold` · [ ] T42 Enhance
-`/enhance` · [ ] T43 Sharpen/Blur `/sharpen` · [ ] T44 Denoise `/denoise` · [ ] T45 Colour Picker
-`/color-picker` · [ ] T46 Recolour `/recolor` · [ ] T47 Duotone `/duotone`
+**Colour & adjust** — [~] T37 Adjustments `/adjust` · [~] T38 Filters `/filters` · [~] T39 Curves
+`/curves` · [~] T40 Colour Space `/color-space` · [~] T41 Threshold `/threshold` · [~] T42 Enhance
+`/enhance` · [~] T43 Sharpen/Blur `/sharpen` · [~] T44 Denoise `/denoise` · [~] T45 Colour Picker
+`/color-picker` · [~] T46 Recolour `/recolor` · [~] T47 Duotone `/duotone`
 
-**Annotate & create** — [ ] T48 Editor `/editor` · [ ] T49 Text `/add-text` · [ ] T50 Watermark
-`/watermark` · [ ] T51 Meme `/meme-generator` · [ ] T52 Draw `/draw` · [ ] T53 Signature `/signature`
+**Annotate & create** — [~] T48 Editor `/editor` · [~] T49 Text `/add-text` · [~] T50 Watermark
+`/watermark` · [~] T51 Meme `/meme-generator` · [~] T52 Draw `/draw` · [~] T53 Signature `/signature`
 
 **Privacy & metadata** — [ ] T54 Metadata Viewer `/exif-viewer` · [ ] T55 Metadata Remover
-`/remove-exif` · [ ] T56 Blur Region `/blur-image` · [ ] T57 Blur Faces `/blur-face` ·
-[ ] T58 Redact `/redact`
+`/remove-exif` · [~] T56 Blur Region `/blur-image` · [ ] T57 Blur Faces `/blur-face` ·
+[~] T58 Redact `/redact`
 
 **Analyze** — [ ] T59 Inspector `/image-info` · [ ] T60 Compare `/compare` · [ ] T61 Duplicates
 `/find-duplicates` · [ ] T62 OCR `/ocr` · [ ] T63 Accessibility `/alt-text`
 
-**Cutout, fill, synthesis (local-first)** — [ ] T66 Remove Object `/remove-object` · [ ] T67 Expand
-`/expand-image` · [ ] T68 Remove Background `/remove-background` · [ ] T69 Replace Background
-`/replace-background` · [ ] T70 Pixel-Art Upscale `/pixel-art-upscaler` · [ ] T77 Cutout Refine
-`/cutout` · [ ] T78 Seamless Composite `/composite` · [ ] T79 Procedural Generator `/generate` ·
+**Cutout, fill, synthesis (local-first)** — [~] T66 Remove Object `/remove-object` · [~] T67 Expand
+`/expand-image` · [~] T68 Remove Background `/remove-background` · [~] T69 Replace Background
+`/replace-background` · [ ] T70 Pixel-Art Upscale `/pixel-art-upscaler` · [~] T77 Cutout Refine
+`/cutout` · [~] T78 Seamless Composite `/composite` · [ ] T79 Procedural Generator `/generate` ·
 [ ] T80 Colour Match `/color-match` · [ ] T81 Adaptive Resize `/adaptive-resize`
 
-**AI-only (Tier 3)** — [ ] T64 Generate `/ai/generate` · [ ] T65 Prompt Edit `/ai/edit` ·
-[ ] T71 Describe `/ai/describe`
+**AI-only (Tier 3)** — [~] T64 Generate `/ai/generate` · [~] T65 Prompt Edit `/ai/edit` ·
+[~] T71 Describe `/ai/describe`
 
-**Batch & developer** — [ ] T72 Batch `/batch` · [ ] T73 Recipe `/recipe` · [ ] T74 Watch `/watch` ·
-[ ] T75 Codegen `/codegen` · [ ] T76 CLI & Library
+**Batch & developer** — [~] T72 Batch `/batch` · [~] T73 Recipe `/recipe` · [~] T74 Watch `/watch` ·
+[~] T75 Codegen `/codegen` · [ ] T76 CLI & Library
 
 ---
 
@@ -1359,3 +1359,49 @@ Every README change gets a row here, per §0.3. Newest first.
 **Total: 134 tasks across 8 phases, 81 tools, 74 format entries, 10 adapters, ~680 pages.**
 
 Start at **P0-01**.\n\n\n
+
+---
+
+## 17. Long-horizon feature-audit execution ledger (2026-09-23)
+
+The attached manual-testing report was reconciled in `docs/manual-testing-audit-reconciliation.md`.
+It produced no duplicate bug rows. Work below is grouped by shared engine/UI dependencies so that a
+route is not marked complete while its phase task, tests, STCC evidence, and audit row diverge.
+
+### 17.1 Delivery waves
+
+| Wave | Owner group | Scope | Dependency rule |
+| --- | --- | --- | --- |
+| W1 | Transform foundation | T25/T26/T28/T29/T30/T31/T33/T34/T35/T36 | Build on the existing crop/resize/rotate/flip primitives before route shells. |
+| W2 | Colour and restoration | T37/T38/T39/T40/T41/T42/T43/T44/T45/T46/T47 | Reuse one schema-driven adjustment pipeline; clearance exclusions remain explicit. |
+| W3 | Editor and annotation | T48/T49/T50/T51/T52/T53/T56/T58 | Editor canvas/layer model lands before dependent annotation and privacy routes. |
+| W4 | Cutout/composite | T67/T68/T69/T77/T78 | Use existing inpaint/alpha/composite primitives; no uncleared probabilistic model. |
+| W5 | Batch, optimize, long tail | T15/T18/T21/T22/T72/T73/T74/T75 | Recipe/batch contracts land before folder-watch and code-generation adapters. |
+| W6 | BYOK and launch | T64/T65/T71, T40/P7 pages/i18n | Provider registry and consent/error contracts precede any external AI route. |
+
+Each wave must update, in one grouped commit, the engine primitive, schema/UI metadata, route, tests,
+`feature-audit.csv`, and the corresponding plan checkboxes. A wave is pushed when its local gate is
+green; later waves may proceed only when their dependency rows are complete or explicitly marked
+blocked with a reason.
+
+### 17.2 Master integration protocol
+
+- Agents work in isolated worktrees/branches and preserve task-specific conventional commit messages.
+- The master agent reviews each completed wave, resolves conflicts by retaining both route features,
+  runs the affected unit/browser/asset gates, then creates a linear grouped commit and pushes it.
+- Existing audit rows are updated in place. A new `BUG-*` row is allowed only when the reconciliation
+  document shows that no existing row owns the defect.
+- Questions are recorded in the reconciliation document with an industry-standard default; a later
+  user answer becomes a plan/audit revision, not an untracked chat decision.
+
+### 17.3 Current execution state
+
+- [x] Pull `origin/master` and create/push `codex/feature-audit-long-horizon`.
+- [x] Reconcile the attached manual report against `feature-audit.csv`.
+- [~] W1 route subset is implemented and audited as partial; full Phase 3 STCC evidence remains open.
+- [~] W2 route subset is implemented and audited as partial; full Phase 3 colour/adjustment evidence remains open.
+- [~] W3 privacy and annotation route subsets are implemented and audited as partial; editor integration and full STCC evidence remain open.
+- [~] W4 cutout/composite routes are implemented and audited as partial; labelled corpus and full STCC evidence remain open.
+- [~] W5 batch/long-tail routes are implemented and audited as partial; full Phase 3/6 STCC evidence remains open.
+- [~] W6 BYOK route subset is implemented and audited as partial; provider registry, configured-provider contracts, local descriptive skeleton, and full Phase 5/7 evidence remain open.
+- [ ] Re-run the complete CI matrix and reconcile the final audit/register counts.
