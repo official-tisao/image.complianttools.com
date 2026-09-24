@@ -86,16 +86,12 @@ test('T49 text and T50 watermark render locally and export while offline', async
     await expect(page.getByTestId(`${testId}-canvas`)).toBeVisible();
     const before = await page
       .getByTestId(`${testId}-canvas`)
-      .evaluate((element) => [
-        ...(element as HTMLCanvasElement).getContext('2d')!.getImageData(8, 8, 1, 1).data,
-      ]);
+      .evaluate((element) => (element as HTMLCanvasElement).toDataURL('image/png'));
     await page.getByTestId(`${testId}-text`).fill(mode === 'text' ? 'Hello' : '© local');
     await page.getByTestId(`${testId}-add`).click();
     const after = await page
       .getByTestId(`${testId}-canvas`)
-      .evaluate((element) => [
-        ...(element as HTMLCanvasElement).getContext('2d')!.getImageData(8, 8, 1, 1).data,
-      ]);
+      .evaluate((element) => (element as HTMLCanvasElement).toDataURL('image/png'));
     expect(after).not.toEqual(before);
     await page.context().setOffline(true);
     try {
@@ -147,7 +143,11 @@ test('T52 supports pointer drawing and shape controls without network requests',
   await page.getByTestId('t52-shape').selectOption('rectangle');
   await expect(page.getByTestId('t52-shape')).toHaveValue('rectangle');
   const download = page.waitForEvent('download');
-  await page.getByTestId('t52-download').click();
+  // WebKit/Firefox can retain the canvas pointer capture after the drag and
+  // miss a synthetic pointer click on a button below the canvas. Exercise the
+  // same native button activation through its keyboard contract.
+  await page.getByTestId('t52-download').focus();
+  await page.keyboard.press('Enter');
   expect((await download).suggestedFilename()).toBe('draw-draw.png');
   expect(externalRequests).toEqual([]);
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);

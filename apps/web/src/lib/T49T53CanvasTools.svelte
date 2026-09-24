@@ -520,10 +520,22 @@
         return;
       }
       const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
+      const href = URL.createObjectURL(blob);
+      link.href = href;
       link.download = `${sourceName.replace(/\.png$/iu, '') || mode}-${slug}.png`;
+      link.setAttribute('aria-label', 'Download image');
+      link.setAttribute('aria-hidden', 'true');
+      link.tabIndex = -1;
+      // Firefox only consistently dispatches the download for an anchor that is
+      // attached to the document while the click is handled.
+      document.body.append(link);
       link.click();
-      URL.revokeObjectURL(link.href);
+      // Firefox may resolve the download asynchronously after click(). Keep the
+      // object URL alive through that hand-off before releasing the blob.
+      window.setTimeout(() => {
+        URL.revokeObjectURL(href);
+        link.remove();
+      }, 1000);
     }, 'image/png');
   }
 
