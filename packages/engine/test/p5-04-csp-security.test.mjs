@@ -18,9 +18,17 @@ const CSP_DIRECTIVES = [
   "object-src 'none'",
   'upgrade-insecure-requests',
   "require-trusted-types-for 'script'",
+  'trusted-types ctimg-default svelte-trusted-html',
 ];
 
 const FULL_CSP = CSP_DIRECTIVES.join('; ');
+
+test('trusted-types directive matches CSP policy list', () => {
+  assert.ok(
+    FULL_CSP.includes('trusted-types ctimg-default svelte-trusted-html'),
+    'CSP includes trusted-types directive for both policies',
+  );
+});
 
 test('base CSP has all directives', () => {
   for (const d of CSP_DIRECTIVES) {
