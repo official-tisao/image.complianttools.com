@@ -1,6 +1,6 @@
 /* global Request, Response, URL, caches, clients, fetch, self */
 
-const VERSION = 'complianttools-shell-v1';
+const VERSION = 'complianttools-shell-v2';
 const CACHE_NAME = `${VERSION}-runtime`;
 const IMMUTABLE_PREFIXES = ['/_app/immutable/', '/ocr-runtime/', '/wasm/', '/models/', '/fonts/'];
 
@@ -13,6 +13,10 @@ function isImmutableAsset(url) {
     IMMUTABLE_PREFIXES.some((prefix) => url.pathname.startsWith(prefix)) ||
     url.pathname === '/favicon.ico'
   );
+}
+
+function isRuntimeAsset(request, url) {
+  return isImmutableAsset(url) || ['script', 'style', 'worker'].includes(request.destination);
 }
 
 async function cacheResponse(request, response) {
@@ -69,9 +73,9 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
   if (request.mode === 'navigate') {
     event.respondWith(networkFirst(request));
-  } else if (request.method === 'HEAD' && isImmutableAsset(url)) {
+  } else if (request.method === 'HEAD' && isRuntimeAsset(request, url)) {
     event.respondWith(headFromCacheOrNetwork(request));
-  } else if (isImmutableAsset(url)) {
+  } else if (isRuntimeAsset(request, url)) {
     event.respondWith(cacheFirst(request));
   }
 });

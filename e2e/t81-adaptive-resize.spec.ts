@@ -44,6 +44,11 @@ async function generatedPng(
   return Buffer.from(base64, 'base64');
 }
 
+async function openAdaptiveResize(page: import('@playwright/test').Page) {
+  await page.goto('/adaptive-resize');
+  await expect(page.locator('html')).toHaveAttribute('data-hydrated', 'true');
+}
+
 for (const locale of ['en', 'en-XA', 'ar'] as const) {
   test(`${locale}/adaptive-resize is prerendered with localized SEO content`, async ({ page }) => {
     const prefix = locale === 'en' ? '' : `/${locale}`;
@@ -82,7 +87,7 @@ test('T81 static Arabic HTML includes its localized tool content without JavaScr
 test('T81 retargets a generated PNG, paints an approximate mask, and downloads the preview', async ({
   page,
 }) => {
-  await page.goto('/adaptive-resize');
+  await openAdaptiveResize(page);
   const appOrigin = new URL(page.url()).origin;
   const outsideRequests: string[] = [];
   page.on('request', (request) => {
@@ -140,7 +145,7 @@ test('T81 retargets a generated PNG, paints an approximate mask, and downloads t
 test('T81 reports the unchanged-image fallback for a uniform saliency profile', async ({
   page,
 }) => {
-  await page.goto('/adaptive-resize');
+  await openAdaptiveResize(page);
   await expect(page.locator('html')).toHaveAttribute('data-hydrated', 'true');
   const png = await generatedPng(page, 32, 24, 'uniform');
   await page
@@ -159,7 +164,7 @@ test('T81 reports the unchanged-image fallback for a uniform saliency profile', 
 test('T81 rejects invalid dimensions and an over-constrained painted mask with recovery advice', async ({
   page,
 }) => {
-  await page.goto('/adaptive-resize');
+  await openAdaptiveResize(page);
   const png = await generatedPng(page, 48, 40);
   await page
     .getByTestId('t81-input')
@@ -185,7 +190,7 @@ test('T81 rejects invalid dimensions and an over-constrained painted mask with r
 });
 
 test('T81 reports malformed and undecodable PNGs with typed remedies', async ({ page }) => {
-  await page.goto('/adaptive-resize');
+  await openAdaptiveResize(page);
   await expect(page.locator('html')).toHaveAttribute('data-hydrated', 'true');
   const valid = Buffer.from(await generatedPng(page, 8, 8));
   const idatType = valid.indexOf(Buffer.from('IDAT'));
@@ -225,7 +230,7 @@ test('T81 reports malformed and undecodable PNGs with typed remedies', async ({ 
 });
 
 test('T81 reports a valid-PNG canvas failure with a typed remedy', async ({ page }) => {
-  await page.goto('/adaptive-resize');
+  await openAdaptiveResize(page);
   await page.getByTestId('t81-input').setInputFiles({
     name: 'canvas-failure.png',
     mimeType: 'image/png',
@@ -244,7 +249,7 @@ test('T81 reports a valid-PNG canvas failure with a typed remedy', async ({ page
 test('T81 resizes a local PNG after external network is blocked', async ({ page, context }) => {
   const externalRequests: string[] = [];
 
-  await page.goto('/adaptive-resize');
+  await openAdaptiveResize(page);
   await expect(page.locator('html')).toHaveAttribute('data-hydrated', 'true');
   const appOrigin = new URL(page.url()).origin;
   page.on('request', (request) => {
@@ -275,7 +280,7 @@ test('T81 retargets a 320-pixel PNG within the Chromium route budget', async ({
 }) => {
   test.skip(browserName !== 'chromium', 'The route latency budget is calibrated on Chromium.');
   test.setTimeout(30_000);
-  await page.goto('/adaptive-resize');
+  await openAdaptiveResize(page);
   const png = await generatedPng(page, 320, 320);
   await page
     .getByTestId('t81-input')
