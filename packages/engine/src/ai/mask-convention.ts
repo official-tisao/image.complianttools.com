@@ -62,6 +62,7 @@ export function createCanonicalMask(
 export function verifyMaskRange(mask: CanonicalMask): boolean {
   for (let i = 0; i < mask.data.length; i++) {
     const v = mask.data[i];
+    if (v === undefined) return false; // defensive: should not occur for Uint8ClampedArray
     if (v < 0 || v > 255) return false;
   }
   return true;
