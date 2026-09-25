@@ -1,7 +1,9 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
   import { translate, type Locale } from './i18n';
+  import { t60ArabicTranslations } from './t60-i18n';
   import CompareCanvas from './CompareCanvas.svelte';
+  import ToolPageCompletion from './ToolPageCompletion.svelte';
 
   const MAX_FILE_BYTES = 32 * 1024 * 1024;
   const MAX_SOURCE_PIXELS = 20_000_000;
@@ -34,6 +36,58 @@
   };
 
   let { locale = 'en' } = $props<{ locale?: Locale }>();
+
+  const t = (key: string, fallback: string, value?: string | number) => {
+    const message =
+      locale === 'ar'
+        ? (t60ArabicTranslations[key] ?? fallback)
+        : translate(locale, key, fallback, value);
+    return locale === 'ar' ? message.replace('{value}', String(value ?? '')) : message;
+  };
+
+  const title = $derived(t('t60.title', 'Compare Images'));
+  const description = $derived(
+    t(
+      't60.description',
+      'Compare two local images with a before-and-after viewer and approximate pixel metrics.',
+    ),
+  );
+  const metaDescription = $derived(
+    t(
+      't60.metaDescription',
+      'Compare two PNG, JPEG, or WebP images locally. Inspect the visual difference and approximate metrics without uploading either file.',
+    ),
+  );
+  const faqs = $derived([
+    {
+      question: t('t60.faqLocal', 'Are my images uploaded?'),
+      answer: t(
+        't60.faqLocalAnswer',
+        'No. This page reads the selected images in your browser. It sends neither image to a server.',
+      ),
+    },
+    {
+      question: t('t60.faqScores', 'Do matching scores prove the images are identical?'),
+      answer: t(
+        't60.faqScoresAnswer',
+        'No. The scores summarize selected pixel and hash features. Inspect the visual comparison and keep the original files when exact identity matters.',
+      ),
+    },
+    {
+      question: t('t60.faqDimensions', 'Why must source dimensions match for metrics?'),
+      answer: t(
+        't60.faqDimensionsAnswer',
+        'The engine compares corresponding pixels and does not align, crop, or warp images. Different dimensions remain viewable, but pixel metrics are withheld.',
+      ),
+    },
+  ]);
+
+  const formatNote = $derived(
+    t(
+      't60.formatNote',
+      'Compare PNG, JPEG, or WebP images up to 32 MiB and 20 megapixels each. Metrics use a proxy no larger than 256 pixels on the longest edge and are approximate; they are not human quality judgments.',
+    ),
+  );
 
   // Translators: Keep PNG, JPEG, WebP, and MiB as format and measurement names.
   const errorMessages: Readonly<Record<T60ErrorKind, readonly [string, string]>> = {
@@ -73,8 +127,8 @@
 
   function createT60Error(kind: T60ErrorKind, detail?: string): T60Error {
     const [messageFallback, remedyFallback] = errorMessages[kind];
-    const message = translate(locale, `t60.error.${kind}`, messageFallback);
-    const remedy = translate(locale, `t60.remedy.${kind}`, remedyFallback);
+    const message = t(`t60.error.${kind}`, messageFallback);
+    const remedy = t(`t60.remedy.${kind}`, remedyFallback);
     return { kind, message: detail ? `${message} ${detail}` : message, remedy };
   }
 
@@ -276,6 +330,10 @@
     return metric.bits ? `${((1 - metric.distance / metric.bits) * 100).toFixed(1)}%` : '—';
   }
 
+  function hashSummary(metric: HashMetric) {
+    return `${percent(metric)} (${metric.distance}/${metric.bits} ${t('t60.differing', 'differing')})`;
+  }
+
   onDestroy(() => {
     taskNumber += 1;
     activeWorker?.terminate();
@@ -285,59 +343,51 @@
   });
 </script>
 
-<svelte:head>
-  <title>Compare Images — ctimg</title>
-  <meta
-    name="description"
-    content="Compare two images locally with a before-and-after viewer and transparent image metrics."
-  />
-  <link rel="canonical" href="https://image.complianttools.com/compare" />
-  <meta property="og:title" content="Compare Images — ctimg" />
-  <meta
-    property="og:description"
-    content="Inspect two local images side by side and compare approximate similarity metrics."
-  />
-</svelte:head>
-
 <header class="tool-header t60-header">
-  <a class="logo" href="/">ctimg</a>
-  <nav aria-label="Main navigation">
-    <a href="/convert">Convert</a>
-    <a href="/compress">Compress</a>
-    <a href="/resize">Resize</a>
-    <a aria-current="page" href="/compare">Compare</a>
+  <a class="logo" href={locale === 'en' ? '/' : `/${locale}/convert`}>ctimg</a>
+  <nav aria-label={t('t60.mainNavigation', 'Main navigation')}>
+    <a href={locale === 'en' ? '/convert' : `/${locale}/convert`}>{t('nav.convert', 'Convert')}</a>
+    <a href={locale === 'en' ? '/compress' : `/${locale}/compress`}
+      >{t('nav.compress', 'Compress')}</a
+    >
+    <a href={locale === 'en' ? '/resize' : `/${locale}/resize`}>{t('nav.resize', 'Resize')}</a>
+    <a aria-current="page" href={locale === 'en' ? '/compare' : `/${locale}/compare`}
+      >{t('t60.title', 'Compare Images')}</a
+    >
   </nav>
-  <span class="privacy">Local only</span>
+  <span class="privacy">{t('privacy.badge', 'Local only')}</span>
 </header>
 
-<main class="tool-page t60-page">
+<main class="tool-page t60-page" lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}>
   <section class="tool-intro">
-    <p class="eyebrow">P4-20 · T60</p>
-    <h1>Compare Images</h1>
-    <p>Inspect two images visually and compare approximate pixel and hash metrics.</p>
-    <p class="privacy-copy">Files stay on your device. Images are not uploaded.</p>
+    <p class="eyebrow">{t('t60.eyebrow', 'P4-20 · T60')}</p>
+    <h1>{title}</h1>
+    <p>{description}</p>
+    <p class="privacy-copy">
+      {t('privacy.copy', 'Files stay on your device. Images are not uploaded.')}
+    </p>
     <div class="t60-inputs">
       <label class="file-entry">
         <span
-          >Before image {#if before}<small>{before.file.name}</small>{/if}</span
+          >{t('t60.before', 'Before image')}{#if before}<small>{before.file.name}</small>{/if}</span
         >
         <input
           data-testid="t60-before-input"
           type="file"
           accept="image/png,image/jpeg,image/webp"
-          aria-label="Choose before image"
+          aria-label={t('t60.chooseBefore', 'Choose before image')}
           onchange={(event) => void choose('before', event)}
         />
       </label>
       <label class="file-entry">
         <span
-          >After image {#if after}<small>{after.file.name}</small>{/if}</span
+          >{t('t60.after', 'After image')}{#if after}<small>{after.file.name}</small>{/if}</span
         >
         <input
           data-testid="t60-after-input"
           type="file"
           accept="image/png,image/jpeg,image/webp"
-          aria-label="Choose after image"
+          aria-label={t('t60.chooseAfter', 'Choose after image')}
           onchange={(event) => void choose('after', event)}
         />
       </label>
@@ -350,95 +400,99 @@
         <CompareCanvas
           beforeUrl={currentSources[0].url}
           afterUrl={currentSources[1].url}
-          alt="Before and after image comparison"
+          alt={t('t60.comparisonAlt', 'Before and after image comparison')}
           {locale}
         />
       {:else}
         <div class="empty-canvas">
-          <p>Choose a before and an after image to start comparing.</p>
+          <p>{t('t60.emptyCanvas', 'Choose a before and an after image to start comparing.')}</p>
         </div>
       {/if}
     </div>
 
     <aside class="t60-metrics" aria-labelledby="t60-metrics-heading">
-      <h2 id="t60-metrics-heading">Comparison metrics</h2>
+      <h2 id="t60-metrics-heading">{t('t60.metricsHeading', 'Comparison metrics')}</h2>
       <p class="t60-disclosure">
-        Engine approximations, not human quality judgments. Metrics use a local proxy with a longest
-        edge of at most 256 pixels; source dimensions must match. Hash matches indicate similarity,
-        not identity.
+        {t(
+          't60.disclosure',
+          'Engine approximations, not human quality judgments. Metrics use a local proxy with a longest edge of at most 256 pixels; source dimensions must match. Hash matches indicate similarity, not identity.',
+        )}
       </p>
       {#if busy}
         <div class="t60-progress">
-          <p data-testid="t60-status" aria-live="polite">Comparing locally…</p>
-          <button data-testid="t60-cancel" type="button" onclick={cancelComparison}>
-            Cancel comparison
-          </button>
+          <p data-testid="t60-status" aria-live="polite">
+            {t('t60.comparing', 'Comparing locally…')}
+          </p>
+          <button data-testid="t60-cancel" type="button" onclick={cancelComparison}
+            >{t('t60.cancel', 'Cancel comparison')}</button
+          >
         </div>
       {:else if error}
         <p class="error" data-testid="t60-error" data-error-kind={error.kind} role="alert">
           {error.message}
           <br />
-          <strong>{translate(locale, 'error.remedyLabel', 'Remedy')}:</strong>
+          <strong>{t('error.remedyLabel', 'Remedy')}:</strong>
           {error.remedy}
         </p>
       {:else if metrics && metricsDimensions}
-        <p class="t60-verdict" data-testid="t60-verdict">{metrics.verdict}</p>
+        <p class="t60-verdict" data-testid="t60-verdict">
+          {t(`t60.verdict.${metrics.verdict}`, metrics.verdict)}
+        </p>
         <p data-testid="t60-proxy-size">
-          Metrics proxy: {metricsDimensions.width} × {metricsDimensions.height}
+          {t(
+            't60.proxySize',
+            'Metrics proxy: {value}',
+            `${metricsDimensions.width} × ${metricsDimensions.height}`,
+          )}
         </p>
         <dl class="t60-results" data-testid="t60-results">
           <div>
-            <dt>Approximate SSIM</dt>
+            <dt>{t('t60.ssim', 'Approximate SSIM')}</dt>
             <dd>{metrics.ssim.toFixed(4)}</dd>
           </div>
           <div>
-            <dt>PSNR</dt>
-            <dd>{metrics.psnr === null ? '∞ (identical)' : `${metrics.psnr.toFixed(2)} dB`}</dd>
-          </div>
-          <div>
-            <dt>Average hash agreement</dt>
+            <dt>{t('t60.psnr', 'PSNR')}</dt>
             <dd>
-              {percent(metrics.averageHash)} ({metrics.averageHash.distance}/{metrics.averageHash
-                .bits} differing)
+              {metrics.psnr === null
+                ? t('t60.identical', '∞ (identical)')
+                : `${metrics.psnr.toFixed(2)} dB`}
             </dd>
           </div>
           <div>
-            <dt>Difference hash agreement</dt>
+            <dt>{t('t60.averageHash', 'Average hash agreement')}</dt>
             <dd>
-              {percent(metrics.differenceHash)} ({metrics.differenceHash.distance}/{metrics
-                .differenceHash.bits} differing)
+              {hashSummary(metrics.averageHash)}
             </dd>
           </div>
           <div>
-            <dt>pHash agreement</dt>
+            <dt>{t('t60.differenceHash', 'Difference hash agreement')}</dt>
             <dd>
-              {percent(metrics.pHash)} ({metrics.pHash.distance}/{metrics.pHash.bits} differing)
+              {hashSummary(metrics.differenceHash)}
+            </dd>
+          </div>
+          <div>
+            <dt>{t('t60.phash', 'pHash agreement')}</dt>
+            <dd>
+              {hashSummary(metrics.pHash)}
             </dd>
           </div>
         </dl>
       {:else}
-        <p data-testid="t60-status" aria-live="polite">Choose both images to calculate metrics.</p>
+        <p data-testid="t60-status" aria-live="polite">
+          {t('t60.chooseBoth', 'Choose both images to calculate metrics.')}
+        </p>
       {/if}
     </aside>
   </section>
 
-  <section class="faq t60-faq">
-    <h2>About these scores</h2>
-    <details>
-      <summary>Do matching scores prove the images are identical?</summary>
-      <p>
-        No. Similarity scores summarize selected pixel and hash features. Inspect the visual
-        comparison and keep the original files when exact identity matters.
-      </p>
-    </details>
-    <details>
-      <summary>Why must the source dimensions match?</summary>
-      <p>
-        The engine compares corresponding pixels and does not align, crop, or warp images. Different
-        dimensions remain viewable, but pixel metrics are withheld to avoid misleading scores.
-      </p>
-    </details>
-  </section>
+  <ToolPageCompletion
+    {locale}
+    route="compare"
+    {title}
+    description={metaDescription}
+    {formatNote}
+    {faqs}
+  />
 </main>
 
 <style>
@@ -540,10 +594,6 @@
     margin: 3px 0 0;
     overflow-wrap: anywhere;
     font-variant-numeric: tabular-nums;
-  }
-
-  .t60-faq {
-    margin-top: 64px;
   }
 
   @media (max-width: 900px) {

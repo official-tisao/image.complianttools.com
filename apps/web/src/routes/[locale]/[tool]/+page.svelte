@@ -21,6 +21,8 @@
   import PixelArtUpscaler from '$lib/PixelArtUpscaler.svelte';
   import T32Upscale from '$lib/T32Upscale.svelte';
   import OcrTool from '$lib/OcrTool.svelte';
+  import P3ColourTool from '$lib/P3ColourTool.svelte';
+  import TransformTool from '$lib/TransformTool.svelte';
   import FormatToolCompletion from '$lib/FormatToolCompletion.svelte';
   import { toolCopy } from '$lib/i18n';
   import type { PageData } from './$types';
@@ -99,6 +101,20 @@
   <PixelArtUpscaler locale={data.locale} />
 {:else if data.tool === 'upscale'}
   <T32Upscale locale={data.locale} />
+{:else if data.tool === 'crop'}
+  <TransformTool kind="crop" locale={data.locale} />
+{:else if data.tool === 'rotate'}
+  <TransformTool kind="rotate" locale={data.locale} />
+{:else if data.tool === 'flip'}
+  <TransformTool kind="flip" locale={data.locale} />
+{:else if data.tool === 'add-border'}
+  <TransformTool kind="border" locale={data.locale} />
+{:else if data.tool === 'threshold'}
+  <P3ColourTool kind="threshold" locale={data.locale} />
+{:else if data.tool === 'sharpen'}
+  <P3ColourTool kind="sharpen" locale={data.locale} />
+{:else if data.tool === 'duotone'}
+  <P3ColourTool kind="duotone" locale={data.locale} />
 {:else}
   <FaviconGenerator locale={data.locale} />
 {/if}

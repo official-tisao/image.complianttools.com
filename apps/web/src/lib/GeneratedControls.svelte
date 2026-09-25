@@ -64,6 +64,7 @@
           value={Number(current(path, description))}
           oninput={(event) => onChange(path, Number(event.currentTarget.value))}
         /><input
+          id={`control-${path}-value`}
           aria-label={`${description.label} value`}
           type="number"
           aria-describedby={description.help ? helpId : undefined}

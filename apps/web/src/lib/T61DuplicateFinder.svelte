@@ -1,20 +1,22 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
+  import type { OptionDescription } from '@complianttools/image-engine/schemas/options';
+  import {
+    T61DuplicateOptionsSchema,
+    t61DuplicateOptionDescriptions,
+    type T61DuplicateOptions,
+  } from '@complianttools/image-engine/schemas/t61-duplicate-options';
   import { createRaster } from '@complianttools/image-engine/ops/raster';
   import {
     differenceHash,
     perceptualHash,
   } from '@complianttools/image-engine/cv/analysis-primitives';
+  import GeneratedControls from './GeneratedControls.svelte';
+  import { localizeOptions } from './i18n';
 
   type Locale = 'en-XA' | 'ar';
   type FailureKind =
-    | 'too-many'
-    | 'too-large'
-    | 'unsupported'
-    | 'decode'
-    | 'pixels'
-    | 'hashing'
-    | 'cancelled';
+    'too-many' | 'too-large' | 'unsupported' | 'decode' | 'pixels' | 'hashing' | 'cancelled';
   type LocalImage = {
     id: number;
     file: File;
@@ -40,8 +42,6 @@
   const MAX_BATCH_BYTES = 80 * 1024 * 1024;
   const MAX_PIXELS = 24_000_000;
   const HASH_SIZE = 8;
-  const MAX_AVERAGE_DISTANCE = 6;
-  const MAX_DIFFERENCE_DISTANCE = 6;
   const SUPPORTED_MIME = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif']);
 
   const words = {
@@ -53,7 +53,8 @@
       localOnly: 'Local only',
       eyebrow: 'P4-20 · T61',
       heading: 'Find Duplicate Images',
-      intro: 'Compare a bounded selection of images to find exact copies and possible visual matches.',
+      intro:
+        'Compare a bounded selection of images to find exact copies and possible visual matches.',
       privacy: 'Files stay on your device. Images are not uploaded.',
       select: 'Choose images',
       input: 'Choose images to scan for duplicates',
@@ -65,9 +66,11 @@
       ready: 'Choose at least two images, then scan them on this device.',
       progress: (done: number, total: number) => `Checking image ${done} of ${total}…`,
       empty: 'No exact or likely visual matches were found.',
-      emptyRemedy: 'Try another selection. Similarity checks are conservative and can miss edits or crops.',
+      emptyRemedy:
+        'Try another selection. Similarity checks are conservative and can miss edits or crops.',
       exactHeading: 'Byte-identical copies',
-      exactNote: 'These files have the same SHA-256 hash. Keep one copy if you choose; originals are untouched.',
+      exactNote:
+        'These files have the same SHA-256 hash. Keep one copy if you choose; originals are untouched.',
       nearHeading: 'Possible visual matches',
       nearNote:
         'Perceptual hashes are approximate. Review these images yourself; a match does not prove identity. Animated images are checked using the browser-decoded first frame.',
@@ -77,7 +80,8 @@
       keep: 'Keep',
       manual: 'Review for removal',
       report: 'Download review CSV',
-      reportNote: 'The CSV is a review aid. This page never deletes or changes your original files.',
+      reportNote:
+        'The CSV is a review aid. This page never deletes or changes your original files.',
       file: 'File',
       dimensions: 'Dimensions',
       size: 'Size',
@@ -103,7 +107,8 @@
     },
     ar: {
       title: 'العثور على الصور المكررة — ctimg',
-      description: 'اعثر على الصور المتطابقة والمرشحة للتشابه ضمن اختيار محلي. تبقى الملفات على جهازك.',
+      description:
+        'اعثر على الصور المتطابقة والمرشحة للتشابه ضمن اختيار محلي. تبقى الملفات على جهازك.',
       nav: 'العثور على المكررات',
       localOnly: 'محلي فقط',
       eyebrow: 'P4-20 · T61',
@@ -122,9 +127,11 @@
       empty: 'لم يتم العثور على نسخ مطابقة أو صور يُرجح تشابهها.',
       emptyRemedy: 'جرّب مجموعة أخرى. فحوص التشابه متحفظة وقد لا تكتشف التعديلات أو الاقتصاص.',
       exactHeading: 'نسخ متطابقة بالبايت',
-      exactNote: 'تحمل هذه الملفات بصمة SHA-256 نفسها. يمكنك الاحتفاظ بنسخة واحدة؛ ولا يتم تغيير الملفات الأصلية.',
+      exactNote:
+        'تحمل هذه الملفات بصمة SHA-256 نفسها. يمكنك الاحتفاظ بنسخة واحدة؛ ولا يتم تغيير الملفات الأصلية.',
       nearHeading: 'صور محتمل تشابهها',
-      nearNote: 'بصمات التشابه تقريبية. راجع الصور بنفسك؛ فالتطابق لا يثبت الهوية. تُفحص الصور المتحركة باستخدام الإطار الأول الذي يفكّه المتصفح.',
+      nearNote:
+        'بصمات التشابه تقريبية. راجع الصور بنفسك؛ فالتطابق لا يثبت الهوية. تُفحص الصور المتحركة باستخدام الإطار الأول الذي يفكّه المتصفح.',
       first: (name: string) => `الاحتفاظ بهذه النسخة: ${name}`,
       other: (name: string) => `الاحتفاظ بهذه النسخة: ${name}`,
       decision: 'القرار',
@@ -157,7 +164,10 @@
     },
   } as const;
 
-  let { locale = 'en-XA', canonicalPath = '/en-XA/find-duplicates' }: {
+  let {
+    locale = 'en-XA',
+    canonicalPath = '/en-XA/find-duplicates',
+  }: {
     locale?: Locale;
     canonicalPath?: string;
   } = $props();
@@ -171,9 +181,29 @@
   let progress = $state('');
   let task = 0;
   let reportUrl: string | undefined;
+  let options = $state<T61DuplicateOptions>(T61DuplicateOptionsSchema.parse({}));
   const copy = $derived(words[locale]);
   const totalBytes = $derived(files.reduce((sum, file) => sum + file.size, 0));
   const matchCount = $derived(exactGroups.length + nearPairs.length);
+  const localizedDescriptions = $derived(
+    localizeOptions(locale, t61DuplicateOptionDescriptions) as Readonly<
+      Record<string, OptionDescription>
+    >,
+  );
+  const optionValues = $derived({
+    't61.averageDistance': options.averageDistance,
+    't61.differenceDistance': options.differenceDistance,
+    't61.aspectRatioTolerance': options.aspectRatioTolerance,
+  });
+
+  function updateOption(path: string, value: unknown) {
+    const key = path.startsWith('t61.') ? path.slice(4) : path;
+    const parsed = T61DuplicateOptionsSchema.safeParse({ ...options, [key]: value });
+    if (parsed.success) {
+      options = parsed.data;
+      resetResults();
+    }
+  }
 
   function failureFor(kind: FailureKind): Failure {
     const map: Record<FailureKind, [string, string]> = {
@@ -212,7 +242,10 @@
     resetResults();
     files = selected;
     if (selected.length > MAX_FILES) failure = failureFor('too-many');
-    else if (selected.some((file) => file.size > MAX_FILE_BYTES) || totalSize(selected) > MAX_BATCH_BYTES)
+    else if (
+      selected.some((file) => file.size > MAX_FILE_BYTES) ||
+      totalSize(selected) > MAX_BATCH_BYTES
+    )
       failure = failureFor('too-large');
     else if (selected.some((file) => !SUPPORTED_MIME.has(file.type)))
       failure = failureFor('unsupported');
@@ -294,7 +327,9 @@
         } catch {
           throw failureFor('hashing');
         }
-        const sha256 = Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
+        const sha256 = Array.from(new Uint8Array(digest), (byte) =>
+          byte.toString(16).padStart(2, '0'),
+        ).join('');
         const image = await decodeHashes(file, index, sha256);
         if (currentTask !== task) return;
         checked.push(image);
@@ -322,12 +357,16 @@
           if (first.sha256 === second.sha256) continue;
           const firstRatio = first.width / first.height;
           const secondRatio = second.width / second.height;
-          if (Math.abs(firstRatio - secondRatio) / Math.max(firstRatio, secondRatio) > 0.1) continue;
+          if (
+            Math.abs(firstRatio - secondRatio) / Math.max(firstRatio, secondRatio) >
+            options.aspectRatioTolerance / 100
+          )
+            continue;
           const averageDistance = hamming(first.averageHash, second.averageHash);
           const differenceDistance = hamming(first.differenceHash, second.differenceHash);
           if (
-            averageDistance <= MAX_AVERAGE_DISTANCE &&
-            differenceDistance <= MAX_DIFFERENCE_DISTANCE
+            averageDistance <= options.averageDistance &&
+            differenceDistance <= options.differenceDistance
           ) {
             possible.push({
               id: `near-${first.id}-${second.id}`,
@@ -381,14 +420,9 @@
   }
 
   function downloadReport() {
-    const rows: (string | number)[][] = [[
-      copy.match,
-      copy.file,
-      copy.dimensions,
-      copy.size,
-      copy.difference,
-      copy.decision,
-    ]];
+    const rows: (string | number)[][] = [
+      [copy.match, copy.file, copy.dimensions, copy.size, copy.difference, copy.decision],
+    ];
     for (const group of exactGroups) {
       for (const image of group.images) {
         rows.push([
@@ -447,9 +481,17 @@
   <title>{copy.title}</title>
   <meta name="description" content={copy.description} />
   <link rel="canonical" href={`https://image.complianttools.com${canonicalPath}`} />
-  <link rel="alternate" hreflang="en-XA" href="https://image.complianttools.com/en-XA/find-duplicates" />
+  <link
+    rel="alternate"
+    hreflang="en-XA"
+    href="https://image.complianttools.com/en-XA/find-duplicates"
+  />
   <link rel="alternate" hreflang="ar" href="https://image.complianttools.com/ar/find-duplicates" />
-  <link rel="alternate" hreflang="x-default" href="https://image.complianttools.com/find-duplicates" />
+  <link
+    rel="alternate"
+    hreflang="x-default"
+    href="https://image.complianttools.com/find-duplicates"
+  />
   <meta property="og:title" content={copy.title} />
   <meta property="og:description" content={copy.description} />
 </svelte:head>
@@ -457,7 +499,10 @@
 <header class="tool-header duplicate-header" lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}>
   <a class="logo" href={locale === 'en-XA' ? '/' : `/${locale}/find-duplicates`}>ctimg</a>
   <nav aria-label={locale === 'ar' ? 'التنقل الرئيسي' : 'Main navigation'}>
-    <a aria-current="page" href={locale === 'en-XA' ? '/find-duplicates' : `/${locale}/find-duplicates`}>{copy.nav}</a>
+    <a
+      aria-current="page"
+      href={locale === 'en-XA' ? '/find-duplicates' : `/${locale}/find-duplicates`}>{copy.nav}</a
+    >
   </nav>
   <span class="privacy">{copy.localOnly}</span>
 </header>
@@ -486,8 +531,28 @@
       <p data-testid="t61-selection">{files.length} · {formatBytes(totalBytes)}</p>
     {/if}
     <div class="t61-actions">
-      <button class="button primary" data-testid="t61-scan" type="button" onclick={scan} disabled={scanning || files.length < 2 || Boolean(failure)}>{copy.scan}</button>
-      <button class="button" data-testid="t61-clear" type="button" onclick={clearSelection} disabled={scanning && !files.length}>{copy.clear}</button>
+      <button
+        class="button primary"
+        data-testid="t61-scan"
+        type="button"
+        onclick={scan}
+        disabled={scanning || files.length < 2 || Boolean(failure)}>{copy.scan}</button
+      >
+      <button
+        class="button"
+        data-testid="t61-clear"
+        type="button"
+        onclick={clearSelection}
+        disabled={scanning && !files.length}>{copy.clear}</button
+      >
+    </div>
+    <div class="t61-options">
+      <GeneratedControls
+        descriptions={localizedDescriptions}
+        values={optionValues}
+        onChange={updateOption}
+        {locale}
+      />
     </div>
   </section>
 
@@ -496,13 +561,19 @@
     <div class="t61-status" aria-live="polite" aria-atomic="true">
       {#if scanning}
         <p data-testid="t61-status">{progress || copy.scanning}</p>
-        <button class="button" data-testid="t61-cancel" type="button" onclick={cancel}>{copy.cancel}</button>
+        <button class="button" data-testid="t61-cancel" type="button" onclick={cancel}
+          >{copy.cancel}</button
+        >
       {:else if failure}
         <p role="alert" data-testid="t61-error" data-error-kind={failure.kind}>
-          {failure.message}<br /><strong>{copy.remedy}:</strong> {failure.remedy}
+          {failure.message}<br /><strong>{copy.remedy}:</strong>
+          {failure.remedy}
         </p>
       {:else if exactGroups.length === 0 && nearPairs.length === 0 && files.length >= 2}
-      <p data-testid="t61-empty">{copy.empty}<br /><strong>{copy.remedy}:</strong> {copy.emptyRemedy}</p>
+        <p data-testid="t61-empty">
+          {copy.empty}<br /><strong>{copy.remedy}:</strong>
+          {copy.emptyRemedy}
+        </p>
       {:else if files.length < 2}
         <p data-testid="t61-status">{copy.ready}</p>
       {:else}
@@ -524,13 +595,24 @@
                   <img src={image.thumbnail} alt={image.file.name} width="144" height="144" />
                   <div>
                     <strong>{image.file.name}</strong>
-                    <small>{copy.dimensions}: {image.width} × {image.height} · {copy.size}: {formatBytes(image.file.size)}</small>
+                    <small
+                      >{copy.dimensions}: {image.width} × {image.height} · {copy.size}: {formatBytes(
+                        image.file.size,
+                      )}</small
+                    >
                   </div>
                   <label>
-                    <input type="radio" name={group.id} value={image.id} checked={keepers[group.id] === image.id} onchange={() => setKeeper(group.id, image.id)} />
+                    <input
+                      type="radio"
+                      name={group.id}
+                      value={image.id}
+                      checked={keepers[group.id] === image.id}
+                      onchange={() => setKeeper(group.id, image.id)}
+                    />
                     {copy.first(image.file.name)}
                   </label>
-                  {#if keepers[group.id] !== image.id}<span class="t61-review">{copy.manual}</span>{/if}
+                  {#if keepers[group.id] !== image.id}<span class="t61-review">{copy.manual}</span
+                    >{/if}
                 </div>
               {/each}
             </fieldset>
@@ -544,19 +626,32 @@
           <p>{copy.nearNote}</p>
           {#each nearPairs as pair (pair.id)}
             <fieldset class="t61-match" data-testid="t61-near-pair">
-              <legend>{copy.visual} · {copy.difference}: aHash {pair.averageDistance}/64, dHash {pair.differenceDistance}/56</legend>
+              <legend
+                >{copy.visual} · {copy.difference}: aHash {pair.averageDistance}/64, dHash {pair.differenceDistance}/56</legend
+              >
               {#each [pair.first, pair.second] as image (image.id)}
                 <div class="t61-file">
                   <img src={image.thumbnail} alt={image.file.name} width="144" height="144" />
                   <div>
                     <strong>{image.file.name}</strong>
-                    <small>{copy.dimensions}: {image.width} × {image.height} · {copy.size}: {formatBytes(image.file.size)}</small>
+                    <small
+                      >{copy.dimensions}: {image.width} × {image.height} · {copy.size}: {formatBytes(
+                        image.file.size,
+                      )}</small
+                    >
                   </div>
                   <label>
-                    <input type="radio" name={pair.id} value={image.id} checked={keepers[pair.id] === image.id} onchange={() => setKeeper(pair.id, image.id)} />
+                    <input
+                      type="radio"
+                      name={pair.id}
+                      value={image.id}
+                      checked={keepers[pair.id] === image.id}
+                      onchange={() => setKeeper(pair.id, image.id)}
+                    />
                     {copy.other(image.file.name)}
                   </label>
-                  {#if keepers[pair.id] !== image.id}<span class="t61-review">{copy.manual}</span>{/if}
+                  {#if keepers[pair.id] !== image.id}<span class="t61-review">{copy.manual}</span
+                    >{/if}
                 </div>
               {/each}
             </fieldset>
@@ -565,7 +660,12 @@
       {/if}
 
       <div class="t61-report">
-        <button class="button primary" data-testid="t61-report" type="button" onclick={downloadReport}>{copy.report}</button>
+        <button
+          class="button primary"
+          data-testid="t61-report"
+          type="button"
+          onclick={downloadReport}>{copy.report}</button
+        >
         <p>{copy.reportNote}</p>
       </div>
     {/if}
@@ -573,37 +673,163 @@
 </main>
 
 <style>
-  .duplicate-header { display: flex; align-items: center; justify-content: space-between; }
-  .duplicate-header nav a[aria-current='page'] { font-weight: 700; text-decoration-thickness: 2px; }
-  .t61-page { padding-bottom: 64px; }
-  .t61-picker { max-width: 620px; flex-wrap: wrap; justify-content: center; }
-  .t61-picker input { max-width: 100%; }
-  .t61-limits { margin: 12px auto; font-size: 13px !important; }
-  .t61-actions { display: flex; justify-content: center; gap: 12px; margin-top: 20px; }
-  .t61-results { max-width: 1040px; margin: 0 auto; padding: 24px; }
-  .t61-visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
-  .t61-results h2 { margin: 0 0 20px; font-size: 22px; }
-  .t61-status { min-height: 56px; margin-bottom: 20px; }
-  .t61-status p { line-height: 1.55; }
-  .t61-section { margin: 28px 0; }
-  .t61-section > h3 { margin-bottom: 8px; }
-  .t61-section > p { color: #5c5a56; line-height: 1.55; }
-  .t61-match { min-width: 0; margin: 16px 0; padding: 12px 18px 18px; border: 1px solid #1c1a1720; border-radius: 8px; background: white; }
-  .t61-match legend { max-width: 100%; padding: 0 8px; font-weight: 650; overflow-wrap: anywhere; }
-  .t61-file { display: grid; grid-template-columns: 72px minmax(0, 1fr) auto auto; align-items: center; gap: 16px; padding: 12px 0; border-top: 1px solid #1c1a1712; }
-  .t61-file img { width: 72px; height: 72px; object-fit: contain; background: #f0eeea; }
-  .t61-file strong, .t61-file small { display: block; overflow-wrap: anywhere; }
-  .t61-file small { margin-top: 4px; color: #5c5a56; }
-  .t61-file label { display: inline-flex; align-items: center; gap: 6px; }
-  .t61-review { border-radius: 999px; padding: 5px 10px; background: #eee9df; font-size: 12px; }
-  .t61-report { margin-top: 32px; padding: 20px; border: 1px solid #1c1a171a; border-radius: 8px; background: white; text-align: center; }
-  .t61-report p { margin-bottom: 0; color: #5c5a56; font-size: 13px; }
+  .duplicate-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .duplicate-header nav a[aria-current='page'] {
+    font-weight: 700;
+    text-decoration-thickness: 2px;
+  }
+  .t61-page {
+    padding-bottom: 64px;
+  }
+  .t61-picker {
+    max-width: 620px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .t61-picker input {
+    max-width: 100%;
+  }
+  .t61-limits {
+    margin: 12px auto;
+    font-size: 13px !important;
+  }
+  .t61-actions {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 20px;
+  }
+  .t61-options {
+    max-width: 680px;
+    margin: 24px auto 0;
+    text-align: start;
+  }
+  .t61-results {
+    max-width: 1040px;
+    margin: 0 auto;
+    padding: 24px;
+  }
+  .t61-visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  .t61-results h2 {
+    margin: 0 0 20px;
+    font-size: 22px;
+  }
+  .t61-status {
+    min-height: 56px;
+    margin-bottom: 20px;
+  }
+  .t61-status p {
+    line-height: 1.55;
+  }
+  .t61-section {
+    margin: 28px 0;
+  }
+  .t61-section > h3 {
+    margin-bottom: 8px;
+  }
+  .t61-section > p {
+    color: #5c5a56;
+    line-height: 1.55;
+  }
+  .t61-match {
+    min-width: 0;
+    margin: 16px 0;
+    padding: 12px 18px 18px;
+    border: 1px solid #1c1a1720;
+    border-radius: 8px;
+    background: white;
+  }
+  .t61-match legend {
+    max-width: 100%;
+    padding: 0 8px;
+    font-weight: 650;
+    overflow-wrap: anywhere;
+  }
+  .t61-file {
+    display: grid;
+    grid-template-columns: 72px minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 0;
+    border-top: 1px solid #1c1a1712;
+  }
+  .t61-file img {
+    width: 72px;
+    height: 72px;
+    object-fit: contain;
+    background: #f0eeea;
+  }
+  .t61-file strong,
+  .t61-file small {
+    display: block;
+    overflow-wrap: anywhere;
+  }
+  .t61-file small {
+    margin-top: 4px;
+    color: #5c5a56;
+  }
+  .t61-file label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .t61-review {
+    border-radius: 999px;
+    padding: 5px 10px;
+    background: #eee9df;
+    font-size: 12px;
+  }
+  .t61-report {
+    margin-top: 32px;
+    padding: 20px;
+    border: 1px solid #1c1a171a;
+    border-radius: 8px;
+    background: white;
+    text-align: center;
+  }
+  .t61-report p {
+    margin-bottom: 0;
+    color: #5c5a56;
+    font-size: 13px;
+  }
   @media (max-width: 767px) {
-    .duplicate-header { padding-inline: 16px; }
-    .duplicate-header .privacy { max-width: 46%; font-size: 11px; text-align: center; }
-    .t61-picker { flex-direction: column; }
-    .t61-results { padding: 16px; }
-    .t61-file { grid-template-columns: 64px minmax(0, 1fr); align-items: start; gap: 8px; }
-    .t61-file img { grid-row: span 3; width: 64px; height: 64px; }
+    .duplicate-header {
+      padding-inline: 16px;
+    }
+    .duplicate-header .privacy {
+      max-width: 46%;
+      font-size: 11px;
+      text-align: center;
+    }
+    .t61-picker {
+      flex-direction: column;
+    }
+    .t61-results {
+      padding: 16px;
+    }
+    .t61-file {
+      grid-template-columns: 64px minmax(0, 1fr);
+      align-items: start;
+      gap: 8px;
+    }
+    .t61-file img {
+      grid-row: span 3;
+      width: 64px;
+      height: 64px;
+    }
   }
 </style>

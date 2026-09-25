@@ -6,6 +6,10 @@ const tools = [
   'convert',
   'compress',
   'resize',
+  'crop',
+  'rotate',
+  'flip',
+  'add-border',
   'image-info',
   'remove-exif',
   'exif-viewer',
@@ -27,6 +31,9 @@ const tools = [
   'pixel-art-upscaler',
   'upscale',
   'ocr',
+  'threshold',
+  'sharpen',
+  'duotone',
 ] as const;
 
 // Routes intentionally excluded from localized entries:

@@ -1,7 +1,4 @@
 <script lang="ts">
-  import { developDng } from '@complianttools/image-engine/codecs/raw/develop';
-  import { extractRawCameraPreview } from '@complianttools/image-engine/codecs/raw/preview';
-  import { rawPreviewExtensionError } from '@complianttools/image-engine/codecs/raw/support';
   import {
     decodeWithTypedErrors,
     engineErrorMessage,
@@ -60,6 +57,8 @@
     developedDownload = replaceUrl(developedDownload, '');
     if (!file) return;
     try {
+      const { rawPreviewExtensionError } =
+        await import('@complianttools/image-engine/codecs/raw/support');
       const extensionError = rawPreviewExtensionError(file.name);
       if (extensionError) throw extensionError;
       const bytes = await file.arrayBuffer(),
@@ -67,6 +66,8 @@
       const isDng = file.name.toLowerCase().endsWith('.dng');
       if (options.instantPreview) {
         try {
+          const { extractRawCameraPreview } =
+            await import('@complianttools/image-engine/codecs/raw/preview');
           const preview = await decodeWithTypedErrors('raw', () => extractRawCameraPreview(bytes));
           previewUrl = replaceUrl(
             previewUrl,
@@ -91,6 +92,7 @@
       }
       status = `${status ? `${status} ` : ''}${t('raw.developing', 'Developing the DNG in the background…')}`;
       await new Promise<void>((resolve) => globalThis.requestAnimationFrame(() => resolve()));
+      const { developDng } = await import('@complianttools/image-engine/codecs/raw/develop');
       const developed = await decodeWithTypedErrors('raw', () => developDng(bytes, options));
       const png = await canvasPng(developed.frames[0].data, developed.width, developed.height);
       developedUrl = replaceUrl(developedUrl, URL.createObjectURL(png));
@@ -117,7 +119,7 @@
 <svelte:head
   ><title>{t('raw.seoTitle', 'RAW & DNG')} — Image Compliant Tools</title><meta
     name="description"
-    content={t('raw.metaDescription', 'Extract RAW camera previews and develop DNG files locally.')}
+    content="Extract RAW camera previews and develop DNG files locally."
   /><link rel="canonical" href={`https://image.complianttools.com${localizedPath}`} /></svelte:head
 >
 <main lang={locale === 'en-XA' ? 'en-XA' : locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}>

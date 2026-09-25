@@ -122,11 +122,12 @@
 
 <svelte:head>
   <title>{t('jxl.title', 'JPEG XL Converter')} — Image Compliant Tools</title>
-  <meta
-    name="description"
-    content={t('jxl.metaDescription', 'Encode images as JPEG XL or decode JPEG XL to PNG locally.')}
-  />
+  <meta name="description" content="Encode images as JPEG XL or decode JPEG XL to PNG locally." />
   <link rel="canonical" href={`https://image.complianttools.com${localizedPath}`} />
+  <meta property="og:title" content="JPEG XL Converter" />
+  <meta property="og:description" content="Encode JPEG XL or decode to PNG locally." />
+  <meta property="og:type" content="website" />
+  <meta property="twitter:card" content="summary" />
 </svelte:head>
 
 <main lang={locale === 'en-XA' ? 'en-XA' : locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}>
@@ -145,6 +146,20 @@
       'Lossless raster mode preserves decoded pixels. Reconstructible JPEG recompression is not exposed by the pinned browser codec and is not claimed here.',
     )}
   </p>
+  <h2>{t('jxl.faqTitle', 'Frequently asked')}</h2>
+  <div>
+    <h3>{t('jxl.faqTitle1', 'Does lossless mode preserve pixels?')}</h3>
+    <p>{t('jxl.faqAnswer1', 'Yes. Lossless raster mode preserves decoded pixels exactly.')}</p>
+    <h3>{t('jxl.faqTitle2', 'Can I recompress a JPEG as JPEG XL?')}</h3>
+    <p>
+      {t(
+        'jxl.faqAnswer2',
+        'No. Reconstructible JPEG recompression is not exposed by the pinned browser codec.',
+      )}
+    </p>
+    <h3>{t('jxl.faqTitle3', 'Is anything uploaded?')}</h3>
+    <p>{t('jxl.faqAnswer3', 'No. Everything runs locally.')}</p>
+  </div>
   <GeneratedControls
     descriptions={localizeOptions(locale, jxlConverterToolOptionDescriptions)}
     values={Object.fromEntries(

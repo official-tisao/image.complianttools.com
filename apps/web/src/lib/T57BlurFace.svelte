@@ -1,6 +1,8 @@
 <script lang="ts">
   import { onDestroy, tick } from 'svelte';
   import { translate } from '$lib/i18n';
+  import type { RasterImage } from '@complianttools/image-engine/types';
+  import { downloadT57YuNetModel, T57_YUNET_MODEL } from './t57-yunet-model';
 
   type Locale = 'en' | 'en-XA' | 'ar';
   type Region = { x: number; y: number; width: number; height: number };
@@ -25,15 +27,29 @@
   const en = {
     title: 'Blur Faces in an Image',
     description:
-      'Mark and blur chosen areas in a still PNG locally. No face detector or upload is used.',
+      'Optionally suggest face regions, mark or adjust them, then blur marked areas in a still PNG locally. No image upload is used.',
     eyebrow: 'Local image privacy tool',
     heading: 'Blur Faces in an Image',
     editorLabel: 'Image editing workspace',
     intro:
-      'Mark each face with a rectangle, inspect the blurred preview, then download a PNG copy.',
+      'Mark faces yourself or request optional model suggestions. Review the blurred preview, then download a PNG copy.',
     privacy: 'Your image stays in this browser. Processing is local; nothing is uploaded.',
     manual:
-      'This tool does not detect faces automatically. You must mark every face you want blurred and check the full image before downloading.',
+      'Optional model suggestions can miss faces. Review the whole image, add any missed faces yourself, and check every region before downloading.',
+    suggestFaces: 'Download model and suggest face regions (227 KiB)',
+    modelProgress: (loaded: number, total: number) =>
+      `Loading face model: ${loaded} / ${total} bytes`,
+    modelLoadedFromCache: 'Using the verified face model saved in this browser.',
+    detectingFaces: 'Checking this image for face regions…',
+    suggestionsAdded: (count: number) =>
+      `Added ${count} suggested ${count === 1 ? 'region' : 'regions'}. Review and adjust them; missed faces need manual marking.`,
+    noSuggestions: 'No face regions were suggested. You can still mark regions yourself.',
+    modelFailure:
+      'Could not load or verify the face model. Manual region marking is still available.',
+    cancelModel: 'Cancel model download or suggestions',
+    suggestionsCancelled: 'Suggestions cancelled. Any existing manual regions are unchanged.',
+    modelDisclosure:
+      'The face model downloads only after you request suggestions and is cached in this browser. Your image remains local.',
     choose: 'Choose a still PNG',
     inputLabel: 'Choose a still PNG image to blur selected face regions',
     limits: 'Still PNG only; up to 16 MiB and 6 megapixels. Animated PNG is not supported.',
@@ -83,9 +99,9 @@
       canvas: 'Try a current browser with 2D canvas support.',
     } satisfies Record<ErrorKind, string>,
     faqHeading: 'About this tool',
-    faqDetection: 'Does it find faces for me?',
+    faqDetection: 'Can it suggest face regions?',
     faqDetectionAnswer:
-      'No. There is no automatic face detection. Mark each face yourself and review the whole image because unmarked faces remain visible.',
+      'You can request optional model suggestions. They can miss faces, so review the whole image, add missing regions yourself, and check every region before downloading.',
     faqPrivacy: 'Are my images uploaded?',
     faqPrivacyAnswer:
       'No. The image is decoded, previewed, blurred, and exported locally in your browser.',
@@ -98,14 +114,28 @@
   const ar = {
     title: 'تمويه الوجوه في صورة',
     description:
-      'موّه مناطق الوجوه التي تحددها يدويًا في صورة PNG ثابتة داخل المتصفح. لا يتم رفع الصورة ولا يُستخدم كاشف وجوه.',
+      'اقترح مناطق الوجوه اختياريًا، ثم حدّد المناطق المطلوبة أو عدّلها وموّهها محليًا في صورة PNG ثابتة. لا يتم رفع الصورة.',
     eyebrow: 'أداة خصوصية محلية للصور',
     heading: 'تمويه الوجوه في صورة',
     editorLabel: 'مساحة تعديل الصورة',
-    intro: 'حدّد كل وجه بمستطيل، وافحص المعاينة المموهة، ثم نزّل نسخة PNG.',
+    intro:
+      'حدّد الوجوه بنفسك أو اطلب اقتراحات اختيارية من النموذج. افحص المعاينة المموهة ثم نزّل نسخة PNG.',
     privacy: 'تبقى الصورة في هذا المتصفح. تتم المعالجة محليًا ولا يتم رفعها.',
     manual:
-      'لا تكتشف هذه الأداة الوجوه تلقائيًا. يجب تحديد كل وجه تريد تمويهه وفحص الصورة كاملة قبل التنزيل.',
+      'قد لا يقترح النموذج جميع الوجوه. راجع الصورة كاملة، وأضف أي وجه لم يظهر في الاقتراحات، وافحص كل منطقة قبل التنزيل.',
+    suggestFaces: 'تنزيل النموذج واقتراح مناطق الوجوه (227 كيلوبايت)',
+    modelProgress: (loaded: number, total: number) =>
+      `تحميل نموذج الوجوه: ${loaded} / ${total} بايت`,
+    modelLoadedFromCache: 'استخدام نموذج الوجوه الذي تم التحقق منه والمحفوظ في هذا المتصفح.',
+    detectingFaces: 'جارٍ فحص الصورة بحثًا عن مناطق الوجوه…',
+    suggestionsAdded: (count: number) =>
+      `أُضيفت ${count} منطقة مقترحة. راجعها وعدّلها؛ ويجب تحديد الوجوه التي لم تظهر يدويًا.`,
+    noSuggestions: 'لم يتم اقتراح مناطق للوجوه. لا يزال بإمكانك تحديد المناطق بنفسك.',
+    modelFailure: 'تعذر تحميل نموذج الوجوه أو التحقق منه. لا يزال تحديد المناطق يدويًا متاحًا.',
+    cancelModel: 'إلغاء تنزيل النموذج أو الاقتراحات',
+    suggestionsCancelled: 'تم إلغاء الاقتراحات. لم تتغير المناطق اليدوية الحالية.',
+    modelDisclosure:
+      'لا يتم تنزيل نموذج الوجوه إلا بعد طلب الاقتراحات، ويتم تخزينه مؤقتًا في هذا المتصفح. تبقى الصورة محلية.',
     choose: 'اختر صورة PNG ثابتة',
     inputLabel: 'اختر صورة PNG ثابتة لتمويه مناطق الوجوه المحددة',
     limits: 'تدعم PNG الثابتة فقط؛ حتى 16 ميبيبايت و6 ميغابكسل. لا تدعم PNG المتحركة.',
@@ -153,9 +183,9 @@
       canvas: 'جرّب متصفحًا حديثًا يدعم لوحة 2D.',
     } satisfies Record<ErrorKind, string>,
     faqHeading: 'حول هذه الأداة',
-    faqDetection: 'هل تعثر الأداة على الوجوه تلقائيًا؟',
+    faqDetection: 'هل يمكنها اقتراح مناطق الوجوه؟',
     faqDetectionAnswer:
-      'لا. لا يوجد اكتشاف تلقائي للوجوه. حدّد كل وجه بنفسك وراجع الصورة كاملة لأن الوجوه غير المحددة ستظل ظاهرة.',
+      'يمكنك طلب اقتراحات اختيارية من النموذج. قد لا يكتشف جميع الوجوه، لذلك راجع الصورة كاملة وأضف المناطق التي لم تظهر وافحص كل منطقة قبل التنزيل.',
     faqPrivacy: 'هل يتم رفع صوري؟',
     faqPrivacyAnswer: 'لا. يجري فك ترميز الصورة ومعاينتها وتمويهها وتصديرها محليًا في المتصفح.',
     faqInput: 'ما الصور التي يمكنني استخدامها؟',
@@ -180,6 +210,11 @@
   let error = $state<ErrorKind>();
   let notice = $state('');
   let selectionTask = 0;
+  let suggestionTask = 0;
+  let modelLoading = $state(false);
+  let modelProgress = $state({ loaded: 0, total: T57_YUNET_MODEL.sizeBytes });
+  let activeModelAbort: AbortController | undefined;
+  let loadedModelBytes: Uint8Array | undefined;
   function pseudoLocalize<T>(source: T): T {
     if (typeof source === 'string') return translate('en-XA', '', source) as T;
     if (typeof source === 'function') {
@@ -233,6 +268,18 @@
     if (canvas) {
       canvas.width = 0;
       canvas.height = 0;
+    }
+  }
+
+  function cancelSuggestions() {
+    const wasLoading = modelLoading;
+    suggestionTask += 1;
+    activeModelAbort?.abort();
+    activeModelAbort = undefined;
+    modelLoading = false;
+    if (wasLoading) {
+      message = '';
+      notice = copy.suggestionsCancelled;
     }
   }
 
@@ -411,6 +458,7 @@
     if (!file) return;
 
     const task = ++selectionTask;
+    cancelSuggestions();
     clearBitmap();
     error = undefined;
     message = '';
@@ -532,10 +580,92 @@
 
   function clearImage() {
     selectionTask += 1;
+    cancelSuggestions();
     clearBitmap();
     error = undefined;
     message = '';
     notice = '';
+  }
+
+  async function suggestFaces() {
+    if (!canvas || !dimensions || modelLoading) return;
+    const task = ++suggestionTask;
+    const controller = new AbortController();
+    activeModelAbort = controller;
+    modelLoading = true;
+    modelProgress = { loaded: 0, total: T57_YUNET_MODEL.sizeBytes };
+    error = undefined;
+    notice = '';
+    message = '';
+    try {
+      if (!loadedModelBytes) {
+        const loaded = await downloadT57YuNetModel(({ loadedBytes, totalBytes }) => {
+          if (task === suggestionTask) modelProgress = { loaded: loadedBytes, total: totalBytes };
+        }, controller.signal);
+        if (task !== suggestionTask) return;
+        loadedModelBytes = loaded.bytes;
+        if (loaded.fromCache) notice = copy.modelLoadedFromCache;
+      }
+      if (task !== suggestionTask) return;
+      const modelBytes = loadedModelBytes;
+      if (!modelBytes) throw new Error('The face model did not load.');
+      message = copy.detectingFaces;
+      const context = canvas.getContext('2d', { willReadFrequently: true });
+      if (!context)
+        throw new Error('The browser could not read image pixels for face suggestions.');
+      const pixels = context.getImageData(0, 0, dimensions.width, dimensions.height);
+      const image: RasterImage = {
+        width: dimensions.width,
+        height: dimensions.height,
+        colorSpace: 'srgb',
+        bitDepth: 8,
+        premultipliedAlpha: false,
+        frames: [{ data: pixels.data, durationMs: 0 }],
+      };
+      const { detectFacesYuNet } =
+        await import('@complianttools/image-engine/cv/yunet-face-detection');
+      const boxes = await detectFacesYuNet(image, {
+        modelData: modelBytes,
+        consentGranted: true,
+      });
+      if (task !== suggestionTask) return;
+      const remaining = MAX_REGIONS - regions.length;
+      const additions = boxes
+        .slice(0, remaining)
+        .map((box) => {
+          // A small margin helps include hairline and chin; users can adjust every suggestion.
+          const marginX = box.width * 0.08;
+          const marginY = box.height * 0.08;
+          const left = Math.max(0, Math.floor(box.x - marginX));
+          const top = Math.max(0, Math.floor(box.y - marginY));
+          const right = Math.min(dimensions!.width, Math.ceil(box.x + box.width + marginX));
+          const bottom = Math.min(dimensions!.height, Math.ceil(box.y + box.height + marginY));
+          return { x: left, y: top, width: right - left, height: bottom - top };
+        })
+        .filter((box) => box.width >= 8 && box.height >= 8);
+      if (!additions.length) {
+        message = '';
+        notice = copy.noSuggestions;
+        return;
+      }
+      regions = [...regions, ...additions];
+      redraw();
+      notice = copy.suggestionsAdded(additions.length);
+    } catch {
+      if (task !== suggestionTask) return;
+      if (controller.signal.aborted) {
+        message = '';
+        notice = copy.suggestionsCancelled;
+      } else {
+        message = '';
+        notice = copy.modelFailure;
+      }
+    } finally {
+      if (task === suggestionTask) {
+        modelLoading = false;
+        activeModelAbort = undefined;
+      }
+    }
   }
 
   async function download() {
@@ -573,6 +703,7 @@
 
   onDestroy(() => {
     selectionTask += 1;
+    cancelSuggestions();
     bitmap?.close();
   });
 </script>
@@ -624,6 +755,30 @@
         {copy.loaded(sourceName, dimensions.width, dimensions.height)}
       </p>
       <p class="draw-help">{copy.drawHelp}</p>
+      <p class="model-disclosure">{copy.modelDisclosure}</p>
+      {#if modelLoading}
+        <progress
+          data-testid="t57-model-progress"
+          aria-label={copy.modelProgress(modelProgress.loaded, modelProgress.total)}
+          max={modelProgress.total}
+          value={modelProgress.loaded}
+        ></progress>
+        <p role="status" aria-live="polite" data-testid="t57-model-status">
+          {modelProgress.loaded < modelProgress.total
+            ? copy.modelProgress(modelProgress.loaded, modelProgress.total)
+            : copy.detectingFaces}
+        </p>
+        <button
+          type="button"
+          class="button"
+          data-testid="t57-cancel-model"
+          onclick={cancelSuggestions}>{copy.cancelModel}</button
+        >
+      {:else}
+        <button type="button" class="button" data-testid="t57-suggest-faces" onclick={suggestFaces}
+          >{copy.suggestFaces}</button
+        >
+      {/if}
       <div class="t57-canvas-wrap">
         <canvas
           bind:this={canvas}
@@ -781,6 +936,9 @@
     color: #533500;
     padding: 12px 16px;
     border-radius: 6px;
+  }
+  .model-disclosure {
+    font-size: 0.95rem;
   }
   .t57-editor {
     padding: 20px;

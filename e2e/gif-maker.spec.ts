@@ -18,7 +18,10 @@ test('GIF maker exposes and uses local quantization and animation controls', asy
   await expect(page.getByLabel('Palette size (2–256)')).toHaveValue('256');
   await expect(page.getByLabel('Transparency index (0–255)')).toHaveValue('0');
   await expect(page.getByLabel('Dithering')).toHaveValue('floyd-steinberg');
-  await expect(page.getByLabel('Dither amount (0–100)')).toHaveValue('100');
+  await page.getByRole('slider', { name: 'Dither amount (0–100)' }).fill('100');
+  await expect(page.getByRole('spinbutton', { name: 'Dither amount (0–100) value' })).toHaveValue(
+    '100',
+  );
   await expect(page.getByLabel('Frame disposal')).toHaveValue('auto');
   await expect(page.getByLabel('Interlace rows')).not.toBeChecked();
   await page.getByLabel('Quantizer').selectOption('neural');
@@ -27,11 +30,12 @@ test('GIF maker exposes and uses local quantization and animation controls', asy
   await page.getByLabel('Crossfade frames').fill('1');
   await page.getByLabel('Palette size (2–256)').fill('16');
   await page.getByLabel('Transparency index (0–255)').fill('5');
-  const pending = page.waitForEvent('download');
   await page.locator('input[type=file]').setInputFiles([
     { name: 'pixel-a.png', mimeType: 'image/png', buffer: fixture },
     { name: 'pixel-b.png', mimeType: 'image/png', buffer: fixture },
   ]);
+  const pending = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Create GIF' }).click();
   const download = await pending;
   const path = await download.path();
   expect(path).not.toBeNull();

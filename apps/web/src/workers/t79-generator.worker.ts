@@ -1,43 +1,61 @@
 import {
+  T79GeneratorError,
+  T79GeneratorOptionsSchema,
+  type T79GeneratorErrorKind,
+} from '@complianttools/image-engine/schemas/procedural-generator';
+import {
   fbm,
   radialGradient,
   valueNoiseTexture,
 } from '@complianttools/image-engine/cv/procedural-synthesis';
 
-type Mode = 'fbm' | 'value-noise' | 'radial-gradient';
-type Request = { width: number; height: number; seed: number; mode: Mode };
+type WorkerResponse =
+  | {
+      readonly type: 'result';
+      readonly width: number;
+      readonly height: number;
+      readonly data: ArrayBuffer;
+    }
+  | { readonly type: 'error'; readonly kind: T79GeneratorErrorKind };
 
-self.onmessage = (event: MessageEvent<Request>) => {
+function reportError(kind: T79GeneratorErrorKind) {
+  const message: WorkerResponse = { type: 'error', kind };
+  self.postMessage(message);
+}
+
+self.onmessage = (event: MessageEvent<unknown>) => {
+  const parsed = T79GeneratorOptionsSchema.safeParse(event.data);
+  if (!parsed.success) {
+    reportError('invalid-options');
+    return;
+  }
+
+  const options = parsed.data;
   try {
-    const { width, height, seed, mode } = event.data;
-    if (
-      !Number.isSafeInteger(width) ||
-      !Number.isSafeInteger(height) ||
-      width < 16 ||
-      height < 16 ||
-      width > 512 ||
-      height > 512 ||
-      !Number.isSafeInteger(seed) ||
-      seed < -2147483648 ||
-      seed > 2147483647 ||
-      !['fbm', 'value-noise', 'radial-gradient'].includes(mode)
-    )
-      throw new RangeError('Invalid generator mode or dimensions.');
-
-    const options = { width, height, seed };
     const image =
-      mode === 'fbm'
+      options.mode === 'fbm'
         ? fbm(options)
-        : mode === 'value-noise'
+        : options.mode === 'value-noise'
           ? valueNoiseTexture(options)
           : radialGradient(options);
-    const pixels = image.frames[0].data;
+    const pixels = image.frames[0]?.data;
+    if (
+      image.width !== options.width ||
+      image.height !== options.height ||
+      !pixels ||
+      pixels.length !== options.width * options.height * 4
+    ) {
+      throw new T79GeneratorError('processing-failed');
+    }
     const buffer = pixels.buffer as ArrayBuffer;
-    self.postMessage(
-      { type: 'result', width: image.width, height: image.height, data: buffer },
-      { transfer: [buffer] },
-    );
-  } catch {
-    self.postMessage({ type: 'error' });
+    const result: WorkerResponse = {
+      type: 'result',
+      width: image.width,
+      height: image.height,
+      data: buffer,
+    };
+    self.postMessage(result, { transfer: [buffer] });
+  } catch (cause) {
+    reportError(cause instanceof T79GeneratorError ? cause.kind : 'processing-failed');
   }
 };

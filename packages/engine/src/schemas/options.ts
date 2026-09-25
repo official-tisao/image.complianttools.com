@@ -358,6 +358,11 @@ export const GifConverterToolOptionsSchema = z.object({
   output: z.enum(['frames', 'apng', 'webp', 'mp4', 'webm']).default('frames'),
 });
 
+export const HeicConverterToolOptionsSchema = z.object({
+  direction: z.enum(['decode', 'encode']).default('decode'),
+});
+export type HeicConverterToolOptions = z.infer<typeof HeicConverterToolOptionsSchema>;
+
 export const WebpConverterToolOptionsSchema = z.object({
   animated: z.boolean().default(false),
   lossless: z.boolean().default(false),
@@ -1429,6 +1434,159 @@ export const base64ToolOptionDescriptions: Readonly<Record<string, OptionDescrip
     defaultValue: 'encode',
   },
 };
+
+export const gifMakerToolOptionDescriptions: Readonly<Record<string, OptionDescription>> = {
+  'gifMaker.optimizeLevel': {
+    label: 'Optimization level',
+    help: '0 retains every frame; 1 merges duplicates; 2–3 make unchanged pixels transparent.',
+    control: 'select',
+    group: 'GIF encoding',
+    advanced: false,
+    options: ['0', '1', '2', '3'],
+    defaultValue: 2,
+  },
+  'gifMaker.lossy': {
+    label: 'Palette reduction (lossy)',
+    help: 'Higher values reduce colour count more strongly (0 = off, up to 200).',
+    control: 'slider',
+    group: 'GIF encoding',
+    advanced: false,
+    min: 0,
+    max: 200,
+    defaultValue: 0,
+  },
+  'gifMaker.quantizer': {
+    label: 'Quantizer',
+    help: 'Palette-building algorithm.',
+    control: 'select',
+    group: 'GIF encoding',
+    advanced: false,
+    options: ['fixed-332', 'median-cut', 'octree', 'wu', 'neural'],
+    optionLabels: {
+      'fixed-332': 'Fixed RGB 3:3:2',
+      'median-cut': 'Weighted median cut',
+      octree: 'Weighted octree',
+      wu: 'Wu variance',
+      neural: 'Neural SOM (NeuQuant-equivalent)',
+    },
+    defaultValue: 'median-cut',
+  },
+  'gifMaker.paletteSize': {
+    label: 'Palette size (2–256)',
+    control: 'number',
+    group: 'GIF encoding',
+    advanced: false,
+    min: 2,
+    max: 256,
+    defaultValue: 256,
+  },
+  'gifMaker.paletteMode': {
+    label: 'Palette mode',
+    control: 'select',
+    group: 'GIF encoding',
+    advanced: false,
+    options: ['global', 'per-frame', 'adaptive'],
+    defaultValue: 'adaptive',
+  },
+  'gifMaker.transparencyIndex': {
+    label: 'Transparency index (0–255)',
+    help: 'Palette index used for transparent pixels.',
+    control: 'number',
+    group: 'GIF encoding',
+    advanced: false,
+    min: 0,
+    max: 255,
+    defaultValue: 0,
+  },
+  'gifMaker.dither': {
+    label: 'Dithering',
+    control: 'select',
+    group: 'GIF encoding',
+    advanced: false,
+    options: ['none', 'ordered', 'floyd-steinberg', 'atkinson', 'sierra'],
+    defaultValue: 'floyd-steinberg',
+  },
+  'gifMaker.ditherAmount': {
+    label: 'Dither amount (0–100)',
+    control: 'slider',
+    group: 'GIF encoding',
+    advanced: false,
+    min: 0,
+    max: 100,
+    defaultValue: 100,
+  },
+  'gifMaker.disposal': {
+    label: 'Frame disposal',
+    control: 'select',
+    group: 'GIF encoding',
+    advanced: false,
+    options: ['auto', 'unspecified', 'none', 'background', 'previous'],
+    defaultValue: 'auto',
+  },
+  'gifMaker.interlace': {
+    label: 'Interlace rows',
+    control: 'toggle',
+    group: 'GIF encoding',
+    advanced: false,
+    defaultValue: false,
+  },
+  'gifMaker.frameGenerator': {
+    label: 'Frame generator',
+    control: 'select',
+    group: 'Animation',
+    advanced: false,
+    options: ['forward', 'reverse', 'bounce', 'crossfade'],
+    defaultValue: 'forward',
+  },
+  'gifMaker.crossfadeFrames': {
+    label: 'Crossfade frames',
+    help: 'Used only when frame generator is crossfade.',
+    control: 'number',
+    group: 'Animation',
+    advanced: false,
+    min: 1,
+    max: 30,
+    defaultValue: 2,
+  },
+  'gifMaker.delayMs': {
+    label: 'Frame delay (ms)',
+    control: 'number',
+    group: 'Animation',
+    advanced: false,
+    min: 10,
+    max: 60000,
+    defaultValue: 100,
+  },
+  'gifMaker.loopCount': {
+    label: 'Loop count (0 = infinite)',
+    control: 'number',
+    group: 'Animation',
+    advanced: false,
+    min: 0,
+    max: 65535,
+    defaultValue: 0,
+  },
+};
+
+export const GifMakerToolOptionsSchema = z.object({
+  optimizeLevel: z.union([z.literal(0), z.literal(1), z.literal(2), z.literal(3)]).default(2),
+  lossy: z.number().min(0).max(200).default(0),
+  quantizer: z.enum(['fixed-332', 'median-cut', 'octree', 'wu', 'neural']).default('median-cut'),
+  paletteSize: z.number().min(2).max(256).default(256),
+  paletteMode: z.enum(['global', 'per-frame', 'adaptive']).default('adaptive'),
+  transparencyIndex: z.number().min(0).max(255).default(0),
+  dither: z
+    .enum(['none', 'ordered', 'floyd-steinberg', 'atkinson', 'sierra'])
+    .default('floyd-steinberg'),
+  ditherAmount: z.number().min(0).max(100).default(100),
+  disposal: z.enum(['auto', 'unspecified', 'none', 'background', 'previous']).default('auto'),
+  interlace: z.boolean().default(false),
+  frameGenerator: z.enum(['forward', 'reverse', 'bounce', 'crossfade']).default('forward'),
+  crossfadeFrames: z.number().min(1).max(30).default(2),
+  delayMs: z.number().min(10).max(60000).default(100),
+  loopCount: z.number().min(0).max(65535).default(0),
+});
+export type GifMakerToolOptions = z.infer<typeof GifMakerToolOptionsSchema>;
 
 export const gifConverterToolOptionDescriptions: Readonly<Record<string, OptionDescription>> = {
   'gif.output': {

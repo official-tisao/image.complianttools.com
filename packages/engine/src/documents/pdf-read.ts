@@ -157,7 +157,12 @@ export async function renderPdfPage(
       viewport.width < 1 ||
       viewport.height < 1
     ) {
-      throw new Error('PDF page has invalid render dimensions.');
+      throw {
+        kind: 'decode-failed',
+        format: 'pdf',
+        detail: 'PDF page has invalid render dimensions.',
+        remedy: 'Check the PDF file integrity or reduce the render DPI and try again.',
+      };
     }
     const canvas = canvasFactory();
     canvas.width = Math.ceil(viewport.width);
