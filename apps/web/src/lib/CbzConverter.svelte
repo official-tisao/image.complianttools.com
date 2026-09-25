@@ -173,6 +173,10 @@
     )}
   />
   <link rel="canonical" href={`https://image.complianttools.com${localizedPath}`} />
+  <meta property="og:title" content="CBZ Comic Converter" />
+  <meta property="og:description" content="Create or extract CBZ comics locally." />
+  <meta property="og:type" content="website" />
+  <meta property="twitter:card" content="summary" />
 </svelte:head>
 
 <main lang={locale === 'en-XA' ? 'en-XA' : locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}>
@@ -190,6 +194,22 @@
     onChange={setControl}
     {locale}
   />
+  <h2>{t('cbz.faqTitle', 'Frequently asked')}</h2>
+  <div>
+    <h3>{t('cbz.faqTitle1', 'Can I create a multi-page comic?')}</h3>
+    <p>
+      {t('cbz.faqAnswer1', 'Yes. Choose multiple images in order; ordering options are available.')}
+    </p>
+    <h3>{t('cbz.faqTitle2', 'Does the preview match the download?')}</h3>
+    <p>
+      {t(
+        'cbz.faqAnswer2',
+        'Yes. The page order preview and PDF preview use the same local content.',
+      )}
+    </p>
+    <h3>{t('cbz.faqTitle3', 'Is anything uploaded?')}</h3>
+    <p>{t('cbz.faqAnswer3', 'No. All processing is local.')}</p>
+  </div>
   <label>
     {options.operation === 'create'
       ? t('cbz.chooseImages', 'Choose comic page images')

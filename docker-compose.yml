@@ -24,6 +24,7 @@ services:
       T32_ESRGAN_X2_FALLBACK_URL: ${T32_ESRGAN_X2_FALLBACK_URL:-}
       T32_ESRGAN_X4_URL: ${T32_ESRGAN_X4_URL:-https://huggingface.co/fernandotonon/QtMeshEditor-models/resolve/d14119a40dfeef208e4e724dfaceb2640d2df95b/RealESRGAN_x4plus.onnx}
       T32_ESRGAN_X4_FALLBACK_URL: ${T32_ESRGAN_X4_FALLBACK_URL:-}
+      T57_YUNET_MODEL_URL: ${T57_YUNET_MODEL_URL:-https://media.githubusercontent.com/media/opencv/opencv_zoo/47534e27c9851bb1128ccc0102f1145e27f23f98/models/face_detection_yunet/face_detection_yunet_2023mar.onnx}
     # Cap to the smallest footprint that still serves 2 concurrent requests.
     # nginx:alpine idle RAM is ~5-10 MB; a 128 MB ceiling leaves headroom for
     # worker connections, gzip buffers, and the wasm asset range requests.

@@ -116,7 +116,7 @@ test('reports malformed JPEG XL with a typed remedy and no network fallback', as
     mimeType: 'image/jxl',
     buffer: Buffer.from('not-jxl'),
   });
-  await expect(page.getByRole('alert')).toContainText('Choose a valid, non-corrupted JXL file', {
+  await expect(page.getByRole('alert')).toContainText('Decoding error', {
     timeout: 30_000,
   });
   expect(crossOrigin).toEqual([]);

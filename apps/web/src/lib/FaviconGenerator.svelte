@@ -17,8 +17,8 @@
   let { locale = 'en' }: { locale?: Locale } = $props();
   const t = (key: string, fallback: string, value?: string | number) =>
     translate(locale, key, fallback, value);
-  const localizedPath = $derived(
-    locale === 'en' ? '/favicon-generator' : `/${locale}/favicon-generator`,
+  const canonical = $derived(
+    `https://image.complianttools.com${locale === 'en' ? '' : `/${locale}`}/favicon-generator`,
   );
 
   let options = $state<FaviconToolOptions>(FaviconToolOptionsSchema.parse({}));
@@ -118,15 +118,15 @@
 </script>
 
 <svelte:head>
-  <title>{t('favicon.title', 'Favicon Generator')} — Image Compliant Tools</title>
+  <title>{t('favicon.title', 'Favicon Generator')}</title>
   <meta
     name="description"
     content={t(
-      'favicon.metaDescription',
-      'Create a multi-resolution favicon package with PNG icons, manifest, and HTML locally.',
+      'favicon.description',
+      'Create a multi-resolution ICO, PNG icon set, web manifest, and HTML link snippet locally. Your image is never uploaded.',
     )}
   />
-  <link rel="canonical" href={`https://image.complianttools.com${localizedPath}`} />
+  <link rel="canonical" href={canonical} />
 </svelte:head>
 
 <main lang={locale === 'en-XA' ? 'en-XA' : locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}>
@@ -144,6 +144,20 @@
     onChange={setControl}
     {locale}
   />
+  <h2>{t('favicon.faqTitle', 'Frequently asked')}</h2>
+  <div>
+    <h3>{t('favicon.faqTitle1', 'What sizes are included?')}</h3>
+    <p>{t('favicon.faqAnswer1', '16, 32, 48, 180, 192, and 512 pixels in PNG plus an ICO.')}</p>
+    <h3>{t('favicon.faqTitle2', 'Does the preview match the download?')}</h3>
+    <p>
+      {t(
+        'favicon.faqAnswer2',
+        'Yes. The 32×32 preview shows the same icon included in the package.',
+      )}
+    </p>
+    <h3>{t('favicon.faqTitle3', 'Is anything uploaded?')}</h3>
+    <p>{t('favicon.faqAnswer3', 'No. Everything is generated locally.')}</p>
+  </div>
   <label>
     {t('favicon.choose', 'Choose an image')}
     <input

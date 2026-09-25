@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
+import { allowAllNetwork, denyAllNetwork } from './support/network.js';
 
 async function generatedPng(
   page: import('@playwright/test').Page,
@@ -87,6 +88,31 @@ test('T61 localized Arabic route is prerendered right-to-left with translated co
   await context.close();
 });
 
+test('T61 exposes schema-backed matching controls with reset and keyboard support', async ({
+  page,
+}) => {
+  await page.goto('/find-duplicates');
+  await page.locator('html[data-hydrated="true"]').waitFor();
+
+  const average = page.getByTestId('option-t61-averageDistance');
+  const difference = page.getByTestId('option-t61-differenceDistance');
+  const aspect = page.getByTestId('option-t61-aspectRatioTolerance');
+  await expect(average).toBeVisible();
+  await expect(difference).toBeVisible();
+  await expect(aspect).toBeVisible();
+
+  const averageInput = average.locator('input[type="range"]');
+  await expect(averageInput).toHaveValue('6');
+  await averageInput.focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(averageInput).toHaveValue('7');
+  const reset = average.locator('button.reset');
+  await expect(reset).toBeEnabled();
+  await reset.click();
+  await expect(averageInput).toHaveValue('6');
+  await expect(reset).toBeDisabled();
+});
+
 test('T61 finds exact copies and conservative near matches locally; review CSV does not delete files', async ({
   page,
 }) => {
@@ -97,6 +123,7 @@ test('T61 finds exact copies and conservative near matches locally; review CSV d
   });
 
   await page.goto('/find-duplicates');
+  await page.locator('html[data-hydrated="true"]').waitFor();
   origin = new URL(page.url()).origin;
   const first = await generatedPng(page);
   const slightlyChanged = await generatedPng(page, { variation: 1 });
@@ -129,6 +156,7 @@ test('T61 finds exact copies and conservative near matches locally; review CSV d
 
 test('T61 reports bounded-input and decode errors with actionable remedies', async ({ page }) => {
   await page.goto('/find-duplicates');
+  await page.locator('html[data-hydrated="true"]').waitFor();
   const input = page.getByTestId('t61-input');
   await input.setInputFiles(
     Array.from({ length: 25 }, (_, index) => ({
@@ -151,6 +179,7 @@ test('T61 reports bounded-input and decode errors with actionable remedies', asy
 
 test('T61 rejects per-file and batch sizes above the advertised limits', async ({ page }) => {
   await page.goto('/find-duplicates');
+  await page.locator('html[data-hydrated="true"]').waitFor();
   const error = page.getByTestId('t61-error');
 
   await setMockFiles(page, [
@@ -173,6 +202,7 @@ test('T61 rejects per-file and batch sizes above the advertised limits', async (
 
 test('T61 rejects unsupported MIME types with a supported-format remedy', async ({ page }) => {
   await page.goto('/find-duplicates');
+  await expect(page.locator('html')).toHaveAttribute('data-hydrated', 'true');
   await page.getByTestId('t61-input').setInputFiles({
     name: 'vector.svg',
     mimeType: 'image/svg+xml',
@@ -192,6 +222,7 @@ test('T61 rejects decoded images above 24 megapixels with a resize remedy', asyn
     });
   });
   await page.goto('/find-duplicates');
+  await page.locator('html[data-hydrated="true"]').waitFor();
   const png = await generatedPng(page);
   await page.getByTestId('t61-input').setInputFiles([
     { name: 'large-a.png', mimeType: 'image/png', buffer: png },
@@ -214,6 +245,7 @@ test('T61 reports secure-hash failures with the secure-context remedy', async ({
     });
   });
   await page.goto('/find-duplicates');
+  await page.locator('html[data-hydrated="true"]').waitFor();
   const png = await generatedPng(page);
   await page.getByTestId('t61-input').setInputFiles([
     { name: 'hash-a.png', mimeType: 'image/png', buffer: png },
@@ -239,6 +271,7 @@ test('T61 supports keyboard operation and cancellation without uploading inputs'
     Object.defineProperty(subtle, 'digest', { configurable: true, value: delayedDigest });
   });
   await page.goto('/find-duplicates');
+  await page.locator('html[data-hydrated="true"]').waitFor();
   const input = page.getByTestId('t61-input');
   await input.focus();
   await expect(input).toBeFocused();
@@ -257,4 +290,116 @@ test('T61 supports keyboard operation and cancellation without uploading inputs'
   await page.keyboard.press('Enter');
   await expect(page.getByTestId('t61-error')).toContainText('The scan was cancelled.');
   await expect(page.getByTestId('t61-error')).toContainText('Remedy: Choose images');
+});
+
+test('T61 scans a warmed local selection while external network is blocked', async ({
+  page,
+  context,
+}) => {
+  const externalRequests: string[] = [];
+
+  await page.goto('/find-duplicates');
+  await page.locator('html[data-hydrated="true"]').waitFor();
+  const appOrigin = new URL(page.url()).origin;
+  page.on('request', (request) => {
+    if (new URL(request.url()).origin !== appOrigin) externalRequests.push(request.url());
+  });
+  const first = await generatedPng(page);
+  const changed = await generatedPng(page, { variation: 1 });
+  await denyAllNetwork(context);
+  try {
+    await page.getByTestId('t61-input').setInputFiles([
+      { name: 'offline-original.png', mimeType: 'image/png', buffer: first },
+      { name: 'offline-copy.png', mimeType: 'image/png', buffer: first },
+      { name: 'offline-adjusted.png', mimeType: 'image/png', buffer: changed },
+    ]);
+    await page.getByTestId('t61-scan').click();
+    await expect(page.getByTestId('t61-exact-group')).toHaveCount(1);
+    await expect(page.getByTestId('t61-exact-group')).toContainText('offline-copy.png');
+    await expect(page.getByTestId('t61-error')).toHaveCount(0);
+    expect(externalRequests).toEqual([]);
+  } finally {
+    await allowAllNetwork(context);
+  }
+});
+
+test('T61 scans the maximum 24-file selection within the Chromium route budget', async ({
+  page,
+  browserName,
+}) => {
+  test.skip(browserName !== 'chromium', 'The route latency budget is calibrated on Chromium.');
+  test.setTimeout(30_000);
+  await page.goto('/find-duplicates');
+  await page.locator('html[data-hydrated="true"]').waitFor();
+  const duplicate = await generatedPng(page, { width: 64, height: 48 });
+  const files = [
+    { name: 'batch-00.png', mimeType: 'image/png', buffer: duplicate },
+    { name: 'batch-01.png', mimeType: 'image/png', buffer: duplicate },
+  ];
+  for (let index = 2; index < 24; index += 1) {
+    files.push({
+      name: `batch-${String(index).padStart(2, '0')}.png`,
+      mimeType: 'image/png',
+      buffer: await generatedPng(page, { width: 64, height: 48, variation: index }),
+    });
+  }
+  await page.getByTestId('t61-input').setInputFiles(files);
+  const startedAt = performance.now();
+  await page.getByTestId('t61-scan').click();
+  await expect(page.getByTestId('t61-exact-group')).toHaveCount(1, { timeout: 10_000 });
+  const elapsedMs = performance.now() - startedAt;
+  console.info(`T61 24-file route latency: ${elapsedMs.toFixed(1)} ms`);
+  expect(elapsedMs).toBeLessThanOrEqual(5_000);
+});
+
+test('T61 scans a local selection after a fresh-page offline reload', async ({
+  page,
+  context,
+  browserName,
+}) => {
+  test.skip(
+    browserName === 'webkit',
+    'WebKit cannot reload this local Blob/File duplicate scan flow while browser networking is offline.',
+  );
+  test.setTimeout(60_000);
+
+  const first = await generatedPng(page);
+  const changed = await generatedPng(page, { variation: 1 });
+  const uploadAndScan = async (suffix: string) => {
+    await page.getByTestId('t61-input').setInputFiles([
+      { name: `offline-original-${suffix}.png`, mimeType: 'image/png', buffer: first },
+      { name: `offline-copy-${suffix}.png`, mimeType: 'image/png', buffer: first },
+      { name: `offline-adjusted-${suffix}.png`, mimeType: 'image/png', buffer: changed },
+    ]);
+    await page.getByTestId('t61-scan').click();
+    await expect(page.getByTestId('t61-exact-group')).toHaveCount(1, { timeout: 15_000 });
+  };
+
+  await page.goto('/find-duplicates');
+  await page.locator('html[data-hydrated="true"]').waitFor();
+  await uploadAndScan('online');
+
+  await page.reload();
+  await page.locator('html[data-hydrated="true"]').waitFor();
+  await page.evaluate(async () => {
+    if (!('serviceWorker' in navigator)) throw new Error('Service workers are unavailable');
+    await navigator.serviceWorker.ready;
+    if (!navigator.serviceWorker.controller) {
+      await new Promise<void>((resolve) => {
+        navigator.serviceWorker.addEventListener('controllerchange', () => resolve(), {
+          once: true,
+        });
+      });
+    }
+  });
+
+  await context.setOffline(true);
+  try {
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.locator('html[data-hydrated="true"]').waitFor();
+    await uploadAndScan('offline');
+    await expect(page.getByTestId('t61-error')).toHaveCount(0);
+  } finally {
+    await context.setOffline(false);
+  }
 });

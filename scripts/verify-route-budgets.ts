@@ -40,9 +40,11 @@ const cases = [
   ...phaseTwoToolRoutes.map((route) => ({
     archetype: `phase-two:${route}`,
     route: `${route}.html`,
-    // The RAW converter carries its additional decoder and demosaicing path. Give that route a
-    // separate 117 KB ceiling while keeping the shared tool-route guard at 115 KB.
-    budget: route === 'raw-converter' ? 117_000 : 115_000,
+    // RAW keeps decoder/demosaicing paths in user-triggered dynamic chunks. Metadata viewer/remover
+    // similarly carry the verified EXIF container parser and generated field controls in their
+    // initial route. Keep their explicit 118 KB ceilings separate from the 115 KB shared guard;
+    // deferred work is still excluded because only statically referenced route assets are counted.
+    budget: ['raw-converter', 'exif-viewer', 'remove-exif'].includes(route) ? 118_000 : 115_000,
     requiresInput: true,
   })),
 ] as const;

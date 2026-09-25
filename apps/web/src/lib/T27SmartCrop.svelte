@@ -187,6 +187,7 @@
   type TextKey = Exclude<keyof typeof en, 'errors' | 'remedies'>;
   let { locale = 'en' }: { locale?: Locale } = $props();
   let sourceFile = $state<File>();
+  let sourceImage = $state<HTMLImageElement>();
   let sourceUrl = $state('');
   let outputUrl = $state('');
   let sourceDimensions = $state<Dimensions>();
@@ -387,7 +388,9 @@
     let bitmap: ImageBitmap | undefined;
     try {
       try {
-        bitmap = await createImageBitmap(sourceFile);
+        if (!sourceImage) throw new Error('decode-failed');
+        if (!sourceImage.complete || !sourceImage.naturalWidth) await sourceImage.decode();
+        bitmap = await createImageBitmap(sourceImage);
       } catch {
         throw new Error('decode-failed');
       }
@@ -564,7 +567,7 @@
           class="t27-source-frame"
           style={`aspect-ratio:${sourceDimensions.width} / ${sourceDimensions.height}`}
         >
-          <img data-testid="t27-source" src={sourceUrl} alt={t('source')} />
+          <img bind:this={sourceImage} data-testid="t27-source" src={sourceUrl} alt={t('source')} />
           {#if cropBox}
             <div
               data-testid="t27-crop-box"

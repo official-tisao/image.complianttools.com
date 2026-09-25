@@ -188,6 +188,7 @@ for (const locale of ['en-XA', 'ar'] as const) {
   test(`${locale} WebP route exports exact lossless bytes with locale layout`, async ({ page }) => {
     await page.goto(`/${locale}/webp-converter`);
     await page.waitForLoadState('networkidle');
+    await expect(page.locator('html')).toHaveAttribute('data-hydrated', 'true');
     await page.getByTestId('option-webp-lossless').locator('input[type=checkbox]').check();
     const pending = page.waitForEvent('download');
     await page.locator('input[type=file]').setInputFiles({

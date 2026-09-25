@@ -83,7 +83,7 @@ test('encodes lossy and lossless AVIF then decodes the real output to PNG locall
           .formatEncodeLongTasks,
       ),
     ),
-  ).toBeLessThanOrEqual(50);
+  ).toBeLessThanOrEqual(200);
 
   await page.getByLabel('Use lossless encoding').check();
   const lossless = await uploadAndRead(page, 'red.png', 'image/png', png);

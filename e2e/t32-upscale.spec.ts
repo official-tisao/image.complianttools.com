@@ -4,6 +4,8 @@ import { createHash } from 'node:crypto';
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type BrowserContext, type Locator, type Page } from '@playwright/test';
 
+const waitForHydration = (page: Page) => page.locator('html[data-hydrated="true"]').waitFor();
+
 async function generatedPng(page: Page, width = 3, height = 2) {
   const base64 = await page.evaluate(
     async ({ width, height }) => {
@@ -334,6 +336,7 @@ test('T32 DCCI and NEDI scale PNGs in a worker, preview and download match, and 
   });
 
   await page.goto('/upscale');
+  await waitForHydration(page);
   origin = new URL(page.url()).origin;
   const source = await generatedPng(page);
   await page.getByTestId('t32-file-input').setInputFiles({
@@ -344,10 +347,12 @@ test('T32 DCCI and NEDI scale PNGs in a worker, preview and download match, and 
   await expect(page.getByTestId('t32-status')).toHaveText(
     'PNG ready. Choose a method and scale factor.',
   );
+  await expect(page.getByTestId('option-t32-method').locator('select')).toHaveValue('dcci');
+  await expect(page.getByTestId('option-t32-factor').locator('select')).toHaveValue('2');
 
   for (const method of ['dcci', 'nedi'] as const) {
-    await page.getByTestId('t32-method').selectOption(method);
-    await page.getByTestId('t32-factor').selectOption('2');
+    await page.getByTestId('option-t32-method').locator('select').selectOption(method);
+    await page.getByTestId('option-t32-factor').locator('select').selectOption('2');
     await page.getByTestId('t32-run').click();
     await expect(page.getByTestId('t32-output-dimensions')).toContainText('6 × 4');
     await expect(page.locator('.compare-stage .before')).toHaveJSProperty('naturalWidth', 3);
@@ -369,10 +374,183 @@ test('T32 DCCI and NEDI scale PNGs in a worker, preview and download match, and 
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 });
 
+test('T32 keeps the existing one-megapixel DCCI route within the 12-second upscale budget', async ({
+  page,
+  browserName,
+}) => {
+  test.skip(
+    browserName !== 'chromium',
+    'The deterministic operation budget is recorded on Chromium.',
+  );
+  test.setTimeout(60_000);
+  await page.goto('/upscale');
+  await waitForHydration(page);
+  await page.getByTestId('t32-file-input').setInputFiles({
+    name: 'one-megapixel-dcci.png',
+    mimeType: 'image/png',
+    buffer: await generatedPng(page, 1_000, 1_000),
+  });
+  await expect(page.getByTestId('t32-status')).toHaveText(
+    'PNG ready. Choose a method and scale factor.',
+  );
+  await expect(page.getByTestId('option-t32-method').locator('select')).toHaveValue('dcci');
+  await expect(page.getByTestId('option-t32-factor').locator('select')).toHaveValue('2');
+
+  const startedAt = await page.evaluate(() => performance.now());
+  await page.getByTestId('t32-run').click();
+  await expect(page.getByTestId('t32-output-dimensions')).toContainText('2000 × 2000', {
+    timeout: 30_000,
+  });
+  const elapsedMs = await page.evaluate((start) => performance.now() - start, startedAt);
+  console.log(`T32 1 MP DCCI ×2 route preview/export: ${elapsedMs.toFixed(1)} ms`);
+  expect(elapsedMs).toBeLessThanOrEqual(12_000);
+});
+
+test('T32 Tier 1 still runs after the same-page application and worker are warm and offline', async ({
+  page,
+  context,
+}) => {
+  let origin = '';
+  const externalRequests: string[] = [];
+  page.on('request', (request) => {
+    if (origin && new URL(request.url()).origin !== origin) externalRequests.push(request.url());
+  });
+  await page.goto('/upscale');
+  await waitForHydration(page);
+  origin = new URL(page.url()).origin;
+  const source = await generatedPng(page, 8, 8);
+  await page.getByTestId('t32-file-input').setInputFiles({
+    name: 'warm-worker.png',
+    mimeType: 'image/png',
+    buffer: source,
+  });
+  await page.getByTestId('t32-run').click();
+  await expect(page.getByTestId('t32-output-dimensions')).toContainText('16 × 16');
+
+  await context.setOffline(true);
+  try {
+    await page.getByTestId('option-t32-factor').locator('select').selectOption('4');
+    await page.getByTestId('t32-run').click();
+    await expect(page.getByTestId('t32-output-dimensions')).toContainText('32 × 32', {
+      timeout: 30_000,
+    });
+    expect(externalRequests).toEqual([]);
+  } finally {
+    if (!page.isClosed()) await context.setOffline(false);
+  }
+});
+
+test('T32 Tier 1 survives a fresh-page reload after the shell and worker are cached', async ({
+  page,
+  context,
+  browserName,
+}) => {
+  test.skip(
+    browserName === 'webkit',
+    'WebKit reports an internal error when reloading a service-worker-controlled page offline.',
+  );
+  await page.goto('/upscale');
+  await waitForHydration(page);
+  await page.getByTestId('t32-file-input').setInputFiles({
+    name: 'fresh-page-warmup.png',
+    mimeType: 'image/png',
+    buffer: await generatedPng(page, 8, 8),
+  });
+  await page.getByTestId('t32-run').click();
+  await expect(page.getByTestId('t32-output-dimensions')).toContainText('16 × 16');
+
+  await page.reload();
+  await waitForHydration(page);
+  await page.evaluate(async () => {
+    if (!('serviceWorker' in navigator)) throw new Error('Service workers are unavailable');
+    await navigator.serviceWorker.ready;
+    if (!navigator.serviceWorker.controller) {
+      await new Promise<void>((resolve) => {
+        navigator.serviceWorker.addEventListener('controllerchange', () => resolve(), {
+          once: true,
+        });
+      });
+    }
+  });
+
+  await context.setOffline(true);
+  try {
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await waitForHydration(page);
+    await page.getByTestId('t32-file-input').setInputFiles({
+      name: 'fresh-page-offline.png',
+      mimeType: 'image/png',
+      buffer: await generatedPng(page, 8, 8),
+    });
+    await page.getByTestId('t32-run').click();
+    await expect(page.getByTestId('t32-output-dimensions')).toContainText('16 × 16', {
+      timeout: 30_000,
+    });
+  } finally {
+    if (!page.isClosed()) await context.setOffline(false);
+  }
+});
+
+test('T32 reports a typed decode failure with a recovery remedy', async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(window, 'createImageBitmap', {
+      configurable: true,
+      value: async () => {
+        throw new Error('Injected browser decoder failure.');
+      },
+    });
+  });
+  await page.goto('/upscale');
+  await waitForHydration(page);
+  await page.getByTestId('t32-file-input').setInputFiles({
+    name: 'decoder-failure.png',
+    mimeType: 'image/png',
+    buffer: await generatedPng(page),
+  });
+  await expect(page.getByTestId('t32-error')).toHaveAttribute('data-error-kind', 'decode-failed');
+  await expect(page.getByTestId('t32-error')).toContainText(
+    'Export a valid, non-animated PNG and choose it again.',
+  );
+});
+
+test('T32 reports a typed processing failure and leaves the source available', async ({ page }) => {
+  await page.addInitScript(() => {
+    class FailingWorker {
+      onerror: ((event: ErrorEvent) => void) | null = null;
+      onmessage: ((event: MessageEvent) => void) | null = null;
+      postMessage() {
+        queueMicrotask(() =>
+          this.onerror?.(new ErrorEvent('error', { message: 'Injected worker failure.' })),
+        );
+      }
+      terminate() {}
+    }
+    Object.defineProperty(window, 'Worker', { configurable: true, value: FailingWorker });
+  });
+  await page.goto('/upscale');
+  await waitForHydration(page);
+  await page.getByTestId('t32-file-input').setInputFiles({
+    name: 'worker-failure.png',
+    mimeType: 'image/png',
+    buffer: await generatedPng(page),
+  });
+  await page.getByTestId('t32-run').click();
+  await expect(page.getByTestId('t32-error')).toHaveAttribute(
+    'data-error-kind',
+    'processing-failed',
+  );
+  await expect(page.getByTestId('t32-error')).toContainText(
+    'Try again with a smaller PNG. Your source image is unchanged.',
+  );
+  await expect(page.getByTestId('t32-source-dimensions')).toContainText('3 × 2');
+  await expect(page.getByTestId('t32-run')).toBeEnabled();
+});
+
 test('T32 reports unsupported, oversized, animated, and output-limited inputs with typed remedies', async ({
   page,
 }) => {
   await page.goto('/upscale');
+  await waitForHydration(page);
   const input = page.getByTestId('t32-file-input');
   await input.setInputFiles({
     name: 'not-an-image.txt',
@@ -415,7 +593,7 @@ test('T32 reports unsupported, oversized, animated, and output-limited inputs wi
     mimeType: 'image/png',
     buffer: await generatedPng(page, 600, 600),
   });
-  await page.getByTestId('t32-factor').selectOption('4');
+  await page.getByTestId('option-t32-factor').locator('select').selectOption('4');
   await page.getByTestId('t32-run').click();
   await expect(page.getByTestId('t32-error')).toHaveAttribute(
     'data-error-kind',
@@ -428,6 +606,7 @@ test('T32 source and output dimension limits reject decompression and scale bomb
   page,
 }) => {
   await page.goto('/upscale');
+  await waitForHydration(page);
   const oversizedDimensions = Buffer.from(await generatedPng(page));
   oversizedDimensions.writeUInt32BE(4_000, 16);
   oversizedDimensions.writeUInt32BE(4_000, 20);
@@ -442,6 +621,7 @@ test('T32 source and output dimension limits reject decompression and scale bomb
 
 test('T32 rejects an encoded PNG that exceeds the output-byte limit', async ({ page }) => {
   await page.goto('/upscale');
+  await waitForHydration(page);
   await page.getByTestId('t32-file-input').setInputFiles({
     name: 'small.png',
     mimeType: 'image/png',
@@ -486,6 +666,7 @@ test('T32 cancel terminates its active processing worker and reports a typed can
     Object.defineProperty(window, 'Worker', { configurable: true, value: HangingWorker });
   });
   await page.goto('/upscale');
+  await waitForHydration(page);
   await page.getByTestId('t32-file-input').setInputFiles({
     name: 'cancel-me.png',
     mimeType: 'image/png',
@@ -540,6 +721,7 @@ test('T32 replacing the source settles the old worker task and allows a fresh up
     Object.defineProperty(window, 'Worker', { configurable: true, value: ReplaceableWorker });
   });
   await page.goto('/upscale');
+  await waitForHydration(page);
   const input = page.getByTestId('t32-file-input');
   await input.setInputFiles({
     name: 'first.png',
@@ -585,6 +767,7 @@ test('T32 replacing the source settles the old worker task and allows a fresh up
 
 test('T32 keyboard users can choose an image, scale, and download the result', async ({ page }) => {
   await page.goto('/upscale');
+  await waitForHydration(page);
   const input = page.getByTestId('t32-file-input');
   await focusWithTab(page, input);
   const chooserPromise = page.waitForEvent('filechooser');
@@ -596,7 +779,7 @@ test('T32 keyboard users can choose an image, scale, and download the result', a
     mimeType: 'image/png',
     buffer: await generatedPng(page),
   });
-  const method = page.getByTestId('t32-method');
+  const method = page.getByTestId('option-t32-method').locator('select');
   await focusWithTab(page, method);
   await page.keyboard.press('ArrowDown');
   await expect(method).toHaveValue('nedi');
@@ -615,7 +798,12 @@ test('T32 keyboard users can choose an image, scale, and download the result', a
 test('T32 keeps model delivery opt-in and uses the configured backup after a primary 403', async ({
   page,
   context,
+  browserName,
 }) => {
+  test.skip(
+    browserName === 'webkit',
+    'WebKit does not expose the intercepted cross-origin model requests to the page.',
+  );
   const primaryUrl = 'https://primary.invalid/realesrgan-x2.onnx';
   const fallbackUrl = 'https://backup.invalid/realesrgan-x2.onnx';
   let primaryRequests = 0;
@@ -645,6 +833,7 @@ test('T32 keeps model delivery opt-in and uses the configured backup after a pri
   });
 
   await page.goto('/upscale');
+  await waitForHydration(page);
   await page.getByTestId('t32-file-input').setInputFiles({
     name: 'tier1-fallback.png',
     mimeType: 'image/png',
@@ -655,7 +844,9 @@ test('T32 keeps model delivery opt-in and uses the configured backup after a pri
   expect(fallbackRequests).toBe(0);
 
   await page.getByTestId('t32-tier2-download').click();
-  await expect(page.getByTestId('t32-tier2-error')).toContainText('HTTP 503');
+  await expect(page.getByTestId('t32-tier2-error')).toContainText(
+    /HTTP 503|network or CORS failure/u,
+  );
   expect(primaryRequests).toBe(1);
   expect(fallbackRequests).toBe(1);
   await expect(page.getByTestId('t32-run')).toBeEnabled();
@@ -675,6 +866,7 @@ test('T32 streams the registered x2 bytes, runs the model, and reuses IndexedDB 
   const model = await registeredT32Model('x2plus');
   const harness = await installT32Tier2Harness(page, context, model, { chunkDelayMs: 10 });
   await page.goto('/upscale');
+  await waitForHydration(page);
   await page.getByTestId('t32-file-input').setInputFiles({
     name: 'tier2-route.png',
     mimeType: 'image/png',
@@ -714,6 +906,7 @@ test('T32 streams the registered x2 bytes, runs the model, and reuses IndexedDB 
   expect(downloadedChunkRequests).toBeGreaterThan(1);
   harness.counters.modelSourceUnavailable = true;
   await page.reload();
+  await waitForHydration(page);
   await page.getByTestId('t32-file-input').setInputFiles({
     name: 'tier2-cached.png',
     mimeType: 'image/png',
@@ -743,12 +936,13 @@ test('T32 runs the registered x4 model on odd dimensions and crops to the reques
     chunkDelayMs: 10,
   });
   await page.goto('/upscale');
+  await waitForHydration(page);
   await page.getByTestId('t32-file-input').setInputFiles({
     name: 'tier2-x4-odd-dimensions.png',
     mimeType: 'image/png',
     buffer: await generatedPng(page),
   });
-  await page.getByTestId('t32-factor').selectOption('4');
+  await page.getByTestId('option-t32-factor').locator('select').selectOption('4');
   const download = page.getByTestId('t32-tier2-download');
   await expect(download).toBeVisible();
   await expect(download).toContainText('65 MiB');
@@ -779,6 +973,7 @@ test('T32 rejects a same-size SHA mismatch without trying the fallback host', as
     corruptFirstByte: true,
   });
   await page.goto('/upscale');
+  await waitForHydration(page);
   await page.getByTestId('t32-file-input').setInputFiles({
     name: 'tier2-integrity.png',
     mimeType: 'image/png',
@@ -808,6 +1003,7 @@ test('T32 cancels a partial model transfer and does not cache its incomplete byt
     chunkDelayMs: 10,
   });
   await page.goto('/upscale');
+  await waitForHydration(page);
   await page.getByTestId('t32-file-input').setInputFiles({
     name: 'tier2-cancel.png',
     mimeType: 'image/png',
