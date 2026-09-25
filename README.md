@@ -2643,6 +2643,7 @@ base-uri 'none';
 object-src 'none';
 upgrade-insecure-requests;
 require-trusted-types-for 'script';
+trusted-types ctimg-default svelte-trusted-html;
 ```
 
 Notes:
