@@ -32,14 +32,24 @@ const factory = (globalThis as { trustedTypes?: TrustedTypePolicyFactory }).trus
 
 function installPolicy(): TrustedTypePolicy | undefined {
   if (!factory) return undefined;
+  const rules = {
+    createScriptURL: (url: string) => url,
+    createScript: (code: string) => code,
+  };
   try {
-    return factory.createPolicy('ctimg-default', {
-      createScriptURL: (url) => url,
-      createScript: (code) => code,
-    });
+    return factory.createPolicy('ctimg-default', rules);
   } catch {
-    // The policy already exists (a second HMR evaluation, for example). It is
-    // created from the same rules above, so it is safe to keep using.
+    // Already created by an earlier evaluation; safe to continue.
+  }
+  try {
+    // A `default` policy is what actually unblocks `new Worker(new URL(...))`:
+    // under `require-trusted-types-for 'script'` the Worker constructor's
+    // script-URL sink rejects a plain string unless a default policy exists.
+    // Routing each call site through createScriptURL() instead would hide the
+    // specifier from Vite, which inlines the worker as a data: URL that
+    // `worker-src` then blocks.
+    return factory.createPolicy('default', rules);
+  } catch {
     return undefined;
   }
 }

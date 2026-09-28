@@ -30,11 +30,7 @@ export default {
         'object-src': ['none'],
         'upgrade-insecure-requests': true,
         'require-trusted-types-for': ['script'],
-        // 'unsafe-inline' lets `new Worker(new URL('./x.worker.ts', import.meta.url))`
-        // pass a plain string. Wrapping the URL in createScriptURL() instead makes
-        // the specifier opaque to Vite, which then inlines the worker as a data:
-        // URL that worker-src blocks. ctimg-default is kept for explicit callers.
-        'trusted-types': ['ctimg-default', 'svelte-trusted-html', "'unsafe-inline'"],
+        'trusted-types': ['ctimg-default', 'svelte-trusted-html', 'default'],
       },
     },
   },
