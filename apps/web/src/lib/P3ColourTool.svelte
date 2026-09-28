@@ -162,13 +162,14 @@
     ),
   );
   let selected = $state<Selected>();
-  let options = $state<Options>(
+  let optionState = $state<Options>(
     kind === 'threshold'
       ? T41ThresholdOptionsSchema.parse({})
       : kind === 'sharpen'
         ? T43SharpenBlurOptionsSchema.parse({})
         : T47DuotoneOptionsSchema.parse({}),
   );
+  let options = $derived(optionState);
   let outputUrl = $state('');
   let outputBytes = $state<Uint8Array>();
   let status = $state('');
@@ -178,19 +179,19 @@
   const updateOption = (path: string, value: unknown) => {
     if (kind === 'threshold') {
       const current = options as T41ThresholdOptions;
-      options = T41ThresholdOptionsSchema.parse({
+      optionState = T41ThresholdOptionsSchema.parse({
         ...current,
         [path.split('.').at(-1)!]: value,
       });
     } else if (kind === 'sharpen') {
       const current = options as T43SharpenBlurOptions;
-      options = T43SharpenBlurOptionsSchema.parse({
+      optionState = T43SharpenBlurOptionsSchema.parse({
         ...current,
         [path.split('.').at(-1)!]: value,
       });
     } else {
       const current = options as T47DuotoneOptions;
-      options = T47DuotoneOptionsSchema.parse({
+      optionState = T47DuotoneOptionsSchema.parse({
         ...current,
         [path.split('.').at(-1)!]: value,
       });
