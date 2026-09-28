@@ -1398,6 +1398,10 @@ blocked with a reason.
 
 - [x] Pull `origin/master` and create/push `codex/feature-audit-long-horizon`.
 - [x] Reconcile the attached manual report against `feature-audit.csv`.
+
+## 16. Change log
+
+- Plan-exempt: Svelte compiler fix on `P3ColourTool.svelte`, `P3AdvancedColourTool.svelte`, `P4CutoutComposite.svelte`. No spec change.
 - [~] W1 route subset is implemented and audited as partial; full Phase 3 STCC evidence remains open.
 - [~] W2 route subset is implemented and audited as partial; full Phase 3 colour/adjustment evidence remains open.
 - [~] W3 privacy and annotation route subsets are implemented and audited as partial; editor integration and full STCC evidence remain open.

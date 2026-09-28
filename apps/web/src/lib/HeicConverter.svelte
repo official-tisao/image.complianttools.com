@@ -169,11 +169,13 @@
     <h3>{t('heic.faqTitle3', 'Is my file uploaded?')}</h3>
     <p>{t('heic.faqAnswer3', 'No. The file is read locally; nothing is uploaded.')}</p>
   </div>
-  <label aria-label="HEIC file input for conversion to PNG" data-testid="heic-file-label">
-    {t('heic.choose', 'Choose a HEIC or HEIF image')}
+  <label for="heic-file-input" data-testid="heic-file-label">
+    <span>{t('heic.choose', 'Choose a HEIC or HEIF image')}</span>
     <input
+      id="heic-file-input"
       type="file"
       accept="image/heic,image/heif,.heic,.heif"
+      aria-label={t('heic.choose', 'Choose a HEIC or HEIF image')}
       onchange={(event) => void convert(event.currentTarget.files?.[0])}
     />
   </label>

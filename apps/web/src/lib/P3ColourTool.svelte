@@ -302,7 +302,7 @@
     { question: t(copy.faq2), answer: t(copy.faq2Answer) },
     { question: t(copy.faq3), answer: t(copy.faq3Answer) },
   ]);
-  const graph = $derived({
+  const _graph = $derived({
     '@context': 'https://schema.org',
     '@graph': [
       {
@@ -328,7 +328,6 @@
       },
     ],
   });
-  void graph;
 
   $effect(() => () => {
     if (selected) URL.revokeObjectURL(selected.url);
@@ -346,7 +345,7 @@
   <link rel="alternate" hreflang="x-default" href={`https://image.complianttools.com/${kind}`} />
   <!-- prettier-ignore -->
   <script type="application/ld+json">
-{JSON.stringify(graph)}
+{JSON.stringify(_graph)}
   </script>
 </svelte:head>
 
