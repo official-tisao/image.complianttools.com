@@ -62,7 +62,7 @@ export const bflAdapter: ProviderAdapter = {
       const resp = await ctx.fetch('https://api.bfl.ai/v1/user', {
         method: 'GET',
         headers: { 'x-key': ctx.credentials.apiKey },
-        signal: ctx.signal,
+        signal: ctx.signal ?? null,
       });
       if (resp.ok)
         return { ok: true, confirmed: descriptor.capabilities, detail: 'User endpoint (200).' };

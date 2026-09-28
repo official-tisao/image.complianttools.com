@@ -118,7 +118,7 @@ export const falAdapter: ProviderAdapter = {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ image_url: 'data:image/png;base64,iVBORw0KGgo=' }),
-        signal: ctx.signal,
+        signal: ctx.signal ?? null,
       });
       return {
         ok: true,

@@ -58,7 +58,7 @@ export const stabilityAdapter: ProviderAdapter = {
       const resp = await ctx.fetch('https://api.stability.ai/v1/user/balance', {
         method: 'GET',
         headers: { Authorization: `Bearer ${ctx.credentials.apiKey}` },
-        signal: ctx.signal,
+        signal: ctx.signal ?? null,
       });
       if (resp.ok)
         return { ok: true, confirmed: descriptor.capabilities, detail: 'Balance endpoint (200).' };
