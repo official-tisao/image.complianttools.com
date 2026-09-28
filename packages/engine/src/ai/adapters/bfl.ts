@@ -123,7 +123,7 @@ export const bflAdapter: ProviderAdapter = {
         moderationStatusMapping: {
           Pending: 'Pending',
           Ready: 'Ready',
-          'Content Moderated': 'Content Moderated (not generic failure)',
+          'Content Moderated': 'moderation: Content Moderated',
           'Request Moderated': 'Request Moderated',
           Error: 'Error',
         },
