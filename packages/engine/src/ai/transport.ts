@@ -13,6 +13,14 @@ export interface TransportOptions {
   timeoutMs?: number;
   maxRetries?: number;
   allowedOrigins?: string[];
+  /**
+   * P5-13: the fetch implementation to issue the request with. Defaults to the global `fetch`.
+   *
+   * This is what makes the transport testable without patching a global, and it is what a hosted
+   * relay integration wraps: the same origin allowlist, timeout, retry, and abort behaviour apply
+   * whichever implementation is supplied.
+   */
+  fetchImpl?: typeof fetch;
 }
 
 export interface TransportResponse {
@@ -21,6 +29,16 @@ export interface TransportResponse {
   statusText: string;
   headers: Headers;
   body: string;
+}
+
+/** A `TransportResponse` whose body has not been consumed. Same fields, unbuffered. */
+export interface RawTransportResponse {
+  ok: boolean;
+  status: number;
+  statusText: string;
+  headers: Headers;
+  /** The provider's response body, still readable. Consume it exactly once. */
+  body: ReadableStream<Uint8Array> | null;
 }
 
 export interface CorsProbeResult {
@@ -165,13 +183,14 @@ export async function transportFetch(
   const maxAttempts = opts?.maxRetries ?? 3;
   const to = opts?.timeoutMs ?? 120000;
   const sig = opts?.signal;
+  const fetchImpl = opts?.fetchImpl ?? fetch;
   let lastResp: TransportResponse | undefined;
   let lastErr: unknown;
 
   for (let a = 0; a < maxAttempts; a++) {
     if (sig?.aborted) throw new TransportError('cancelled', 'unknown', 'Cancelled.', undefined);
     try {
-      const resp = await fetch(url, buildInit(init, sig, to));
+      const resp = await fetchImpl(url, buildInit(init, sig, to));
       const body = await resp.text();
       const tr: TransportResponse = {
         ok: resp.ok,
@@ -234,6 +253,53 @@ export async function transportFetch(
     lastErr ?? new Error('Transport failed after retries.'),
     opts?.allowedOrigins,
   );
+}
+
+/**
+ * P5-13: like {@link transportFetch}, but the response body is returned unread.
+ *
+ * The relay changes nothing about how a response arrives, so a request sent through it must reach
+ * the caller exactly as a direct request would — including progressively, for providers that stream.
+ * Buffering here would silently make every relayed request behave differently from a direct one.
+ * Status, headers, timeout, retry, and abort are all identical to `transportFetch`.
+ *
+ * Retries stop once a response has arrived: a body may represent a billable, partially-delivered
+ * result, so it is never re-sent (README §13.5 item 3).
+ */
+export async function transportFetchRaw(
+  url: string,
+  init?: RequestInit,
+  opts?: TransportOptions,
+): Promise<RawTransportResponse> {
+  const origins = opts?.allowedOrigins ?? [];
+  const check = checkOriginAllowlist(url, origins);
+  if (!check.allowed)
+    throw new TransportError(
+      'ai-cors-blocked',
+      check.origin ?? 'unknown',
+      'Blocked: ' + (check.reason ?? ''),
+      undefined,
+    );
+
+  const sig = opts?.signal;
+  const fetchImpl = opts?.fetchImpl ?? fetch;
+  // A signal that is already aborted must not put a request on the wire at all — `buildInit` would
+  // otherwise pass it straight to `fetch`, and a caller's cancellation would cost a real request.
+  if (sig?.aborted) throw new TransportError('cancelled', 'unknown', 'Cancelled.', undefined);
+  try {
+    const resp = await fetchImpl(url, buildInit(init, sig, opts?.timeoutMs ?? 120000));
+    return {
+      ok: resp.ok,
+      status: resp.status,
+      statusText: resp.statusText,
+      headers: resp.headers,
+      body: resp.body,
+    };
+  } catch (e: unknown) {
+    if (sig?.aborted)
+      throw new TransportError('cancelled', 'unknown', 'Cancelled by caller.', undefined);
+    throw normalizeTransportError(e, origins);
+  }
 }
 
 export class TransportError extends Error {
