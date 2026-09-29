@@ -1,0 +1,26 @@
+#:schema node_modules/wrangler/config-schema.json
+# P5-13 — Cloudflare Worker deployment (README §15.3).
+#
+# Deploy with:  npx wrangler deploy
+#
+# `ALLOWED_ORIGINS` below is the ONLY value set by default. Set it to your own site's origin,
+# comma-separated. If you unset it, the relay falls back to https://image.complianttools.com.
+#
+# `RELAY_TOKEN` is deliberately NOT set here. Set it as a secret so it never lands in git:
+#     npx wrangler secret put RELAY_TOKEN
+#
+# There is no KV, D1, R2, Durable Object, or queue binding, and there is no `observability` block.
+# The relay holds nothing.
+
+name = "ctimg-relay"
+main = "dist/index.js"
+compatibility_date = "2025-09-01"
+
+# Observability is off. Cloudflare would otherwise retain request metadata (URLs, status codes,
+# timings, IP addresses) in its own logs. The relay's own code logs nothing; this setting keeps the
+# platform from logging on its behalf. You can still see aggregate request counts in the CF dashboard.
+[observability]
+enabled = false
+
+[vars]
+ALLOWED_ORIGINS = "https://image.complianttools.com"

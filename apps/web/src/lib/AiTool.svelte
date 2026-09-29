@@ -1,6 +1,12 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { transportFetch } from '@complianttools/image-engine/ai/transport';
+  import {
+    describePath,
+    resolveRequest,
+    RelayRoutingError,
+  } from '@complianttools/image-engine/ai/relay';
+  import { setProviderRelay } from '@complianttools/image-engine/ai/connection';
   import { translate, type Locale } from './i18n';
 
   type AiKind = 'generate' | 'edit' | 'describe';
@@ -48,6 +54,17 @@
   let result = $state('');
   let hydrated = $state(false);
 
+  // P5-13 (README §15.4) — Connection: Direct (recommended) | Via my relay.
+  // The relay URL and token are component state and module state only: never localStorage, never
+  // sessionStorage, never IndexedDB. They are gone on reload, like the API key above.
+  const PROVIDER_ID = $derived(`ai-tool-${kind}`);
+  let connection = $state<'direct' | 'relay'>('direct');
+  let relayUrl = $state('');
+  let relayToken = $state('');
+  // Shown before the request as the destination, and after it as the path that was actually taken.
+  let pathNote = $state('');
+  let usedPath = $state<'direct' | 'relay' | ''>('');
+
   function t(key: string, fallback: string) {
     return translate(locale, key, fallback);
   }
@@ -87,21 +104,38 @@
       error = 'image-required: choose an image for this capability before consenting to a request.';
       return;
     }
-    let parsed: URL;
+    // Both destinations are validated locally before anything is issued. A relay that is configured
+    // but unusable raises here — it never falls back to a direct request.
+    let resolved;
     try {
-      parsed = new URL(endpoint);
-      if (parsed.protocol !== 'https:') throw new Error('HTTPS is required for provider requests.');
+      setProviderRelay(
+        PROVIDER_ID,
+        connection === 'relay' ? { relayUrl, token: relayToken } : undefined,
+      );
+      resolved = resolveRequest(
+        endpoint,
+        connection === 'relay' ? { relayUrl, token: relayToken } : undefined,
+      );
     } catch (cause) {
-      error = `provider-endpoint-invalid: ${cause instanceof Error ? cause.message : String(cause)}`;
+      error =
+        cause instanceof RelayRoutingError
+          ? `${cause.kind}: ${cause.message}`
+          : `provider-endpoint-invalid: ${cause instanceof Error ? cause.message : String(cause)}`;
       return;
     }
+    // Tell the user where this is going *before* it goes there (README §15.4).
+    pathNote = describePath(resolved, new URL(endpoint).host);
     busy = true;
     try {
       const response = await transportFetch(
-        parsed.toString(),
+        resolved.url,
         {
           method: 'POST',
-          headers: { 'content-type': 'application/json', authorization: `Bearer ${apiKey}` },
+          headers: {
+            'content-type': 'application/json',
+            authorization: `Bearer ${apiKey}`,
+            ...resolved.headers,
+          },
           body: JSON.stringify({
             capability: kind,
             model: model.trim() || undefined,
@@ -115,8 +149,11 @@
               : undefined,
           }),
         },
-        { allowedOrigins: [parsed.origin], maxRetries: 1, timeoutMs: 30_000 },
+        // The allowlist covers whichever hop is actually used: the relay's origin when relaying,
+        // the provider's when direct.
+        { allowedOrigins: [resolved.origin], maxRetries: 1, timeoutMs: 30_000 },
       );
+      usedPath = resolved.path;
       if (!response.ok) {
         error = `provider-error: ${response.status} ${response.statusText || 'request rejected'}`;
         return;
@@ -124,6 +161,9 @@
       result = response.body || 'Provider accepted the request.';
       status = 'Provider request completed. Review the response before using its output.';
     } catch (cause) {
+      // A relayed request that fails is still a relayed request. The path is reported, never
+      // silently retried direct.
+      usedPath = resolved.path;
       const kindValue =
         cause && typeof cause === 'object' && 'kind' in cause
           ? String(cause.kind)
@@ -184,6 +224,52 @@
         autocomplete="off"
       /></label
     >
+    <fieldset data-testid="ai-connection">
+      <legend>Connection</legend>
+      <label class="radio"
+        ><input
+          type="radio"
+          name={`connection-${kind}`}
+          data-testid="ai-connection-direct"
+          bind:group={connection}
+          value="direct"
+        /> Direct (recommended)</label
+      >
+      <label class="radio"
+        ><input
+          type="radio"
+          name={`connection-${kind}`}
+          data-testid="ai-connection-relay"
+          bind:group={connection}
+          value="relay"
+        /> Via my relay</label
+      >
+      {#if connection === 'relay'}
+        <label
+          >Relay URL <input
+            data-testid="ai-relay-url"
+            type="url"
+            bind:value={relayUrl}
+            placeholder="https://ctimg-relay.<your-subdomain>.workers.dev"
+            autocomplete="off"
+          /></label
+        >
+        <label
+          >Relay token (optional) <input
+            data-testid="ai-relay-token"
+            type="password"
+            bind:value={relayToken}
+            placeholder="Your RELAY_TOKEN, if you set one"
+            autocomplete="off"
+          /></label
+        >
+        <p class="hint">
+          Kept in memory for this page only — not saved, and cleared on reload. A relay must be
+          deployed by you, to your own account; we host none. See
+          <a href="/connect-ai">Connect an AI provider</a>.
+        </p>
+      {/if}
+    </fieldset>
     <label
       >Model (optional) <input
         data-testid="ai-model"
@@ -216,6 +302,9 @@
       disabled={busy}>{busy ? 'Waiting…' : copy[kind].action}</button
     >
   </form>
+  {#if pathNote}
+    <p data-testid="ai-path" data-path={usedPath || connection}>{pathNote}</p>
+  {/if}
   {#if status}<p role="status" data-testid="ai-status">{status}</p>{/if}
   {#if error}<p role="alert" data-testid="ai-error">{error}</p>{/if}
   {#if result}<pre data-testid="ai-result">{result}</pre>{/if}
@@ -283,6 +372,35 @@
   }
   [role='status'] {
     color: #075e31;
+  }
+  fieldset {
+    display: grid;
+    gap: 0.6rem;
+    max-width: 48rem;
+    border: 1px solid #c8d0dd;
+    border-radius: 0.4rem;
+    padding: 0.8rem;
+  }
+  legend {
+    font-weight: 700;
+    padding: 0 0.35rem;
+  }
+  label.radio {
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 400;
+  }
+  .hint {
+    margin: 0;
+    color: #52627a;
+    font-size: 0.85rem;
+  }
+  [data-testid='ai-path'] {
+    max-width: 48rem;
+    padding: 0.6rem 0.8rem;
+    border-left: 3px solid #3a5f9e;
+    background: #f3f5f8;
   }
   pre {
     white-space: pre-wrap;

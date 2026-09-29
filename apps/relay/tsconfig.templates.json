@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "declaration": false,
+    "declarationMap": false,
+    // Deno resolves the audited policy module by its real path, so the import carries a `.ts`
+    // extension. That is correct for Deno and is a type error without this flag.
+    "allowImportingTsExtensions": true,
+    // `Headers` is iterable only with `dom.iterable`, which the base `lib` does not imply.
+    "lib": ["ES2022", "DOM", "DOM.Iterable"]
+  },
+  "include": ["src/**/*.ts", "templates/**/*.ts", "templates/platform-globals.d.ts"]
+}
