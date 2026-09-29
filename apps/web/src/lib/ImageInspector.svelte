@@ -100,9 +100,10 @@
       'Inspect dimensions, colour, depth, alpha, animation, container structure, and supported metadata locally. Your file is never uploaded.',
     )}
   </p>
-  <label
+  <label for="inspector-file-input"
     >{t('inspector.choose', 'Choose an image')}
     <input
+      id="inspector-file-input"
       type="file"
       accept="image/*"
       onchange={(event) => void inspect(event.currentTarget.files?.[0])}

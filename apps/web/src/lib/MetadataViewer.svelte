@@ -250,9 +250,10 @@
       'Your file stays in this browser. PNG, JPEG, GIF, WebP, AVIF, and HEIF metadata markers are read locally.',
     )}
   </p>
-  <label
+  <label for="metadata-file-input"
     >{t('viewer.choose', 'Choose an image')}
     <input
+      id="metadata-file-input"
       type="file"
       accept="image/png,image/jpeg,image/gif,image/webp,image/avif,image/heif"
       onchange={(event) => void inspect(event.currentTarget.files?.[0])}
