@@ -28,7 +28,10 @@ export default {
         'form-action': ['none'],
         'base-uri': ['none'],
         'object-src': ['none'],
-        'upgrade-insecure-requests': true,
+        // Keep upgrade-insecure-requests on the production `_headers` policy.
+        // SvelteKit also emits this policy as a per-page meta tag, which makes
+        // the HTTP Playwright preview upgrade its local module URLs to HTTPS;
+        // WebKit then rejects them because the test server has no TLS.
         'require-trusted-types-for': ['script'],
         'trusted-types': ['ctimg-default', 'svelte-trusted-html', 'default'],
       },

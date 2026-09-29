@@ -36,22 +36,25 @@ function installPolicy(): TrustedTypePolicy | undefined {
     createScriptURL: (url: string) => url,
     createScript: (code: string) => code,
   };
+  let applicationPolicy: TrustedTypePolicy | undefined;
   try {
-    return factory.createPolicy('ctimg-default', rules);
+    applicationPolicy = factory.createPolicy('ctimg-default', rules);
   } catch {
     // Already created by an earlier evaluation; safe to continue.
   }
+
+  // A default policy is required for browser sinks such as Worker(string). The
+  // application policy above is still useful to callers that explicitly need
+  // createScriptURL(), but it does not make implicit TrustedScriptURL
+  // conversions legal. Create both policies independently so the order of
+  // module evaluation cannot leave Worker() blocked by require-trusted-types.
   try {
-    // A `default` policy is what actually unblocks `new Worker(new URL(...))`:
-    // under `require-trusted-types-for 'script'` the Worker constructor's
-    // script-URL sink rejects a plain string unless a default policy exists.
-    // Routing each call site through createScriptURL() instead would hide the
-    // specifier from Vite, which inlines the worker as a data: URL that
-    // `worker-src` then blocks.
-    return factory.createPolicy('default', rules);
+    factory.createPolicy('default', rules);
   } catch {
-    return undefined;
+    // Already created by an earlier evaluation; safe to continue.
   }
+
+  return applicationPolicy;
 }
 
 let policy = installPolicy();
