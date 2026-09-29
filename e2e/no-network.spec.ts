@@ -18,7 +18,9 @@ test('a real conversion pipeline makes zero cross-origin requests', async ({ pag
   });
   await page.goto('/convert');
   await page.waitForLoadState('networkidle');
-  await page.locator('html[data-hydrated="true"]').waitFor();
+  await page.waitForFunction(() => document.querySelector('html[data-hydrated="true"]') !== null, {
+    timeout: 30000,
+  });
   await page.setInputFiles('[data-testid=file-input]', fixture);
   await expect(page.getByTestId('compare-canvas')).toBeVisible();
   await expect(page.getByTestId('size-prediction')).not.toContainText('Choose');
@@ -28,7 +30,9 @@ test('a real conversion pipeline makes zero cross-origin requests', async ({ pag
 test('the real conversion remains interactive after going offline', async ({ page, context }) => {
   await page.goto('/compress');
   await page.waitForLoadState('networkidle');
-  await page.locator('html[data-hydrated="true"]').waitFor();
+  await page.waitForFunction(() => document.querySelector('html[data-hydrated="true"]') !== null, {
+    timeout: 30000,
+  });
   await page.setInputFiles('[data-testid=file-input]', fixture);
   await expect(page.getByTestId('compare-canvas')).toBeVisible();
   await context.setOffline(true);

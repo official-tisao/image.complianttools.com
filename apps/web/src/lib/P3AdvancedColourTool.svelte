@@ -159,7 +159,7 @@
     { question: pseudoIf(locale, copy.faq2), answer: pseudoIf(locale, copy.faq2Answer) },
     { question: pseudoIf(locale, copy.faq3), answer: pseudoIf(locale, copy.faq3Answer) },
   ]);
-  const graph = $derived({
+  const _graph = $derived({
     '@context': 'https://schema.org',
     '@graph': [
       {
@@ -179,7 +179,6 @@
       },
     ],
   });
-  void graph;
 
   function pseudoIf(currentLocale: Locale, value: string) {
     return currentLocale === 'en-XA' ? pseudo(value) : value;
@@ -364,7 +363,7 @@
   <link rel="alternate" hreflang="x-default" href={`https://image.complianttools.com${path}`} />
   <!-- prettier-ignore -->
   <script type="application/ld+json">
-{JSON.stringify(graph)}
+{JSON.stringify(_graph)}
   </script>
 </svelte:head>
 
