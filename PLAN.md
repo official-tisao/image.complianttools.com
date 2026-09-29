@@ -781,6 +781,7 @@ Justification Register short.
 - **Spec:** README §16.3 · **Done when:** the credential-leak test passes and a wrong passphrase reports cleanly with no lockout
 
 #### P5-04 · CSP and headers
+- [/] The production CSP now names the Trusted Types policies used by the application; the complete provider-origin and cross-origin-isolation review remains open.
 - [ ] Base CSP from README §16.4; COOP/COEP with `crossOriginIsolated` feature detection
 - [ ] Provider origins handled per the §16.4 decision — **never fall back to `connect-src *`**
 - [ ] All headers from README §16.5
@@ -816,6 +817,7 @@ Justification Register short.
 - **Spec:** README §14.2 · **Done when:** contract test passes; the masking caveat is shown once near the brush
 
 #### P5-10 · Adapter — Google Gemini
+- [/] A local Gemini adapter scaffold is present with descriptor, model list, credential guard, and deterministic stub output; live request/response contracts and multi-turn editing remain open.
 - [ ] `generate`, `edit`, `describe`; `previous_interaction_id` exposed as "Continue editing this result"
 - [ ] **SynthID watermarking stated in the UI before generation**
 - [ ] No mask parameter → label the path "prompt-guided (mask applied locally)"
