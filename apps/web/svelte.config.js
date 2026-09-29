@@ -15,10 +15,17 @@ export default {
         'script-src': ['self', 'wasm-unsafe-eval'],
         'style-src': ['self', 'unsafe-inline'],
         'img-src': ['self', 'data:', 'blob:'],
+        // Video exports are created as in-memory blob URLs and verified in a local
+        // <video> element before the download is considered usable.
+        'media-src': ['self', 'blob:'],
         'font-src': ['self'],
         'connect-src': [
           'self',
           'blob:',
+          // Model delivery is opt-in and each downloaded model is checked against
+          // its pinned byte length and SHA-256 before use. Keep the host configurable
+          // for project-controlled or deployment-specific static origins.
+          'https:',
           'https://cdn.jsdelivr.net',
           'https://raw.githubusercontent.com/tesseract-ocr/tessdata_fast/87416418657359cb625c412a48b6e1d6d41c29bd/script/Latin.traineddata',
         ],
