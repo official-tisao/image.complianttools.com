@@ -125,7 +125,7 @@
     { question: t(copy.faq2), answer: t(copy.faq2Answer) },
     { question: t(copy.faq3), answer: t(copy.faq3Answer) },
   ]);
-  const graph = $derived({
+  const _graph = $derived({
     '@context': 'https://schema.org',
     '@graph': [
       {
@@ -145,7 +145,6 @@
       },
     ],
   });
-  void graph;
 
   function clearOutput() {
     if (outputUrl) URL.revokeObjectURL(outputUrl);
@@ -357,7 +356,7 @@
   />
   <!-- prettier-ignore -->
   <script type="application/ld+json">
-{JSON.stringify(graph)}
+{JSON.stringify(_graph)}
   </script>
 </svelte:head>
 

@@ -250,10 +250,11 @@
       'Your file stays in this browser. PNG, JPEG, GIF, WebP, AVIF, and HEIF metadata markers are read locally.',
     )}
   </p>
-  <label for="metadata-file-input"
-    >{t('viewer.choose', 'Choose an image')}
+  <label for="metadata-file-input">
+    <span>{t('viewer.choose', 'Choose an image')}</span>
     <input
       id="metadata-file-input"
+      aria-label={t('viewer.choose', 'Choose an image')}
       type="file"
       accept="image/png,image/jpeg,image/gif,image/webp,image/avif,image/heif"
       onchange={(event) => void inspect(event.currentTarget.files?.[0])}

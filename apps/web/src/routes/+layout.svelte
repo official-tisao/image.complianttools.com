@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import '$lib/trustedTypes';
   import '../../../../packages/ui/src/tokens.css';
   import '../app.css';
   let { children } = $props();

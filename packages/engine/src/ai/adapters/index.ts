@@ -1,0 +1,12 @@
+import { registerProvider } from '../registry.js';
+import { testStubAdapter } from './test-stub.js';
+import { geminiAdapter } from './gemini.js';
+import { stabilityAdapter } from './stability.js';
+import { bflAdapter } from './bfl.js';
+import { falAdapter } from './fal.js';
+export { testStubAdapter, geminiAdapter, stabilityAdapter, bflAdapter, falAdapter };
+registerProvider(testStubAdapter);
+registerProvider(geminiAdapter);
+registerProvider(stabilityAdapter);
+registerProvider(bflAdapter);
+registerProvider(falAdapter);

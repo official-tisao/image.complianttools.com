@@ -1,59 +1,63 @@
-/** P5-04 CSP/security tests */
+/** P5-04 CSP/security tests — reads real files */
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
-const CSP_DIRECTIVES = [
-  "default-src 'none'",
-  "script-src 'self' 'wasm-unsafe-eval'",
-  "style-src 'self'",
-  "img-src 'self' data: blob:",
-  "font-src 'self'",
-  "connect-src 'self' blob: https://cdn.jsdelivr.net",
-  "worker-src 'self' blob:",
-  "child-src 'self' blob:",
-  "manifest-src 'self'",
-  "form-action 'none'",
-  "frame-ancestors 'none'",
-  "base-uri 'none'",
-  "object-src 'none'",
-  'upgrade-insecure-requests',
-  "require-trusted-types-for 'script'",
-  'trusted-types ctimg-default svelte-trusted-html',
-];
+const appHtmlPath = resolve('apps/web/src/app.html');
+const headersPath = resolve('apps/web/static/_headers');
 
-const FULL_CSP = CSP_DIRECTIVES.join('; ');
+function extractCsp(text) {
+  const meta = text.match(/content="([^"]+)"/);
+  if (meta) return meta[1];
+  const header = text.match(/Content-Security-Policy:\s*([^\r\n]+)/);
+  if (header) return header[1].trim();
+  return '';
+}
 
-test('trusted-types directive matches CSP policy list', () => {
+const appHtml = readFileSync(appHtmlPath, 'utf8');
+const headers = readFileSync(headersPath, 'utf8');
+
+const cspApp = extractCsp(appHtml);
+const cspHeaders = extractCsp(headers);
+
+test('app.html CSP contains trusted-types directive', () => {
   assert.ok(
-    FULL_CSP.includes('trusted-types ctimg-default svelte-trusted-html'),
-    'CSP includes trusted-types directive for both policies',
+    cspApp.includes('trusted-types ctimg-default svelte-trusted-html'),
+    'app.html CSP missing trusted-types',
+  );
+  assert.ok(
+    cspApp.includes("require-trusted-types-for 'script'"),
+    'app.html CSP missing require-trusted-types-for',
   );
 });
 
-test('base CSP has all directives', () => {
-  for (const d of CSP_DIRECTIVES) {
-    assert.ok(FULL_CSP.includes(d), `CSP includes: ${d}`);
-  }
+test('_headers CSP matches trusted-types directive', () => {
+  assert.ok(
+    cspHeaders.includes('trusted-types ctimg-default svelte-trusted-html'),
+    '_headers CSP missing trusted-types',
+  );
+  assert.ok(
+    cspHeaders.includes("require-trusted-types-for 'script'"),
+    '_headers CSP missing require-trusted-types-for',
+  );
 });
 
-test('connect-src has no unrestricted * fallback', () => {
-  assert.strictEqual(FULL_CSP.includes('connect-src *'), false);
-  assert.strictEqual(FULL_CSP.includes("connect-src 'self' *"), false);
+test('both CSP sources agree on trusted-types policies', () => {
+  assert.strictEqual(cspApp.includes('ctimg-default'), cspHeaders.includes('ctimg-default'));
+  assert.strictEqual(
+    cspApp.includes('svelte-trusted-html'),
+    cspHeaders.includes('svelte-trusted-html'),
+  );
 });
 
-test('provider origins not in base CSP (handled by transport)', () => {
-  assert.strictEqual(FULL_CSP.includes('api.openai.com'), false);
-  assert.strictEqual(FULL_CSP.includes('api.anthropic.com'), false);
-});
-
-test('COOP and COEP required', () => {
-  assert.strictEqual('Cross-Origin-Opener-Policy: same-origin'.includes('same-origin'), true);
-  assert.strictEqual('Cross-Origin-Embedder-Policy: require-corp'.includes('require-corp'), true);
-});
-
-test('unsafe CSP fragments rejected', () => {
-  const unsafe = ['connect-src *', 'script-src *', 'default-src *', "script-src 'unsafe-eval'"];
-  for (const s of unsafe) {
-    assert.strictEqual(FULL_CSP.includes(s), false, `Rejected unsafe: ${s}`);
-  }
+test('script-src permits the SvelteKit inline bootstrap', () => {
+  // SvelteKit emits an inline bootstrap script per page. Without an
+  // 'unsafe-inline'/'unsafe-hashes' allowance or a matching hash/nonce, CSP
+  // blocks it and hydration never runs.
+  const scriptSrc = (cspApp.match(/script-src ([^;]*)/) || [])[1] || '';
+  assert.ok(
+    scriptSrc.includes("'unsafe-inline'") || /sha256-|'nonce-/.test(scriptSrc),
+    `script-src blocks the inline bootstrap: ${scriptSrc}`,
+  );
 });

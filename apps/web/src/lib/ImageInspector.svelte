@@ -100,10 +100,11 @@
       'Inspect dimensions, colour, depth, alpha, animation, container structure, and supported metadata locally. Your file is never uploaded.',
     )}
   </p>
-  <label for="inspector-file-input"
-    >{t('inspector.choose', 'Choose an image')}
+  <label for="inspector-file-input">
+    <span>{t('inspector.choose', 'Choose an image')}</span>
     <input
       id="inspector-file-input"
+      aria-label={t('inspector.choose', 'Choose an image')}
       type="file"
       accept="image/*"
       onchange={(event) => void inspect(event.currentTarget.files?.[0])}
