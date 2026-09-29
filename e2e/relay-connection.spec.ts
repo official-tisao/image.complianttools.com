@@ -12,6 +12,23 @@ import { expect, test } from '@playwright/test';
 
 const APP_ORIGIN = /^https?:\/\/127\.0\.0\.1:\d+$/;
 
+/**
+ * Whether a request stayed on the app's own origin.
+ *
+ * The origin is compared, not the whole URL: a prerendered page loads its JS chunks from the same
+ * origin, and `http://127.0.0.1:4390/_app/immutable/chunks/x.mjs` is same-origin even though it does
+ * not string-match an origin-only pattern. What these tests forbid is a request that *leaves* the
+ * origin, so the path must be discarded before the comparison.
+ */
+function isAppRequest(url: string): boolean {
+  try {
+    return APP_ORIGIN.test(new URL(url).origin);
+  } catch {
+    // A URL the runtime could not parse is not a request to the app's origin.
+    return false;
+  }
+}
+
 for (const capability of ['generate', 'edit', 'describe'] as const) {
   test(`AI ${capability} offers Direct (recommended) / Via my relay`, async ({ page }) => {
     await page.goto(`/ai/${capability}`);
@@ -38,7 +55,7 @@ test('no consent or credentials still means no request, on either path', async (
   const external: string[] = [];
   page.on('request', (request) => {
     const url = request.url();
-    if (!APP_ORIGIN.test(url)) external.push(url);
+    if (!isAppRequest(url)) external.push(url);
   });
 
   await page.goto('/ai/describe');
@@ -66,7 +83,7 @@ test('an unusable relay URL is refused locally and never falls back to direct', 
   const external: string[] = [];
   page.on('request', (request) => {
     const url = request.url();
-    if (!APP_ORIGIN.test(url)) external.push(url);
+    if (!isAppRequest(url)) external.push(url);
   });
 
   await page.goto('/ai/generate');
