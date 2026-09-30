@@ -58,7 +58,7 @@
    * provider because the page cannot know the provider's current CORS posture for certain — which
    * is exactly what the freshness note on the chooser table admits.
    */
-  const failureClasses: readonly FailureClass[] = [
+  const failureClasses: readonly FailureClass[] = $derived([
     'rejected',
     'forbidden',
     'not-configured',
@@ -66,7 +66,7 @@
     ...(testMayCost ? (['no-credits'] as const) : ([] as const)),
     'rate-limited',
     'provider-error',
-  ];
+  ]);
 </script>
 
 <!-- Step 1 — create an account and a key. -->
@@ -292,6 +292,7 @@
 
   {#if descriptor.models.length > 0}
     <h3 class="connect-h3">{t('connect.models', 'Models this adapter offers')}</h3>
+    <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
     <div class="connect-scroll" tabindex="0" role="group" aria-label="Models">
       <table class="connect-table">
         <caption>

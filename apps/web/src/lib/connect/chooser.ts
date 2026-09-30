@@ -289,9 +289,12 @@ export function chooserStyleSheet(
 
   for (const { task, priority } of combinations) {
     const selector = `.chooser:has(input[name="task"][value="${task}"]:checked):has(input[name="priority"][value="${priority}"]:checked)`;
-    // The default combination is handled above, and a duplicate rule for it adds nothing.
-    if (task === DEFAULT_ANSWERS.task && priority === DEFAULT_ANSWERS.priority) continue;
-    rules.push(`${selector} .chooser-outcome--${task}--${priority}{display:block}`);
+    // The default combination's outcome rule is emitted above, and a duplicate adds nothing. Only
+    // that rule is skipped -- its per-provider notes still need rules, or the default outcome's
+    // "you already have an account here" note could never appear.
+    if (task !== DEFAULT_ANSWERS.task || priority !== DEFAULT_ANSWERS.priority) {
+      rules.push(`${selector} .chooser-outcome--${task}--${priority}{display:block}`);
+    }
 
     for (const provider of providers) {
       rules.push(

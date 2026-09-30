@@ -131,10 +131,10 @@
               images off someone else's machine entirely.
             </p>
           {/if}
-          {#each ACCOUNT_PROVIDERS as provider (provider.slug)}
-            {#if provider.slug === outcome.result.pick.slug}
+          {#each ACCOUNT_PROVIDERS as provider (provider.value)}
+            {#if provider.value === outcome.result.pick.slug}
               <p
-                class="chooser-owned chooser-owned--{outcome.task}--{outcome.priority}--{provider.slug}"
+                class="chooser-owned chooser-owned--{outcome.task}--{outcome.priority}--{provider.value}"
               >
                 Tick {provider.label} above and setup drops to a couple of minutes.
               </p>

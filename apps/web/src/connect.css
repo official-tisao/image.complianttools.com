@@ -1092,6 +1092,60 @@
   display: block;
 }
 .chooser:has(input[name='task'][value='generate']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='openai']:checked)
+  .chooser-owned--generate--best-quality--openai {
+  display: block;
+}
+.chooser:has(input[name='task'][value='generate']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='anthropic']:checked)
+  .chooser-owned--generate--best-quality--anthropic {
+  display: block;
+}
+.chooser:has(input[name='task'][value='generate']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='gemini']:checked)
+  .chooser-owned--generate--best-quality--gemini {
+  display: block;
+}
+.chooser:has(input[name='task'][value='generate']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='stability']:checked)
+  .chooser-owned--generate--best-quality--stability {
+  display: block;
+}
+.chooser:has(input[name='task'][value='generate']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='bfl']:checked)
+  .chooser-owned--generate--best-quality--bfl {
+  display: block;
+}
+.chooser:has(input[name='task'][value='generate']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='fal']:checked)
+  .chooser-owned--generate--best-quality--fal {
+  display: block;
+}
+.chooser:has(input[name='task'][value='generate']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='replicate']:checked)
+  .chooser-owned--generate--best-quality--replicate {
+  display: block;
+}
+.chooser:has(input[name='task'][value='generate']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='removebg']:checked)
+  .chooser-owned--generate--best-quality--removebg {
+  display: block;
+}
+.chooser:has(input[name='task'][value='generate']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='clipdrop']:checked)
+  .chooser-owned--generate--best-quality--clipdrop {
+  display: block;
+}
+.chooser:has(input[name='task'][value='generate']:checked):has(
     input[name='priority'][value='most-private']:checked
   )
   .chooser-outcome--generate--most-private {
