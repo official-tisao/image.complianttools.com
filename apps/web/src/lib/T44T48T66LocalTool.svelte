@@ -7,6 +7,9 @@
     removeObject,
     type RasterImage,
   } from '@complianttools/image-engine';
+  import ConnectEmptyState from './connect/ConnectEmptyState.svelte';
+  import { ESCALATION_STATE } from './connect/empty-states';
+  import '../connect.css';
 
   type Locale = 'en' | 'en-XA' | 'ar';
   type Kind = 'denoise' | 'editor' | 'remove-object';
@@ -436,7 +439,18 @@
         href={outputUrl}
         download={`${kind}.png`}>{localized(copy.download)}</a
       >
-    </section>{/if}
+    </section>
+
+    <!--
+      P5-14 (README §17.7) — the escalation empty state, shown only once a local result exists.
+
+      The placement is the whole point: §17.7 says that on an escalation control "the local result
+      is already on screen, so this is an offer, not a blocker." Gating the state on `outputUrl`
+      keeps that true — the reader is looking at a finished, free, downloadable image, and the copy
+      below opens by handing that over rather than by asking for anything.
+    -->
+    <ConnectEmptyState route={`/${kind}`} state={ESCALATION_STATE} {locale} />
+  {/if}
   <section class="faq tool-completion">
     <h2>{localized('Questions about this tool')}</h2>
     {#each faq as item (item.question)}<details>

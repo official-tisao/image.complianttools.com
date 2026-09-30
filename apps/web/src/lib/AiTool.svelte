@@ -7,6 +7,9 @@
     RelayRoutingError,
   } from '@complianttools/image-engine/ai/relay';
   import { setProviderRelay } from '@complianttools/image-engine/ai/connection';
+  import ConnectEmptyState from './connect/ConnectEmptyState.svelte';
+  import { AI_ONLY_STATE } from './connect/empty-states';
+  import '../connect.css';
   import { translate, type Locale } from './i18n';
 
   type AiKind = 'generate' | 'edit' | 'describe';
@@ -302,6 +305,16 @@
       disabled={busy}>{busy ? 'Waiting…' : copy[kind].action}</button
     >
   </form>
+
+  <!--
+    P5-14 (README §17.7) — the AI-only empty state. T64, T65, and T71 all render through this
+    component, and all three share the same property that makes this copy necessary: there is no
+    local path at all, so the honest sentence is that the operation needs a model, paired with a
+    real link to a local tool that does work. It is deliberately NOT the escalation state, which
+    belongs on a tool that already has a finished local result on screen.
+  -->
+  <ConnectEmptyState route={`/ai/${kind}`} state={AI_ONLY_STATE} {locale} />
+
   {#if pathNote}
     <p data-testid="ai-path" data-path={usedPath || connection}>{pathNote}</p>
   {/if}
