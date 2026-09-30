@@ -1,0 +1,2227 @@
+/*
+ * P5-14 — styles for the `/connect-ai` pages.
+ *
+ * Kept in its own file rather than appended to `app.css` for two reasons: the connect pages are a
+ * distinct, content-heavy archetype with a 45 kB JavaScript budget, and a 10-row comparison table
+ * has no business widening the rules for the 80-odd tool pages that share `app.css`.
+ *
+ * Colours are the same literals the rest of the app uses (`#1c1a17` ink, `#5c5a56` muted,
+ * `#f0eeea` page) rather than the tokens in `packages/ui/src/tokens.css`, which `app.css` does not
+ * consume either. Introducing a second palette on one route would make the site read as two
+ * products.
+ *
+ * Accessibility notes that are load-bearing rather than decorative:
+ * - The comparison table is a real `<table>` with a `<caption>` and `scope`d headers, so a screen
+ *   reader can navigate it as a table instead of reading a wall of cells.
+ * - `.connect-scroll` is a focusable region (`tabindex="0"`) with an explicit label, because a
+ *   horizontally scrollable box is unreachable by keyboard otherwise.
+ * - Nothing relies on colour alone: the browser-direct column pairs its label with a word, and the
+ *   verified/unverified marker pairs its colour with an explicit marker character.
+ */
+
+.connect-page {
+  max-width: 960px;
+  margin-inline: auto;
+  padding: 40px 24px 96px;
+}
+
+/* The hero's first screen. Three sentences, no marketing. */
+.connect-hero {
+  max-width: 720px;
+  margin-block: 32px 56px;
+}
+
+.connect-hero h1 {
+  font-size: clamp(2.2rem, 5vw, 3.2rem);
+  line-height: 1.08;
+  letter-spacing: -2px;
+  font-weight: 500;
+  margin-block: 8px 16px;
+}
+
+.connect-hero p {
+  color: #5c5a56;
+  font-size: 18px;
+  line-height: 1.6;
+}
+
+.connect-hero .hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-block-start: 24px;
+}
+
+/* Section rhythm. One rule so the long page does not drift. */
+.connect-section {
+  margin-block-start: 72px;
+  padding-block-start: 40px;
+  border-top: 1px solid #1c1a171a;
+}
+
+.connect-section > h2 {
+  font-size: 30px;
+  letter-spacing: -1.2px;
+  font-weight: 500;
+  margin-block-end: 8px;
+}
+
+.connect-section > h2 + .connect-lede {
+  color: #5c5a56;
+  font-size: 17px;
+  line-height: 1.6;
+  max-width: 68ch;
+  margin-block: 0 28px;
+}
+
+.connect-h3 {
+  font-size: 19px;
+  font-weight: 500;
+  margin-block: 32px 8px;
+}
+
+/* The four BYOK reasons. A plain definition list reads better than four boxes. */
+.connect-why {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  margin: 0;
+  padding: 0;
+}
+
+.connect-why > div {
+  border-left: 2px solid #1c1a1720;
+  padding-inline-start: 16px;
+}
+
+.connect-why dt {
+  font-weight: 500;
+  margin-block-end: 6px;
+}
+
+.connect-why dd {
+  margin: 0;
+  color: #5c5a56;
+  line-height: 1.6;
+  font-size: 15px;
+}
+
+/*
+ * The comparison table.
+ *
+ * `overflow-x: auto` on a focusable wrapper rather than on the page: on a narrow screen the table
+ * scrolls sideways inside its own box, and the page body never scrolls horizontally.
+ */
+.connect-scroll {
+  overflow-x: auto;
+  border: 1px solid #1c1a171f;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.connect-table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 760px;
+  font-size: 14px;
+}
+
+.connect-table caption {
+  text-align: start;
+  padding: 16px;
+  color: #5c5a56;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.connect-table th,
+.connect-table td {
+  text-align: start;
+  padding: 12px 16px;
+  border-block-end: 1px solid #1c1a170f;
+  vertical-align: top;
+  line-height: 1.5;
+}
+
+.connect-table thead th {
+  font-weight: 600;
+  border-block-end: 1px solid #1c1a1720;
+  white-space: nowrap;
+}
+
+.connect-table tbody tr:last-child th,
+.connect-table tbody tr:last-child td {
+  border-block-end: none;
+}
+
+.connect-table tbody th {
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.connect-table tbody th a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.connect-table .cell-note {
+  display: block;
+  color: #5c5a56;
+  font-size: 12.5px;
+  margin-block-start: 4px;
+}
+
+.connect-caps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.connect-cap {
+  border: 1px solid #1c1a1720;
+  border-radius: 999px;
+  padding: 2px 9px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.connect-verdict {
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.connect-verdict[data-verdict='yes'] {
+  color: #1c5c3a;
+}
+
+.connect-verdict[data-verdict='caution'] {
+  color: #7a5a12;
+}
+
+.connect-verdict[data-verdict='unknown'] {
+  color: #7c1e16;
+}
+
+/* A "needs checking" cell is a claim about our knowledge, so it links to the note explaining it. */
+.connect-freshness {
+  color: #5c5a56;
+  font-size: 13px;
+  line-height: 1.6;
+  max-width: 72ch;
+  margin-block-start: 12px;
+}
+
+/* The "help me choose" flow. */
+.chooser {
+  border: 1px solid #1c1a171f;
+  border-radius: 8px;
+  background: #fff;
+  padding: 24px;
+}
+
+.chooser fieldset {
+  border: none;
+  padding: 0;
+  margin: 0 0 24px;
+}
+
+.chooser legend {
+  font-weight: 500;
+  padding: 0;
+  margin-block-end: 10px;
+}
+
+.chooser-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chooser-options label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #1c1a1720;
+  border-radius: 999px;
+  padding: 7px 14px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.chooser-options label:focus-within {
+  outline: 2px solid #1c1a17;
+  outline-offset: 2px;
+}
+
+.chooser-checkboxes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 6px 16px;
+}
+
+.chooser-checkboxes label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 2px 0;
+}
+
+.chooser-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.chooser-result {
+  margin-block-start: 28px;
+  padding-block-start: 24px;
+  border-top: 1px solid #1c1a1720;
+}
+
+/*
+ * The recommendation is one item, and the alternatives are visibly subordinate. The point of the
+ * flow is to end a decision, so the layout must not read as a list of equals.
+ */
+.chooser-pick {
+  border: 1px solid #1c1a17;
+  border-radius: 8px;
+  padding: 20px;
+  margin-block-end: 20px;
+}
+
+.chooser-pick h4 {
+  margin: 0 0 4px;
+  font-size: 20px;
+  font-weight: 500;
+}
+
+.chooser-pick p {
+  margin: 0 0 12px;
+  color: #5c5a56;
+  line-height: 1.6;
+}
+
+.chooser-alt {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.chooser-alt > div {
+  flex: 1 1 220px;
+  border: 1px solid #1c1a1720;
+  border-radius: 8px;
+  padding: 14px 16px;
+  font-size: 14px;
+}
+
+.chooser-alt h4 {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.chooser-alt p {
+  margin: 0;
+  color: #5c5a56;
+  line-height: 1.5;
+}
+
+/* Notices. `.error` already exists in app.css; these add the informational tones. */
+.connect-note,
+.connect-warning,
+.connect-unverified {
+  border-inline-start: 3px solid #1c1a1720;
+  padding: 12px 16px;
+  margin-block: 20px;
+  background: #f0eeea;
+  border-radius: 0 6px 6px 0;
+  line-height: 1.6;
+  font-size: 15px;
+}
+
+.connect-note strong,
+.connect-warning strong,
+.connect-unverified strong {
+  display: block;
+  margin-block-end: 4px;
+}
+
+.connect-warning {
+  border-inline-start-color: #7a5a12;
+}
+
+.connect-unverified {
+  border-inline-start-color: #7c1e16;
+  background: #f6eeee;
+}
+
+/* A verification stamp, used wherever a claim carries a date. */
+.connect-stamp {
+  display: block;
+  color: #5c5a56;
+  font-size: 13px;
+  margin-block-start: 6px;
+}
+
+/* A source link printed next to a claim, so any command can be checked by the reader. */
+.connect-source {
+  font-size: 13px;
+  color: #5c5a56;
+  margin-block-start: 8px;
+  line-height: 1.5;
+}
+
+.connect-source a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Commands. `pre` here is deliberately narrow-scoped so it cannot affect other routes. */
+.connect-command {
+  background: #fff;
+  border: 1px solid #1c1a1720;
+  border-radius: 6px;
+  padding: 12px 14px;
+  margin-block: 10px;
+  overflow-x: auto;
+  font-size: 13.5px;
+  line-height: 1.55;
+  white-space: pre;
+  tab-size: 2;
+}
+
+.connect-step {
+  margin-block: 20px;
+}
+
+.connect-step > h4 {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.connect-step p {
+  margin: 0;
+  color: #5c5a56;
+  line-height: 1.6;
+  font-size: 15px;
+}
+
+/* The UI labels the user will actually see on the provider's site. */
+.connect-ui-labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-block-start: 10px;
+  align-items: baseline;
+}
+
+.connect-ui-labels code {
+  background: #fff;
+  border: 1px solid #1c1a1720;
+  border-radius: 4px;
+  padding: 2px 7px;
+  font-size: 12.5px;
+}
+
+/* A described screenshot placeholder, per §17.3. Deliberately not an <img>. */
+.connect-shot {
+  border: 1px dashed #1c1a1740;
+  border-radius: 6px;
+  padding: 18px;
+  margin-block: 12px;
+  color: #5c5a56;
+  font-size: 14px;
+  line-height: 1.6;
+  background: #f0eeea;
+}
+
+/* §17.3's credential form. */
+.connect-form {
+  display: grid;
+  gap: 14px;
+  margin-block: 16px;
+}
+
+.connect-field {
+  display: grid;
+  gap: 6px;
+}
+
+.connect-field label {
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.connect-field .field-help {
+  color: #5c5a56;
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.connect-field input[type='text'],
+.connect-field input[type='password'],
+.connect-field input[type='url'] {
+  font: inherit;
+  padding: 9px 12px;
+  border: 1px solid #1c1a1733;
+  border-radius: 6px;
+  background: #fff;
+  color: #1c1a17;
+  max-width: 520px;
+}
+
+.connect-field input:focus-visible {
+  outline: 2px solid #1c1a17;
+  outline-offset: 1px;
+}
+
+.connect-reveal {
+  font: inherit;
+  font-size: 13px;
+  border: 1px solid #1c1a1720;
+  background: #fff;
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+/* A warning that never blocks. §17.3: a provider may change its key format at any time. */
+.connect-soft-warn {
+  color: #7a5a12;
+  font-size: 13px;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* §17.3 step 4 — the payoff grid. */
+.connect-unlock {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-block-start: 16px;
+}
+
+.connect-unlock > a {
+  display: block;
+  border: 1px solid #1c1a1720;
+  border-radius: 8px;
+  padding: 14px 16px;
+  background: #fff;
+  text-decoration: none;
+  transition: border-color 120ms ease;
+}
+
+.connect-unlock > a:hover {
+  border-color: #1c1a17;
+}
+
+.connect-unlock strong {
+  display: block;
+  font-weight: 500;
+  margin-block-end: 4px;
+}
+
+.connect-unlock span {
+  color: #5c5a56;
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.connect-unlock[aria-disabled='true'] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* The result of a connection test, success or a specific failure. */
+.connect-result {
+  border: 1px solid #1c1a17;
+  border-radius: 8px;
+  padding: 16px;
+  margin-block: 20px;
+  background: #fff;
+}
+
+.connect-result[data-severity='error'] {
+  border-color: #7c1e16;
+  background: #f6eeee;
+}
+
+.connect-result[data-severity='warning'] {
+  border-color: #7a5a12;
+  background: #f7f2e6;
+}
+
+.connect-result h4 {
+  margin: 0 0 6px;
+  font-size: 17px;
+  font-weight: 500;
+}
+
+.connect-result p {
+  margin: 0 0 8px;
+  line-height: 1.6;
+}
+
+.connect-result .remedy-label {
+  font-weight: 500;
+}
+
+.connect-result-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-block-start: 10px;
+}
+
+.connect-result-links a {
+  border: 1px solid #1c1a1720;
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 14px;
+  background: #fff;
+  text-decoration: none;
+}
+
+.connect-result-links a:hover {
+  border-color: #1c1a17;
+}
+
+/* FAQ. Reuses the global `details summary` rule from app.css. */
+.connect-faq details {
+  border-block-start: 1px solid #1c1a171a;
+}
+
+.connect-faq details:last-of-type {
+  border-block-end: 1px solid #1c1a171a;
+}
+
+.connect-faq summary {
+  cursor: pointer;
+  padding: 16px 0;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.connect-faq details > div {
+  padding-block-end: 18px;
+  color: #5c5a56;
+  line-height: 1.65;
+  max-width: 72ch;
+}
+
+.connect-faq details p {
+  margin-block: 0 10px;
+}
+
+.connect-faq .faq-note {
+  font-size: 14px;
+  border-inline-start: 2px solid #1c1a1720;
+  padding-inline-start: 12px;
+}
+
+/* Cross-links between the connect pages. */
+.connect-subpages {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 12px;
+  margin-block-start: 20px;
+}
+
+.connect-subpages > a {
+  display: block;
+  border: 1px solid #1c1a1720;
+  border-radius: 8px;
+  padding: 16px;
+  background: #fff;
+  text-decoration: none;
+}
+
+.connect-subpages > a:hover {
+  border-color: #1c1a17;
+}
+
+.connect-subpages strong {
+  display: block;
+  font-weight: 500;
+  margin-block-end: 4px;
+}
+
+.connect-subpages span {
+  color: #5c5a56;
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+/* The two empty states. They must not look interchangeable. */
+.connect-escalation {
+  border: 1px solid #1c1a1720;
+  border-radius: 8px;
+  padding: 22px;
+  margin-block: 24px;
+  background: #fff;
+}
+
+.connect-empty-state {
+  border: 1px solid #1c1a1720;
+  border-radius: 8px;
+  padding: 24px;
+  margin-block: 24px;
+  background: #fff;
+}
+
+.connect-escalation .eyebrow,
+.connect-empty-state .eyebrow {
+  margin-block: 0 8px;
+}
+
+.connect-escalation h3,
+.connect-empty-state h3 {
+  margin: 0 0 12px;
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.6px;
+}
+
+.connect-escalation p,
+.connect-empty-state p {
+  margin-block: 0 10px;
+  line-height: 1.65;
+  color: #5c5a56;
+  max-width: 68ch;
+}
+
+.connect-state-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-block: 16px;
+}
+
+.connect-state-actions a {
+  border: 1px solid #1c1a1720;
+  border-radius: 999px;
+  padding: 9px 18px;
+  font-size: 14px;
+  background: #fff;
+  text-decoration: none;
+}
+
+.connect-state-actions a[aria-describedby] {
+  border-style: dashed;
+}
+
+.connect-state-actions a.primary-action {
+  background: #1c1a17;
+  color: #fff;
+  border-color: #1c1a17;
+}
+
+.connect-local-alt {
+  border-block-start: 1px solid #1c1a1720;
+  margin-block-start: 18px;
+  padding-block-start: 16px;
+  font-size: 14.5px;
+  line-height: 1.6;
+}
+
+.connect-local-alt a {
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.connect-cost {
+  font-size: 14px;
+  color: #5c5a56;
+  margin-block-start: 12px;
+}
+
+@media (max-width: 767px) {
+  .connect-page {
+    padding-inline: 16px;
+  }
+
+  .connect-hero h1 {
+    letter-spacing: -1.2px;
+  }
+
+  .chooser {
+    padding: 18px 16px;
+  }
+
+  .connect-section {
+    margin-block-start: 56px;
+    padding-block-start: 32px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .connect-unlock > a,
+  .connect-subpages > a,
+  .connect-result-links a,
+  .connect-state-actions a {
+    transition: none;
+  }
+}
+
+/*
+  P5-14 — the chooser's switching rules.
+
+  GENERATED from `chooserStyleSheet()` in `chooser.ts`. These live here rather than in an
+  injected <style> block because both eslint and prettier-plugin-svelte fail on a {@html} tag
+  inside <style>: eslint cannot see the binding as used, and the plugin hands the tag to PostCSS
+  and aborts. Every selector is `.chooser`-prefixed, so component scoping is unchanged.
+
+  Regenerate with: pnpm generate:chooser-css
+*/
+.chooser-outcome {
+  display: none;
+}
+.chooser:has(input[name='task'][value='generate']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ) {
+  .chooser-outcome--generate--best-quality {
+    display: block;
+  }
+}
+.chooser:has(input[name='task'][value='describe']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  )
+  .chooser-outcome--describe--cheapest {
+  display: block;
+}
+.chooser:has(input[name='task'][value='describe']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  ):has(input[name='account'][value='openai']:checked)
+  .chooser-owned--describe--cheapest--openai {
+  display: block;
+}
+.chooser:has(input[name='task'][value='describe']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  ):has(input[name='account'][value='anthropic']:checked)
+  .chooser-owned--describe--cheapest--anthropic {
+  display: block;
+}
+.chooser:has(input[name='task'][value='describe']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  ):has(input[name='account'][value='gemini']:checked)
+  .chooser-owned--describe--cheapest--gemini {
+  display: block;
+}
+.chooser:has(input[name='task'][value='describe']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  ):has(input[name='account'][value='stability']:checked)
+  .chooser-owned--describe--cheapest--stability {
+  display: block;
+}
+.chooser:has(input[name='task'][value='describe']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  ):has(input[name='account'][value='bfl']:checked)
+  .chooser-owned--describe--cheapest--bfl {
+  display: block;
+}
+.chooser:has(input[name='task'][value='describe']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  ):has(input[name='account'][value='fal']:checked)
+  .chooser-owned--describe--cheapest--fal {
+  display: block;
+}
+.chooser:has(input[name='task'][value='describe']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  ):has(input[name='account'][value='replicate']:checked)
+  .chooser-owned--describe--cheapest--replicate {
+  display: block;
+}
+.chooser:has(input[name='task'][value='describe']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  ):has(input[name='account'][value='removebg']:checked)
+  .chooser-owned--describe--cheapest--removebg {
+  display: block;
+}
+.chooser:has(input[name='task'][value='describe']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  ):has(input[name='account'][value='clipdrop']:checked)
+  .chooser-owned--describe--cheapest--clipdrop {
+  display: block;
+}
+.chooser:has(input[name='task'][value='describe']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  )
+  .chooser-outcome--describe--best-quality {
+  display: block;
+}
+.chooser:has(input[name='task'][value='describe']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='openai']:checked)
+  .chooser-owned--describe--best-quality--openai {
+  display: block;
+}
+.chooser:has(input[name='task'][value='describe']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='anthropic']:checked)
+  .chooser-owned--describe--best-quality--anthropic {
+  display: block;
+}
+.chooser:has(input[name='task'][value='describe']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='gemini']:checked)
+  .chooser-owned--describe--best-quality--gemini {
+  display: block;
+}
+.chooser:has(input[name='task'][value='describe']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='stability']:checked)
+  .chooser-owned--describe--best-quality--stability {
+  display: block;
+}
+.chooser:has(input[name='task'][value='describe']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='bfl']:checked)
+  .chooser-owned--describe--best-quality--bfl {
+  display: block;
+}
+.chooser:has(input[name='task'][value='describe']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='fal']:checked)
+  .chooser-owned--describe--best-quality--fal {
+  display: block;
+}
+.chooser:has(input[name='task'][value='describe']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='replicate']:checked)
+  .chooser-owned--describe--best-quality--replicate {
+  display: block;
+}
+.chooser:has(input[name='task'][value='describe']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='removebg']:checked)
+  .chooser-owned--describe--best-quality--removebg {
+  display: block;
+}
+.chooser:has(input[name='task'][value='describe']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='clipdrop']:checked)
+  .chooser-owned--describe--best-quality--clipdrop {
+  display: block;
+}
+.chooser:has(input[name='task'][value='describe']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  )
+  .chooser-outcome--describe--most-private {
+  display: block;
+}
+.chooser:has(input[name='task'][value='describe']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  ):has(input[name='account'][value='openai']:checked)
+  .chooser-owned--describe--most-private--openai {
+  display: block;
+}
+.chooser:has(input[name='task'][value='describe']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  ):has(input[name='account'][value='anthropic']:checked)
+  .chooser-owned--describe--most-private--anthropic {
+  display: block;
+}
+.chooser:has(input[name='task'][value='describe']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  ):has(input[name='account'][value='gemini']:checked)
+  .chooser-owned--describe--most-private--gemini {
+  display: block;
+}
+.chooser:has(input[name='task'][value='describe']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  ):has(input[name='account'][value='stability']:checked)
+  .chooser-owned--describe--most-private--stability {
+  display: block;
+}
+.chooser:has(input[name='task'][value='describe']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  ):has(input[name='account'][value='bfl']:checked)
+  .chooser-owned--describe--most-private--bfl {
+  display: block;
+}
+.chooser:has(input[name='task'][value='describe']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  ):has(input[name='account'][value='fal']:checked)
+  .chooser-owned--describe--most-private--fal {
+  display: block;
+}
+.chooser:has(input[name='task'][value='describe']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  ):has(input[name='account'][value='replicate']:checked)
+  .chooser-owned--describe--most-private--replicate {
+  display: block;
+}
+.chooser:has(input[name='task'][value='describe']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  ):has(input[name='account'][value='removebg']:checked)
+  .chooser-owned--describe--most-private--removebg {
+  display: block;
+}
+.chooser:has(input[name='task'][value='describe']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  ):has(input[name='account'][value='clipdrop']:checked)
+  .chooser-owned--describe--most-private--clipdrop {
+  display: block;
+}
+.chooser:has(input[name='task'][value='describe']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  )
+  .chooser-outcome--describe--easiest-setup {
+  display: block;
+}
+.chooser:has(input[name='task'][value='describe']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  ):has(input[name='account'][value='openai']:checked)
+  .chooser-owned--describe--easiest-setup--openai {
+  display: block;
+}
+.chooser:has(input[name='task'][value='describe']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  ):has(input[name='account'][value='anthropic']:checked)
+  .chooser-owned--describe--easiest-setup--anthropic {
+  display: block;
+}
+.chooser:has(input[name='task'][value='describe']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  ):has(input[name='account'][value='gemini']:checked)
+  .chooser-owned--describe--easiest-setup--gemini {
+  display: block;
+}
+.chooser:has(input[name='task'][value='describe']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  ):has(input[name='account'][value='stability']:checked)
+  .chooser-owned--describe--easiest-setup--stability {
+  display: block;
+}
+.chooser:has(input[name='task'][value='describe']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  ):has(input[name='account'][value='bfl']:checked)
+  .chooser-owned--describe--easiest-setup--bfl {
+  display: block;
+}
+.chooser:has(input[name='task'][value='describe']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  ):has(input[name='account'][value='fal']:checked)
+  .chooser-owned--describe--easiest-setup--fal {
+  display: block;
+}
+.chooser:has(input[name='task'][value='describe']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  ):has(input[name='account'][value='replicate']:checked)
+  .chooser-owned--describe--easiest-setup--replicate {
+  display: block;
+}
+.chooser:has(input[name='task'][value='describe']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  ):has(input[name='account'][value='removebg']:checked)
+  .chooser-owned--describe--easiest-setup--removebg {
+  display: block;
+}
+.chooser:has(input[name='task'][value='describe']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  ):has(input[name='account'][value='clipdrop']:checked)
+  .chooser-owned--describe--easiest-setup--clipdrop {
+  display: block;
+}
+.chooser:has(input[name='task'][value='generate']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  )
+  .chooser-outcome--generate--cheapest {
+  display: block;
+}
+.chooser:has(input[name='task'][value='generate']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  ):has(input[name='account'][value='openai']:checked)
+  .chooser-owned--generate--cheapest--openai {
+  display: block;
+}
+.chooser:has(input[name='task'][value='generate']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  ):has(input[name='account'][value='anthropic']:checked)
+  .chooser-owned--generate--cheapest--anthropic {
+  display: block;
+}
+.chooser:has(input[name='task'][value='generate']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  ):has(input[name='account'][value='gemini']:checked)
+  .chooser-owned--generate--cheapest--gemini {
+  display: block;
+}
+.chooser:has(input[name='task'][value='generate']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  ):has(input[name='account'][value='stability']:checked)
+  .chooser-owned--generate--cheapest--stability {
+  display: block;
+}
+.chooser:has(input[name='task'][value='generate']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  ):has(input[name='account'][value='bfl']:checked)
+  .chooser-owned--generate--cheapest--bfl {
+  display: block;
+}
+.chooser:has(input[name='task'][value='generate']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  ):has(input[name='account'][value='fal']:checked)
+  .chooser-owned--generate--cheapest--fal {
+  display: block;
+}
+.chooser:has(input[name='task'][value='generate']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  ):has(input[name='account'][value='replicate']:checked)
+  .chooser-owned--generate--cheapest--replicate {
+  display: block;
+}
+.chooser:has(input[name='task'][value='generate']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  ):has(input[name='account'][value='removebg']:checked)
+  .chooser-owned--generate--cheapest--removebg {
+  display: block;
+}
+.chooser:has(input[name='task'][value='generate']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  ):has(input[name='account'][value='clipdrop']:checked)
+  .chooser-owned--generate--cheapest--clipdrop {
+  display: block;
+}
+.chooser:has(input[name='task'][value='generate']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='openai']:checked)
+  .chooser-owned--generate--best-quality--openai {
+  display: block;
+}
+.chooser:has(input[name='task'][value='generate']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='anthropic']:checked)
+  .chooser-owned--generate--best-quality--anthropic {
+  display: block;
+}
+.chooser:has(input[name='task'][value='generate']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='gemini']:checked)
+  .chooser-owned--generate--best-quality--gemini {
+  display: block;
+}
+.chooser:has(input[name='task'][value='generate']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='stability']:checked)
+  .chooser-owned--generate--best-quality--stability {
+  display: block;
+}
+.chooser:has(input[name='task'][value='generate']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='bfl']:checked)
+  .chooser-owned--generate--best-quality--bfl {
+  display: block;
+}
+.chooser:has(input[name='task'][value='generate']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='fal']:checked)
+  .chooser-owned--generate--best-quality--fal {
+  display: block;
+}
+.chooser:has(input[name='task'][value='generate']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='replicate']:checked)
+  .chooser-owned--generate--best-quality--replicate {
+  display: block;
+}
+.chooser:has(input[name='task'][value='generate']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='removebg']:checked)
+  .chooser-owned--generate--best-quality--removebg {
+  display: block;
+}
+.chooser:has(input[name='task'][value='generate']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='clipdrop']:checked)
+  .chooser-owned--generate--best-quality--clipdrop {
+  display: block;
+}
+.chooser:has(input[name='task'][value='generate']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  )
+  .chooser-outcome--generate--most-private {
+  display: block;
+}
+.chooser:has(input[name='task'][value='generate']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  ):has(input[name='account'][value='openai']:checked)
+  .chooser-owned--generate--most-private--openai {
+  display: block;
+}
+.chooser:has(input[name='task'][value='generate']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  ):has(input[name='account'][value='anthropic']:checked)
+  .chooser-owned--generate--most-private--anthropic {
+  display: block;
+}
+.chooser:has(input[name='task'][value='generate']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  ):has(input[name='account'][value='gemini']:checked)
+  .chooser-owned--generate--most-private--gemini {
+  display: block;
+}
+.chooser:has(input[name='task'][value='generate']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  ):has(input[name='account'][value='stability']:checked)
+  .chooser-owned--generate--most-private--stability {
+  display: block;
+}
+.chooser:has(input[name='task'][value='generate']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  ):has(input[name='account'][value='bfl']:checked)
+  .chooser-owned--generate--most-private--bfl {
+  display: block;
+}
+.chooser:has(input[name='task'][value='generate']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  ):has(input[name='account'][value='fal']:checked)
+  .chooser-owned--generate--most-private--fal {
+  display: block;
+}
+.chooser:has(input[name='task'][value='generate']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  ):has(input[name='account'][value='replicate']:checked)
+  .chooser-owned--generate--most-private--replicate {
+  display: block;
+}
+.chooser:has(input[name='task'][value='generate']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  ):has(input[name='account'][value='removebg']:checked)
+  .chooser-owned--generate--most-private--removebg {
+  display: block;
+}
+.chooser:has(input[name='task'][value='generate']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  ):has(input[name='account'][value='clipdrop']:checked)
+  .chooser-owned--generate--most-private--clipdrop {
+  display: block;
+}
+.chooser:has(input[name='task'][value='generate']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  )
+  .chooser-outcome--generate--easiest-setup {
+  display: block;
+}
+.chooser:has(input[name='task'][value='generate']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  ):has(input[name='account'][value='openai']:checked)
+  .chooser-owned--generate--easiest-setup--openai {
+  display: block;
+}
+.chooser:has(input[name='task'][value='generate']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  ):has(input[name='account'][value='anthropic']:checked)
+  .chooser-owned--generate--easiest-setup--anthropic {
+  display: block;
+}
+.chooser:has(input[name='task'][value='generate']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  ):has(input[name='account'][value='gemini']:checked)
+  .chooser-owned--generate--easiest-setup--gemini {
+  display: block;
+}
+.chooser:has(input[name='task'][value='generate']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  ):has(input[name='account'][value='stability']:checked)
+  .chooser-owned--generate--easiest-setup--stability {
+  display: block;
+}
+.chooser:has(input[name='task'][value='generate']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  ):has(input[name='account'][value='bfl']:checked)
+  .chooser-owned--generate--easiest-setup--bfl {
+  display: block;
+}
+.chooser:has(input[name='task'][value='generate']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  ):has(input[name='account'][value='fal']:checked)
+  .chooser-owned--generate--easiest-setup--fal {
+  display: block;
+}
+.chooser:has(input[name='task'][value='generate']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  ):has(input[name='account'][value='replicate']:checked)
+  .chooser-owned--generate--easiest-setup--replicate {
+  display: block;
+}
+.chooser:has(input[name='task'][value='generate']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  ):has(input[name='account'][value='removebg']:checked)
+  .chooser-owned--generate--easiest-setup--removebg {
+  display: block;
+}
+.chooser:has(input[name='task'][value='generate']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  ):has(input[name='account'][value='clipdrop']:checked)
+  .chooser-owned--generate--easiest-setup--clipdrop {
+  display: block;
+}
+.chooser:has(input[name='task'][value='backgrounds']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  )
+  .chooser-outcome--backgrounds--cheapest {
+  display: block;
+}
+.chooser:has(input[name='task'][value='backgrounds']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  ):has(input[name='account'][value='openai']:checked)
+  .chooser-owned--backgrounds--cheapest--openai {
+  display: block;
+}
+.chooser:has(input[name='task'][value='backgrounds']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  ):has(input[name='account'][value='anthropic']:checked)
+  .chooser-owned--backgrounds--cheapest--anthropic {
+  display: block;
+}
+.chooser:has(input[name='task'][value='backgrounds']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  ):has(input[name='account'][value='gemini']:checked)
+  .chooser-owned--backgrounds--cheapest--gemini {
+  display: block;
+}
+.chooser:has(input[name='task'][value='backgrounds']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  ):has(input[name='account'][value='stability']:checked)
+  .chooser-owned--backgrounds--cheapest--stability {
+  display: block;
+}
+.chooser:has(input[name='task'][value='backgrounds']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  ):has(input[name='account'][value='bfl']:checked)
+  .chooser-owned--backgrounds--cheapest--bfl {
+  display: block;
+}
+.chooser:has(input[name='task'][value='backgrounds']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  ):has(input[name='account'][value='fal']:checked)
+  .chooser-owned--backgrounds--cheapest--fal {
+  display: block;
+}
+.chooser:has(input[name='task'][value='backgrounds']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  ):has(input[name='account'][value='replicate']:checked)
+  .chooser-owned--backgrounds--cheapest--replicate {
+  display: block;
+}
+.chooser:has(input[name='task'][value='backgrounds']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  ):has(input[name='account'][value='removebg']:checked)
+  .chooser-owned--backgrounds--cheapest--removebg {
+  display: block;
+}
+.chooser:has(input[name='task'][value='backgrounds']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  ):has(input[name='account'][value='clipdrop']:checked)
+  .chooser-owned--backgrounds--cheapest--clipdrop {
+  display: block;
+}
+.chooser:has(input[name='task'][value='backgrounds']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  )
+  .chooser-outcome--backgrounds--best-quality {
+  display: block;
+}
+.chooser:has(input[name='task'][value='backgrounds']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='openai']:checked)
+  .chooser-owned--backgrounds--best-quality--openai {
+  display: block;
+}
+.chooser:has(input[name='task'][value='backgrounds']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='anthropic']:checked)
+  .chooser-owned--backgrounds--best-quality--anthropic {
+  display: block;
+}
+.chooser:has(input[name='task'][value='backgrounds']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='gemini']:checked)
+  .chooser-owned--backgrounds--best-quality--gemini {
+  display: block;
+}
+.chooser:has(input[name='task'][value='backgrounds']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='stability']:checked)
+  .chooser-owned--backgrounds--best-quality--stability {
+  display: block;
+}
+.chooser:has(input[name='task'][value='backgrounds']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='bfl']:checked)
+  .chooser-owned--backgrounds--best-quality--bfl {
+  display: block;
+}
+.chooser:has(input[name='task'][value='backgrounds']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='fal']:checked)
+  .chooser-owned--backgrounds--best-quality--fal {
+  display: block;
+}
+.chooser:has(input[name='task'][value='backgrounds']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='replicate']:checked)
+  .chooser-owned--backgrounds--best-quality--replicate {
+  display: block;
+}
+.chooser:has(input[name='task'][value='backgrounds']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='removebg']:checked)
+  .chooser-owned--backgrounds--best-quality--removebg {
+  display: block;
+}
+.chooser:has(input[name='task'][value='backgrounds']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='clipdrop']:checked)
+  .chooser-owned--backgrounds--best-quality--clipdrop {
+  display: block;
+}
+.chooser:has(input[name='task'][value='backgrounds']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  )
+  .chooser-outcome--backgrounds--most-private {
+  display: block;
+}
+.chooser:has(input[name='task'][value='backgrounds']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  ):has(input[name='account'][value='openai']:checked)
+  .chooser-owned--backgrounds--most-private--openai {
+  display: block;
+}
+.chooser:has(input[name='task'][value='backgrounds']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  ):has(input[name='account'][value='anthropic']:checked)
+  .chooser-owned--backgrounds--most-private--anthropic {
+  display: block;
+}
+.chooser:has(input[name='task'][value='backgrounds']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  ):has(input[name='account'][value='gemini']:checked)
+  .chooser-owned--backgrounds--most-private--gemini {
+  display: block;
+}
+.chooser:has(input[name='task'][value='backgrounds']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  ):has(input[name='account'][value='stability']:checked)
+  .chooser-owned--backgrounds--most-private--stability {
+  display: block;
+}
+.chooser:has(input[name='task'][value='backgrounds']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  ):has(input[name='account'][value='bfl']:checked)
+  .chooser-owned--backgrounds--most-private--bfl {
+  display: block;
+}
+.chooser:has(input[name='task'][value='backgrounds']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  ):has(input[name='account'][value='fal']:checked)
+  .chooser-owned--backgrounds--most-private--fal {
+  display: block;
+}
+.chooser:has(input[name='task'][value='backgrounds']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  ):has(input[name='account'][value='replicate']:checked)
+  .chooser-owned--backgrounds--most-private--replicate {
+  display: block;
+}
+.chooser:has(input[name='task'][value='backgrounds']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  ):has(input[name='account'][value='removebg']:checked)
+  .chooser-owned--backgrounds--most-private--removebg {
+  display: block;
+}
+.chooser:has(input[name='task'][value='backgrounds']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  ):has(input[name='account'][value='clipdrop']:checked)
+  .chooser-owned--backgrounds--most-private--clipdrop {
+  display: block;
+}
+.chooser:has(input[name='task'][value='backgrounds']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  )
+  .chooser-outcome--backgrounds--easiest-setup {
+  display: block;
+}
+.chooser:has(input[name='task'][value='backgrounds']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  ):has(input[name='account'][value='openai']:checked)
+  .chooser-owned--backgrounds--easiest-setup--openai {
+  display: block;
+}
+.chooser:has(input[name='task'][value='backgrounds']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  ):has(input[name='account'][value='anthropic']:checked)
+  .chooser-owned--backgrounds--easiest-setup--anthropic {
+  display: block;
+}
+.chooser:has(input[name='task'][value='backgrounds']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  ):has(input[name='account'][value='gemini']:checked)
+  .chooser-owned--backgrounds--easiest-setup--gemini {
+  display: block;
+}
+.chooser:has(input[name='task'][value='backgrounds']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  ):has(input[name='account'][value='stability']:checked)
+  .chooser-owned--backgrounds--easiest-setup--stability {
+  display: block;
+}
+.chooser:has(input[name='task'][value='backgrounds']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  ):has(input[name='account'][value='bfl']:checked)
+  .chooser-owned--backgrounds--easiest-setup--bfl {
+  display: block;
+}
+.chooser:has(input[name='task'][value='backgrounds']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  ):has(input[name='account'][value='fal']:checked)
+  .chooser-owned--backgrounds--easiest-setup--fal {
+  display: block;
+}
+.chooser:has(input[name='task'][value='backgrounds']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  ):has(input[name='account'][value='replicate']:checked)
+  .chooser-owned--backgrounds--easiest-setup--replicate {
+  display: block;
+}
+.chooser:has(input[name='task'][value='backgrounds']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  ):has(input[name='account'][value='removebg']:checked)
+  .chooser-owned--backgrounds--easiest-setup--removebg {
+  display: block;
+}
+.chooser:has(input[name='task'][value='backgrounds']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  ):has(input[name='account'][value='clipdrop']:checked)
+  .chooser-owned--backgrounds--easiest-setup--clipdrop {
+  display: block;
+}
+.chooser:has(input[name='task'][value='erase']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  )
+  .chooser-outcome--erase--cheapest {
+  display: block;
+}
+.chooser:has(input[name='task'][value='erase']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  ):has(input[name='account'][value='openai']:checked)
+  .chooser-owned--erase--cheapest--openai {
+  display: block;
+}
+.chooser:has(input[name='task'][value='erase']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  ):has(input[name='account'][value='anthropic']:checked)
+  .chooser-owned--erase--cheapest--anthropic {
+  display: block;
+}
+.chooser:has(input[name='task'][value='erase']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  ):has(input[name='account'][value='gemini']:checked)
+  .chooser-owned--erase--cheapest--gemini {
+  display: block;
+}
+.chooser:has(input[name='task'][value='erase']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  ):has(input[name='account'][value='stability']:checked)
+  .chooser-owned--erase--cheapest--stability {
+  display: block;
+}
+.chooser:has(input[name='task'][value='erase']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  ):has(input[name='account'][value='bfl']:checked)
+  .chooser-owned--erase--cheapest--bfl {
+  display: block;
+}
+.chooser:has(input[name='task'][value='erase']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  ):has(input[name='account'][value='fal']:checked)
+  .chooser-owned--erase--cheapest--fal {
+  display: block;
+}
+.chooser:has(input[name='task'][value='erase']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  ):has(input[name='account'][value='replicate']:checked)
+  .chooser-owned--erase--cheapest--replicate {
+  display: block;
+}
+.chooser:has(input[name='task'][value='erase']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  ):has(input[name='account'][value='removebg']:checked)
+  .chooser-owned--erase--cheapest--removebg {
+  display: block;
+}
+.chooser:has(input[name='task'][value='erase']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  ):has(input[name='account'][value='clipdrop']:checked)
+  .chooser-owned--erase--cheapest--clipdrop {
+  display: block;
+}
+.chooser:has(input[name='task'][value='erase']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  )
+  .chooser-outcome--erase--best-quality {
+  display: block;
+}
+.chooser:has(input[name='task'][value='erase']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='openai']:checked)
+  .chooser-owned--erase--best-quality--openai {
+  display: block;
+}
+.chooser:has(input[name='task'][value='erase']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='anthropic']:checked)
+  .chooser-owned--erase--best-quality--anthropic {
+  display: block;
+}
+.chooser:has(input[name='task'][value='erase']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='gemini']:checked)
+  .chooser-owned--erase--best-quality--gemini {
+  display: block;
+}
+.chooser:has(input[name='task'][value='erase']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='stability']:checked)
+  .chooser-owned--erase--best-quality--stability {
+  display: block;
+}
+.chooser:has(input[name='task'][value='erase']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='bfl']:checked)
+  .chooser-owned--erase--best-quality--bfl {
+  display: block;
+}
+.chooser:has(input[name='task'][value='erase']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='fal']:checked)
+  .chooser-owned--erase--best-quality--fal {
+  display: block;
+}
+.chooser:has(input[name='task'][value='erase']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='replicate']:checked)
+  .chooser-owned--erase--best-quality--replicate {
+  display: block;
+}
+.chooser:has(input[name='task'][value='erase']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='removebg']:checked)
+  .chooser-owned--erase--best-quality--removebg {
+  display: block;
+}
+.chooser:has(input[name='task'][value='erase']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='clipdrop']:checked)
+  .chooser-owned--erase--best-quality--clipdrop {
+  display: block;
+}
+.chooser:has(input[name='task'][value='erase']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  )
+  .chooser-outcome--erase--most-private {
+  display: block;
+}
+.chooser:has(input[name='task'][value='erase']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  ):has(input[name='account'][value='openai']:checked)
+  .chooser-owned--erase--most-private--openai {
+  display: block;
+}
+.chooser:has(input[name='task'][value='erase']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  ):has(input[name='account'][value='anthropic']:checked)
+  .chooser-owned--erase--most-private--anthropic {
+  display: block;
+}
+.chooser:has(input[name='task'][value='erase']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  ):has(input[name='account'][value='gemini']:checked)
+  .chooser-owned--erase--most-private--gemini {
+  display: block;
+}
+.chooser:has(input[name='task'][value='erase']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  ):has(input[name='account'][value='stability']:checked)
+  .chooser-owned--erase--most-private--stability {
+  display: block;
+}
+.chooser:has(input[name='task'][value='erase']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  ):has(input[name='account'][value='bfl']:checked)
+  .chooser-owned--erase--most-private--bfl {
+  display: block;
+}
+.chooser:has(input[name='task'][value='erase']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  ):has(input[name='account'][value='fal']:checked)
+  .chooser-owned--erase--most-private--fal {
+  display: block;
+}
+.chooser:has(input[name='task'][value='erase']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  ):has(input[name='account'][value='replicate']:checked)
+  .chooser-owned--erase--most-private--replicate {
+  display: block;
+}
+.chooser:has(input[name='task'][value='erase']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  ):has(input[name='account'][value='removebg']:checked)
+  .chooser-owned--erase--most-private--removebg {
+  display: block;
+}
+.chooser:has(input[name='task'][value='erase']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  ):has(input[name='account'][value='clipdrop']:checked)
+  .chooser-owned--erase--most-private--clipdrop {
+  display: block;
+}
+.chooser:has(input[name='task'][value='erase']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  )
+  .chooser-outcome--erase--easiest-setup {
+  display: block;
+}
+.chooser:has(input[name='task'][value='erase']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  ):has(input[name='account'][value='openai']:checked)
+  .chooser-owned--erase--easiest-setup--openai {
+  display: block;
+}
+.chooser:has(input[name='task'][value='erase']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  ):has(input[name='account'][value='anthropic']:checked)
+  .chooser-owned--erase--easiest-setup--anthropic {
+  display: block;
+}
+.chooser:has(input[name='task'][value='erase']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  ):has(input[name='account'][value='gemini']:checked)
+  .chooser-owned--erase--easiest-setup--gemini {
+  display: block;
+}
+.chooser:has(input[name='task'][value='erase']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  ):has(input[name='account'][value='stability']:checked)
+  .chooser-owned--erase--easiest-setup--stability {
+  display: block;
+}
+.chooser:has(input[name='task'][value='erase']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  ):has(input[name='account'][value='bfl']:checked)
+  .chooser-owned--erase--easiest-setup--bfl {
+  display: block;
+}
+.chooser:has(input[name='task'][value='erase']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  ):has(input[name='account'][value='fal']:checked)
+  .chooser-owned--erase--easiest-setup--fal {
+  display: block;
+}
+.chooser:has(input[name='task'][value='erase']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  ):has(input[name='account'][value='replicate']:checked)
+  .chooser-owned--erase--easiest-setup--replicate {
+  display: block;
+}
+.chooser:has(input[name='task'][value='erase']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  ):has(input[name='account'][value='removebg']:checked)
+  .chooser-owned--erase--easiest-setup--removebg {
+  display: block;
+}
+.chooser:has(input[name='task'][value='erase']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  ):has(input[name='account'][value='clipdrop']:checked)
+  .chooser-owned--erase--easiest-setup--clipdrop {
+  display: block;
+}
+.chooser:has(input[name='task'][value='expand']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  )
+  .chooser-outcome--expand--cheapest {
+  display: block;
+}
+.chooser:has(input[name='task'][value='expand']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  ):has(input[name='account'][value='openai']:checked)
+  .chooser-owned--expand--cheapest--openai {
+  display: block;
+}
+.chooser:has(input[name='task'][value='expand']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  ):has(input[name='account'][value='anthropic']:checked)
+  .chooser-owned--expand--cheapest--anthropic {
+  display: block;
+}
+.chooser:has(input[name='task'][value='expand']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  ):has(input[name='account'][value='gemini']:checked)
+  .chooser-owned--expand--cheapest--gemini {
+  display: block;
+}
+.chooser:has(input[name='task'][value='expand']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  ):has(input[name='account'][value='stability']:checked)
+  .chooser-owned--expand--cheapest--stability {
+  display: block;
+}
+.chooser:has(input[name='task'][value='expand']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  ):has(input[name='account'][value='bfl']:checked)
+  .chooser-owned--expand--cheapest--bfl {
+  display: block;
+}
+.chooser:has(input[name='task'][value='expand']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  ):has(input[name='account'][value='fal']:checked)
+  .chooser-owned--expand--cheapest--fal {
+  display: block;
+}
+.chooser:has(input[name='task'][value='expand']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  ):has(input[name='account'][value='replicate']:checked)
+  .chooser-owned--expand--cheapest--replicate {
+  display: block;
+}
+.chooser:has(input[name='task'][value='expand']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  ):has(input[name='account'][value='removebg']:checked)
+  .chooser-owned--expand--cheapest--removebg {
+  display: block;
+}
+.chooser:has(input[name='task'][value='expand']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  ):has(input[name='account'][value='clipdrop']:checked)
+  .chooser-owned--expand--cheapest--clipdrop {
+  display: block;
+}
+.chooser:has(input[name='task'][value='expand']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  )
+  .chooser-outcome--expand--best-quality {
+  display: block;
+}
+.chooser:has(input[name='task'][value='expand']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='openai']:checked)
+  .chooser-owned--expand--best-quality--openai {
+  display: block;
+}
+.chooser:has(input[name='task'][value='expand']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='anthropic']:checked)
+  .chooser-owned--expand--best-quality--anthropic {
+  display: block;
+}
+.chooser:has(input[name='task'][value='expand']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='gemini']:checked)
+  .chooser-owned--expand--best-quality--gemini {
+  display: block;
+}
+.chooser:has(input[name='task'][value='expand']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='stability']:checked)
+  .chooser-owned--expand--best-quality--stability {
+  display: block;
+}
+.chooser:has(input[name='task'][value='expand']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='bfl']:checked)
+  .chooser-owned--expand--best-quality--bfl {
+  display: block;
+}
+.chooser:has(input[name='task'][value='expand']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='fal']:checked)
+  .chooser-owned--expand--best-quality--fal {
+  display: block;
+}
+.chooser:has(input[name='task'][value='expand']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='replicate']:checked)
+  .chooser-owned--expand--best-quality--replicate {
+  display: block;
+}
+.chooser:has(input[name='task'][value='expand']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='removebg']:checked)
+  .chooser-owned--expand--best-quality--removebg {
+  display: block;
+}
+.chooser:has(input[name='task'][value='expand']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='clipdrop']:checked)
+  .chooser-owned--expand--best-quality--clipdrop {
+  display: block;
+}
+.chooser:has(input[name='task'][value='expand']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  )
+  .chooser-outcome--expand--most-private {
+  display: block;
+}
+.chooser:has(input[name='task'][value='expand']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  ):has(input[name='account'][value='openai']:checked)
+  .chooser-owned--expand--most-private--openai {
+  display: block;
+}
+.chooser:has(input[name='task'][value='expand']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  ):has(input[name='account'][value='anthropic']:checked)
+  .chooser-owned--expand--most-private--anthropic {
+  display: block;
+}
+.chooser:has(input[name='task'][value='expand']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  ):has(input[name='account'][value='gemini']:checked)
+  .chooser-owned--expand--most-private--gemini {
+  display: block;
+}
+.chooser:has(input[name='task'][value='expand']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  ):has(input[name='account'][value='stability']:checked)
+  .chooser-owned--expand--most-private--stability {
+  display: block;
+}
+.chooser:has(input[name='task'][value='expand']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  ):has(input[name='account'][value='bfl']:checked)
+  .chooser-owned--expand--most-private--bfl {
+  display: block;
+}
+.chooser:has(input[name='task'][value='expand']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  ):has(input[name='account'][value='fal']:checked)
+  .chooser-owned--expand--most-private--fal {
+  display: block;
+}
+.chooser:has(input[name='task'][value='expand']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  ):has(input[name='account'][value='replicate']:checked)
+  .chooser-owned--expand--most-private--replicate {
+  display: block;
+}
+.chooser:has(input[name='task'][value='expand']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  ):has(input[name='account'][value='removebg']:checked)
+  .chooser-owned--expand--most-private--removebg {
+  display: block;
+}
+.chooser:has(input[name='task'][value='expand']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  ):has(input[name='account'][value='clipdrop']:checked)
+  .chooser-owned--expand--most-private--clipdrop {
+  display: block;
+}
+.chooser:has(input[name='task'][value='expand']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  )
+  .chooser-outcome--expand--easiest-setup {
+  display: block;
+}
+.chooser:has(input[name='task'][value='expand']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  ):has(input[name='account'][value='openai']:checked)
+  .chooser-owned--expand--easiest-setup--openai {
+  display: block;
+}
+.chooser:has(input[name='task'][value='expand']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  ):has(input[name='account'][value='anthropic']:checked)
+  .chooser-owned--expand--easiest-setup--anthropic {
+  display: block;
+}
+.chooser:has(input[name='task'][value='expand']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  ):has(input[name='account'][value='gemini']:checked)
+  .chooser-owned--expand--easiest-setup--gemini {
+  display: block;
+}
+.chooser:has(input[name='task'][value='expand']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  ):has(input[name='account'][value='stability']:checked)
+  .chooser-owned--expand--easiest-setup--stability {
+  display: block;
+}
+.chooser:has(input[name='task'][value='expand']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  ):has(input[name='account'][value='bfl']:checked)
+  .chooser-owned--expand--easiest-setup--bfl {
+  display: block;
+}
+.chooser:has(input[name='task'][value='expand']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  ):has(input[name='account'][value='fal']:checked)
+  .chooser-owned--expand--easiest-setup--fal {
+  display: block;
+}
+.chooser:has(input[name='task'][value='expand']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  ):has(input[name='account'][value='replicate']:checked)
+  .chooser-owned--expand--easiest-setup--replicate {
+  display: block;
+}
+.chooser:has(input[name='task'][value='expand']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  ):has(input[name='account'][value='removebg']:checked)
+  .chooser-owned--expand--easiest-setup--removebg {
+  display: block;
+}
+.chooser:has(input[name='task'][value='expand']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  ):has(input[name='account'][value='clipdrop']:checked)
+  .chooser-owned--expand--easiest-setup--clipdrop {
+  display: block;
+}
+.chooser:has(input[name='task'][value='upscale']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  )
+  .chooser-outcome--upscale--cheapest {
+  display: block;
+}
+.chooser:has(input[name='task'][value='upscale']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  ):has(input[name='account'][value='openai']:checked)
+  .chooser-owned--upscale--cheapest--openai {
+  display: block;
+}
+.chooser:has(input[name='task'][value='upscale']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  ):has(input[name='account'][value='anthropic']:checked)
+  .chooser-owned--upscale--cheapest--anthropic {
+  display: block;
+}
+.chooser:has(input[name='task'][value='upscale']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  ):has(input[name='account'][value='gemini']:checked)
+  .chooser-owned--upscale--cheapest--gemini {
+  display: block;
+}
+.chooser:has(input[name='task'][value='upscale']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  ):has(input[name='account'][value='stability']:checked)
+  .chooser-owned--upscale--cheapest--stability {
+  display: block;
+}
+.chooser:has(input[name='task'][value='upscale']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  ):has(input[name='account'][value='bfl']:checked)
+  .chooser-owned--upscale--cheapest--bfl {
+  display: block;
+}
+.chooser:has(input[name='task'][value='upscale']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  ):has(input[name='account'][value='fal']:checked)
+  .chooser-owned--upscale--cheapest--fal {
+  display: block;
+}
+.chooser:has(input[name='task'][value='upscale']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  ):has(input[name='account'][value='replicate']:checked)
+  .chooser-owned--upscale--cheapest--replicate {
+  display: block;
+}
+.chooser:has(input[name='task'][value='upscale']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  ):has(input[name='account'][value='removebg']:checked)
+  .chooser-owned--upscale--cheapest--removebg {
+  display: block;
+}
+.chooser:has(input[name='task'][value='upscale']:checked):has(
+    input[name='priority'][value='cheapest']:checked
+  ):has(input[name='account'][value='clipdrop']:checked)
+  .chooser-owned--upscale--cheapest--clipdrop {
+  display: block;
+}
+.chooser:has(input[name='task'][value='upscale']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  )
+  .chooser-outcome--upscale--best-quality {
+  display: block;
+}
+.chooser:has(input[name='task'][value='upscale']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='openai']:checked)
+  .chooser-owned--upscale--best-quality--openai {
+  display: block;
+}
+.chooser:has(input[name='task'][value='upscale']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='anthropic']:checked)
+  .chooser-owned--upscale--best-quality--anthropic {
+  display: block;
+}
+.chooser:has(input[name='task'][value='upscale']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='gemini']:checked)
+  .chooser-owned--upscale--best-quality--gemini {
+  display: block;
+}
+.chooser:has(input[name='task'][value='upscale']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='stability']:checked)
+  .chooser-owned--upscale--best-quality--stability {
+  display: block;
+}
+.chooser:has(input[name='task'][value='upscale']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='bfl']:checked)
+  .chooser-owned--upscale--best-quality--bfl {
+  display: block;
+}
+.chooser:has(input[name='task'][value='upscale']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='fal']:checked)
+  .chooser-owned--upscale--best-quality--fal {
+  display: block;
+}
+.chooser:has(input[name='task'][value='upscale']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='replicate']:checked)
+  .chooser-owned--upscale--best-quality--replicate {
+  display: block;
+}
+.chooser:has(input[name='task'][value='upscale']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='removebg']:checked)
+  .chooser-owned--upscale--best-quality--removebg {
+  display: block;
+}
+.chooser:has(input[name='task'][value='upscale']:checked):has(
+    input[name='priority'][value='best-quality']:checked
+  ):has(input[name='account'][value='clipdrop']:checked)
+  .chooser-owned--upscale--best-quality--clipdrop {
+  display: block;
+}
+.chooser:has(input[name='task'][value='upscale']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  )
+  .chooser-outcome--upscale--most-private {
+  display: block;
+}
+.chooser:has(input[name='task'][value='upscale']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  ):has(input[name='account'][value='openai']:checked)
+  .chooser-owned--upscale--most-private--openai {
+  display: block;
+}
+.chooser:has(input[name='task'][value='upscale']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  ):has(input[name='account'][value='anthropic']:checked)
+  .chooser-owned--upscale--most-private--anthropic {
+  display: block;
+}
+.chooser:has(input[name='task'][value='upscale']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  ):has(input[name='account'][value='gemini']:checked)
+  .chooser-owned--upscale--most-private--gemini {
+  display: block;
+}
+.chooser:has(input[name='task'][value='upscale']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  ):has(input[name='account'][value='stability']:checked)
+  .chooser-owned--upscale--most-private--stability {
+  display: block;
+}
+.chooser:has(input[name='task'][value='upscale']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  ):has(input[name='account'][value='bfl']:checked)
+  .chooser-owned--upscale--most-private--bfl {
+  display: block;
+}
+.chooser:has(input[name='task'][value='upscale']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  ):has(input[name='account'][value='fal']:checked)
+  .chooser-owned--upscale--most-private--fal {
+  display: block;
+}
+.chooser:has(input[name='task'][value='upscale']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  ):has(input[name='account'][value='replicate']:checked)
+  .chooser-owned--upscale--most-private--replicate {
+  display: block;
+}
+.chooser:has(input[name='task'][value='upscale']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  ):has(input[name='account'][value='removebg']:checked)
+  .chooser-owned--upscale--most-private--removebg {
+  display: block;
+}
+.chooser:has(input[name='task'][value='upscale']:checked):has(
+    input[name='priority'][value='most-private']:checked
+  ):has(input[name='account'][value='clipdrop']:checked)
+  .chooser-owned--upscale--most-private--clipdrop {
+  display: block;
+}
+.chooser:has(input[name='task'][value='upscale']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  )
+  .chooser-outcome--upscale--easiest-setup {
+  display: block;
+}
+.chooser:has(input[name='task'][value='upscale']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  ):has(input[name='account'][value='openai']:checked)
+  .chooser-owned--upscale--easiest-setup--openai {
+  display: block;
+}
+.chooser:has(input[name='task'][value='upscale']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  ):has(input[name='account'][value='anthropic']:checked)
+  .chooser-owned--upscale--easiest-setup--anthropic {
+  display: block;
+}
+.chooser:has(input[name='task'][value='upscale']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  ):has(input[name='account'][value='gemini']:checked)
+  .chooser-owned--upscale--easiest-setup--gemini {
+  display: block;
+}
+.chooser:has(input[name='task'][value='upscale']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  ):has(input[name='account'][value='stability']:checked)
+  .chooser-owned--upscale--easiest-setup--stability {
+  display: block;
+}
+.chooser:has(input[name='task'][value='upscale']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  ):has(input[name='account'][value='bfl']:checked)
+  .chooser-owned--upscale--easiest-setup--bfl {
+  display: block;
+}
+.chooser:has(input[name='task'][value='upscale']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  ):has(input[name='account'][value='fal']:checked)
+  .chooser-owned--upscale--easiest-setup--fal {
+  display: block;
+}
+.chooser:has(input[name='task'][value='upscale']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  ):has(input[name='account'][value='replicate']:checked)
+  .chooser-owned--upscale--easiest-setup--replicate {
+  display: block;
+}
+.chooser:has(input[name='task'][value='upscale']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  ):has(input[name='account'][value='removebg']:checked)
+  .chooser-owned--upscale--easiest-setup--removebg {
+  display: block;
+}
+.chooser:has(input[name='task'][value='upscale']:checked):has(
+    input[name='priority'][value='easiest-setup']:checked
+  ):has(input[name='account'][value='clipdrop']:checked)
+  .chooser-owned--upscale--easiest-setup--clipdrop {
+  display: block;
+}
