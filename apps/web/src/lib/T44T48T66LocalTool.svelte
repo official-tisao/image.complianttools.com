@@ -9,7 +9,7 @@
   } from '@complianttools/image-engine';
   import type { AiCapability } from '@complianttools/image-engine/ai/types';
   import ConnectEmptyState from './connect/ConnectEmptyState.svelte';
-  import EscalationControl from './ai/EscalationControl.svelte';
+  import LazyEscalationControl from './ai/LazyEscalationControl.svelte';
   import { ESCALATION_STATE } from './connect/empty-states';
   import '../connect.css';
 
@@ -479,9 +479,15 @@
       P5-16 (README §22.6a) — the escalation offer, gated on the local result exactly as the P5-14
       empty state below it is. §13.1.3 admits a Tier 3 case for T66 only; `denoise` and `editor` have
       no admitted capability, so `PROVIDER_CAPABILITY` leaves them without one and no control renders.
+
+      The control is `import()`ed rather than imported. This component is also the whole body of
+      `/denoise` and `/editor`, and a static import would put the provider catalogue, the request
+      gate, and the implemented-adapter allowlist into both of those shells — measured at +32 KB
+      compressed on the `/editor` app-shell alone, which broke its 220 KB budget. Only `remove-object`
+      renders the control, so only it should pay for the code behind it.
     -->
     {#if providerCapability}
-      <EscalationControl
+      <LazyEscalationControl
         capability={providerCapability}
         localResultUrl={outputUrl}
         buildImage={buildEscalationImage}
@@ -575,7 +581,7 @@
     display: inline-block;
     padding: 0.15rem 0.35rem;
     border-radius: 0.25rem;
-    background: #16a34a;
+    background: #166534;
     color: #fff;
     font-size: 0.7rem;
     font-weight: 600;

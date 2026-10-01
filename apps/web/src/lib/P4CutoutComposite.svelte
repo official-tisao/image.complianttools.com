@@ -2,7 +2,7 @@
   import { onDestroy } from 'svelte';
   import type { AiCapability } from '@complianttools/image-engine/ai/types';
   import type { RasterImage } from '@complianttools/image-engine/types';
-  import EscalationControl from './ai/EscalationControl.svelte';
+  import LazyEscalationControl from './ai/LazyEscalationControl.svelte';
 
   type Locale = 'en' | 'en-XA' | 'ar';
   type Kind = 'expand-image' | 'remove-background' | 'replace-background' | 'cutout' | 'composite';
@@ -529,7 +529,7 @@
       not offer one.
     -->
     {#if capability}
-      <EscalationControl
+      <LazyEscalationControl
         {capability}
         localResultUrl={outputUrl}
         buildImage={buildEscalationImage}
@@ -639,7 +639,7 @@
     margin-inline-start: 8px;
     padding: 0.15rem 0.35rem;
     border-radius: 0.25rem;
-    background: #16a34a;
+    background: #166534;
     color: #fff;
     font-size: 0.7rem;
     font-weight: 600;

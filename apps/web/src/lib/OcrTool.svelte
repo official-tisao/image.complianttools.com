@@ -15,7 +15,7 @@
   } from '@complianttools/image-engine/schemas/ocr';
   import type { OptionDescription } from '@complianttools/image-engine/schemas/options';
   import type { RasterImage } from '@complianttools/image-engine/types';
-  import EscalationControl from './ai/EscalationControl.svelte';
+  import LazyEscalationControl from './ai/LazyEscalationControl.svelte';
   import GeneratedControls from './GeneratedControls.svelte';
   import ToolPageCompletion from './ToolPageCompletion.svelte';
   import { localizeOptions, translate, type Locale } from './i18n';
@@ -642,7 +642,7 @@
       §17.7's reason — the local result is already on screen, so this is an offer.
     -->
     {#if file}
-      <EscalationControl
+      <LazyEscalationControl
         capability="describe"
         localResultUrl={previewUrl}
         buildImage={buildEscalationImage}
@@ -670,7 +670,7 @@
     display: inline-block;
     padding: 0.15rem 0.35rem;
     border-radius: 0.25rem;
-    background: #16a34a;
+    background: #166534;
     color: #fff;
     font-size: 0.7rem;
     font-weight: 600;

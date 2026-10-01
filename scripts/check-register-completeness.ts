@@ -45,6 +45,12 @@ export interface CheckablePath {
   readonly route: string;
   readonly tool: string;
   readonly capability: string;
+  /**
+   * Provider ids declaring this capability, carried through only so a failure can name what needs
+   * justifying. It is deliberately not part of matching: which providers exist is not what makes a
+   * register row required, and matching on it would let a provider rename re-scope the gate.
+   */
+  readonly providers?: readonly string[];
 }
 
 /** A shipped path with no register row. */
@@ -154,9 +160,19 @@ async function loadShippedPaths(root: string): Promise<readonly CheckablePath[]>
   // registrations must run first or the registry answers "nothing is shipped".
   const engineDist = path.join(root, 'packages', 'engine', 'dist');
   await import(pathToFileURL(path.join(engineDist, 'ai', 'adapters', 'index.js')).href);
+  // Typed as the engine's own `ShippedTier3Path` rather than as `CheckablePath`, so the rename from
+  // `declaredProviders` to `providers` below is a real, checked mapping instead of a cast that
+  // silently disagrees with the engine about the field name.
   const tiers = (await import(
     pathToFileURL(path.join(engineDist, 'ai', 'shipped-tiers.js')).href
-  )) as { shippedTier3Paths(): readonly CheckablePath[] };
+  )) as {
+    shippedTier3Paths(): readonly {
+      route: string;
+      tool: string;
+      capability: string;
+      declaredProviders: readonly string[];
+    }[];
+  };
   return tiers.shippedTier3Paths().map((entry) => ({
     route: entry.route,
     tool: entry.tool,

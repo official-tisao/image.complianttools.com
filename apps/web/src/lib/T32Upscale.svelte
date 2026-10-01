@@ -2,7 +2,7 @@
   import { onDestroy, onMount } from 'svelte';
   import type { RasterImage } from '@complianttools/image-engine/types';
   import CompareCanvas from './CompareCanvas.svelte';
-  import EscalationControl from './ai/EscalationControl.svelte';
+  import LazyEscalationControl from './ai/LazyEscalationControl.svelte';
   import GeneratedControls from './GeneratedControls.svelte';
   import ToolPageCompletion from './ToolPageCompletion.svelte';
   import { translate, type Locale } from './i18n';
@@ -958,7 +958,7 @@
         own button is pressed.
       -->
       {#if outputUrl && outputDimensions && !tier2SupportIssue}
-        <EscalationControl
+        <LazyEscalationControl
           capability="upscale"
           localResultUrl={outputUrl}
           buildImage={buildEscalationImage}
@@ -1044,7 +1044,7 @@
   }
 
   .tier-badge[data-tier='local'] {
-    background: #16a34a;
+    background: #166534;
     color: #fff;
   }
 

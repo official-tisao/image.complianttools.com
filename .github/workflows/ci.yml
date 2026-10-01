@@ -270,8 +270,15 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      # Tier independence runs against the engine's vitest suite, which `pnpm test` already covers;
-      # named explicitly here so this job is readable as the P5-16 gate and not as a mystery.
+      # The engine's `.test.mjs` files import from `../dist/index.js`, so `dist/` must exist before
+      # they run. `turbo.json` gives the root `test` task a `dependsOn: ["build"]`, but
+      # `pnpm --filter <pkg> test` bypasses turbo and therefore skips that edge — the build has to be
+      # named explicitly. This mirrors `test:gates` and `test:credential-leak`, which do the same.
+      - name: Build the engine
+        run: pnpm --filter @complianttools/image-engine build
+      # Tier independence and the surface-derivation tests live in the engine's vitest suite. Named
+      # explicitly so this job is readable as the P5-16 gate rather than as a mystery; `pnpm test` at
+      # the root also runs them, so this is a fast, pointed re-check rather than the only coverage.
       - name: Tier independence and register completeness
         run: pnpm --filter @complianttools/image-engine test && pnpm verify:register-completeness
       - run: pnpm exec playwright install --with-deps chromium firefox webkit

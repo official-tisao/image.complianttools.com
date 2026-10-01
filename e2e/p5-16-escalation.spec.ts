@@ -80,10 +80,21 @@ const LOCAL_TOOLS = [
         mimeType: 'image/png',
         buffer: file,
       });
-      // The local result is the recognition itself. The default language is English, whose model the
-      // Playwright webServer prefetches, so this completes offline and without a provider.
+      // The local result is the recognition itself. The default language is English, whose model
+      // the Playwright webServer prefetches. `ocr-result` renders only after a real `ocr-result`
+      // message arrives — the engine's error path returns without setting it — so its presence does
+      // mean recognition completed. The status line is asserted too, because a recognition that ran
+      // and found nothing is a *different* outcome from one that never ran, and this test is about
+      // the latter.
       await page.getByRole('button', { name: /recognize/i }).click();
       await expect(page.getByTestId('ocr-result')).toBeVisible({ timeout: 60_000 });
+      // Targeted by name, not by role: once the local result exists the page carries two
+      // `role="status"` elements — this recognition's, and the escalation control's cost estimate.
+      // `getByRole('status')` is ambiguous there, and a strict-mode violation would be a confusing
+      // way to learn that.
+      await expect(page.getByRole('status').filter({ hasText: /finished/i })).toBeVisible({
+        timeout: 30_000,
+      });
     },
   },
   {
