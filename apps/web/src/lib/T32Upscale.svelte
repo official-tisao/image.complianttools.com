@@ -1,6 +1,8 @@
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte';
+  import type { RasterImage } from '@complianttools/image-engine/types';
   import CompareCanvas from './CompareCanvas.svelte';
+  import EscalationControl from './ai/EscalationControl.svelte';
   import GeneratedControls from './GeneratedControls.svelte';
   import ToolPageCompletion from './ToolPageCompletion.svelte';
   import { translate, type Locale } from './i18n';
@@ -668,6 +670,32 @@
     reject?.(error);
   }
 
+  /**
+   * Decode the chosen PNG for the escalation request (README §13.1.3's T32 row).
+   *
+   * Reads the already-decoded source bitmap rather than decoding the file again, and runs only from
+   * the escalation button's click handler. Returns `undefined` if the source is gone, which hands
+   * the refusal to the gate's `image-required` path rather than sending a request without its image.
+   */
+  async function buildEscalationImage(): Promise<RasterImage | undefined> {
+    if (!decodedSource) return undefined;
+    const canvas = document.createElement('canvas');
+    canvas.width = decodedSource.width;
+    canvas.height = decodedSource.height;
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+    if (!context) return undefined;
+    context.drawImage(decodedSource, 0, 0);
+    const pixels = context.getImageData(0, 0, canvas.width, canvas.height);
+    return {
+      width: canvas.width,
+      height: canvas.height,
+      colorSpace: 'srgb',
+      bitDepth: 8,
+      premultipliedAlpha: false,
+      frames: [{ data: pixels.data, durationMs: 0 }],
+    };
+  }
+
   function download() {
     if (!sourceFile || !outputUrl) return;
     const base = sourceFile.name.replace(/\.png$/iu, '') || 'upscaled-image';
@@ -782,6 +810,23 @@
         </p>
       {/if}
       {#if status}<p role="status" aria-live="polite" data-testid="t32-status">{status}</p>{/if}
+      <!--
+        P5-16 / README §13.1.2: the tier that produced the result is always visible. DCCI and NEDI
+        are Tier 1 local interpolation, and the optional Real-ESRGAN run is Tier 2 — an on-device
+        model, still local, still no provider. Neither is ever labelled `Local` when a model ran.
+      -->
+      {#if outputDimensions}
+        <p>
+          <span
+            class="tier-badge"
+            data-testid="tier-badge"
+            data-tier={outputEngine === 'realesrgan' ? 'on-device' : 'local'}
+            >{outputEngine === 'realesrgan'
+              ? t('t32.tier.badge.onDevice', 'On-device model')
+              : t('t32.tier.badge.local', 'Local')}</span
+          >
+        </p>
+      {/if}
       {#if busy}
         <button class="button" type="button" data-testid="t32-cancel" onclick={cancel}
           >{t('t32.cancel', 'Cancel scaling')}</button
@@ -905,6 +950,22 @@
           </button>
         {/if}
       </section>
+
+      <!--
+        P5-16 (README §22.6a) — the escalation offer. Rendered only once a real output exists, so
+        §17.7's "the local result is already on screen, so this is an offer, not a blocker" holds.
+        Its presence must not affect the local path above: this component makes no request until its
+        own button is pressed.
+      -->
+      {#if outputUrl && outputDimensions && !tier2SupportIssue}
+        <EscalationControl
+          capability="upscale"
+          localResultUrl={outputUrl}
+          buildImage={buildEscalationImage}
+          buildRequest={() => ({ scaleFactor: factor })}
+          {locale}
+        />
+      {/if}
     </div>
   </section>
 
@@ -970,5 +1031,25 @@
     clip: rect(0, 0, 0, 0);
     white-space: nowrap;
     border: 0;
+  }
+
+  .tier-badge {
+    display: inline-block;
+    padding: 0.15rem 0.35rem;
+    border-radius: 0.25rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+
+  .tier-badge[data-tier='local'] {
+    background: #16a34a;
+    color: #fff;
+  }
+
+  .tier-badge[data-tier='on-device'] {
+    background: #1c6dd5;
+    color: #fff;
   }
 </style>

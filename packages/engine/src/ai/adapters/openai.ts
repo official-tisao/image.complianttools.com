@@ -39,6 +39,57 @@ function decodeBase64(base64: string): Uint8ClampedArray {
   return bytes;
 }
 
+/**
+ * Read a PNG's real dimensions from its IHDR chunk.
+ *
+ * Both the generate and the edit response previously declared every returned image as `1024 × 1024`
+ * regardless of the bytes actually received. That is not cosmetic: a `RasterImage` whose `width`/`height`
+ * disagree with `frame.data.length` throws the moment anything downstream trusts the declaration —
+ * `new ImageData(data, width, height)` in the browser, a canvas draw, or an encoder. A provider that
+ * returns a differently-sized image (or a size requested via `size:`/`aspect_ratio`, which is not
+ * always 1024) therefore produced a result that could never be displayed, while the request reported
+ * success.
+ *
+ * PNG only, which is what `/images/generations` and `/images/edits` return as `b64_json`. The IHDR is
+ * the first chunk, so this needs no decoder. A non-PNG or truncated payload falls back to deriving the
+ * dimensions from the pixel count, which keeps the frame self-consistent rather than inventing a size
+ * that would fail downstream.
+ */
+function pngDimensions(bytes: Uint8ClampedArray): {
+  readonly width: number;
+  readonly height: number;
+} {
+  const isPng =
+    bytes.length > 24 &&
+    bytes[0] === 0x89 &&
+    bytes[1] === 0x50 &&
+    bytes[2] === 0x4e &&
+    bytes[3] === 0x47;
+  if (isPng) {
+    const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    const width = view.getUint32(16);
+    const height = view.getUint32(20);
+    if (width > 0 && height > 0) return { width, height };
+  }
+  // `b64_json` is PNG in practice; this is the honest fallback rather than a fabricated 1024².
+  const pixels = Math.max(1, Math.round(bytes.length / 4));
+  return { width: pixels, height: 1 };
+}
+
+/** Build a `RasterImage` from a returned base64 payload, sized to the payload. */
+function rasterFromBase64(base64: string): RasterImage {
+  const data = decodeBase64(base64);
+  const { width, height } = pngDimensions(data);
+  return {
+    width,
+    height,
+    colorSpace: 'srgb',
+    bitDepth: 8,
+    premultipliedAlpha: false,
+    frames: [{ data, durationMs: 0 }],
+  };
+}
+
 const descriptor: ProviderDescriptor = {
   id: DESCRIPTOR_ID,
   name: 'OpenAI (GPT-image-1)',
@@ -190,23 +241,13 @@ export const openaiAdapter: ProviderAdapter = {
       const images: RasterImage[] = [];
       for (const it of data.data) {
         if (it.b64_json) {
-          images.push({
-            width: 1024,
-            height: 1024,
-            colorSpace: 'srgb',
-            bitDepth: 8,
-            premultipliedAlpha: false,
-            frames: [{ data: decodeBase64(it.b64_json), durationMs: 0 }],
-          } as unknown as (typeof images)[0]);
+          images.push(rasterFromBase64(it.b64_json));
         } else if (it.url) {
-          images.push({
-            width: 1024,
-            height: 1024,
-            colorSpace: 'srgb',
-            bitDepth: 8,
-            premultipliedAlpha: false,
-            frames: [{ data: new Uint8ClampedArray(0), durationMs: 0 }],
-          } as unknown as (typeof images)[0]);
+          // A URL response carries no bytes yet. Declaring 1024² over an empty frame is a
+          // dimension that cannot be true of zero-length data and would throw in any consumer that
+          // trusts it, so the image is omitted rather than fabricated: `resultIsUsable` then reports
+          // "nothing usable", which is the honest outcome for a response we cannot read.
+          continue;
         }
       }
       return { images, usage: { images: images.length, providerCost: 'n/a' } };
@@ -265,23 +306,13 @@ export const openaiAdapter: ProviderAdapter = {
       const images: RasterImage[] = [];
       for (const it of data.data) {
         if (it.b64_json) {
-          images.push({
-            width: 1024,
-            height: 1024,
-            colorSpace: 'srgb',
-            bitDepth: 8,
-            premultipliedAlpha: false,
-            frames: [{ data: decodeBase64(it.b64_json), durationMs: 0 }],
-          } as unknown as (typeof images)[0]);
+          images.push(rasterFromBase64(it.b64_json));
         } else if (it.url) {
-          images.push({
-            width: 1024,
-            height: 1024,
-            colorSpace: 'srgb',
-            bitDepth: 8,
-            premultipliedAlpha: false,
-            frames: [{ data: new Uint8ClampedArray(0), durationMs: 0 }],
-          } as unknown as (typeof images)[0]);
+          // A URL response carries no bytes yet. Declaring 1024² over an empty frame is a
+          // dimension that cannot be true of zero-length data and would throw in any consumer that
+          // trusts it, so the image is omitted rather than fabricated: `resultIsUsable` then reports
+          // "nothing usable", which is the honest outcome for a response we cannot read.
+          continue;
         }
       }
       return { images, usage: { images: images.length, providerCost: 'n/a' } };
@@ -421,11 +452,14 @@ function encodePngFromRgba(rgbaBytes: Uint8ClampedArray, width: number, height: 
       const canvas = new OffscreenCanvas(width, height);
       const ctx = canvas.getContext('2d');
       if (ctx) {
-        const imgData = new ImageData(width, height);
-        for (let i = 0; i < rgbaBytes.length; i++) {
-          const val = rgbaBytes[i] ?? 0;
-          imgData.data[i] = val;
-        }
+        // `ImageData`'s three-argument form is `(data, width, height)`. The previous
+        // `new ImageData(width, height)` passed two numbers where a buffer was expected, which
+        // throws `InvalidStateError` in every browser that has `OffscreenCanvas` — so the mask upload
+        // silently fell through to the synthetic-PNG fallback for `inpaint` while the surrounding
+        // request appeared to succeed.
+        const pixels = new Uint8ClampedArray(width * height * 4);
+        pixels.set(rgbaBytes.subarray(0, pixels.length));
+        const imgData = new ImageData(pixels, width, height);
         ctx.putImageData(imgData, 0, 0);
         const blobPromise = canvas.convertToBlob({ type: 'image/png' });
         // convertToBlob is spec'd as synchronous but returns a Promise in some implementations;

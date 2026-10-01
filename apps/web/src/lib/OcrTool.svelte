@@ -14,6 +14,8 @@
     type OcrToolOptions,
   } from '@complianttools/image-engine/schemas/ocr';
   import type { OptionDescription } from '@complianttools/image-engine/schemas/options';
+  import type { RasterImage } from '@complianttools/image-engine/types';
+  import EscalationControl from './ai/EscalationControl.svelte';
   import GeneratedControls from './GeneratedControls.svelte';
   import ToolPageCompletion from './ToolPageCompletion.svelte';
   import { localizeOptions, translate, type Locale } from './i18n';
@@ -204,6 +206,60 @@
 
   let options = $state<OcrToolOptions>(OcrToolOptionsSchema.parse({}));
   let file = $state<File>();
+
+  /**
+   * The instruction sent with a `describe` escalation.
+   *
+   * Transcription rather than a caption, because a vision model asked to "describe" returns prose the
+   * user cannot diff against the local OCR output. Asked to transcribe, it returns text, which is the
+   * same shape the local tier produced and can be compared like for like.
+   */
+  function buildEscalationRequest(): Record<string, unknown> {
+    return {
+      question: t(
+        'ocr.escalation.question',
+        'Transcribe every piece of text in this image exactly as it appears.',
+      ),
+    };
+  }
+
+  /**
+   * Decode the chosen image for the escalation request.
+   *
+   * Runs only from the escalation button's click handler, so the local OCR path above is never
+   * joined by a provider call, and this decode happens only when the user asks for it. Returns
+   * `undefined` on a decode failure or an oversized image, which hands the refusal to the gate's
+   * `image-required` path rather than sending a request without its image.
+   */
+  async function buildEscalationImage(): Promise<RasterImage | undefined> {
+    if (!file) return undefined;
+    let bitmap: ImageBitmap;
+    try {
+      bitmap = await createImageBitmap(file);
+    } catch {
+      return undefined;
+    }
+    try {
+      if (bitmap.width * bitmap.height > MAX_IMAGE_PIXELS) return undefined;
+      const canvas = document.createElement('canvas');
+      canvas.width = bitmap.width;
+      canvas.height = bitmap.height;
+      const context = canvas.getContext('2d', { willReadFrequently: true });
+      if (!context) return undefined;
+      context.drawImage(bitmap, 0, 0);
+      const pixels = context.getImageData(0, 0, canvas.width, canvas.height);
+      return {
+        width: canvas.width,
+        height: canvas.height,
+        colorSpace: 'srgb',
+        bitDepth: 8,
+        premultipliedAlpha: false,
+        frames: [{ data: pixels.data, durationMs: 0 }],
+      };
+    } finally {
+      bitmap.close();
+    }
+  }
   let previewUrl = $state('');
   let error = $state('');
   let status = $state('');
@@ -542,6 +598,17 @@
   {#if resultReady}
     <section aria-labelledby="ocr-result-heading" data-testid="ocr-result">
       <h2 id="ocr-result-heading">{t('ocr.result', 'OCR result')}</h2>
+      <!--
+        P5-16 / README §13.1.2: the tier that produced the result is always visible. Tesseract runs
+        in a browser worker against a model the app loads, so this is a local result — one that
+        happens to fetch a pinned model file the first time, which §13.1.2 permits and discloses
+        elsewhere on the page.
+      -->
+      <p>
+        <span class="tier-badge" data-testid="tier-badge" data-tier="local"
+          >{t('ocr.tier.badge.local', 'Local')}</span
+        >
+      </p>
       {#if helperResult?.helper === 'osd'}
         <dl>
           <dt>{t('ocr.orientation', 'Page orientation')}</dt>
@@ -566,6 +633,23 @@
         {/if}
       {/if}
     </section>
+
+    <!--
+      P5-16 (README §22.6a) — the escalation offer, shown only once a real recognition has run.
+      §13.1.3's T62 row admits a Tier 3 case for recognition on the classes the local corpus does
+      not cover (handwriting, artistic type, skewed captures), so the capability here is `describe`:
+      a vision model asked to read the image rather than to redraw it. Gated on `resultReady` for
+      §17.7's reason — the local result is already on screen, so this is an offer.
+    -->
+    {#if file}
+      <EscalationControl
+        capability="describe"
+        localResultUrl={previewUrl}
+        buildImage={buildEscalationImage}
+        buildRequest={buildEscalationRequest}
+        {locale}
+      />
+    {/if}
   {/if}
 
   <ToolPageCompletion
@@ -580,3 +664,17 @@
     faqs={seoFaqs}
   />
 </main>
+
+<style>
+  .tier-badge {
+    display: inline-block;
+    padding: 0.15rem 0.35rem;
+    border-radius: 0.25rem;
+    background: #16a34a;
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+</style>

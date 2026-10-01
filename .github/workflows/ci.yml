@@ -251,6 +251,33 @@ jobs:
           key: raw-corpus-${{ hashFiles('packages/engine/test/fixtures/raw-real-corpus.json') }}
       - run: pnpm verify:raw-corpus
 
+  escalation:
+    name: escalation (P5-16)
+    # README §22.6a calls the no-implicit-escalation test load-bearing for P11 and P12, and §22.4
+    # requires register completeness and tier independence as CI checks. They get their own job
+    # rather than living only inside `browser-e2e`, so a failure names the principle it broke
+    # instead of surfacing as an anonymous spec failure in a 60-minute job.
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.5
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # Tier independence runs against the engine's vitest suite, which `pnpm test` already covers;
+      # named explicitly here so this job is readable as the P5-16 gate and not as a mystery.
+      - name: Tier independence and register completeness
+        run: pnpm --filter @complianttools/image-engine test && pnpm verify:register-completeness
+      - run: pnpm exec playwright install --with-deps chromium firefox webkit
+      - name: No implicit escalation, and one gesture to exactly one request
+        run: pnpm test:escalation
+
   credential-leak:
     name: credential-leak
     runs-on: ubuntu-latest

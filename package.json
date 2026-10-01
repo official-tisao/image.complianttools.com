@@ -22,6 +22,8 @@
     "test": "turbo test",
     "test:e2e": "playwright test",
     "test:no-network": "playwright test e2e/no-network.spec.ts",
+    "test:escalation": "playwright test e2e/p5-16-escalation.spec.ts",
+    "verify:register-completeness": "pnpm --filter @complianttools/image-engine build && tsx scripts/check-register-completeness.ts",
     "test:ui-visual": "playwright test e2e/ui-visual.spec.ts",
     "test:credential-leak": "pnpm --filter @complianttools/image-engine build && node packages/engine/test/credential-leak.test.mjs",
     "lint": "eslint . && turbo lint && pnpm lint:fixtures",
@@ -46,7 +48,7 @@
     "size": "size-limit",
     "lighthouse": "lhci autorun",
     "wasm:fetch": "tsx scripts/fetch-wasm.ts",
-    "test:gates": "tsx scripts/test-static-assets.ts && node scripts/verify-p4-21-cc0-fixtures.mjs && node scripts/verify-p4-21-register.mjs && tsx scripts/test-license-gate.ts && tsx scripts/test-attribution-gate.ts && tsx scripts/test-trademark-gate.ts && tsx scripts/test-wasm-gate.ts && tsx scripts/test-plan-sync.ts",
+    "test:gates": "tsx scripts/test-static-assets.ts && node scripts/verify-p4-21-cc0-fixtures.mjs && node scripts/verify-p4-21-register.mjs && pnpm --filter @complianttools/image-engine build && tsx scripts/check-register-completeness.ts && tsx scripts/test-register-completeness-gate.ts && tsx scripts/test-license-gate.ts && tsx scripts/test-attribution-gate.ts && tsx scripts/test-trademark-gate.ts && tsx scripts/test-wasm-gate.ts && tsx scripts/test-plan-sync.ts",
     "progress": "node scripts/plan-progress.mjs",
     "prepare": "lefthook install"
   },
