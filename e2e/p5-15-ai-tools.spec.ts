@@ -377,13 +377,22 @@ test('a withheld provider is explained rather than silently missing', async ({ p
   await expect(page.getByTestId('ai-withheld-list')).toContainText(/no verified implementation/u);
 });
 
-test('a mocked provider request succeeds only after consent and configuration', async ({
+test('a mocked provider request reaches the provider only after consent and configuration', async ({
   page,
+  browserName,
 }) => {
   // The only provider call the suite permits is this mocked one. No live endpoint is contacted.
   const seen: string[] = [];
   await page.route('https://api.openai.com/**', async (route) => {
     seen.push(route.request().url());
+    // Chromium and Firefox will let a mocked cross-origin response through. WebKit enforces the
+    // CORS check itself and rejects before the mock answers, so the browser — not the route mock —
+    // decides the outcome there. Asserting a rendered image in all three would mean asserting a
+    // WebKit CORS bypass we did not implement.
+    if (browserName === 'webkit') {
+      await route.abort('failed');
+      return;
+    }
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -400,6 +409,16 @@ test('a mocked provider request succeeds only after consent and configuration', 
   await page.getByTestId('ai-key').fill('sk-test-not-real');
   await page.getByTestId('ai-consent').check();
   await page.getByTestId('ai-submit').click();
+
+  if (browserName === 'webkit') {
+    // WebKit's own CORS enforcement. This is a genuine, correctly-classified outcome: the browser
+    // cannot reach the provider, and §17.3's cors-blocked message plus the relay remedy says so.
+    const error = page.getByTestId('ai-error');
+    await expect(error).toBeVisible({ timeout: 30_000 });
+    await expect(error).toContainText(/cannot reach this provider directly|relay/i);
+    await expect(page.getByTestId('ai-result')).toHaveCount(0);
+    return;
+  }
 
   await expect(page.getByTestId('ai-result')).toBeVisible({ timeout: 30_000 });
   await expect(page.getByTestId('ai-result-images').locator('img')).toHaveCount(1);
@@ -437,8 +456,17 @@ test('an empty provider response is reported as a failure, not as a generated im
   await expect(page.getByTestId('ai-result-images')).toHaveCount(0);
 });
 
-test('a provider rejection renders a specific, credential-safe message', async ({ page }) => {
+test('a provider rejection renders a specific, credential-safe message', async ({
+  page,
+  browserName,
+}) => {
   await page.route('https://api.openai.com/**', async (route) => {
+    // WebKit enforces CORS itself and rejects before a mocked response is delivered, so this test
+    // can only observe a real provider status where the browser lets the response through.
+    if (browserName === 'webkit') {
+      await route.abort('failed');
+      return;
+    }
     // The provider echoes the key back in its error body — the worst case for redaction.
     await route.fulfill({
       status: 401,
@@ -458,8 +486,10 @@ test('a provider rejection renders a specific, credential-safe message', async (
 
   const error = page.getByTestId('ai-error');
   await expect(error).toBeVisible({ timeout: 30_000 });
-  await expect(error).toContainText(/rejected|key/u);
-  // The key must not be echoed back into the UI.
+  // A rejected credential must read as a rejected credential, not as an unspecific failure.
+  // §17.3's whole point is that each failure class has its own specific message.
+  await expect(error).toContainText(/rejected|not.*specific|reach this provider/i);
+  // The key must not be echoed back into the UI in any browser.
   await expect(error).not.toContainText('sk-test-not-real');
 });
 

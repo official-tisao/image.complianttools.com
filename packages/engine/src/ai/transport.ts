@@ -334,16 +334,42 @@ function normalizeTransportError(err: unknown, _origins?: string[]): TransportEr
     if (msg.includes('aborted') || msg.includes('timeout') || msg.includes('Abort'))
       return new TransportError('timeout', 'unknown', 'Timed out.', undefined);
     const lowerMsg = msg.toLowerCase();
-    if (
-      lowerMsg.includes('failed to fetch') ||
-      lowerMsg.includes('networkerror') ||
-      lowerMsg.includes('typeerror')
-    ) {
+    if (isBrowserCorsOrNetworkFailure(err, lowerMsg)) {
       return new TransportError('ai-cors-blocked', 'unknown', 'Network failure.', undefined);
     }
     return new TransportError('provider-error', 'unknown', msg, undefined);
   }
   return new TransportError('provider-error', 'unknown', 'Unknown failure.', undefined);
+}
+
+/**
+ * Whether a thrown value is a browser-level CORS or network failure.
+ *
+ * Every engine reports this differently, and §13.5 item 5 requires all of them to become
+ * `ai-cors-blocked` with the relay remedy — never a generic network error, "the single most
+ * confusing failure mode in BYOK products":
+ *
+ * - Chromium: `TypeError: Failed to fetch`
+ * - Firefox: `TypeError: NetworkError when attempting to fetch resource.`
+ * - WebKit:    `TypeError: Load failed`
+ *
+ * Matching the message text alone missed WebKit entirely, because none of the historical phrases
+ * appear in `"Load failed"`. A `TypeError` with an unrecognised message is therefore treated as a
+ * CORS/network failure: a thrown `TypeError` from `fetch` always is one, and no other source in this
+ * module throws that type.
+ */
+function isBrowserCorsOrNetworkFailure(err: Error, lowerMsg: string): boolean {
+  if (
+    lowerMsg.includes('failed to fetch') ||
+    lowerMsg.includes('networkerror') ||
+    lowerMsg.includes('typeerror') ||
+    // WebKit's wording.
+    lowerMsg.includes('load failed') ||
+    lowerMsg.includes('cors')
+  ) {
+    return true;
+  }
+  return err.name === 'TypeError' || err instanceof TypeError;
 }
 
 export interface PollOptions {
