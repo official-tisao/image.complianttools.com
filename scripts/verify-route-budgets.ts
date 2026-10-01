@@ -2,7 +2,12 @@ import { readFile } from 'node:fs/promises';
 import { gzipSync } from 'node:zlib';
 import path from 'node:path';
 
-const buildDirectory = path.join(process.cwd(), 'apps', 'web', 'build');
+// `pnpm build` measures the real static output. `CT_BUILD_DIR` points the same check at a
+// synthetic tree so `scripts/test-route-budget-gate.ts` can prove it actually fails an
+// over-budget route — without that override the gate is CI-only and silently dead between runs.
+const buildDirectory = process.env['CT_BUILD_DIR']
+  ? path.resolve(process.env['CT_BUILD_DIR'])
+  : path.join(process.cwd(), 'apps', 'web', 'build');
 const phaseTwoToolRoutes = [
   'heic-converter',
   'raw-converter',
@@ -40,18 +45,21 @@ const cases = [
   ...phaseTwoToolRoutes.map((route) => ({
     archetype: `phase-two:${route}`,
     route: `${route}.html`,
-    // RAW keeps decoder/demosaicing paths in user-triggered dynamic chunks. Metadata viewer/remover
-    // similarly carry the verified EXIF container parser and generated field controls in their
-    // initial route. Keep their explicit ceilings separate from the 115 KB shared guard; deferred
-    // work is still excluded because only statically referenced route assets are counted.
+    // Deferred work is excluded because only statically referenced route assets are counted:
+    // RAW keeps decoder/demosaicing paths in user-triggered dynamic chunks, and the metadata
+    // viewer/remover carry the verified EXIF container parser in their initial route.
     //
-    // Measured 2026-10-01, and this ceiling is now anchored to those numbers rather than to the
-    // round figure that preceded it: exif-viewer 118,135, remove-exif 117,428, raw-converter
-    // 109,931. The prior 118 KB was picked without recording a baseline, so a single new shared
-    // translation string consumed its margin unnoticed. The dominant shared cost is the eager
-    // locale table in `apps/web/src/lib/i18n.ts`, which every route imports and no route splits —
-    // if this ceiling is breached again, defer that table rather than raising the number again.
-    budget: ['raw-converter', 'exif-viewer', 'remove-exif'].includes(route) ? 121_000 : 115_000,
+    // Every route shares one 115 KB ceiling again. The locale catalogue used to be a literal in
+    // `apps/web/src/lib/i18n.ts`: 920 Arabic keys, ~18.5 KB gzipped, preloaded by all 148
+    // English pages, none of which read a single Arabic string. It now lives in
+    // `apps/web/src/lib/locales/ar.ts` and is registered only by `routes/[locale]/+layout.svelte`,
+    // so no English route references that chunk. That freed the former 118/121 KB EXIF+RAW tier,
+    // which is now gone rather than retuned.
+    //
+    // Measured 2026-10-01 after the split: exif-viewer 100,908, remove-exif 100,206,
+    // raw-converter 92,697. If this ceiling is breached again the cause is a *new* eager import,
+    // not the locale table — find that import instead of raising this number.
+    budget: 115_000,
     requiresInput: true,
   })),
 ] as const;

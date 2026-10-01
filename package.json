@@ -48,7 +48,7 @@
     "size": "size-limit",
     "lighthouse": "lhci autorun",
     "wasm:fetch": "tsx scripts/fetch-wasm.ts",
-    "test:gates": "tsx scripts/test-static-assets.ts && node scripts/verify-p4-21-cc0-fixtures.mjs && node scripts/verify-p4-21-register.mjs && pnpm --filter @complianttools/image-engine build && tsx scripts/check-register-completeness.ts && tsx scripts/test-register-completeness-gate.ts && tsx scripts/test-license-gate.ts && tsx scripts/test-attribution-gate.ts && tsx scripts/test-trademark-gate.ts && tsx scripts/test-wasm-gate.ts && tsx scripts/test-plan-sync.ts",
+    "test:gates": "tsx scripts/test-static-assets.ts && node scripts/verify-p4-21-cc0-fixtures.mjs && node scripts/verify-p4-21-register.mjs && pnpm --filter @complianttools/image-engine build && tsx scripts/check-register-completeness.ts && tsx scripts/test-register-completeness-gate.ts && tsx scripts/test-route-budget-gate.ts && tsx scripts/test-license-gate.ts && tsx scripts/test-attribution-gate.ts && tsx scripts/test-trademark-gate.ts && tsx scripts/test-wasm-gate.ts && tsx scripts/test-plan-sync.ts",
     "progress": "node scripts/plan-progress.mjs",
     "prepare": "lefthook install"
   },
