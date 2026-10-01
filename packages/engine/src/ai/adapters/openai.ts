@@ -22,6 +22,23 @@ import { createCanonicalMask, verifyMaskRange } from '../mask-convention.js';
 
 const DESCRIPTOR_ID = 'openai';
 
+/**
+ * Decode base64 to bytes without Node's `Buffer`.
+ *
+ * `Buffer` does not exist in a browser, so using it here made **every** generate and edit request
+ * fail at the last step with `Buffer is not defined` — a failure that only appears in the one
+ * environment this app actually runs in. `atob` is present in browsers and in Node 16+, so this is
+ * portable without a polyfill.
+ */
+function decodeBase64(base64: string): Uint8ClampedArray {
+  const binary = atob(base64);
+  const bytes = new Uint8ClampedArray(binary.length);
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+  return bytes;
+}
+
 const descriptor: ProviderDescriptor = {
   id: DESCRIPTOR_ID,
   name: 'OpenAI (GPT-image-1)',
@@ -179,9 +196,7 @@ export const openaiAdapter: ProviderAdapter = {
             colorSpace: 'srgb',
             bitDepth: 8,
             premultipliedAlpha: false,
-            frames: [
-              { data: new Uint8ClampedArray(Buffer.from(it.b64_json, 'base64')), durationMs: 0 },
-            ],
+            frames: [{ data: decodeBase64(it.b64_json), durationMs: 0 }],
           } as unknown as (typeof images)[0]);
         } else if (it.url) {
           images.push({
@@ -256,9 +271,7 @@ export const openaiAdapter: ProviderAdapter = {
             colorSpace: 'srgb',
             bitDepth: 8,
             premultipliedAlpha: false,
-            frames: [
-              { data: new Uint8ClampedArray(Buffer.from(it.b64_json, 'base64')), durationMs: 0 },
-            ],
+            frames: [{ data: decodeBase64(it.b64_json), durationMs: 0 }],
           } as unknown as (typeof images)[0]);
         } else if (it.url) {
           images.push({

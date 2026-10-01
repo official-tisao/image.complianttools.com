@@ -158,4 +158,48 @@ describe('P5-09 OpenAI adapter', () => {
     const notes = openaiAdapter.descriptor.models[0].notes || '';
     expect(notes).toContain('P5-07');
   });
+
+  // P5-15: this used to call `Buffer.from`, which does not exist in a browser — so every generate
+  // and edit request failed at the final decode step in the one environment this app runs in. The
+  // engine's `no-engine-browser-globals` lint rule does not cover `Buffer`, so the regression is
+  // caught here instead.
+  it('decodes a base64 image without Node globals', async () => {
+    // A hand-rolled response rather than a real `Response`: Node's `Response` reaches for `Buffer`
+    // in its own `json()` implementation, so a real one would fail here for a reason unrelated to
+    // the adapter. The object below is the shape the adapter actually consumes.
+    const body = {
+      data: [
+        {
+          b64_json:
+            'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+        },
+      ],
+    };
+    const ctx = {
+      credentials: { apiKey: 'test' },
+      baseUrl: 'https://api.openai.test/v1',
+      fetch: (async () => ({
+        ok: true,
+        status: 200,
+        headers: new Map(),
+        json: async () => body,
+        text: async () => JSON.stringify(body),
+      })) as unknown as typeof fetch,
+    };
+
+    // Now remove it. A browser has no `Buffer`, so a regression surfaces here rather than in a
+    // user's session, where it would be indistinguishable from a provider failure.
+    const original = globalThis.Buffer;
+    try {
+      (globalThis as Record<string, unknown>)['Buffer'] = undefined;
+      const result = await openaiAdapter.run(
+        { capability: 'generate', model: 'gpt-image-1', prompt: 'a red square' },
+        ctx,
+      );
+      expect(result.images).toHaveLength(1);
+      expect(result.images![0]!.frames[0]!.data.length).toBeGreaterThan(0);
+    } finally {
+      (globalThis as Record<string, unknown>)['Buffer'] = original;
+    }
+  });
 });

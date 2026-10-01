@@ -8,7 +8,7 @@
     "prebuild": "node ../../scripts/prune-ocr-tessdata-cache.mjs",
     "build": "vite build",
     "preview": "vite preview --host 127.0.0.1 --port 4173",
-    "test": "node --test",
+    "test": "node --experimental-strip-types --test test/*.test.ts",
     "lint": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "typecheck": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
   },

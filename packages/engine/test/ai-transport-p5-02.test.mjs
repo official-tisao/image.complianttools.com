@@ -406,3 +406,58 @@ test('non-retryable 4xx does not retry (terminal)', () => {
     assert.strictEqual(retryable, false, `status ${s} should not be retryable`);
   }
 });
+
+/* ------------------------------------------------------------------ */
+/* 8. Per-engine CORS wording (README §13.5 item 5)                    */
+/* ------------------------------------------------------------------ */
+
+/*
+ * Each engine reports a blocked cross-origin `fetch` differently, and §13.5 item 5 requires all of
+ * them to become `ai-cors-blocked` with the relay remedy. Only Chromium's and Firefox's wordings
+ * were recognised, so WebKit's `TypeError: Load failed` was reported as a generic provider error —
+ * exactly the "inscrutable failure" the section forbids.
+ */
+for (const [engine, message] of [
+  ['Chromium', 'Failed to fetch'],
+  ['Firefox', 'NetworkError when attempting to fetch resource.'],
+  ['WebKit', 'Load failed'],
+]) {
+  test(`${engine} CORS rejection is classified as ai-cors-blocked`, async () => {
+    const fetchImpl = async () => {
+      throw new TypeError(message);
+    };
+    await assert.rejects(
+      () =>
+        transportFetch(
+          'https://api.openai.com/v1/images/generations',
+          { method: 'POST' },
+          { allowedOrigins: ['https://api.openai.com'], maxRetries: 1, fetchImpl },
+        ),
+      (err) => {
+        assert.ok(err instanceof TransportError, `${engine}: expected a TransportError`);
+        assert.equal(err.kind, 'ai-cors-blocked', `${engine}: wrong kind for "${message}"`);
+        return true;
+      },
+    );
+  });
+}
+
+test('an unrecognised TypeError message is still treated as a network failure', async () => {
+  // No browser currently throws this exact text, but a thrown TypeError from `fetch` is only ever
+  // a CORS or network failure, so guessing the wording is worse than accepting the type.
+  const fetchImpl = async () => {
+    throw new TypeError('some future engine wording');
+  };
+  await assert.rejects(
+    () =>
+      transportFetch(
+        'https://api.openai.com/v1/images/generations',
+        { method: 'POST' },
+        { allowedOrigins: ['https://api.openai.com'], maxRetries: 1, fetchImpl },
+      ),
+    (err) => {
+      assert.equal(err.kind, 'ai-cors-blocked');
+      return true;
+    },
+  );
+});
