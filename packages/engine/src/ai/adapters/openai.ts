@@ -19,6 +19,7 @@ import type {
 } from '../types.js';
 import type { EngineError, RasterImage } from '../../types.js';
 import { createCanonicalMask, verifyMaskRange } from '../mask-convention.js';
+import { redactProviderText, classifyTestResponse } from '../adapter-support.js';
 
 const DESCRIPTOR_ID = 'openai';
 
@@ -161,12 +162,24 @@ export const openaiAdapter: ProviderAdapter = {
         signal: ctx.signal || null,
       });
       if (!res.ok) {
-        const t = await res.text().catch(() => '');
-        return { ok: false, error: err('ai-provider-error', 'Model list failed.', res.status, t) };
+        // The body is rendered by §17.3's failure copy, and OpenAI's 401 body echoes the submitted
+        // key — so this is a place a credential reaches the screen unless it is scrubbed here.
+        const t = redactProviderText(await res.text().catch(() => ''), ctx.credentials);
+        // Classify by status so a 401 reads as an auth failure and a 5xx as a provider error, per
+        // §17.3 — a user with a mistyped key must not be sent to read the API reference.
+        const classified = classifyTestResponse(res.status, DESCRIPTOR_ID, res.headers);
+        return {
+          ok: false,
+          // `err()` carries the provider's already-redacted words as the diagnostic detail.
+          error: err(classified.kind, classified.remedy, res.status, t),
+        };
       }
+      // `GET /models` proves the credential and lists the catalogue. It does not exercise the four
+      // image endpoints, so it confirms the key rather than the capabilities — the same rule the
+      // other adapters were corrected to follow.
       return {
         ok: true,
-        confirmed: descriptor.capabilities as AiCapability[],
+        confirmed: [],
         detail: 'GET /models passed.',
       };
     } catch (e) {
@@ -213,7 +226,11 @@ export const openaiAdapter: ProviderAdapter = {
         signal: ctx.signal || null,
       });
       if (!res.ok) {
-        const t = await res.text().catch(() => '');
+        // OpenAI echoes the submitted key back in its 401 body ("Incorrect API key provided:
+        // sk-..."). Every branch below interpolates provider text into a thrown message, so it is
+        // redacted once here rather than at each site. Recorded-contract-tested; this replaced
+        // code that leaked the key into the escalation control's error panel.
+        const t = redactProviderText(await res.text().catch(() => ''), ctx.credentials);
         if (res.status === 401) throw new Error(`OpenAI auth failed (401): ${t}`);
         if (res.status === 429) {
           const ra = res.headers.get('Retry-After');
@@ -289,7 +306,7 @@ export const openaiAdapter: ProviderAdapter = {
         signal: ctx.signal || null,
       });
       if (!res.ok) {
-        const t = await res.text().catch(() => '');
+        const t = redactProviderText(await res.text().catch(() => ''), ctx.credentials);
         if (res.status === 401) throw new Error(`OpenAI auth failed (401): ${t}`);
         if (res.status === 429) throw new Error(`OpenAI rate limited (429): ${t}`);
         throw new Error(`OpenAI error (${res.status}): ${t || res.statusText}`);
@@ -342,7 +359,7 @@ export const openaiAdapter: ProviderAdapter = {
         signal: ctx.signal || null,
       });
       if (!res.ok) {
-        const t = await res.text().catch(() => '');
+        const t = redactProviderText(await res.text().catch(() => ''), ctx.credentials);
         if (res.status === 401) throw new Error(`OpenAI auth failed (401): ${t}`);
         throw new Error(`OpenAI error (${res.status}): ${t || res.statusText}`);
       }
@@ -446,56 +463,136 @@ function nearestNeighbourResample(
   return { width: newW, height: newH, data: newData };
 }
 
+/**
+ * Encode RGBA bytes as a real, decodable PNG.
+ *
+ * ## Why this replaced the canvas path
+ *
+ * The previous implementation preferred `OffscreenCanvas` and returned
+ * `canvas.convertToBlob(...)` cast to `Blob`. `convertToBlob` returns a **Promise**, so the cast
+ * satisfied TypeScript while handing a Promise to `form.append('mask', blob, 'mask.png')` — which
+ * stringifies to `"[object Promise]"`. Every `inpaint` in every browser that has `OffscreenCanvas`
+ * (all of them) therefore uploaded a mask the provider could not read.
+ *
+ * The fallback was no better: it emitted a PNG signature and an IHDR with **no IDAT and no IEND**,
+ * which no decoder will render. So neither branch produced a usable mask.
+ *
+ * This version has no canvas dependency, is synchronous, and produces a valid PNG: signature,
+ * IHDR, a zlib stream built with **stored (uncompressed) deflate blocks** plus the Adler-32
+ * checksum zlib requires, IDAT, IEND. Uncompressed is deliberate — the mask is a single channel,
+ * the encoder runs once per inpaint, and correctness matters more here than a few kilobytes.
+ */
 function encodePngFromRgba(rgbaBytes: Uint8ClampedArray, width: number, height: number): Blob {
-  try {
-    if (typeof OffscreenCanvas !== 'undefined') {
-      const canvas = new OffscreenCanvas(width, height);
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        // `ImageData`'s three-argument form is `(data, width, height)`. The previous
-        // `new ImageData(width, height)` passed two numbers where a buffer was expected, which
-        // throws `InvalidStateError` in every browser that has `OffscreenCanvas` — so the mask upload
-        // silently fell through to the synthetic-PNG fallback for `inpaint` while the surrounding
-        // request appeared to succeed.
-        const pixels = new Uint8ClampedArray(width * height * 4);
-        pixels.set(rgbaBytes.subarray(0, pixels.length));
-        const imgData = new ImageData(pixels, width, height);
-        ctx.putImageData(imgData, 0, 0);
-        const blobPromise = canvas.convertToBlob({ type: 'image/png' });
-        // convertToBlob is spec'd as synchronous but returns a Promise in some implementations;
-        // we treat it synchronously with a cast to satisfy TypeScript.
-        return blobPromise as unknown as Blob;
-      }
-    }
-  } catch {
-    // Canvas not available; fall back to synthetic PNG.
-  }
-  return buildMinimalPng(rgbaBytes, width, height);
+  const bytes = new Uint8Array(rgbaBytes.buffer, rgbaBytes.byteOffset, width * height * 4);
+  return new Blob([buildPng(bytes, width, height)], { type: 'image/png' });
 }
 
-// Minimal pure-JS PNG encoder (no external dependencies) for contract/test use.
-function buildMinimalPng(_rgbaBytes: Uint8ClampedArray, width: number, height: number): Blob {
-  // PNG signature
-  const SIGNATURE = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
-  // IHDR chunk: width (4), height (4), bit depth (1=8), color type (6=RGBA), compression (0), filter (0), interlace (0)
-  const ihdrData = new Uint8Array(13);
-  const w = new DataView(ihdrData.buffer);
-  w.setUint32(0, width, false); // big-endian
-  w.setUint32(4, height, false);
-  ihdrData[8] = 8; // bit depth
-  ihdrData[9] = 6; // color type RGBA
-  ihdrData[10] = 0; // compression
-  ihdrData[11] = 0; // filter method
-  ihdrData[12] = 0; // interlace
+/** Assemble a complete, decodable PNG from RGBA bytes. */
+function buildPng(rgba: Uint8Array, width: number, height: number): Uint8Array {
+  const SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
 
-  // For a real minimal PNG we would need zlib compression. Instead, we produce
-  // a minimal synthetic PNG that passes basic parsing in browsers.
-  // However, for adapter contract purposes we do not need a fully valid PNG
-  // for every test — we primarily need the conversion logic to execute correctly.
-  // Return a synthetic PNG blob (not fully zlib-compressed, but valid signature/IHDR).
-  return new Blob([SIGNATURE, new Uint8Array(ihdrData.buffer), new Uint8Array([0, 0, 0, 0])], {
-    type: 'image/png',
-  });
+  const ihdr = new Uint8Array(13);
+  const view = new DataView(ihdr.buffer);
+  view.setUint32(0, width, false);
+  view.setUint32(4, height, false);
+  ihdr[8] = 8; // bit depth
+  ihdr[9] = 6; // colour type: RGBA
+  ihdr[10] = 0; // compression: deflate
+  ihdr[11] = 0; // filter method
+  ihdr[12] = 0; // no interlace
+
+  // Raw scanlines: each row is prefixed with its filter type (0 = None).
+  const raw = new Uint8Array(height * (1 + width * 4));
+  for (let y = 0; y < height; y += 1) {
+    const rowStart = y * (1 + width * 4);
+    raw[rowStart] = 0;
+    raw.set(rgba.subarray(y * width * 4, (y + 1) * width * 4), rowStart + 1);
+  }
+
+  const idat = zlibStored(raw);
+
+  const parts: number[] = [...SIGNATURE];
+  const pushChunk = (type: string, data: Uint8Array): void => {
+    parts.push(
+      (data.length >>> 24) & 0xff,
+      (data.length >>> 16) & 0xff,
+      (data.length >>> 8) & 0xff,
+      data.length & 0xff,
+    );
+    for (const byte of type) parts.push(byte.charCodeAt(0));
+    for (const byte of data) parts.push(byte);
+    const crc = crc32(type, data);
+    parts.push((crc >>> 24) & 0xff, (crc >>> 16) & 0xff, (crc >>> 8) & 0xff, crc & 0xff);
+  };
+
+  const typeBytes = (s: string): Uint8Array => Uint8Array.from(s, (c) => c.charCodeAt(0));
+
+  pushChunk('IHDR', ihdr);
+  pushChunk('IDAT', idat);
+  pushChunk('IEND', new Uint8Array(0));
+
+  void typeBytes;
+  return Uint8Array.from(parts);
+}
+
+/**
+ * Wrap `data` in a zlib stream using stored (uncompressed) deflate blocks.
+ *
+ * Stored blocks need no compressor: each is a 3-bit header, a LEN/NLEN pair, and the raw bytes.
+ * The final block is marked BFINAL. A zlib header and the Adler-32 of the uncompressed data
+ * complete the stream, which is what a PNG decoder checks before reading IDAT.
+ */
+function zlibStored(data: Uint8Array): Uint8Array {
+  const MAX_BLOCK = 0xffff;
+  const blockCount = Math.max(1, Math.ceil(data.length / MAX_BLOCK));
+  const out: number[] = [
+    0x78, // CMF: deflate, 32K window
+    0x01, // FLG: no dictionary, fastest; (0x78 << 8 | 0x01) % 31 === 0
+  ];
+
+  for (let i = 0; i < blockCount; i += 1) {
+    const start = i * MAX_BLOCK;
+    const chunk = data.subarray(start, Math.min(start + MAX_BLOCK, data.length));
+    const isFinal = i === blockCount - 1;
+    out.push(isFinal ? 0x01 : 0x00);
+    out.push(chunk.length & 0xff, (chunk.length >>> 8) & 0xff);
+    out.push(~chunk.length & 0xff, (~chunk.length >>> 8) & 0xff);
+    for (const byte of chunk) out.push(byte);
+  }
+
+  const checksum = adler32(data);
+  out.push(
+    (checksum >>> 24) & 0xff,
+    (checksum >>> 16) & 0xff,
+    (checksum >>> 8) & 0xff,
+    checksum & 0xff,
+  );
+  return Uint8Array.from(out);
+}
+
+/** Adler-32, as specified for zlib. */
+function adler32(data: Uint8Array): number {
+  let a = 1;
+  let b = 0;
+  for (let i = 0; i < data.length; i += 1) {
+    a = (a + (data[i] as number)) % 65521;
+    b = (b + a) % 65521;
+  }
+  return ((b << 16) | a) >>> 0;
+}
+
+/** CRC-32 over a chunk's type and data, as PNG requires for each chunk. */
+function crc32(type: string, data: Uint8Array): number {
+  let crc = 0xffffffff;
+  const update = (byte: number): void => {
+    crc ^= byte;
+    for (let bit = 0; bit < 8; bit += 1) {
+      crc = crc & 1 ? (crc >>> 1) ^ 0xedb88320 : crc >>> 1;
+    }
+  };
+  for (const char of type) update(char.charCodeAt(0));
+  for (const byte of data) update(byte);
+  return (crc ^ 0xffffffff) >>> 0;
 }
 function frameToBlob(
   frame: { data?: Uint8ClampedArray | string; url?: string; mime?: string },

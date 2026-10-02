@@ -12,6 +12,7 @@ import type {
 } from '../types.js';
 import type { EngineError } from '../../types.js';
 import { promptForMode } from './anthropic/prompts.js';
+import { redactProviderText } from '../adapter-support.js';
 const DESCRIPTOR_ID = 'anthropic';
 
 const descriptor = {
@@ -241,7 +242,11 @@ export const anthropicAdapter: ProviderAdapter = {
 
     if (!response.ok) {
       const text = await response.text().catch(() => '');
-      throw new Error(`Anthropic adapter error ${response.status}: ${text || response.statusText}`);
+      // Anthropic echoes the submitted key back in its 401 body (`invalid x-api-key: sk-...`).
+      // Putting that verbatim into a thrown message carries the user's credential into whatever
+      // renders it. Redacted here, and asserted by the recorded contract suite.
+      const safe = redactProviderText(text || response.statusText, ctx.credentials);
+      throw new Error(`Anthropic adapter error ${response.status}: ${safe}`);
     }
 
     const data = (await response.json()) as {

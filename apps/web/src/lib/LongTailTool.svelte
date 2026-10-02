@@ -1,6 +1,12 @@
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte';
-  import { buildShareLink, migrateRecipe, parseRecipe } from '@complianttools/image-engine';
+  import {
+    buildShareLink,
+    describeRecipe,
+    migrateRecipe,
+    parseRecipe,
+    parseShareFragment,
+  } from '@complianttools/image-engine';
   import { translate, type Locale } from './i18n';
 
   type LongTailKind =
@@ -110,8 +116,18 @@
   let watchArmed = $state(false);
   let watchTimer: ReturnType<typeof setInterval> | undefined;
 
+  /** Flow D: the shared recipe, described in plain language for the recipient. */
+  let recipeDescription = $state('');
+  let recipeSteps = $state<readonly string[]>([]);
+
   onMount(() => {
     hydrated = true;
+    // A shared link must land on a described recipe, not an empty form. `hashchange` is handled too
+    // so pasting a different share link into the address bar of an open tab also works.
+    openSharedRecipe();
+    const onHashChange = (): void => openSharedRecipe();
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
   });
 
   function t(key: string, fallback: string, value?: string | number) {
@@ -275,6 +291,39 @@
     }
   }
 
+  /**
+   * Flow D, step 3 — open a shared recipe.
+   *
+   * §11.4 says a recipient "opens the link, sees the recipe described in plain language
+   * ('Resize to 1200 px wide → strip metadata → WebP quality 80'), drops their own files, and runs
+   * it." Only the *share* half was implemented: `buildShareFragment` produced a URL that nothing
+   * ever read back, so a shared link landed on an empty page — the round trip was broken at the
+   * point the growth loop depends on.
+   *
+   * The fragment is read on mount. It never reaches a server (a fragment is not sent in an HTTP
+   * request), which is exactly why the sender can offer a recipe without asking the recipient to
+   * trust them with a file.
+   *
+   * A malformed fragment is reported rather than thrown: a hand-edited or truncated link is a normal
+   * thing to arrive at, and an unhandled exception on a shared URL is a broken page.
+   */
+  function openSharedRecipe() {
+    if (typeof location === 'undefined') return;
+    const fragment = location.hash;
+    if (!fragment || !fragment.includes('recipe=')) return;
+
+    try {
+      const shared = parseShareFragment(fragment);
+      recipeText = JSON.stringify(shared, null, 2);
+      const described = describeRecipe(shared);
+      recipeDescription = described.phrases.join(' → ');
+      recipeSteps = described.phrases;
+      status = `Loaded a shared recipe: ${recipeDescription}. Drop your own files and run it.`;
+    } catch (cause) {
+      error = `That share link could not be read: ${(cause as Error).message ?? String(cause)}`;
+    }
+  }
+
   function makeCodegen() {
     const value = recipeText.startsWith('r1.') ? parseRecipe(recipeText) : JSON.parse(recipeText);
     const recipe = JSON.stringify(value, null, 2);
@@ -350,6 +399,27 @@
       >Recipe JSON or share token
       <textarea data-testid="recipe-input" bind:value={recipeText} rows="14"></textarea>
     </label>
+    <!--
+      Flow D, step 3: a recipient "sees the recipe described in plain language" before running it.
+
+      Showing the JSON alone would make them read a schema to find out what the link does, which is
+      the opposite of why the format is shareable. The description is derived from the parsed
+      recipe — never from the URL — so it cannot disagree with what would actually run.
+    -->
+    {#if recipeDescription}
+      <div class="wide" data-testid="recipe-description">
+        <strong>What this recipe does</strong>
+        <ol data-testid="recipe-steps">
+          {#each recipeSteps as step, index (index)}
+            <li>{step}</li>
+          {/each}
+        </ol>
+        <p>
+          These steps ran nowhere yet. Drop your own files below and press the button; nothing was
+          uploaded to get here.
+        </p>
+      </div>
+    {/if}
   {:else if kind === 'html-to-image'}
     <label class="wide"
       >HTML or URL card text

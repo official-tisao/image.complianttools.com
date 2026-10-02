@@ -7,6 +7,7 @@ import type {
   AdapterContext,
 } from '../types.js';
 import type { EngineError } from '../../types.js';
+import { classifyTestResponse, classifyThrownByTransport } from '../adapter-support.js';
 const descriptor: ProviderDescriptor = {
   id: 'stability',
   name: 'Stability AI',
@@ -60,24 +61,41 @@ export const stabilityAdapter: ProviderAdapter = {
         headers: { Authorization: `Bearer ${ctx.credentials.apiKey}` },
         signal: ctx.signal ?? null,
       });
-      if (resp.ok)
-        return { ok: true, confirmed: descriptor.capabilities, detail: 'Balance endpoint (200).' };
+      if (resp.ok) {
+        // §14.4 documents `GET /v1/user/balance` as the free credential check. It proves the key
+        // and the balance; it does not exercise the eight image endpoints the descriptor declares.
+        // Returning `descriptor.capabilities` here told a user their generate/inpaint/outpaint
+        // paths were confirmed by a call that never touched one of them.
+        let balance: string | undefined;
+        try {
+          const parsed = JSON.parse(await resp.text()) as { balance?: number | string };
+          if (parsed.balance !== undefined) balance = String(parsed.balance);
+        } catch {
+          // A 200 with an unparseable body still means the credential was accepted. Report that,
+          // and say the balance is unknown rather than inventing a zero.
+        }
+        return {
+          ok: true,
+          confirmed: [],
+          detail:
+            'Stability AI accepted the credential (GET /v1/user/balance returned 200)' +
+            (balance ? `, balance ${balance}.` : '.') +
+            ' This proves the key only; each capability is confirmed when it is first used.',
+        };
+      }
+      // Classified by status, so a 402 (no credits) does not read as "key rejected" — §17.3 gives
+      // those two failures different messages and different fixes.
       return {
         ok: false,
-        error: {
-          kind: 'ai-auth-failed',
-          provider: descriptor.id,
-          remedy: 'Key rejected.',
-        } satisfies EngineError,
+        error: classifyTestResponse(resp.status, descriptor.id, resp.headers) satisfies EngineError,
       };
     } catch (e: unknown) {
+      // A browser-side network failure is not an authentication failure. §17.3 gives the two
+      // different messages and different fixes: a CORS block means the key was never sent, so
+      // telling the user to re-copy it sends them looking for the wrong problem entirely.
       return {
         ok: false,
-        error: {
-          kind: 'ai-auth-failed',
-          provider: descriptor.id,
-          remedy: `Failed: ${(e as Error).message || String(e)}`,
-        } satisfies EngineError,
+        error: classifyThrownByTransport(e, descriptor.id) satisfies EngineError,
       };
     }
   },
@@ -114,7 +132,16 @@ export const stabilityAdapter: ProviderAdapter = {
         capability: req.capability,
         endpoint: path,
         model: req.model || 'stable-image-core',
-        maskPolarityVerified: true,
+        // §14.4 states the polarity matches ours and marks the same sentence "⚠ VERIFY per
+        // endpoint — polarity differs between endpoints". Nothing here has confirmed it against
+        // the live API, so this reports unverified. Claiming `true` would be the over-claim §4.9
+        // forbids: an unverified conversion presented as a verified one, which silently inverts a
+        // user's mask if the endpoint disagrees.
+        maskPolarityVerified: false,
+        maskPolarityNote:
+          '⚠ VERIFY: README §14.4 records polarity as matching per endpoint but marks the same ' +
+          'sentence unverified. The nightly contract job (§22.7) is what may confirm it. The ' +
+          'conversion below is the documented assumption, not a confirmed one.',
         maskConversion: req.mask ? 'channel-extraction (matches provider)' : 'none',
         inputPrompt: req.prompt,
         negativePrompt: req.negativePrompt,

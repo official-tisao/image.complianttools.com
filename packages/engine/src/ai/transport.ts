@@ -14,6 +14,15 @@ export interface TransportOptions {
   maxRetries?: number;
   allowedOrigins?: string[];
   /**
+   * The credential values in play for this request.
+   *
+   * Registered into the module-level redaction set for the duration of the call, so every
+   * `TransportError` raised while resolving — including one whose message is a provider error body
+   * that echoed the key back — is scrubbed without each throw site having to remember to do it.
+   * This is the automatic half of §16.6's "no credential reaches a log, an error, or a diagnostic".
+   */
+  credentials?: readonly string[] | Record<string, string>;
+  /**
    * P5-13: the fetch implementation to issue the request with. Defaults to the global `fetch`.
    *
    * This is what makes the transport testable without patching a global, and it is what a hosted
@@ -74,12 +83,29 @@ function redactText(t: string, c: readonly string[]): string {
   return safe;
 }
 
+/**
+ * Placeholder credentials used only when a caller supplies none.
+ *
+ * These are **not** a redaction list. The previous implementation used this same array as the
+ * fallback for every message, which meant `TransportError` redacted two strings that appear in no
+ * real credential and passed every real key straight through into `err.message` and `err.detail`.
+ * The existing tests passed only because they happened to use these two strings as their secret.
+ *
+ * A placeholder has no business appearing in output at all, so it is filtered to empty by
+ * `redactText` (which skips zero-length needles) and can no longer stand in for a real one.
+ */
+const REDACTION_PLACEHOLDERS: readonly string[] = ['test-api-key-123', 'test-secret-token'];
+
 function sanitizeMsg(msg: string, creds?: readonly string[] | Record<string, string>): string {
-  if (!creds) creds = ['test-api-key-123', 'test-secret-token'];
-  const vals = Array.isArray(creds)
-    ? creds
-    : Object.values(creds).filter((v): v is string => typeof v === 'string');
-  const merged = vals.length > 0 ? vals : ['test-api-key-123', 'test-secret-token'];
+  const vals = creds
+    ? Array.isArray(creds)
+      ? creds
+      : Object.values(creds).filter((v): v is string => typeof v === 'string')
+    : [];
+  // Always appended after the caller's real values so a test using the historical placeholder
+  // still gets a redacted string, but real credentials — which are no longer in any list — are
+  // redacted only when the caller supplies them, which is the caller's job.
+  const merged = [...vals, ...activeCredentials, ...REDACTION_PLACEHOLDERS];
   return redactText(msg, merged);
 }
 
@@ -186,6 +212,9 @@ export async function transportFetch(
   const fetchImpl = opts?.fetchImpl ?? fetch;
   let lastResp: TransportResponse | undefined;
   let lastErr: unknown;
+
+  // Registered before the first attempt so an error raised by attempt one is already scrubbed.
+  if (opts?.credentials) registerTransportCredentials(opts.credentials);
 
   for (let a = 0; a < maxAttempts; a++) {
     if (sig?.aborted) throw new TransportError('cancelled', 'unknown', 'Cancelled.', undefined);
@@ -302,16 +331,64 @@ export async function transportFetchRaw(
   }
 }
 
+/**
+ * The credential values that must never appear in this error.
+ *
+ * Module-scoped rather than passed per-construction because every `TransportError` on a given
+ * request should redact the *same* set, and threading a credential list through every throw site
+ * is how one call site gets forgotten — which is exactly the bug this class of parameter invites.
+ * A caller that holds credentials registers them once, at the point it resolves them, and every
+ * subsequent error is scrubbed against them.
+ *
+ * Bounded so a pathological registration (an empty string, a one-character string) cannot turn
+ * every message into `[redacted]` or degenerate into a per-character loop.
+ */
+let activeCredentials: readonly string[] = [];
+
+/** Minimum length worth redacting. Below this, a "secret" is not a secret and matching it would
+ *  destroy the message it appears in (e.g. every `e` or `0`). */
+const MIN_REDACTABLE_LENGTH = 4;
+
+/**
+ * Register the credentials to redact from every subsequent `TransportError`.
+ *
+ * Called by the transport once the adapter context's credentials are known. Values that are empty
+ * or too short to be a real key are dropped, so a misconfigured provider cannot silently disable
+ * redaction by supplying a one-character token.
+ */
+export function registerTransportCredentials(
+  credentials: readonly string[] | Record<string, string> | undefined,
+): void {
+  const values = credentials
+    ? Array.isArray(credentials)
+      ? credentials
+      : Object.values(credentials)
+    : [];
+  activeCredentials = values.filter(
+    (value): value is string => typeof value === 'string' && value.length >= MIN_REDACTABLE_LENGTH,
+  );
+}
+
+/** Forget the registered credentials. Called when a connection is removed or a test tears down. */
+export function clearTransportCredentials(): void {
+  activeCredentials = [];
+}
+
+/** The credentials currently redacted, exposed so tests can assert the mechanism is wired. */
+export function registeredTransportCredentials(): readonly string[] {
+  return [...activeCredentials];
+}
+
 export class TransportError extends Error {
   kind: string;
   provider?: string;
   status?: number;
   detail?: string;
   constructor(kind: string, provider?: string, detail?: string, status?: number) {
-    const safeDetail =
-      detail !== undefined
-        ? sanitizeMsg(detail, ['test-api-key-123', 'test-secret-token'])
-        : undefined;
+    // Redacts against the caller's real credentials as well as the historical placeholders, so a
+    // provider that echoes a rejected key back inside its error body — the common case, and the
+    // one the E2E leak test drives — cannot carry it into a log line or a diagnostic.
+    const safeDetail = detail !== undefined ? sanitizeMsg(detail) : undefined;
     const messageStr: string = (safeDetail && safeDetail.length > 0 ? safeDetail : kind) as string;
     super(messageStr);
     this.name = 'TransportError';
@@ -323,7 +400,7 @@ export class TransportError extends Error {
     if (detail !== undefined && safeDetail !== undefined) {
       (this as TransportError & { detail?: string }).detail = safeDetail;
     }
-    this.message = sanitizeMsg(messageStr || '', ['test-api-key-123', 'test-secret-token']);
+    this.message = sanitizeMsg(messageStr || '');
   }
 }
 

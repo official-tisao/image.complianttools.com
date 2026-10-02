@@ -29,14 +29,17 @@ describe('P5-09 OpenAI adapter', () => {
     expect(r.ok).toBe(false);
   });
 
-  it('auth failure via test() returns ai-auth-failed or provider error', async () => {
+  it('auth failure via test() returns ai-auth-failed', async () => {
     const r = await openaiAdapter.test({
       credentials: { apiKey: 'bad' },
       baseUrl: 'https://api.openai.com/v1',
       fetch: () => Promise.resolve(new Response('{}', { status: 401 })),
     });
     expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.error.kind).toBe('ai-provider-error');
+    // A 401 is an authentication failure specifically. It was previously reported as a generic
+    // `ai-provider-error`, which §17.3 renders as "OpenAI returned an error" — sending a user with
+    // a mistyped key to look at the wrong problem. `classifyTestResponse` now distinguishes them.
+    if (!r.ok) expect(r.error.kind).toBe('ai-auth-failed');
   });
 
   // 3. Generation request construction
@@ -68,6 +71,7 @@ describe('P5-09 OpenAI adapter', () => {
       fetch: () => Promise.resolve(new Response('{}', { status: 500 })),
     });
     expect(r.ok).toBe(false);
+    // A 5xx is a provider-side fault, not an authentication one, and stays `ai-provider-error`.
     if (!r.ok) expect(r.error.kind).toBe('ai-provider-error');
   });
 

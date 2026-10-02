@@ -285,6 +285,37 @@ jobs:
       - name: No implicit escalation, and one gesture to exactly one request
         run: pnpm test:escalation
 
+  gate5-local:
+    name: gate5-local-tools
+    # Gate 5's behavioural half: the local tools work with no provider configured and none
+    # contacted. Split from `escalation` because it is a different claim — that one proves a
+    # configured provider is never called, this one proves nothing needs to be.
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.5
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @complianttools/image-engine build
+      # The inventory half of the claim is derived from `feature-audit.csv` and the route tree, so a
+      # fourth provider-dependent tool or a deleted page fails before a browser is ever launched.
+      - name: Derive the 78-of-81 inventory
+        run: pnpm verify:local-tool-inventory
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Local tools complete with no provider
+        run: pnpm test:gate5-local
+      # Flow D's round trip. A share link that no page reads back is a broken growth loop, and the
+      # only way to know is to open one.
+      - name: Recipe share, open, and run
+        run: pnpm test:flow-d
+
   credential-leak:
     name: credential-leak
     runs-on: ubuntu-latest

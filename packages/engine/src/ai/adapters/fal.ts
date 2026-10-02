@@ -7,6 +7,7 @@ import type {
   AdapterContext,
 } from '../types.js';
 import type { EngineError } from '../../types.js';
+import { classifyTestResponse, classifyThrownByTransport } from '../adapter-support.js';
 const descriptor: ProviderDescriptor = {
   id: 'fal',
   name: 'fal.ai',
@@ -120,19 +121,41 @@ export const falAdapter: ProviderAdapter = {
         body: JSON.stringify({ image_url: 'data:image/png;base64,iVBORw0KGgo=' }),
         signal: ctx.signal ?? null,
       });
+
+      // A 2xx is the only thing that proves the credential. The status used to be interpolated into
+      // a success message while `confirmed` returned the full descriptor list — so a 401, a 500,
+      // and a 200 all produced "key valid" with nine capabilities confirmed. §17.3's whole premise
+      // is that a failure class is reported specifically, and a rejected key reported as connected
+      // is the worst version of that bug: the user goes looking for the wrong problem.
+      if (!resp.ok) {
+        return {
+          ok: false,
+          error: classifyTestResponse(
+            resp.status,
+            descriptor.id,
+            resp.headers,
+          ) satisfies EngineError,
+        };
+      }
+
+      // The probe reached fal and the key was accepted. It confirms the *credential* only: the
+      // probe ran one cheap model, so no other capability was exercised. Returning
+      // `descriptor.capabilities` here would offer nine operations against a single observation,
+      // and the nightly job (§22.7) exists precisely to confirm the rest with real calls.
       return {
         ok: true,
-        confirmed: descriptor.capabilities,
-        detail: `fal endpoint responded (${resp.status}); key valid. Minimal cost ~0.001.`,
+        confirmed: [],
+        detail:
+          `fal accepted the credential (HTTP ${resp.status}). This probe ran one cheap endpoint ` +
+          'and confirms no capability on its own — each operation is verified when it is first used.',
       };
     } catch (e: unknown) {
+      // A browser-side network failure is not an authentication failure. §17.3 gives the two
+      // different messages and different fixes: a CORS block means the key was never sent, so
+      // telling the user to re-copy it sends them looking for the wrong problem entirely.
       return {
         ok: false,
-        error: {
-          kind: 'ai-auth-failed',
-          provider: descriptor.id,
-          remedy: `Failed: ${(e as Error).message || String(e)}.`,
-        } satisfies EngineError,
+        error: classifyThrownByTransport(e, descriptor.id) satisfies EngineError,
       };
     }
   },

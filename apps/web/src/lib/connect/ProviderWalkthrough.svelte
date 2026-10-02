@@ -36,6 +36,7 @@
     type ProviderGuide,
   } from './providers';
   import { failureMessage, type FailureClass } from './failures';
+  import ProviderConnectionTest from './ProviderConnectionTest.svelte';
   import { t as translate, type Locale } from './t';
 
   let { guide, locale = 'en' }: { guide: ProviderGuide; locale?: Locale } = $props();
@@ -182,7 +183,7 @@
     <strong>{t('connect.storage.title', 'Where this key is kept')}</strong>
     {t(
       'connect.storage.body',
-      'In the page that took it, for as long as that page is open, and nowhere else. There is no saved list of connections yet, so nothing is written to storage and nothing survives a reload. If you want the key to outlive a tab, a server you run yourself keeps it in your own server instead.',
+      'In the page that took it, for as long as that page is open, and nowhere else. Nothing is written to storage and nothing survives a reload, because there is no saved list of connections yet. If you want a key to outlive a tab, a server you run yourself keeps it in your own server instead.',
     )}
   </div>
 </section>
@@ -197,24 +198,57 @@
     )}
   </p>
 
+  <!--
+    The real control. §17.3 step 3 asks for a button that runs `adapter.test()` and reports what
+    actually came back, and Flow C' depends on it, so it exists rather than being documented as
+    pending. `ProviderConnectionTest` imports the adapter at press time and renders only what the
+    test returned.
+  -->
+  <ProviderConnectionTest {guide} {locale} />
+
   <div class="connect-unverified" data-testid="test-pending">
-    <strong>The test button is not on this page yet</strong>
-    A key pasted on one page does not survive a navigation, and there is no connection manager to hold
-    it — so this page stays a static document rather than carrying a button that could not do anything.
-    The states a test reports, and the exact message for each, are below.
+    <strong>What this page does not do yet</strong>
+    There is no connection manager, so a key pasted here is not remembered: it lives on this page and
+    is gone when you navigate away or close the tab. Nothing here lists your connections or stores a key
+    for next time. The states a test reports, and the exact message for each, are below.
   </div>
 
   {#if testMayCost}
-    <div class="connect-warning" data-testid="test-may-cost">
-      <strong>This provider’s test may cost a little</strong>
-      {descriptor.name} has no free endpoint to check a key against, so confirming one may make a billable
-      call of roughly a cent. The button says so before it is pressed and requires a second, confirming
-      click.
-    </div>
+    <!--
+      The cost disclosure now lives in `ProviderConnectionTest`, next to the button that can spend
+      money, and it is gated on the same condition. Duplicating it here produced two elements with
+      `data-testid="test-may-cost"` on the same page — a strict-mode violation for anything
+      asserting on it, and a user reading the same warning twice.
+    -->
+    <p class="connect-leded" data-testid="test-may-cost-note">
+      {t(
+        'connect.test.costPointer',
+        'This provider has no free endpoint to check a key against, so testing may cost a little. The button above says so before it is pressed and asks you to confirm.',
+      )}
+    </p>
   {/if}
 
-  <h3 class="connect-h3">{t('connect.test.success', 'When it works')}</h3>
-  <div class="connect-result" data-severity="ok" data-testid="test-success">
+  <h3 class="connect-h3">{t('connect.test.success', 'What a successful test reports')}</h3>
+  <!--
+    This is an illustration of the *shape* of a success message, not a result.
+
+    It previously read "Connected to {name}." with `data-severity="ok"` and was styled like a live
+    result panel, on every one of the fourteen provider pages, while no test had ever run. Anything
+    scraping or screenshotting this page — or a reader skimming it — could reasonably take it as a
+    live confirmation. §4.9 forbids reporting a placeholder as a success, and that applies to
+    documentation as much as to code.
+
+    So it is now marked as an example in three independent ways: a neutral severity, a
+    `data-example` attribute rather than a result testid, and an explicit line saying no test has
+    been run. The real `successMessage()` output is what a working button renders.
+  -->
+  <div
+    class="connect-result"
+    data-severity="neutral"
+    data-example="true"
+    data-testid="test-success-example"
+    aria-label="Example of what a successful connection test reports"
+  >
     <h4>Connected to {descriptor.name}.</h4>
     <p>
       {descriptor.models.length > 0
@@ -222,10 +256,16 @@
         : ''}Confirmed: only the operations the test actually proved. This test was free — no image
       was generated.
     </p>
+    <p class="connect-note">
+      {t(
+        'connect.test.successExampleNote',
+        'This is an example of the message, not a live result. No test has been run on this page, and the model count above is what the adapter declares rather than what the provider returned. A real Test connection reports what actually came back.',
+      )}
+    </p>
     <p>
       {t(
         'connect.test.successNote',
-        'A provider that cannot confirm a capability says so rather than offering it, and the same is true here: the model list above is what the adapter declares, not a live result.',
+        'A provider that cannot confirm a capability says so rather than offering it, and the same is true here.',
       )}
     </p>
   </div>
