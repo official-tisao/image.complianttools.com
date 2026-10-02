@@ -130,3 +130,4 @@ export * from './ocr.js';
 export * from './ai/ledger.js';
 export * from './ai/ledger-persistence.js';
 export * from './ai/spend-guard.js';
+export * from './ai/shipped-tiers.js';

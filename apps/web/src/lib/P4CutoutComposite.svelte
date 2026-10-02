@@ -1,5 +1,8 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
+  import type { AiCapability } from '@complianttools/image-engine/ai/types';
+  import type { RasterImage } from '@complianttools/image-engine/types';
+  import LazyEscalationControl from './ai/LazyEscalationControl.svelte';
 
   type Locale = 'en' | 'en-XA' | 'ar';
   type Kind = 'expand-image' | 'remove-background' | 'replace-background' | 'cutout' | 'composite';
@@ -98,6 +101,19 @@
     composite: { en: 'Seamless Composite', ar: 'تركيب سلس' },
   };
 
+  /**
+   * The capability each route escalates to (README §13.1.3's register rows T67, T68, T69).
+   *
+   * `cutout` and `composite` are absent on purpose: §13.1.3 admits no Tier 3 case for either, so
+   * offering one would be offering a capability the register does not justify. `PROVIDER_CAPABILITY`
+   * resolves to `undefined` for them and the control is not rendered.
+   */
+  const PROVIDER_CAPABILITY: Partial<Record<Kind, AiCapability>> = {
+    'expand-image': 'outpaint',
+    'remove-background': 'removeBackground',
+    'replace-background': 'replaceBackground',
+  };
+
   const pseudo = (value: string) =>
     `⟦${value.replace(/[aeiou]/giu, (vowel) => ({ a: 'á', e: 'ë', i: 'ï', o: 'ô', u: 'ü' })[vowel.toLowerCase()] ?? vowel)}⟧`;
 
@@ -115,6 +131,40 @@
   let outputHeight = $state(0);
 
   const copy = $derived(locale === 'ar' ? AR : EN);
+  const capability = $derived(PROVIDER_CAPABILITY[kind]);
+
+  /**
+   * Decode the chosen foreground for the escalation request.
+   *
+   * Runs only from the escalation button's click handler, so no image is decoded — and no provider
+   * request is built — during page load or when a local result appears. Returning `undefined` on a
+   * decode failure hands the refusal to the gate's own `image-required` path rather than sending a
+   * request without its image.
+   */
+  async function buildEscalationImage(): Promise<RasterImage | undefined> {
+    if (!foregroundFile) return undefined;
+    let image: HTMLImageElement;
+    try {
+      image = await decode(foregroundFile);
+    } catch {
+      return undefined;
+    }
+    const canvas = document.createElement('canvas');
+    canvas.width = image.naturalWidth;
+    canvas.height = image.naturalHeight;
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+    if (!context) return undefined;
+    context.drawImage(image, 0, 0);
+    const pixels = context.getImageData(0, 0, canvas.width, canvas.height);
+    return {
+      width: canvas.width,
+      height: canvas.height,
+      colorSpace: 'srgb',
+      bitDepth: 8,
+      premultipliedAlpha: false,
+      frames: [{ data: pixels.data, durationMs: 0 }],
+    };
+  }
   const t = (value: string) => (locale === 'en-XA' ? pseudo(value) : value);
   const routePath = $derived(`/${kind}`);
   const path = $derived(locale === 'en' ? routePath : `/${locale}${routePath}`);
@@ -457,12 +507,34 @@
     <section class="result" aria-label={t(copy.preview)}>
       <figure>
         <img data-testid="p4-preview" src={outputUrl} alt={t(copy.preview)} />
-        <figcaption>{t(copy.preview)}</figcaption>
+        <figcaption>
+          {t(copy.preview)}
+          <!--
+            P5-16 / README §13.1.2: "the tier used is always visible". This route is local by
+            construction — a canvas flood fill and a composite — so the badge says so explicitly
+            rather than leaving the user to infer it from the absence of a network indicator.
+          -->
+          <span class="tier-badge" data-testid="tier-badge" data-tier="local">Local</span>
+        </figcaption>
       </figure>
       <a data-testid="p4-download" class="button primary" href={outputUrl} download={downloadName()}
         >{t(copy.download)}</a
       >
     </section>
+
+    <!--
+      P5-16 (README §22.6a) — the escalation offer, shown only once a local result exists. §17.7:
+      on an escalation control the local result is already on screen, so this is an offer, not a gate.
+      Gated on `capability`, because `cutout` and `composite` have no admitted Tier 3 case and must
+      not offer one.
+    -->
+    {#if capability}
+      <LazyEscalationControl
+        {capability}
+        localResultUrl={outputUrl}
+        buildImage={buildEscalationImage}
+      />
+    {/if}
   {/if}
 
   <section class="tool-completion faq" aria-label={t('Questions about this tool')}>
@@ -561,6 +633,18 @@
   .faq summary {
     cursor: pointer;
     font-weight: 600;
+  }
+  .tier-badge {
+    display: inline-block;
+    margin-inline-start: 8px;
+    padding: 0.15rem 0.35rem;
+    border-radius: 0.25rem;
+    background: #166534;
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
   }
   .error {
     color: #a01818;

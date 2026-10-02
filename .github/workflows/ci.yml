@@ -251,6 +251,40 @@ jobs:
           key: raw-corpus-${{ hashFiles('packages/engine/test/fixtures/raw-real-corpus.json') }}
       - run: pnpm verify:raw-corpus
 
+  escalation:
+    name: escalation (P5-16)
+    # README §22.6a calls the no-implicit-escalation test load-bearing for P11 and P12, and §22.4
+    # requires register completeness and tier independence as CI checks. They get their own job
+    # rather than living only inside `browser-e2e`, so a failure names the principle it broke
+    # instead of surfacing as an anonymous spec failure in a 60-minute job.
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.5
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # The engine's `.test.mjs` files import from `../dist/index.js`, so `dist/` must exist before
+      # they run. `turbo.json` gives the root `test` task a `dependsOn: ["build"]`, but
+      # `pnpm --filter <pkg> test` bypasses turbo and therefore skips that edge — the build has to be
+      # named explicitly. This mirrors `test:gates` and `test:credential-leak`, which do the same.
+      - name: Build the engine
+        run: pnpm --filter @complianttools/image-engine build
+      # Tier independence and the surface-derivation tests live in the engine's vitest suite. Named
+      # explicitly so this job is readable as the P5-16 gate rather than as a mystery; `pnpm test` at
+      # the root also runs them, so this is a fast, pointed re-check rather than the only coverage.
+      - name: Tier independence and register completeness
+        run: pnpm --filter @complianttools/image-engine test && pnpm verify:register-completeness
+      - run: pnpm exec playwright install --with-deps chromium firefox webkit
+      - name: No implicit escalation, and one gesture to exactly one request
+        run: pnpm test:escalation
+
   credential-leak:
     name: credential-leak
     runs-on: ubuntu-latest

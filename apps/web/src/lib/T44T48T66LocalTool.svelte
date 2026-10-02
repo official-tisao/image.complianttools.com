@@ -7,7 +7,9 @@
     removeObject,
     type RasterImage,
   } from '@complianttools/image-engine';
+  import type { AiCapability } from '@complianttools/image-engine/ai/types';
   import ConnectEmptyState from './connect/ConnectEmptyState.svelte';
+  import LazyEscalationControl from './ai/LazyEscalationControl.svelte';
   import { ESCALATION_STATE } from './connect/empty-states';
   import '../connect.css';
 
@@ -107,6 +109,29 @@
   let hydrated = $state(false);
 
   const title = $derived(locale === 'ar' ? TITLES[kind].ar : TITLES[kind].en);
+  /**
+   * The capability this route escalates to (README §13.1.3's register row T66).
+   *
+   * Only `remove-object` has one. §13.1.3 admits no Tier 3 case for denoise or the layered editor —
+   * both are deterministic local algorithms with measured Tiers 0–1 — so offering one there would be
+   * offering exactly the "the model is probably better" justification §13.1.3 rules out.
+   */
+  const PROVIDER_CAPABILITY: Partial<Record<Kind, AiCapability>> = {
+    'remove-object': 'inpaint',
+  };
+  const providerCapability = $derived(PROVIDER_CAPABILITY[kind]);
+
+  /**
+   * Build the escalation request's image from the already-decoded source pixels.
+   *
+   * Runs only from the escalation button's click handler, so nothing is encoded for a provider until
+   * the user asks. The painted mask travels with it, so a provider receives the same region the
+   * local path was given rather than being asked to guess the target.
+   */
+  async function buildEscalationImage(): Promise<RasterImage | undefined> {
+    if (!sourcePixels || !sourceWidth || !sourceHeight) return undefined;
+    return createRaster(sourceWidth, sourceHeight, sourcePixels);
+  }
   const localized = (value: string) => (locale === 'en-XA' ? pseudo(value) : value);
   const copy = $derived(locale === 'ar' ? AR : EN);
   const path = $derived(`/${kind}`);
@@ -433,13 +458,42 @@
     </section>
   {/if}
   {#if outputUrl}<section class="result">
-      <img data-testid="local-tool-preview" src={outputUrl} alt={localized(copy.preview)} /><a
+      <img data-testid="local-tool-preview" src={outputUrl} alt={localized(copy.preview)} />
+      <!--
+        P5-16 / README §13.1.2: the tier that produced the result is always visible. Every path this
+        component takes — median/bilateral denoise, layered composite, or a chosen inpainting
+        algorithm — is local, so the badge says so rather than leaving it to be inferred.
+      -->
+      <p>
+        <span class="tier-badge" data-testid="tier-badge" data-tier="local">Local</span>
+      </p>
+      <a
         data-testid="local-tool-download"
         class="button primary"
         href={outputUrl}
         download={`${kind}.png`}>{localized(copy.download)}</a
       >
     </section>
+
+    <!--
+      P5-16 (README §22.6a) — the escalation offer, gated on the local result exactly as the P5-14
+      empty state below it is. §13.1.3 admits a Tier 3 case for T66 only; `denoise` and `editor` have
+      no admitted capability, so `PROVIDER_CAPABILITY` leaves them without one and no control renders.
+
+      The control is `import()`ed rather than imported. This component is also the whole body of
+      `/denoise` and `/editor`, and a static import would put the provider catalogue, the request
+      gate, and the implemented-adapter allowlist into both of those shells — measured at +32 KB
+      compressed on the `/editor` app-shell alone, which broke its 220 KB budget. Only `remove-object`
+      renders the control, so only it should pay for the code behind it.
+    -->
+    {#if providerCapability}
+      <LazyEscalationControl
+        capability={providerCapability}
+        localResultUrl={outputUrl}
+        buildImage={buildEscalationImage}
+        {locale}
+      />
+    {/if}
 
     <!--
       P5-14 (README §17.7) — the escalation empty state, shown only once a local result exists.
@@ -522,5 +576,16 @@
   }
   .error {
     color: #a01818;
+  }
+  .tier-badge {
+    display: inline-block;
+    padding: 0.15rem 0.35rem;
+    border-radius: 0.25rem;
+    background: #166534;
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
   }
 </style>
