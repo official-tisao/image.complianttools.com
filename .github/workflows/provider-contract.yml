@@ -1,0 +1,236 @@
+name: provider-contract
+
+# README §22.7: the live half of the AI adapter contract tests. Runs nightly and on demand; never on
+# a pull request. That trigger list is the security boundary, not a convenience — see the note on
+# secrets below.
+on:
+  schedule:
+    # 03:11 UTC. Off the hour on purpose: every scheduled workflow in GitHub's fleet fires at :00, and
+    # a shared minute means a shared queue and a shared rate limit.
+    - cron: '11 3 * * *'
+  workflow_dispatch:
+    inputs:
+      spend_cap:
+        description: 'Hard spend ceiling for this run, in USD (capped at 2.00 by the runner).'
+        required: false
+        default: '0.20'
+
+# The job is informational. `ci.yml` is what gates a merge, and nothing here may add a required check
+# or a branch rule: a provider being unreachable at 03:11 must never block someone's pull request.
+concurrency:
+  group: provider-contract
+  cancel-in-progress: false
+
+# Least privilege, declared at the top so a job cannot widen it implicitly.
+#
+# `contents: write` is needed because the job commits regenerated adapter descriptors and
+# `docs/PROVIDERS.md` onto a branch. `pull-requests: write` opens the generated-drift PR, and
+# `issues: write` files the breakage and model-drift issues. Nothing else is granted — no
+# `actions: write`, no `packages: write`, no `deployments: write`.
+#
+# This is deliberately *not* the token `ci.yml` uses. `ci.yml` needs `pull-requests: write` to record
+# a plan-sync comment on someone else's pull request; this job needs to push a branch of its own, and
+# separating the two means a compromise in one does not hand over the other's privileges.
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  contract:
+    name: live provider contract (P5-17)
+    runs-on: ubuntu-latest
+    # Generous enough for a provider that is slow to answer, short enough that a hung request cannot
+    # hold a runner for hours.
+    timeout-minutes: 45
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          # The job pushes a branch and, on the first run, may open a PR; full history keeps the
+          # generated diff reviewable rather than appearing as a single opaque commit.
+          fetch-depth: 0
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.5
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build the engine
+        # The runner loads the real adapters from `dist/` — a job that checked a copy of them would
+        # report green while the shipped adapters drifted, which is the failure §22.7 exists to
+        # prevent.
+        run: pnpm --filter @complianttools/image-engine build
+
+      # §22.7: "from a real browser context via Playwright so CORS behaviour is genuinely observed".
+      # Without this the job still runs, but every `browserDirect` value comes back `unknown` and the
+      # job says so — it never substitutes a Node-side fetch for the browser's verdict.
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      # ------------------------------------------------------------------------------------------
+      # Secrets reach the job here, and only here.
+      #
+      # The `if` below is the reason this job is not safe to add `pull_request` to. `test()` and the
+      # minimal operations send real credentials to real providers and spend real money, so a run
+      # whose ref is untrusted would hand an attacker every configured key by adding a line to an
+      # adapter. The guard makes that structurally impossible rather than merely intended: it is
+      # checked before any secret is expanded into an environment block, and the job's `on:` list
+      # contains no pull-request trigger to begin with. Defence in depth, deliberately both.
+      #
+      # A provider is configured by adding its credential to the `PROVIDER_CONTRACT_CREDENTIALS`
+      # repository secret, which is a JSON object keyed by provider id. A provider absent from it is
+      # reported `unconfigured` and never contacted — so adding a provider cannot silently start
+      # costing money, and forgetting one cannot look like breakage.
+      - name: Run the live contract job
+        id: contract
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        env:
+          # A single JSON secret rather than one per provider: adding a provider is a secret edit,
+          # and the runner parses it defensively — malformed JSON means every provider reports
+          # `unconfigured`, not "everything is broken".
+          PROVIDER_CONTRACT_CREDENTIALS: ${{ secrets.PROVIDER_CONTRACT_CREDENTIALS }}
+          PROVIDER_CONTRACT_SPEND_CAP: ${{ inputs.spend_cap || '0.20' }}
+        run: pnpm exec tsx scripts/provider-contract/main.ts
+
+      - name: Verify the contract job's own rules
+        # The job's decision logic is what files issues and opens PRs, so it runs on every change to
+        # the job rather than only on its own schedule. Offline and deterministic.
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        run: pnpm exec tsx scripts/test-provider-contract-gate.ts
+
+      - name: Publish the run report
+        # Uploaded regardless of findings. A night with no findings is a result too, and an absent
+        # artifact would be indistinguishable from a job that never ran.
+        if: always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+        uses: actions/upload-artifact@v4
+        with:
+          name: provider-contract-report
+          path: .generated/provider-contract/
+          retention-days: 30
+
+      # ------------------------------------------------------------------------------------------
+      # The GitHub actions. Both read `decision.json`, which `decideGithubActions` produced from the
+      # redacted report — so the bodies here cannot contain a credential even in principle, because
+      # the decision layer never had one.
+      - name: Open a pull request for generated drift
+        # Runs only when the runner found something to change. The step outputs are set by the runner
+        # step itself, so a night where the job could not run leaves them empty and this is skipped
+        # rather than reaching for a decision file that was never written.
+        if: >-
+          always()
+          && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+          && needs.contract.outputs.drift == 'true'
+        needs: contract
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: p5-17/provider-contract
+          delete-branch: true
+          add-paths: |
+            packages/engine/src/ai/adapters
+            docs/PROVIDERS.md
+          # The PR title is the runner's own decision title, which is built from the redacted report.
+          title: ${{ needs.contract.outputs.drift_title }}
+          commit-message: ${{ needs.contract.outputs.drift_title }}
+
+      - name: File an issue for provider breakage
+        if: >-
+          always()
+          && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+          && needs.contract.outputs.breakage == 'true'
+        needs: contract
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('node:fs');
+            const decision = JSON.parse(
+              fs.readFileSync('.generated/provider-contract/decision.json', 'utf8'),
+            );
+            const plan = decision.breakageIssue;
+            if (!plan) core.info('no breakage issue to file');
+            // A stable slug in the title makes this update the existing issue on a later night
+            // rather than filing a new one every 24 hours.
+            const title = plan.title;
+            const existing = await github.paginate(
+              '/repos/{owner}/{repo}/issues',
+              { state: 'open', per_page: 100 },
+              (issues) => issues.filter((i) => i.title.startsWith('[p5-17]')),
+            );
+            const prior = existing.find((i) => i.title === title);
+            if (prior) {
+              core.info(`updating issue #${prior.number}`);
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prior.number,
+                body: plan.body,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body: plan.body,
+                labels: ['p5-17', 'provider-breakage'],
+              });
+            }
+
+      - name: File an issue for model-list drift
+        if: >-
+          always()
+          && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+          && needs.contract.outputs.drift_issue == 'true'
+        needs: contract
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('node:fs');
+            const decision = JSON.parse(
+              fs.readFileSync('.generated/provider-contract/decision.json', 'utf8'),
+            );
+            const plan = decision.driftIssue;
+            if (!plan) core.info('no drift issue to file');
+            const existing = await github.paginate(
+              '/repos/{owner}/{repo}/issues',
+              { state: 'open', per_page: 100 },
+              (issues) => issues.filter((i) => i.title.startsWith('[p5-17]')),
+            );
+            const prior = existing.find((i) => i.title === plan.title);
+            if (prior) {
+              core.info(`updating issue #${prior.number}`);
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prior.number,
+                body: plan.body,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: plan.title,
+                body: plan.body,
+                labels: ['p5-17', 'model-drift'],
+              });
+            }
+
+      - name: Summarise
+        # Always last, and never fails the job. Its only job is to make the run legible in the
+        # Actions UI without making anyone read the artifact.
+        if: always()
+        run: |
+          if [ -f .generated/provider-contract/report.md ]; then
+            cat .generated/provider-contract/report.md
+          else
+            echo "The contract job produced no report. See the job log for why."
+          fi

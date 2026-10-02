@@ -1,0 +1,88 @@
+{
+  "$comment": [
+    "P5-17 — a deliberately stale curated model list, for the drift path's own test.",
+    "",
+    "README §22.7's 'Done when' clause is 'a deliberately stale model list opens a PR'. That can only",
+    "be proved deterministically if the stale state is a fixture rather than something a live provider",
+    "has to be coaxed into — a real provider would have to change its catalogue, which is neither",
+    "repeatable nor something a test should be able to cause.",
+    "",
+    "So this file describes a provider whose curated fallback list contains a model the discovered",
+    "list does not have. `test-provider-contract-gate.ts` drives it through the same runner, report",
+    "and GitHub-decision code the nightly job uses, and asserts the whole chain ends in a pull-request",
+    "plan. No network, no key, no provider.",
+    "",
+    "The shapes are the ones the runner consumes: a curated descriptor list, what `listModels()`",
+    "actually returned, and the browser observation. A 'removed' model is present in the curated list",
+    "and absent from the discovered list — which is the case §17.2's chooser turns into a selection that",
+    "fails when a user clicks it."
+  ],
+  "provider": {
+    "id": "fixture-stale",
+    "name": "Fixture provider with a stale curated list",
+    "homepage": "https://example.test/",
+    "capabilities": ["generate", "describe"],
+    "browserDirect": "unknown",
+    "credentialFields": [
+      {
+        "key": "apiKey",
+        "label": "API Key",
+        "placeholder": "fixture-key",
+        "secret": true,
+        "required": true
+      }
+    ],
+    "defaultBaseUrl": "https://api.example.test/v1",
+    "allowsCustomBaseUrl": false,
+    "curatedModels": [
+      {
+        "id": "model-still-here",
+        "label": "Still Here",
+        "capabilities": ["generate", "describe"]
+      },
+      {
+        "id": "model-retired-last-month",
+        "label": "Retired Last Month",
+        "capabilities": ["generate"],
+        "notes": "⚠ VERIFY this slug still exists."
+      }
+    ]
+  },
+  "discoveredModels": [
+    {
+      "id": "model-still-here",
+      "label": "Still Here",
+      "capabilities": ["generate", "describe"]
+    },
+    {
+      "id": "model-added-yesterday",
+      "label": "Added Yesterday",
+      "capabilities": ["generate"]
+    }
+  ],
+  "test": { "ok": true, "confirmed": ["generate", "describe"], "detail": "GET /models passed." },
+  "browserObservation": {
+    "source": "playwright-chromium",
+    "sameOriginControlOk": true,
+    "completed": true,
+    "status": 200,
+    "usedAuthHeader": true
+  },
+  "$expect": {
+    "removed": ["model-retired-last-month"],
+    "added": ["model-added-yesterday"],
+    "diffStatus": "fail",
+    "drift": true,
+    "pullRequestPlanned": true,
+    "driftIssuePlanned": true,
+    "breakageIssuePlanned": false,
+    "$rationale": [
+      "The removed model is the defect: the chooser offers something the provider no longer serves.",
+      "The added model rides along in the same diff but is not by itself breakage, so it appears in the",
+      "drift issue rather than a breakage one.",
+      "test() passing is what keeps this a drift finding and not a breakage finding — the two have to",
+      "stay separately triggerable or a provider that both broke and lost a model produces one",
+      "ambiguous issue instead of two actionable ones."
+    ]
+  }
+}
