@@ -308,7 +308,7 @@ jobs:
       # fourth provider-dependent tool or a deleted page fails before a browser is ever launched.
       - name: Derive the 78-of-81 inventory
         run: pnpm verify:local-tool-inventory
-      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm exec playwright install --with-deps chromium firefox webkit
       - name: Local tools complete with no provider
         run: pnpm test:gate5-local
       # Flow D's round trip. A share link that no page reads back is a broken growth loop, and the
