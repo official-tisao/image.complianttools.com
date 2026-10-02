@@ -233,16 +233,25 @@ export const LEDGER_STATUS = {
 /** README §17.5 — what the "your providers" area can and cannot show right now. */
 export const CONNECTIONS_STATUS = {
   implemented:
-    'Whether each provider is being reached directly or through a relay you deployed. That choice is per-provider and is remembered for the session only, because a relay token authorises spending your quota.',
+    'Testing a connection, for real: every provider walkthrough has a Test connection button that runs a minimal probe against the provider and reports exactly what came back, including which specific thing went wrong when it did. Also whether each provider is being reached directly or through a relay you deployed — that choice is per-provider and is remembered for the session only, because a relay token authorises spending your quota.',
   notYet:
     'A saved list of connected providers is not built yet. There is no store that holds a credential, a confirmed-capability set, a last-used time, or a status flag per provider, so this page cannot list them, and it will not show a provider as connected when it has no way to know.',
   consequence:
-    'A key you paste on a walkthrough page is used by that page and is not retained here, so this section is empty until the connection manager exists. That is the honest state of it, and the walkthrough pages still work in the meantime.',
+    'A key you paste on a walkthrough page is used by that page and is not retained here, so this section is empty until the connection manager exists. That is the honest state of it: the test tells you whether a key works right now, and nothing here will remember it for tomorrow.',
   exportNote:
     'Exporting a configuration file without secrets (§17.5) is not implemented, and no such file is offered.',
 } as const;
 
-/** README §17.6 #6 and §17.7 — the local-tool count, stated as a figure with its own source. */
+/**
+ * README §17.6 #6 and §17.7 — the local-tool count, stated as a figure with its own source.
+ *
+ * These three numbers are **derived and checked**, not typed in and hoped for.
+ * `scripts/check-local-tool-inventory.ts` parses `feature-audit.csv`, verifies the ids are exactly
+ * T01–T81, derives the provider-dependent set from the CSV's own `AI-only` category *and*
+ * independently from the `/ai/*` route directories, asserts the two agree, checks every local
+ * tool's route exists on disk, and fails if any of these figures drifts.
+ * `scripts/test-local-tool-inventory-gate.ts` proves that check still fails when it should.
+ */
 export const LOCAL_TOOL_COUNT = {
   total: 81,
   workingWithoutKey: 78,

@@ -40,6 +40,10 @@ function makeBuild(payloadBytes: number, options: { includeInput?: boolean } = {
     'convert/png-to-webp.html',
     'docs/formats/jpeg.html',
     'connect-ai.html',
+    // The per-provider walkthrough, which hydrates so §17.3's Test connection button can run. Nested
+    // under `connect-ai/` like its real counterpart, so the verifier's nested-route handling is
+    // exercised by the synthetic tree too.
+    'connect-ai/openai.html',
     'editor.html',
     'heic-converter.html',
     'raw-converter.html',

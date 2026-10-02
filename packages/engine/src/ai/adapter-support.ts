@@ -12,6 +12,9 @@
  * Neither helper ever accepts, stores, or echoes a credential.
  */
 
+import type { EngineError } from '../types.js';
+import { registeredTransportCredentials } from './transport.js';
+
 /** Provider credit/rate-limit headers that map onto the ledger. */
 export interface LedgerHeaderReading {
   /** Credits spent by this request, when the provider reported it. */
@@ -202,4 +205,185 @@ export function cspConnectSrcOrigin(baseUrl: string | undefined): string | null 
   }
   if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
   return parsed.origin;
+}
+
+/**
+ * Map a non-2xx probe response onto an `EngineError` of the right kind (§17.3).
+ *
+ * ## Why this exists
+ *
+ * §17.3's contract is one specific message per failure class, and `apps/web/src/lib/connect/
+ * failures.ts` classifies strictly off `EngineError.kind`. An adapter that reports every rejection
+ * as `ai-auth-failed` therefore renders "That key was rejected — copy the whole key again" for a
+ * rate limit, a content-policy refusal, and an empty balance alike. All three have a different fix,
+ * and the wrong one costs a user an afternoon.
+ *
+ * So the classification has to happen where the status code is still in hand, and it has to be the
+ * *same* classification the UI performs — otherwise the adapter and the renderer disagree about
+ * what happened, which is how a failure ends up described two different ways in one flow.
+ *
+ * The status-to-kind mapping is deliberately identical to `classify()` on the web side:
+ *
+ * | status              | kind                  | what the user is told              |
+ * |---------------------|-----------------------|-----------------------------------|
+ * | 401                 | `ai-auth-failed`      | the key was rejected               |
+ * | 402                 | `ai-provider-error`   | the account has no credit          |
+ * | 403                 | `ai-auth-failed`      | valid key, not permitted           |
+ * | 408, 429            | `ai-rate-limited`     | the provider's limit, not ours     |
+ * | anything else       | `ai-provider-error`   | the provider returned an error     |
+ *
+ * `429` carries `retryAfterMs` when the provider sent `Retry-After`, which the transport honours and
+ * the ledger records. `413` maps to `ai-provider-error` deliberately: an oversized upload is the
+ * provider refusing the request, and §17.3's `provider-error` remedy ("try a smaller image") is
+ * exactly right for it.
+ */
+export function classifyTestResponse(
+  status: number,
+  provider: string,
+  headers?: Headers | Record<string, string>,
+): EngineError {
+  const readHeader = (name: string): string | null => {
+    if (!headers) return null;
+    if (typeof (headers as Headers).get === 'function') {
+      return (headers as Headers).get(name);
+    }
+    const record = headers as Record<string, string>;
+    const match = Object.keys(record).find((key) => key.toLowerCase() === name.toLowerCase());
+    return match ? (record[match] ?? null) : null;
+  };
+
+  if (status === 401) {
+    return {
+      kind: 'ai-auth-failed',
+      provider,
+      remedy: `The provider rejected the credential (HTTP ${status}). Copy the whole key again.`,
+    };
+  }
+  if (status === 403) {
+    // Deliberately `ai-auth-failed`, not `ai-provider-error`: the web classifier turns a 403 on an
+    // auth failure into the `forbidden` class ("the key is valid but not permitted"), which is the
+    // message that matches this status. Reporting it as a generic provider error would collapse it.
+    return {
+      kind: 'ai-auth-failed',
+      provider,
+      remedy: `The credential was accepted but this account may not use the API (HTTP ${status}).`,
+    };
+  }
+  if (status === 402) {
+    return {
+      kind: 'ai-provider-error',
+      provider,
+      status,
+      remedy: 'The account authenticated but has no credit left. Add credit, then test again.',
+    };
+  }
+  if (status === 408 || status === 429) {
+    const retryAfter = readHeader('retry-after');
+    const seconds = retryAfter ? Number.parseInt(retryAfter, 10) : Number.NaN;
+    return {
+      kind: 'ai-rate-limited',
+      provider,
+      ...(Number.isFinite(seconds) && seconds > 0 ? { retryAfterMs: seconds * 1000 } : {}),
+      remedy:
+        retryAfter && Number.isFinite(seconds) && seconds > 0
+          ? `The provider is rate limiting this account. Retry in about ${seconds}s.`
+          : 'The provider is rate limiting this account. Wait, then test again.',
+    };
+  }
+  return {
+    kind: 'ai-provider-error',
+    provider,
+    status,
+    remedy: `The provider returned HTTP ${status}. See its API reference for what this endpoint expects.`,
+  };
+}
+
+/**
+ * Classify a thrown value from `adapter.test()` into an `EngineError`.
+ *
+ * ## Why adapters need this
+ *
+ * An adapter's `catch` block used to return `ai-auth-failed` for anything thrown. That is wrong for
+ * the single most common browser-side failure: a provider whose server sends no CORS headers makes
+ * `fetch` throw a `TypeError` before any request is sent, and §17.3 requires that to render as
+ * *"your browser can't reach this provider directly"* with the relay remedy — not as "that key was
+ * rejected".
+ *
+ * Telling a user to re-copy a key that was never transmitted costs them an afternoon and sends them
+ * looking for the wrong problem. The transport already classifies this correctly
+ * (`isBrowserCorsOrNetworkFailure`); this reuses that judgement rather than re-implementing it.
+ *
+ * The three engines word it differently — Chromium `Failed to fetch`, Firefox `NetworkError when
+ * attempting to fetch resource.`, WebKit `Load failed` — so matching is on `TypeError`, which is
+ * what all three throw.
+ */
+export function classifyThrownByTransport(
+  cause: unknown,
+  provider: string,
+  detail?: string,
+): EngineError {
+  const message = cause instanceof Error ? cause.message : String(cause);
+  const isNetworkFailure =
+    cause instanceof TypeError ||
+    (cause instanceof Error &&
+      /failed to fetch|networkerror|load failed|network error/i.test(message));
+
+  if (isNetworkFailure) {
+    return {
+      kind: 'ai-cors-blocked',
+      provider,
+      remedy:
+        'The browser blocked this request before it left the page — the provider does not allow ' +
+        'calls from a web page. Your key was never sent. Deploy a relay, or use a provider that ' +
+        'answers browsers directly.',
+    };
+  }
+
+  return {
+    kind: 'ai-provider-error',
+    provider,
+    providerMessage: detail ?? message,
+    remedy: `The request to this provider failed before a response arrived (${message}).`,
+  };
+}
+
+/**
+ * Strip credential values out of a provider's own response text.
+ *
+ * ## Why an adapter needs this
+ *
+ * Providers echo the submitted credential back inside their error bodies. OpenAI's 401 reads
+ * `Incorrect API key provided: sk-...`; Anthropic's reads `invalid x-api-key: sk-...`. Both are
+ * ordinary, documented response shapes, not something an adapter can filter at the source.
+ *
+ * An adapter that puts that body into a thrown `Error` message therefore puts the user's key into
+ * whatever consumes the message — the escalation control's error panel, a console, a crash
+ * reporter, a support screenshot. §16.6 forbids exactly that, and §17.3's failure copy has to be
+ * safe to render.
+ *
+ * The recorded contract suite replays those real 401 bodies and asserts the key does not survive;
+ * this function is what makes it pass. It was added because those tests failed, which is the
+ * clearest evidence this was a live defect rather than a precaution.
+ *
+ * Substitution is by `split`/`join` rather than `RegExp`, so a credential containing regex
+ * metacharacters — which real keys do — cannot break the redaction or throw.
+ *
+ * `credentials` is optional and defaults to everything registered with the transport, so a caller
+ * that has already handed its key to {@link registerTransportCredentials} passes nothing.
+ */
+export function redactProviderText(
+  text: string,
+  credentials?: readonly string[] | Record<string, string>,
+): string {
+  const supplied = credentials
+    ? Array.isArray(credentials)
+      ? credentials
+      : Object.values(credentials)
+    : [];
+  const values = [...supplied, ...registeredTransportCredentials()].filter(
+    (value) => typeof value === 'string' && value.length >= 4,
+  );
+  let safe = text;
+  for (const value of values) safe = safe.split(value).join('[redacted]');
+  return safe;
 }

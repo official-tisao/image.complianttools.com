@@ -10,6 +10,9 @@ import {
   pollAsyncJob,
   TransportError,
   makeTransportLogger,
+  registerTransportCredentials,
+  clearTransportCredentials,
+  registeredTransportCredentials,
 } from '../dist/index.js';
 
 /* ------------------------------------------------------------------ */
@@ -372,6 +375,102 @@ test('redacted error detail never exposes raw values', () => {
   );
   assert.equal(err.message.includes('test-secret-token'), false);
   assert.equal(err.detail?.includes('test-secret-token'), false);
+});
+
+/* ------------------------------------------------------------------ */
+/* 8a. Real credentials, not just the historical placeholder          */
+/* ------------------------------------------------------------------ */
+
+/*
+ * Every redaction test above uses `test-api-key-123` or `test-secret-token`. That is exactly the
+ * pair the transport used to fall back to when no credential list was supplied — so those tests
+ * passed against a mechanism that would have passed a real `sk-ant-...` straight through into
+ * `err.message` and `err.detail`. The bug was invisible *because* the test secret and the fallback
+ * secret were the same two strings.
+ *
+ * These use credential shapes that appear in no redaction list, which is what a real key looks like
+ * from the transport's point of view.
+ */
+
+test('a real-shaped credential is redacted once registered, not only the placeholder', () => {
+  const realKey = 'sk-ant-api03-REAL-LOOKING-KEY-9f2b7c1e4a';
+  registerTransportCredentials({ apiKey: realKey });
+  try {
+    // The exact shape a provider uses when it echoes a rejected key back in its error body.
+    const err = new TransportError(
+      'provider-error',
+      'anthropic',
+      `{"error":{"message":"Incorrect API key provided: ${realKey}"}}`,
+    );
+    assert.equal(
+      err.message.includes(realKey),
+      false,
+      'a real credential reached the error message',
+    );
+    assert.equal(err.detail?.includes(realKey), false, 'a real credential reached error.detail');
+    assert.ok(err.message.includes('[redacted]'));
+  } finally {
+    clearTransportCredentials();
+  }
+});
+
+test('credentials are cleared between connections, so one provider cannot redact another s key', () => {
+  const keyA = 'sk-provider-alpha-AAAA-1111';
+  const keyB = 'sk-provider-beta-BBBB-2222';
+  registerTransportCredentials({ apiKey: keyA });
+  registerTransportCredentials({ apiKey: keyB });
+  try {
+    // Only the most recent registration is active, which is the correct lifetime: a credential
+    // stops being redacted when the user removes it, and the *next* key is what needs protecting.
+    assert.deepEqual([...registeredTransportCredentials()], [keyB]);
+    assert.equal(new TransportError('x', 'p', `saw ${keyB}`).message.includes(keyB), false);
+  } finally {
+    clearTransportCredentials();
+  }
+  assert.deepEqual([...registeredTransportCredentials()], []);
+});
+
+test('a too-short credential is not registered, so it cannot blank out every message', () => {
+  // Redacting a 1-3 character token would replace ordinary characters throughout the message and
+  // destroy the diagnostic it exists to preserve.
+  registerTransportCredentials({ apiKey: 'ab', relay: '' });
+  try {
+    assert.deepEqual([...registeredTransportCredentials()], []);
+    const err = new TransportError('provider-error', 'p', 'a short ab token was rejected');
+    assert.equal(err.message, 'a short ab token was rejected');
+  } finally {
+    clearTransportCredentials();
+  }
+});
+
+test('transportFetch registers the credentials it is given before any attempt', async () => {
+  const realKey = 'sk-openai-REAL-PROJECT-KEY-77aa11';
+  const stubFetch = async () => {
+    // The provider echoes the key back, as OpenAI's 401 body does.
+    throw new TypeError(`Failed to fetch: key=${realKey}`);
+  };
+  await assert.rejects(
+    () =>
+      transportFetch(
+        'https://api.openai.com/v1/images/generations',
+        { method: 'POST' },
+        {
+          allowedOrigins: ['https://api.openai.com'],
+          credentials: { apiKey: realKey },
+          fetchImpl: stubFetch,
+          maxRetries: 1,
+        },
+      ),
+    (error) => {
+      assert.equal(
+        error.message.includes(realKey),
+        false,
+        'a real credential survived into a normalized TransportError',
+      );
+      return true;
+    },
+  );
+  clearTransportCredentials();
 });
 
 /* ------------------------------------------------------------------ */

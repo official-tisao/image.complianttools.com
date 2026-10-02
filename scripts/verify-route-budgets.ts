@@ -41,6 +41,18 @@ const cases = [
   },
   { archetype: 'reference', route: 'docs/formats/jpeg.html', budget: 0, requiresInput: false },
   { archetype: 'connect-ai', route: 'connect-ai.html', budget: 45_000, requiresInput: false },
+  // The per-provider walkthrough hydrates so §17.3's `Test connection` button can run, which means
+  // it pays for the Svelte runtime — the bulk of this figure, and unavoidable for any interactive
+  // page. The budget is set just above the measured size so it is a regression guard rather than a
+  // target, and it is deliberately far below the `app-shell` budget: adapters are imported
+  // dynamically at press time, so none of the ten implementations is in this chunk, and a change
+  // that made them static would blow straight through it.
+  {
+    archetype: 'connect-ai-provider',
+    route: 'connect-ai/openai.html',
+    budget: 80_000,
+    requiresInput: false,
+  },
   { archetype: 'app-shell', route: 'editor.html', budget: 220_000, requiresInput: false },
   ...phaseTwoToolRoutes.map((route) => ({
     archetype: `phase-two:${route}`,

@@ -15,18 +15,21 @@ import { PROVIDER_GUIDES, providerGuide } from '$lib/connect/providers';
 export const prerender = true;
 
 /**
- * The walkthrough ships as static HTML with no client JavaScript.
+ * The walkthrough ships as prerendered HTML, and hydrates so step 3's button can run.
  *
  * Steps 1, 2, and 4 — create a key, understand the credential field, see what the provider
- * unlocks — are complete as markup. Step 3's *Test connection* is the one interactive part, and it
- * is a `<details>` disclosure whose contents are authored per provider and rendered at build time.
- * That keeps the page inside the 45 kB route budget and makes the whole walkthrough readable with
- * scripting off, which is the same reasoning that gives `docs/formats/*` a zero-JavaScript budget.
+ * unlocks — are complete as markup and readable with scripting off, which is the same reasoning that
+ * gives `docs/formats/*` a zero-JavaScript budget.
  *
- * Making the test a real call is a follow-up: it needs a connection manager to keep a credential
- * across a page load, and that does not exist yet (see `CONNECTIONS_STATUS`).
+ * Client-side rendering is on because §17.3 step 3 is an actual control: it runs `adapter.test()`
+ * against the provider and renders what came back. `ProviderConnectionTest` imports the adapter
+ * dynamically at press time, so none of the ten adapter implementations is in this route's initial
+ * chunk — which is what keeps the page inside its 45 kB budget.
+ *
+ * With scripting off the button does not work, and the page says so: the documented states and
+ * messages below it are the fallback, and they are the same ones a working test would render.
  */
-export const csr = false;
+export const csr = true;
 
 /** One prerendered page per connectable provider. */
 export const entries: EntryGenerator = () =>

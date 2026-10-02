@@ -88,11 +88,22 @@ export const geminiAdapter: ProviderAdapter = {
           remedy: 'Provide apiKey.',
         } satisfies EngineError,
       };
+    // This used to return `ok: true` with every declared capability "confirmed" without making a
+    // single request. §17.3's Test connection is the moment a user decides to trust this
+    // integration, so reporting success there on no evidence at all is the one thing that step must
+    // never do — the copy in `ProviderWalkthrough.svelte` even said so in its `detail` while the
+    // `confirmed` array above it said the opposite.
+    //
+    // Gemini has no free metadata endpoint documented in §14.3 to probe against, so the honest
+    // answer is a real credential-shape check plus an explicit "nothing confirmed yet". The
+    // nightly job (§22.7) and the first real operation are what confirm a capability.
     return {
       ok: true,
-      confirmed: descriptor.capabilities,
+      confirmed: [],
       detail:
-        'Gemini adapter: endpoint documented at README §14.3; live test not executed (no live credentials).',
+        'The key was accepted locally, but no request was sent: §14.3 documents no free endpoint to ' +
+        'probe it against, so nothing is confirmed yet. Each capability is verified the first time ' +
+        'you use it.',
     };
   },
   async listModels(ctx: AdapterContext) {

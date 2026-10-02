@@ -7,6 +7,7 @@ import type {
   AdapterContext,
 } from '../types.js';
 import type { EngineError } from '../../types.js';
+import { classifyTestResponse, classifyThrownByTransport } from '../adapter-support.js';
 const descriptor: ProviderDescriptor = {
   id: 'bfl',
   name: 'Black Forest Labs (FLUX)',
@@ -64,24 +65,34 @@ export const bflAdapter: ProviderAdapter = {
         headers: { 'x-key': ctx.credentials.apiKey },
         signal: ctx.signal ?? null,
       });
-      if (resp.ok)
-        return { ok: true, confirmed: descriptor.capabilities, detail: 'User endpoint (200).' };
+      if (resp.ok) {
+        // §14.5 is explicit that BFL has no free endpoint: "no free account endpoint; minimal
+        // billable generation required (~$0.01)". `GET /v1/user` therefore proves the credential
+        // and nothing else. It previously returned `descriptor.capabilities`, so a successful key
+        // check was reported as confirmation that generate, inpaint, and outpaint all work —
+        // capabilities whose endpoints were never called.
+        return {
+          ok: true,
+          confirmed: [],
+          detail:
+            'BFL accepted the credential (GET /v1/user returned 200). This proves the key only: ' +
+            '§14.5 documents no free endpoint for the model APIs, so no capability is confirmed ' +
+            'until an operation is run.',
+        };
+      }
+      // A non-2xx from the user endpoint is a real answer with a real cause, so it is classified
+      // rather than flattened to "no free endpoint" regardless of status.
       return {
         ok: false,
-        error: {
-          kind: 'ai-auth-failed',
-          provider: descriptor.id,
-          remedy: 'No free endpoint (§14.5); minimal billable generation required (~$0.01).',
-        } satisfies EngineError,
+        error: classifyTestResponse(resp.status, descriptor.id, resp.headers) satisfies EngineError,
       };
     } catch (e: unknown) {
+      // A browser-side network failure is not an authentication failure. §17.3 gives the two
+      // different messages and different fixes: a CORS block means the key was never sent, so
+      // telling the user to re-copy it sends them looking for the wrong problem entirely.
       return {
         ok: false,
-        error: {
-          kind: 'ai-auth-failed',
-          provider: descriptor.id,
-          remedy: `Failed: ${(e as Error).message || String(e)}. Minimal billable generation may be needed.`,
-        } satisfies EngineError,
+        error: classifyThrownByTransport(e, descriptor.id) satisfies EngineError,
       };
     }
   },
