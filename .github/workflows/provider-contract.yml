@@ -130,8 +130,7 @@ jobs:
         if: >-
           always()
           && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
-          && needs.contract.outputs.drift == 'true'
-        needs: contract
+          && steps.contract.outputs.drift == 'true'
         uses: peter-evans/create-pull-request@v6
         with:
           branch: p5-17/provider-contract
@@ -140,15 +139,14 @@ jobs:
             packages/engine/src/ai/adapters
             docs/PROVIDERS.md
           # The PR title is the runner's own decision title, which is built from the redacted report.
-          title: ${{ needs.contract.outputs.drift_title }}
-          commit-message: ${{ needs.contract.outputs.drift_title }}
+          title: ${{ steps.contract.outputs.drift_title }}
+          commit-message: ${{ steps.contract.outputs.drift_title }}
 
       - name: File an issue for provider breakage
         if: >-
           always()
           && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
-          && needs.contract.outputs.breakage == 'true'
-        needs: contract
+          && steps.contract.outputs.breakage == 'true'
         uses: actions/github-script@v7
         with:
           script: |
@@ -189,8 +187,7 @@ jobs:
         if: >-
           always()
           && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
-          && needs.contract.outputs.drift_issue == 'true'
-        needs: contract
+          && steps.contract.outputs.drift_issue == 'true'
         uses: actions/github-script@v7
         with:
           script: |
