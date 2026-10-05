@@ -132,16 +132,63 @@ export type DemuxedVideoChunk = {
 };
 
 /**
+ * Reads the duration of a local video's primary video track, in seconds.
+ *
+ * T13 needs this *before* decoding anything: it is what turns "no frames were produced" into
+ * "your trim range falls outside a 1.5 second clip", which is a fixable user mistake rather
+ * than an opaque decode failure.
+ */
+export async function readContainerVideoDuration(input: Blob): Promise<number> {
+  const { ALL_FORMATS, BlobSource, Input } = await import('mediabunny');
+  // Pass the MIME type through as a format hint. A Blob source that carries no usable type is
+  // harder for the reader to identify, and it can then report a perfectly good WebM as having no
+  // video track.
+  const media = new Input({
+    formats: ALL_FORMATS,
+    source: input.type
+      ? new BlobSource(new Blob([input], { type: input.type }))
+      : new BlobSource(input),
+  });
+  try {
+    const track = await media.getPrimaryVideoTrack();
+    if (!track)
+      throw {
+        kind: 'decode-failed',
+        format: 'mp4',
+        detail: 'The container contains no video track.',
+        remedy: 'Choose a container with a video stream or try a different file.',
+      } satisfies EngineError;
+    // `computeDuration` reads from the input as it scans, so it must be awaited *before* the
+    // `finally` disposes it. Returning the promise instead of awaiting it lets disposal win the
+    // race, and the caller sees `InputDisposedError` rather than a duration.
+    return await track.computeDuration();
+  } finally {
+    media.dispose();
+  }
+}
+
+/**
  * Reads the first encoded video packet from any container supported by the pinned
  * Mediabunny build. This proves container parsing independently from the browser's
  * codec availability and is used for MP4, WebM, Matroska, and AVI capability checks.
  */
 export async function demuxContainerFirstVideoPacket(
   input: ArrayBuffer | Uint8Array,
+  mimeType?: string,
 ): Promise<DemuxedVideoChunk> {
-  const { ALL_FORMATS, BufferSource, EncodedPacketSink, Input } = await import('mediabunny');
+  const { ALL_FORMATS, BlobSource, BufferSource, EncodedPacketSink, Input } =
+    await import('mediabunny');
   const bytes = input instanceof Uint8Array ? input : new Uint8Array(input);
-  const media = new Input({ formats: ALL_FORMATS, source: new BufferSource(bytes) });
+  // With a MIME type, hand the reader a Blob so it can use the type as a format hint. A WebM
+  // produced by MediaRecorder is a live stream: it carries no duration in its header, and the
+  // type is what lets the reader recognise the container without a seekable index. Without the
+  // hint the same bytes can be reported as having no video track.
+  const media = new Input({
+    formats: ALL_FORMATS,
+    source: mimeType
+      ? new BlobSource(new Blob([bytes], { type: mimeType }))
+      : new BufferSource(bytes),
+  });
   try {
     const track = await media.getPrimaryVideoTrack();
     if (!track)

@@ -1,13 +1,17 @@
 import { expect, test } from '@playwright/test';
 
+/**
+ * The routes still served by the generic `LongTailTool` shell.
+ *
+ * `spritesheet`, `html-to-image`, `compress-to-size`, and `watch` were removed from this list in
+ * P6-01: they now have dedicated components with their own schemas, typed errors, and previews,
+ * and are covered by `e2e/p6-01-tools.spec.ts` instead. This file still covers the four the
+ * shell serves.
+ */
 const routes = [
-  ['spritesheet', 'Spritesheet Maker'],
-  ['html-to-image', 'HTML to Image'],
-  ['compress-to-size', 'Compress to Target Size'],
   ['optimize-for-web', 'Optimize for Web'],
   ['batch', 'Batch Runner'],
   ['recipe', 'Recipe Builder'],
-  ['watch', 'Folder Watcher'],
   ['codegen', 'Code Generator'],
 ] as const;
 
@@ -43,13 +47,9 @@ test.describe('W5 long-tail tools', () => {
     await expect(page.getByTestId('long-tail-status')).toContainText('generated');
   });
 
-  test('HTML card export stays local and produces a download link', async ({ page }) => {
-    await page.goto('/html-to-image');
-    await page.getByTestId('html-input').fill('<h1>CC0 fixture</h1><p>Local card</p>');
-    await page.getByTestId('long-tail-run').click();
-    await expect(page.getByTestId('long-tail-download')).toHaveAttribute(
-      'download',
-      'html-card.png',
-    );
+  test('web export produces a local download link', async ({ page }) => {
+    await page.goto('/optimize-for-web');
+    await expect(page.getByTestId('long-tail-input')).toBeVisible();
+    await expect(page.getByTestId('quality')).toBeVisible();
   });
 });

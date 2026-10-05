@@ -1,7 +1,8 @@
 <script lang="ts">
-  import LongTailTool from '$lib/LongTailTool.svelte';
+  import T15Spritesheet from '$lib/T15Spritesheet.svelte';
   import type { PageData } from './$types';
+
   let { data }: { data: PageData } = $props();
 </script>
 
-<LongTailTool kind="spritesheet" locale={data.locale} />
+<T15Spritesheet locale={data.locale} />

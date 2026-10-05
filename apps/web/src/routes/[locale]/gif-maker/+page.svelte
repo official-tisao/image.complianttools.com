@@ -1,8 +1,8 @@
 <script lang="ts">
-  import T21CompressToSize from '$lib/T21CompressToSize.svelte';
+  import T12GifMaker from '$lib/T12GifMaker.svelte';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();
 </script>
 
-<T21CompressToSize locale={data.locale} />
+<T12GifMaker locale={data.locale} />
