@@ -21,6 +21,8 @@ describe('P2 codec registry', () => {
       webGl2: false,
       offscreenCanvas: false,
       fileSystemAccess: false,
+      fileSystemDirectoryAccess: false,
+      saveFilePicker: false,
       opfs: false,
       webCodecs: false,
     });
@@ -230,6 +232,8 @@ describe('P2 codec registry', () => {
       webGl2: false,
       offscreenCanvas: false,
       fileSystemAccess: false,
+      fileSystemDirectoryAccess: false,
+      saveFilePicker: false,
       opfs: false,
       webCodecs: true,
     });

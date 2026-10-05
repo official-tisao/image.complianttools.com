@@ -766,8 +766,10 @@ test.describe('T74 folder watcher', () => {
 
     await page.getByTestId('t74-start').click();
 
-    // The first sweep is the baseline and reports what was already there.
-    await expect(page.getByTestId('t74-status')).toContainText('already present', {
+    // "Ignore files already present" is off by default, so the first sweep processes the two
+    // seeded files as well as recording them as the baseline. It previously only recorded them,
+    // which contradicted the toggle's own label and left a pointed-at folder of photos untouched.
+    await expect(page.getByTestId('t74-status')).toContainText('Wrote 2 file(s)', {
       timeout: 15_000,
     });
 

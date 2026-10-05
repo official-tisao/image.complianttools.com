@@ -82,6 +82,8 @@ const capabilities = {
   webGl2: false,
   offscreenCanvas: false,
   fileSystemAccess: false,
+  fileSystemDirectoryAccess: false,
+  saveFilePicker: false,
   opfs: false,
   webCodecs: false,
 };

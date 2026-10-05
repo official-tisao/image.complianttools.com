@@ -11,6 +11,7 @@
    * ordinary multi-file picker does the same processing so the tool is still useful.
    */
   import { onDestroy } from 'svelte';
+  import { SvelteSet } from 'svelte/reactivity';
   import {
     T74FolderWatchOptionsSchema,
     t74FolderWatchOptionDescriptions,
@@ -19,11 +20,13 @@
   import {
     FALLBACK_ACCEPT,
     batchEntries,
+    buildZipArchive,
     diffSnapshots,
     engineErrorMessage,
     isEngineError,
     isProcessableImage,
     outputFileName,
+    planOutputNames,
     scanFolder,
     supportsDirectoryAccess,
     type FolderSnapshot,
@@ -48,11 +51,18 @@
     readonly source: string;
     readonly output: string;
     readonly bytes: number;
+    /** Retained so the ZIP fallback and save-as write the same bytes the results list names. */
+    readonly blob: Blob;
   };
+
+  /** A file already offered to the user, held for the ZIP fallback. */
+  type Download = { name: string; url: string; blob: Blob };
 
   const MAX_PIXELS = 20_000_000;
   const WRITE_BATCH = 8;
   const ORIGIN = 'https://image.complianttools.com';
+  /** The single archive README §7.2 requires for the multi-file fallback. */
+  const ZIP_NAME = 'folder-watcher-results.zip';
 
   const enText = {
     title: 'Folder Watcher',
@@ -82,11 +92,14 @@
     batchNote: 'Wrote {value} file(s) in this sweep.',
     fallbackHeading: 'Or choose images directly',
     fallbackHelp:
-      'These are processed once, with the same format and quality as the watch. There is no output folder: the results are offered as downloads.',
+      'These are processed once, with the same format and quality as the watch. There is no output folder: the results are offered as a single ZIP archive.',
     processNow: 'Process selected files',
     resultsHeading: 'Results',
     download: 'Download',
-    batchDownloads: 'Download all',
+    batchDownloads: 'Download all as ZIP',
+    zipSummary: 'One archive with {value} file(s).',
+    zipSaved: 'Saved {value}.',
+    zipCancelled: 'No location was chosen; nothing was written.',
     noResults: 'Nothing has been processed yet.',
     errors: {
       'folder-picker-unavailable':
@@ -166,11 +179,14 @@
     batchNote: 'كُتب {value} ملف في هذا المسح.',
     fallbackHeading: 'أو اختر الصور مباشرة',
     fallbackHelp:
-      'تُعالَج هذه الصور مرة واحدة، بالصيغة والجودة نفسها التي تستخدمها المراقبة. لا يوجد مجلد إخراج: تُعرض النتائج للتنزيل.',
+      'تُعالَج هذه الصور مرة واحدة، بالصيغة والجودة نفسها التي تستخدمها المراقبة. لا يوجد مجلد إخراج: تُعرض النتائج كأرشيف ZIP واحد.',
     processNow: 'عالج الملفات المختارة',
     resultsHeading: 'النتائج',
     download: 'تنزيل',
-    batchDownloads: 'تنزيل الكل',
+    batchDownloads: 'تنزيل الكل كـ ZIP',
+    zipSummary: 'أرشيف واحد يحتوي على {value} ملف.',
+    zipSaved: 'حُفظ {value}.',
+    zipCancelled: 'لم يُختر أي موقع؛ لم يُكتب شيء.',
     noResults: 'لم تُعالَج أي ملفات بعد.',
     errors: {
       'folder-picker-unavailable': 'لا ينفّذ هذا المتصفح واجهة مجلدات نظام الملفات.',
@@ -223,7 +239,9 @@
   let lastAdded = $state(0);
   let totalSeen = $state(0);
   let results = $state<readonly Processed[]>([]);
-  let downloadUrls = $state<readonly { name: string; url: string }[]>([]);
+  let downloads = $state<readonly Download[]>([]);
+  let zipUrl = $state('');
+  let zipSummary = $state('');
   let busy = $state(false);
   let status = $state('');
   let error = $state<ErrorKind>();
@@ -231,11 +249,32 @@
   let sourceHandle = $state<WatchedDirectoryHandle>();
   let outputHandle = $state<WatchedDirectoryHandle>();
   let previousSnapshot = $state<FolderSnapshot>();
+  /**
+   * Names this tool has already written. Retained so a second sweep over an overlapping output
+   * folder cannot pick up what the previous sweep produced — see {@link planOutputNames}.
+   */
+  let generatedNames = new SvelteSet<string>();
+  /**
+   * Output names already claimed within the sweep in progress. Scoped to one sweep so that a
+   * source re-processed later still gets its plain name, while two sources sharing a basename in
+   * the *same* sweep do not overwrite each other. It is read only from `processOne` and never in
+   * the template, so a plain `Set` behind a `let` binding is the right shape here.
+   */
+  let batchNames: Set<string> = new SvelteSet<string>();
   let timer: ReturnType<typeof setInterval> | undefined;
   let swept = false;
 
   /** Probed once on mount; the controls are hidden rather than shown-but-dead where it is false. */
   const directorySupported = supportsDirectoryAccess();
+  const savePickerSupported =
+    typeof (globalThis as { showSaveFilePicker?: unknown }).showSaveFilePicker === 'function';
+
+  /** Whether the output folder is also being watched, which needs the collision guard. */
+  function overlapping(): boolean {
+    const source = sourceHandle;
+    const output = outputHandle;
+    return source !== undefined && output !== undefined && source.name === output.name;
+  }
 
   const pseudo = (value: string) =>
     `［${value.replace(/[aeiou]/giu, (vowel) => ({ a: 'á', e: 'ë', i: 'ï', o: 'ô', u: 'ü' })[vowel.toLowerCase()] ?? vowel)}］`;
@@ -332,6 +371,10 @@
         watchedName = handle.name;
         previousSnapshot = undefined;
         swept = false;
+        // A different watched folder is a different set of names; carrying the old ones over
+        // would needlessly suffix outputs that have nothing to collide with.
+        generatedNames = new SvelteSet();
+        batchNames = new SvelteSet();
       } else {
         outputHandle = handle;
         outputName = handle.name;
@@ -347,12 +390,8 @@
     }
   }
 
-  /** Re-encodes one image and writes it into the output folder, or returns it as a download. */
-  async function processOne(
-    file: Blob,
-    name: string,
-    write: ((bytes: Blob, outputName: string) => Promise<void>) | undefined,
-  ): Promise<Processed> {
+  /** Re-encodes one image to the chosen output format. */
+  async function encodeOne(file: Blob): Promise<Blob> {
     let bitmap: ImageBitmap;
     try {
       bitmap = await createImageBitmap(file);
@@ -382,21 +421,133 @@
     }
 
     const mime = options.format === 'webp' ? 'image/webp' : 'image/jpeg';
-    const encoded = await new Promise<Blob>((resolve, reject) => {
+    return new Promise<Blob>((resolve, reject) => {
       canvas.toBlob(
         (value) => (value ? resolve(value) : reject('encoding-failed' satisfies ErrorKind)),
         mime,
         options.quality / 100,
       );
     });
+  }
 
-    const output = outputFileName(name, options.format === 'webp' ? 'webp' : 'jpg');
+  /** Re-encodes one image and writes it into the output folder, or retains it for the ZIP. */
+  async function processOne(
+    file: Blob,
+    name: string,
+    write: ((bytes: Blob, outputName: string) => Promise<void>) | undefined,
+  ): Promise<Processed> {
+    const encoded = await encodeOne(file);
+    const extension = options.format === 'webp' ? 'webp' : 'jpg';
+    // Two inputs in one sweep can produce the same name — a recursive watch of `a/shot.png` and
+    // `b/shot.png` both encode to `shot.webp` — so within-sweep names are deduped too, or the
+    // second write silently overwrites the first. `generatedNames` additionally guards the
+    // overlapping case, where a name already written would be re-read as new on the next poll.
+    // It is consulted only when the folders overlap: elsewhere a re-saved source should simply
+    // overwrite its own previous output rather than accumulate `-2`, `-3` copies forever.
+    const candidates = overlapping() ? [...generatedNames, ...batchNames] : [...batchNames];
+    const [planned] = planOutputNames([outputFileName(name, extension)], new Set(candidates));
+    const output = planned!.name;
     if (write) await write(encoded, output);
-    else {
-      const url = URL.createObjectURL(encoded);
-      downloadUrls = [...downloadUrls, { name: output, url }];
+    else retain(output, encoded);
+    batchNames.add(output.toLowerCase());
+    generatedNames.add(output.toLowerCase());
+    return { source: name, output, bytes: encoded.size, blob: encoded };
+  }
+
+  /** Holds a processed image for the ZIP fallback, keeping one blob URL per distinct name. */
+  function retain(name: string, blob: Blob) {
+    const replaced = downloads.find((entry) => entry.name === name);
+    if (replaced) URL.revokeObjectURL(replaced.url);
+    const rest = downloads.filter((entry) => entry.name !== name);
+    downloads = [...rest, { name, url: URL.createObjectURL(blob), blob }];
+  }
+
+  function releaseDownloads() {
+    for (const entry of downloads) URL.revokeObjectURL(entry.url);
+    downloads = [];
+  }
+
+  /** Triggers an anchor download — the README §7.2 fallback for `showSaveFilePicker`. */
+  function anchorDownload(url: string, name: string) {
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = name;
+    anchor.click();
+  }
+
+  /**
+   * Writes a blob through `showSaveFilePicker`, falling back to an anchor download when the API
+   * is absent. A cancellation is *not* a fallback: the user declined, so re-offering the same
+   * file through a second, unskippable mechanism would defeat the point of cancelling.
+   */
+  async function saveBlob(
+    blob: Blob,
+    suggestedName: string,
+    types?: { description: string; accept: Record<string, string[]> },
+  ): Promise<'saved' | 'downloaded' | 'cancelled'> {
+    if (!savePickerSupported) {
+      const url = URL.createObjectURL(blob);
+      anchorDownload(url, suggestedName);
+      setTimeout(() => URL.revokeObjectURL(url), 0);
+      return 'downloaded';
     }
-    return { source: name, output, bytes: encoded.size };
+    try {
+      const handle = await (
+        globalThis as unknown as {
+          showSaveFilePicker: (options: {
+            suggestedName: string;
+            types?: readonly { description: string; accept: Record<string, string[]> }[];
+          }) => Promise<{
+            createWritable(): Promise<{ write(data: Blob): Promise<void>; close(): Promise<void> }>;
+          }>;
+        }
+      ).showSaveFilePicker({
+        suggestedName,
+        ...(types ? { types: [{ ...types }] } : {}),
+      });
+      const writable = await handle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+      return 'saved';
+    } catch (cause) {
+      if (cause instanceof DOMException && cause.name === 'AbortError') return 'cancelled';
+      // A picker that exists but cannot hand back a writable (revoked permission, blocked file
+      // type) is exactly the case the anchor fallback exists for.
+      const url = URL.createObjectURL(blob);
+      anchorDownload(url, suggestedName);
+      setTimeout(() => URL.revokeObjectURL(url), 0);
+      return 'downloaded';
+    }
+  }
+
+  /**
+   * Builds one ZIP of every retained result and saves it. README §7.2 requires the multi-file
+   * fallback to be "`<input type=file>` + ZIP download", not a burst of separate downloads —
+   * browsers throttle or block those, and the user gets N save dialogs.
+   */
+  async function downloadArchive() {
+    if (downloads.length === 0) return;
+    const files = await Promise.all(
+      downloads.map(async (entry) => ({
+        name: entry.name,
+        bytes: new Uint8Array(await entry.blob.arrayBuffer()),
+      })),
+    );
+    const zip = buildZipArchive(files);
+    const outcome = await saveBlob(new Blob([zip], { type: 'application/zip' }), ZIP_NAME, {
+      description: 'ZIP archive',
+      accept: { 'application/zip': ['.zip'] },
+    });
+    if (outcome === 'cancelled') {
+      status = localized(tr('zipCancelled'));
+      return;
+    }
+    zipSummary = localized(tr('zipSummary')).replace('{value}', String(files.length));
+    if (outcome === 'saved') {
+      status = localized(tr('zipSaved')).replace('{value}', ZIP_NAME);
+      return;
+    }
+    status = zipSummary;
   }
 
   async function writeIntoOutput(bytes: Blob, name: string): Promise<void> {
@@ -429,27 +580,40 @@
     const handle = sourceHandle;
     if (!handle || busy) return;
     busy = true;
+    batchNames = new SvelteSet();
     try {
       const snapshot = await scanFolder(handle, { recursive: options.recursive });
       totalSeen = snapshot.entries.size;
 
-      // The first sweep establishes the baseline. With "ignore existing files" off the baseline is
-      // also processed, which is what someone who points the tool at a folder of existing photos
-      // expects; with it on, only later additions are.
-      if (!previousSnapshot || (!swept && options.skipExisting)) {
+      // The first sweep establishes the baseline. With "ignore existing files" on, nothing is processed
+      // yet — that is what the toggle means. With it off, the files already present are processed
+      // on this sweep, which is what someone who points the tool at a folder of existing photos
+      // expects; the baseline for that is empty, so every existing file counts as new. Either way
+      // the snapshot is recorded, so the next sweep diffs against it.
+      let baseline = previousSnapshot;
+      if (!swept) {
+        baseline = options.skipExisting ? snapshot : { entries: new Map(), scanned: 0 };
         previousSnapshot = snapshot;
         swept = true;
-        status = localized(tr('started'))
-          .replace('{name}', watchedName)
-          .replace('{count}', String(snapshot.entries.size));
-        return;
+        if (options.skipExisting) {
+          status = localized(tr('started'))
+            .replace('{name}', watchedName)
+            .replace('{count}', String(snapshot.entries.size));
+          return;
+        }
       }
+      if (!baseline) return;
 
-      const diff = diffSnapshots(previousSnapshot, snapshot);
+      const diff = diffSnapshots(baseline, snapshot);
       previousSnapshot = snapshot;
       lastAdded = diff.added.length;
 
-      const processable = diff.added.filter((entry) => isProcessableImage(entry.name));
+      // A file this tool wrote into the watched folder is never itself a candidate. Without this
+      // filter the write becomes the next sweep's "new file", and an overlapping output folder
+      // produces a fresh image on every poll forever.
+      const processable = diff.added.filter(
+        (entry) => isProcessableImage(entry.name) && !generatedNames.has(entry.name.toLowerCase()),
+      );
       const written: Processed[] = [];
       // Bounded batches so a folder that filled up while the tab was closed does not block the
       // page in one long synchronous burst.
@@ -549,6 +713,14 @@
     }
     busy = true;
     error = undefined;
+    // A fresh multi-file selection starts a fresh result set, so names chosen by the previous
+    // batch must not push this one to `-2` suffixes.
+    releaseDownloads();
+    generatedNames = new SvelteSet();
+    batchNames = new SvelteSet();
+    if (zipUrl) URL.revokeObjectURL(zipUrl);
+    zipUrl = '';
+    zipSummary = '';
     const written: Processed[] = [];
     try {
       for (const batch of batchEntries(selected, WRITE_BATCH)) {
@@ -570,18 +742,10 @@
     }
   }
 
-  function downloadAll() {
-    for (const entry of downloadUrls) {
-      const anchor = document.createElement('a');
-      anchor.href = entry.url;
-      anchor.download = entry.name;
-      anchor.click();
-    }
-  }
-
   onDestroy(() => {
     stopWatching();
-    for (const entry of downloadUrls) URL.revokeObjectURL(entry.url);
+    releaseDownloads();
+    if (zipUrl) URL.revokeObjectURL(zipUrl);
   });
 </script>
 
@@ -710,10 +874,17 @@
           </li>
         {/each}
       </ul>
-      {#if downloadUrls.length > 0}
-        <button class="button" data-testid="t74-download-all" type="button" onclick={downloadAll}
-          >{tr('batchDownloads')}</button
+      {#if downloads.length > 0}
+        <button
+          class="button"
+          data-testid="t74-download-all"
+          type="button"
+          disabled={busy}
+          onclick={() => void downloadArchive()}>{tr('batchDownloads')}</button
         >
+      {/if}
+      {#if zipSummary}
+        <p class="t74-help" role="status" data-testid="t74-zip-summary">{zipSummary}</p>
       {/if}
       {#if watching}
         <p class="t74-help" data-testid="t74-sweep">
