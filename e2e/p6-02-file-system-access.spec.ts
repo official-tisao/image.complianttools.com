@@ -97,6 +97,26 @@ async function removeSavePicker(page: Page) {
   });
 }
 
+/**
+ * Skips unless the page natively exposes the directory picker.
+ *
+ * `installDirectoryApi` can only supply the *handle constructors* on a browser that already has
+ * `showDirectoryPicker`; it cannot invent the picker itself. On Firefox and WebKit the probe
+ * correctly reports no directory access, the watch controls stay hidden by design, and the
+ * stand-in handles are never reached — so these tests are Chromium-only rather than skipped on
+ * capability, which would hide a real regression on a browser that later gains support.
+ */
+async function requireNativeDirectoryPicker(page: Page) {
+  const supported = await page.evaluate(
+    () =>
+      typeof (globalThis as { showDirectoryPicker?: unknown }).showDirectoryPicker === 'function',
+  );
+  test.skip(
+    !supported,
+    'This browser does not implement the File System Access directory API natively.',
+  );
+}
+
 /** Sets up the T74 directory handles, and reports them as unsupported when `supported` is false. */
 async function installDirectoryApi(page: Page, supported: boolean) {
   await page.addInitScript((supported) => {
@@ -269,6 +289,7 @@ test.describe('P6-02 T74 output-folder overlap', () => {
     await removeSavePicker(page);
     await installDirectoryApi(page, true);
     await open(page, '/watch');
+    await requireNativeDirectoryPicker(page);
 
     // One folder used for both roles: the exact configuration that otherwise turns every write
     // into the next sweep's new file, forever.
@@ -413,6 +434,7 @@ test.describe('P6-02 T74 output-folder overlap', () => {
     await removeSavePicker(page);
     await installDirectoryApi(page, true);
     await open(page, '/watch');
+    await requireNativeDirectoryPicker(page);
 
     await page.evaluate(async () => {
       const written: Record<string, number> = {};
@@ -568,13 +590,23 @@ test.describe('P6-02 picker availability', () => {
     await open(page, '/debug/capabilities');
 
     // README §7.2 gives each API its own fallback, so a single combined flag would hide which
-    // one is missing.
+    // one is missing. The rows are asserted on every browser; only the *values* need the API to
+    // exist natively, so the expected verdict is derived rather than assumed.
     const read = async (label: string) => {
       const term = page.locator('dt', { hasText: label }).first();
       return (await term.locator('xpath=following-sibling::dd[1]').innerText()).trim();
     };
     await expect(page.locator('dt', { hasText: 'directory picker' }).first()).toBeVisible();
-    expect(await read('File System Access (directory picker)')).toBe('Available');
+    await expect(page.locator('dt', { hasText: 'showSaveFilePicker' }).first()).toBeVisible();
+
+    const native = await page.evaluate(
+      () =>
+        typeof (globalThis as { showDirectoryPicker?: unknown }).showDirectoryPicker === 'function',
+    );
+    expect(await read('File System Access (directory picker)')).toBe(
+      native ? 'Available' : 'Unavailable',
+    );
+    // `showSaveFilePicker` was deleted above, so this row is the honest one either way.
     expect(await read('showSaveFilePicker')).toBe('Unavailable');
   });
 
