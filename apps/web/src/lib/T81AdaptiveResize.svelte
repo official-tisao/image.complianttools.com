@@ -7,6 +7,9 @@
     type T81AdaptiveResizeOptions,
   } from '@complianttools/image-engine/schemas/t81-adaptive-resize-options';
   import GeneratedControls from './GeneratedControls.svelte';
+  import ResultTransfer from './ResultTransfer.svelte';
+  import { pasteImage } from './transfer/paste-action';
+  import { publishResult, type PublishedResult } from './transfer/result-file';
   import { localizeOptions } from './i18n';
 
   type Locale = 'en' | 'en-XA' | 'ar';
@@ -233,6 +236,8 @@
   let rejectWorker: ((reason: ErrorKind) => void) | undefined;
   let operationId = 0;
   let selectionId = 0;
+  /** P6-03: the bytes behind `outputUrl`, kept for the clipboard write and the drag-out. */
+  let published = $state<PublishedResult | null>(null);
 
   const pseudo = (value: string) =>
     `⟦${value.replace(/[aeiou]/giu, (vowel) => ({ a: 'á', e: 'ë', i: 'ï', o: 'ô', u: 'ü' })[vowel.toLowerCase()] ?? vowel)}⟧`;
@@ -303,6 +308,9 @@
     outputUrl = '';
     outputBytes = 0;
     outputDimensions = undefined;
+    // A cleared output is also a withdrawn result: the clipboard and drag-out must not keep
+    // offering bytes for a preview that is no longer on screen.
+    published = null;
   }
 
   function clearResult() {
@@ -381,12 +389,12 @@
     clearResult();
   }
 
-  async function chooseImage(event: Event) {
-    const input = event.currentTarget as HTMLInputElement;
-    const file = input.files?.[0];
-    input.value = '';
-    if (!file) return;
-
+  /**
+   * Adopts an image as the new source, shared by the file input and the paste listener, so a pasted
+   * image is held to the same still-PNG and 320-pixel-side checks and resets the same mask and
+   * target dimensions a chosen one does.
+   */
+  async function adopt(file: File) {
     const currentSelection = ++selectionId;
     cancelWorker();
     clearOutput();
@@ -412,6 +420,14 @@
     } catch (cause) {
       error = typedKind(cause) ?? 'unsupported-file';
     }
+  }
+
+  function chooseImage(event: Event) {
+    const input = event.currentTarget as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    void adopt(file);
   }
 
   async function prepareProtection(enabled: boolean) {
@@ -613,12 +629,21 @@
       outputBytes = blob.size;
       outputDimensions = { width: result.width, height: result.height };
       status = tr('done');
+      // The worker returns RGBA that `pngBlob` encodes as PNG, so `png` names the format the
+      // published bytes are actually in.
+      published = publishResult(blob, {
+        sourceName: sourceFile.name.replace(/\.[^.]+$/u, ''),
+        extension: 'png',
+      });
     } catch (cause) {
       if (task !== operationId) return;
       error =
         typeof cause === 'string' && cause in enText.errors
           ? (cause as ErrorKind)
           : (typedKind(cause) ?? 'processing-failed');
+      // Retargeting never produced bytes, so an earlier result no longer describes what is on
+      // screen.
+      published = null;
     } finally {
       if (task === operationId) busy = false;
     }
@@ -754,7 +779,12 @@
   >
 </svelte:head>
 
-<main class="tool-page t81-page" lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}>
+<main
+  class="tool-page t81-page"
+  lang={locale}
+  dir={locale === 'ar' ? 'rtl' : 'ltr'}
+  use:pasteImage={(files) => void adopt(files[0]!)}
+>
   <header class="tool-intro">
     <p class="eyebrow">{tr('eyebrow')}</p>
     <h1>{title}</h1>
@@ -866,6 +896,7 @@
         href={outputUrl}
         download={downloadName(selected.file)}>{tr('download')}</a
       >
+      <ResultTransfer result={published} {busy} {locale} testIdPrefix="t81-transfer" />
     </section>
   {/if}
 

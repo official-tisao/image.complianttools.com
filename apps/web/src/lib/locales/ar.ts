@@ -360,6 +360,23 @@ export const arabic: Readonly<Record<string, string>> = {
   'base64.clipboardError': 'تعذر النسخ. اسمح بالوصول إلى الحافظة ثم حاول مجددًا.',
   'base64.metaDescription':
     'حوّل الصور إلى عناوين بيانات Base64 أو أعدها إلى ملفات محلية في متصفحك.',
+  // P6-03 — copy a processed result to the clipboard as an image, and drag it out as a file.
+  // README §11.5. The fallback copy is reported as a download, never as a copy: saying "copied"
+  // when the file went to the downloads folder is the kind of small lie users report as data loss.
+  'transfer.copy': 'نسخ إلى الحافظة',
+  'transfer.copyAndDownload': 'نسخ إلى الحافظة أو تنزيل',
+  'transfer.copyUnavailable':
+    'هذا المتصفح لا يضع الصور في الحافظة، لذا سيُنزَّل الملف بدلًا من ذلك.',
+  'transfer.copied': 'نُسخت الصورة إلى الحافظة.',
+  'transfer.copyFailed':
+    'تعذّر النسخ إلى الحافظة. اسمح بالوصول إلى الحافظة لهذه الصفحة، أو استخدم التنزيل.',
+  'transfer.fallbackDownloaded':
+    'لا يستطيع هذا المتصفح وضع الصور في الحافظة، لذا نُزِّل الملف بدلًا من ذلك.',
+  'transfer.dragOut': 'اسحب النتيجة خارج الصفحة كملف',
+  'transfer.dragHandle': 'اسحب خارجًا',
+  'transfer.dragTextOnly':
+    'يمكن لهذا المتصفح سحب اسم الملف فقط لا الصورة. استخدم نسخ إلى الحافظة بدلًا من ذلك.',
+  'transfer.resultNotCurrent': 'هذه النتيجة قديمة. انتظر انتهاء المعالجة ثم اسحبها مجددًا.',
   'option.base64.mode.label': 'الاتجاه',
   'option.base64.mode.option.encode': 'الصورة إلى Base64',
   'option.base64.mode.option.decode': 'Base64 إلى ملف',

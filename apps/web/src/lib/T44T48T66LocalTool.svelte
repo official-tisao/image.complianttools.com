@@ -10,6 +10,9 @@
   import type { AiCapability } from '@complianttools/image-engine/ai/types';
   import ConnectEmptyState from './connect/ConnectEmptyState.svelte';
   import LazyEscalationControl from './ai/LazyEscalationControl.svelte';
+  import ResultTransfer from './ResultTransfer.svelte';
+  import { pasteImage } from './transfer/paste-action';
+  import { publishResult, type PublishedResult } from './transfer/result-file';
   import { ESCALATION_STATE } from './connect/empty-states';
   import '../connect.css';
 
@@ -92,6 +95,8 @@
   let layerFile = $state<File>();
   let sourceUrl = $state('');
   let outputUrl = $state('');
+  /** P6-03: the bytes behind `outputUrl`, kept for the clipboard write and the drag-out. */
+  let published = $state<PublishedResult | null>(null);
   let status = $state('');
   let error = $state('');
   let busy = $state(false);
@@ -147,6 +152,27 @@
   function clearOutput() {
     if (outputUrl) URL.revokeObjectURL(outputUrl);
     outputUrl = '';
+    // A cleared output is also a withdrawn result: nothing may still copy or drag its bytes.
+    published = null;
+  }
+
+  /**
+   * Adopts an image as the source, shared by the file input and the paste listener so a pasted
+   * image is type-checked and prepares its preview through the same path.
+   */
+  function adopt(file: File) {
+    if (!file.type.startsWith('image/')) {
+      error = 'Choose an image file.';
+      published = null;
+      return;
+    }
+    if (sourceUrl) URL.revokeObjectURL(sourceUrl);
+    sourceFile = file;
+    sourceUrl = URL.createObjectURL(file);
+    clearOutput();
+    error = '';
+    status = file.name;
+    void prepareSource(file);
   }
 
   function selectFile(event: Event, target: 'source' | 'layer') {
@@ -154,19 +180,18 @@
     const file = input.files?.[0];
     input.value = '';
     if (!file) return;
+    if (target === 'source') {
+      adopt(file);
+      return;
+    }
     if (!file.type.startsWith('image/')) {
       error = 'Choose an image file.';
       return;
     }
-    if (target === 'source') {
-      if (sourceUrl) URL.revokeObjectURL(sourceUrl);
-      sourceFile = file;
-      sourceUrl = URL.createObjectURL(file);
-    } else layerFile = file;
+    layerFile = file;
     clearOutput();
     error = '';
     status = file.name;
-    if (target === 'source') void prepareSource(file);
   }
 
   async function decode(file: File): Promise<HTMLImageElement> {
@@ -322,8 +347,10 @@
       );
       outputUrl = URL.createObjectURL(blob);
       status = localized(copy.download);
+      published = publishResult(blob, { sourceName: kind, extension: 'png' });
     } catch (cause) {
       error = cause instanceof Error ? cause.message : 'Processing failed.';
+      published = null;
     } finally {
       busy = false;
     }
@@ -349,7 +376,14 @@
   <link rel="alternate" hreflang="x-default" href={`https://image.complianttools.com${path}`} />
 </svelte:head>
 
-<main class="local-intel" lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}>
+<main
+  class="local-intel"
+  lang={locale}
+  dir={locale === 'ar' ? 'rtl' : 'ltr'}
+  use:pasteImage={(files) => {
+    if (files[0]) adopt(files[0]);
+  }}
+>
   <header class="tool-intro">
     <p class="eyebrow">{localized('Local image tool')}</p>
     <h1>{localized(title)}</h1>
@@ -473,6 +507,7 @@
         href={outputUrl}
         download={`${kind}.png`}>{localized(copy.download)}</a
       >
+      <ResultTransfer result={published} {busy} {locale} testIdPrefix="local-tool-transfer" />
     </section>
 
     <!--

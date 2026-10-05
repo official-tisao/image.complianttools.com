@@ -7,6 +7,9 @@
     type T80ColorMatchOptions,
   } from '@complianttools/image-engine/schemas/t80-color-match-options';
   import GeneratedControls from './GeneratedControls.svelte';
+  import ResultTransfer from './ResultTransfer.svelte';
+  import { pasteImage } from './transfer/paste-action';
+  import { publishResult, type PublishedResult } from './transfer/result-file';
   import { localizeOptions } from './i18n';
 
   type Locale = 'en' | 'en-XA' | 'ar';
@@ -196,6 +199,8 @@
   let rejectWorker: ((reason: ErrorKind) => void) | undefined;
   let runNumber = 0;
   const selectionNumber: Record<Side, number> = { source: 0, reference: 0 };
+  /** P6-03: the bytes behind `outputUrl`, kept for the clipboard write and the drag-out. */
+  let published = $state<PublishedResult | null>(null);
 
   const pseudo = (value: string) =>
     `⟦${value.replace(/[aeiou]/giu, (vowel) => ({ a: 'á', e: 'ë', i: 'ï', o: 'ô', u: 'ü' })[vowel.toLowerCase()] ?? vowel)}⟧`;
@@ -229,6 +234,9 @@
     if (outputUrl) URL.revokeObjectURL(outputUrl);
     outputUrl = '';
     outputBytes = 0;
+    // A cleared output is also a withdrawn result: the clipboard and drag-out must not keep
+    // offering bytes for a preview that is no longer on screen.
+    published = null;
   }
 
   function cancelWorker() {
@@ -290,12 +298,13 @@
     return undefined;
   }
 
-  async function choose(side: Side, event: Event) {
-    const input = event.currentTarget as HTMLInputElement;
-    const file = input.files?.[0];
-    input.value = '';
-    if (!file) return;
-
+  /**
+   * Adopts an image into one of the two slots, shared by the file inputs and the paste listener, so
+   * a pasted image is held to the same still-PNG checks as a chosen one and reports the same
+   * failure. A paste always fills the source slot: the source is the image being corrected, and
+   * that is the slot a user pasting a screenshot expects to replace.
+   */
+  async function adopt(side: Side, file: File) {
     cancelWorker();
     const task = ++selectionNumber[side];
     clearSelection(side);
@@ -311,6 +320,14 @@
       if (task !== selectionNumber[side]) return;
       error = typedKind(cause) ?? 'unsupported-file';
     }
+  }
+
+  function choose(side: Side, event: Event) {
+    const input = event.currentTarget as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    void adopt(side, file);
   }
 
   async function decode(file: File): Promise<{
@@ -458,12 +475,20 @@
       outputUrl = URL.createObjectURL(blob);
       outputBytes = blob.size;
       status = t('done');
+      // Both inputs are still PNGs and the worker writes a PNG, so `png` names the format the
+      // published bytes are actually in rather than a guess from the selected method.
+      published = publishResult(blob, {
+        sourceName: sourceFile.name.replace(/\.[^.]+$/u, ''),
+        extension: 'png',
+      });
     } catch (cause) {
       if (task !== runNumber) return;
       error =
         typeof cause === 'string' && cause in en.errors
           ? (cause as ErrorKind)
           : (typedKind(cause) ?? 'processing-failed');
+      // Matching never produced bytes, so an earlier result no longer describes what is on screen.
+      published = null;
     } finally {
       if (task === runNumber) busy = false;
     }
@@ -549,7 +574,12 @@
   >
 </svelte:head>
 
-<main class="tool-page t80-page" lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}>
+<main
+  class="tool-page t80-page"
+  lang={locale}
+  dir={locale === 'ar' ? 'rtl' : 'ltr'}
+  use:pasteImage={(files) => void adopt('source', files[0]!)}
+>
   <header class="tool-intro">
     <p class="eyebrow">{t('eyebrow')}</p>
     <h1>{title}</h1>
@@ -655,6 +685,7 @@
         href={outputUrl}
         download={downloadName(source.file)}>{t('download')}</a
       >
+      <ResultTransfer result={published} {busy} {locale} testIdPrefix="t80-transfer" />
     </section>
   {/if}
 

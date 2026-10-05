@@ -3,7 +3,10 @@
   import type { Recipe } from '@complianttools/image-engine/types';
   import CompareCanvas from './CompareCanvas.svelte';
   import GeneratedControls from './GeneratedControls.svelte';
+  import ResultTransfer from './ResultTransfer.svelte';
   import ToolPageCompletion from './ToolPageCompletion.svelte';
+  import { pasteImage } from './transfer/paste-action';
+  import { markStale, publishResult, type PublishedResult } from './transfer/result-file';
   import type { Locale } from './i18n';
   import type { OptionDescription } from '@complianttools/image-engine/schemas/options';
 
@@ -275,6 +278,8 @@
   let status = $state('');
   let error = $state('');
   let currentTask = 0;
+  /** P6-03: the bytes behind `outputUrl`, kept for the clipboard write and the drag-out. */
+  let published = $state<PublishedResult | null>(null);
 
   const descriptions = $derived.by(() => {
     const d: Record<string, OptionDescription> = {};
@@ -415,6 +420,9 @@
 
   function updateOption(pathName: string, value: unknown) {
     options = { ...options, [pathName]: value };
+    // The visible result stops matching the options the moment they change, so it stops being
+    // copyable now rather than when the replacement lands.
+    published = published ? markStale(published) : published;
     if (decoded && sourceFile) void processImage();
   }
 
@@ -529,20 +537,29 @@
       outputUrl = URL.createObjectURL(blob);
       outputDimensions = { width: result.width, height: result.height };
       status = copy.dimensions(result.width, result.height);
+      published = publishResult(blob, {
+        sourceName: `${(sourceFile?.name ?? '').replace(/\.[^.]+$/u, '')}-${kind}`,
+        extension: 'png',
+      });
     } catch (cause) {
       if (task === currentTask) {
         error = cause instanceof Error ? cause.message : String(cause);
         status = '';
+        // A run that failed leaves nothing trustworthy to copy.
+        published = null;
       }
     } finally {
       if (task === currentTask) busy = false;
     }
   }
 
-  async function choose(event: Event) {
-    const file = (event.currentTarget as HTMLInputElement).files?.[0];
-    if (!file) return;
+  /**
+   * Adopts an image as the new source, shared by the file input and the paste listener so both go
+   * through the same decode, the same option defaults, and the same error surface.
+   */
+  async function adopt(file: File) {
     sourceFile = file;
+    published = null;
     if (sourceUrl) URL.revokeObjectURL(sourceUrl);
     sourceUrl = URL.createObjectURL(file);
     try {
@@ -557,14 +574,24 @@
     } catch (cause) {
       error = cause instanceof Error ? cause.message : String(cause);
       status = '';
+      published = null;
     }
+  }
+
+  async function choose(event: Event) {
+    const file = (event.currentTarget as HTMLInputElement).files?.[0];
+    if (!file) return;
+    await adopt(file);
   }
 
   function download() {
     if (!outputUrl || !sourceFile) return;
     const link = document.createElement('a');
     link.href = outputUrl;
-    link.download = `${sourceFile.name.replace(/\.[^.]+$/u, '')}-${kind}.png`;
+    // Prefer the published name so Download, Copy, and drag-out agree; the composed fallback keeps
+    // the pre-existing naming for any result published before this change.
+    link.download =
+      published?.file.name ?? `${sourceFile.name.replace(/\.[^.]+$/u, '')}-${kind}.png`;
     link.click();
   }
 
@@ -575,7 +602,12 @@
   });
 </script>
 
-<main class="tool-page transform-page" lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}>
+<main
+  class="tool-page transform-page"
+  lang={locale}
+  dir={locale === 'ar' ? 'rtl' : 'ltr'}
+  use:pasteImage={(files) => void adopt(files[0]!)}
+>
   <section class="tool-intro">
     <p class="eyebrow">Local image instrument</p>
     <h1>{copy.title}</h1>
@@ -628,6 +660,7 @@
         disabled={!outputUrl || busy}
         onclick={download}>{copy.download}</button
       >
+      <ResultTransfer result={published} {busy} {locale} testIdPrefix="transform-transfer" />
     </div>
   </section>
   <ToolPageCompletion

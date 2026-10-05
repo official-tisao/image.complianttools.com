@@ -7,6 +7,9 @@
   import type { Recipe } from '@complianttools/image-engine/types';
   import CompareCanvas from './CompareCanvas.svelte';
   import GeneratedControls from './GeneratedControls.svelte';
+  import ResultTransfer from './ResultTransfer.svelte';
+  import { pasteImage } from './transfer/paste-action';
+  import { markStale, publishResult, type PublishedResult } from './transfer/result-file';
   import { localizeOptions, translate, type Locale } from './i18n';
 
   type ToolKind = 'convert' | 'compress' | 'resize';
@@ -131,6 +134,12 @@
   let currentFile: File | undefined;
   let decodedImage: ImageData | undefined;
   let proxyCanvas: HTMLCanvasElement | null = null;
+  /**
+   * P6-03: the bytes behind `outputUrl`, kept because a clipboard write needs a `Blob` and a
+   * drag-out needs a `File` — an object URL can supply neither without an async round trip, which
+   * `dragstart` has no room for. See ./transfer/result-file for the staleness contract.
+   */
+  let published = $state<PublishedResult | null>(null);
 
   function formatBytes(bytes: number) {
     return bytes >= 1_000_000
@@ -142,6 +151,10 @@
     values = { ...values };
     if (currentFile && decodedImage) {
       if (updateTimer) clearTimeout(updateTimer);
+      // The preview on screen is now about to be replaced, so its bytes stop being current
+      // immediately — before the debounce fires there is a window where Copy would hand the user
+      // bytes that do not match the options they just set.
+      published = published ? markStale(published) : published;
       updateTimer = setTimeout(() => {
         void predictSize(decodedImage!);
         void processFile(currentFile!);
@@ -324,29 +337,52 @@
       if (outputUrl) URL.revokeObjectURL(outputUrl);
       outputUrl = URL.createObjectURL(blob);
       outputBytes = blob.size;
+      // Publish before the preview is considered ready: the transfer controls read this, and a
+      // Copy pressed in the same tick as the render must see the new bytes, not the old ones.
+      published = publishResult(blob, {
+        sourceName: filename,
+        extension: format,
+      });
     } catch (cause) {
       error = cause instanceof Error ? cause.message : String(cause);
+      // A failed run invalidates whatever is on screen. Leaving the previous result copyable
+      // would let the user take away bytes from a run that is known to have failed.
+      published = null;
     } finally {
       busy = false;
     }
   }
-  async function choose(event: Event) {
-    const file = (event.currentTarget as HTMLInputElement).files?.[0];
-    if (!file) return;
+  /**
+   * Adopts an image as the new source. Shared by the file input and the paste listener so a
+   * pasted screenshot is validated and decoded by exactly the same path as a chosen file — the
+   * existing ingestion path, not a second one with different rules.
+   */
+  async function adopt(file: File) {
     currentFile = file;
     decodedImage = undefined;
     proxyCanvas = null;
     filename = file.name;
     sourceBytes = file.size;
+    // The old source is gone and no output corresponds to it any more.
+    published = null;
     if (sourceUrl) URL.revokeObjectURL(sourceUrl);
     sourceUrl = URL.createObjectURL(file);
     await processFile(file);
+  }
+  async function choose(event: Event) {
+    const file = (event.currentTarget as HTMLInputElement).files?.[0];
+    if (!file) return;
+    await adopt(file);
   }
   function download() {
     if (!outputUrl) return;
     const link = document.createElement('a');
     link.href = outputUrl;
-    link.download = `${filename.replace(/\.[^.]+$/u, '')}.${values['export.format'] === 'same' ? filename.split('.').at(-1) : values['export.format']}`;
+    // The published result already carries the name derived from the format actually encoded;
+    // reusing it keeps Download, Copy, and drag-out from disagreeing on what the file is called.
+    link.download =
+      published?.file.name ??
+      `${filename.replace(/\.[^.]+$/u, '')}.${values['export.format'] === 'same' ? filename.split('.').at(-1) : values['export.format']}`;
     link.click();
   }
   onDestroy(() => {
@@ -378,7 +414,12 @@
   </nav>
   <span class="privacy">{translate(locale, 'privacy.badge', 'Local only')}</span>
 </header>
-<main class="tool-page" lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}>
+<main
+  class="tool-page"
+  lang={locale}
+  dir={locale === 'ar' ? 'rtl' : 'ltr'}
+  use:pasteImage={(files) => void adopt(files[0]!)}
+>
   <section class="tool-intro">
     <p class="eyebrow">{translate(locale, 'workspace.eyebrow', 'Local image instrument')}</p>
     <h1>{title}</h1>
@@ -433,9 +474,16 @@
         >{targetProgress || '\u00A0'}</span
       >
     </div>
-    <button class="button primary" type="button" disabled={!outputUrl || busy} onclick={download}
-      >{translate(locale, 'workspace.download', 'Download')}</button
-    >
+    <div class="action-bar-actions">
+      <ResultTransfer result={published} {busy} {locale} testIdPrefix="workspace-transfer" />
+      <button
+        class="button primary"
+        type="button"
+        data-testid="workspace-download"
+        disabled={!outputUrl || busy}
+        onclick={download}>{translate(locale, 'workspace.download', 'Download')}</button
+      >
+    </div>
   </footer>
   <section class="faq">
     <h2>{translate(locale, 'workspace.questions', 'Questions')}</h2>

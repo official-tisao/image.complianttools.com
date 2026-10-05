@@ -11,6 +11,9 @@
     extractPalette,
     type RasterImage,
   } from '@complianttools/image-engine';
+  import ResultTransfer from './ResultTransfer.svelte';
+  import { pasteImage } from './transfer/paste-action';
+  import { publishResult, type PublishedResult } from './transfer/result-file';
 
   type Locale = 'en' | 'en-XA' | 'ar';
   type Kind =
@@ -134,6 +137,8 @@
   let status = $state('');
   let error = $state('');
   let busy = $state(false);
+  /** P6-03: the bytes behind `outputUrl`, kept for the clipboard write and the drag-out. */
+  let published = $state<PublishedResult | null>(null);
   let brightness = $state(0);
   let contrast = $state(0);
   let saturation = $state(0);
@@ -188,15 +193,19 @@
     if (outputUrl) URL.revokeObjectURL(outputUrl);
     outputUrl = '';
     palette = [];
+    // Every output this tool produces is invalidated here, including the bytes a clipboard write
+    // or drag-out would otherwise still be carrying.
+    published = null;
   }
 
-  function choose(event: Event) {
-    const input = event.currentTarget as HTMLInputElement;
-    const file = input.files?.[0];
-    input.value = '';
-    if (!file) return;
+  /**
+   * Adopts an image as the new source, shared by the file input and the paste listener so a pasted
+   * image is held to the same type check and clears the same previous output.
+   */
+  function adopt(file: File) {
     if (!file.type.startsWith('image/')) {
       error = 'Choose a PNG, JPEG, or WebP image.';
+      published = null;
       return;
     }
     if (sourceUrl) URL.revokeObjectURL(sourceUrl);
@@ -205,6 +214,14 @@
     clearOutput();
     error = '';
     status = file.name;
+  }
+
+  function choose(event: Event) {
+    const input = event.currentTarget as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    adopt(file);
   }
 
   async function decode(file: File): Promise<HTMLImageElement> {
@@ -340,8 +357,10 @@
       );
       outputUrl = URL.createObjectURL(blob);
       status = pseudoIf(locale, copy.download);
+      published = publishResult(blob, { sourceName: kind, extension: 'png' });
     } catch (cause) {
       error = cause instanceof Error ? cause.message : 'Processing failed.';
+      published = null;
     } finally {
       busy = false;
     }
@@ -367,7 +386,12 @@
   </script>
 </svelte:head>
 
-<main class="tool-page advanced-colour" lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}>
+<main
+  class="tool-page advanced-colour"
+  lang={locale}
+  dir={locale === 'ar' ? 'rtl' : 'ltr'}
+  use:pasteImage={(files) => adopt(files[0]!)}
+>
   <header class="tool-intro">
     <p class="eyebrow">{pseudoIf(locale, 'Local image tool')}</p>
     <h1>{title}</h1>
@@ -402,7 +426,7 @@
     {#if error}<p class="error" role="alert" data-testid="p3a-error">{pseudoIf(locale, error)}</p>{/if}
   </section>
   {#if sourceUrl}<figure class="source"><img src={sourceUrl} alt={pseudoIf(locale, 'Selected source image')} /><figcaption>{pseudoIf(locale, 'Selected source image')}</figcaption></figure>{/if}
-  {#if outputUrl}<section class="result"><figure><img data-testid="p3a-preview" src={outputUrl} alt={pseudoIf(locale, copy.preview)} /><figcaption>{pseudoIf(locale, copy.preview)}</figcaption></figure><a data-testid="p3a-download" class="button primary" href={outputUrl} download={`${kind}.png`}>{pseudoIf(locale, copy.download)}</a></section>{/if}
+  {#if outputUrl}<section class="result"><figure><img data-testid="p3a-preview" src={outputUrl} alt={pseudoIf(locale, copy.preview)} /><figcaption>{pseudoIf(locale, copy.preview)}</figcaption></figure><a data-testid="p3a-download" class="button primary" href={outputUrl} download={`${kind}.png`}>{pseudoIf(locale, copy.download)}</a><ResultTransfer result={published} {busy} {locale} testIdPrefix="p3a-transfer" /></section>{/if}
   {#if kind === 'color-picker' && palette.length}
     <section class="palette" data-testid="p3a-palette" aria-label={pseudoIf(locale, 'Extracted palette')}>
       {#each palette as entry (entry.r + ':' + entry.g + ':' + entry.b)}<div class="swatch" style={`background:rgb(${entry.r} ${entry.g} ${entry.b})`} title={`rgb(${entry.r}, ${entry.g}, ${entry.b})`}><span>{entry.r},{entry.g},{entry.b}</span></div>{/each}
