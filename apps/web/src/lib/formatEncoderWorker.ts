@@ -6,9 +6,11 @@ export function encodeInFormatWorker(
   options: Record<string, unknown>,
 ): Promise<ArrayBuffer> {
   return new Promise((resolve, reject) => {
+
     // Keep this URL literal: Vite statically analyses this exact form and emits the worker as a
     // same-origin chunk. Passing it through createScriptURL makes Vite inline the module as a
     // data: URL, which the production worker-src policy deliberately does not allow.
+
     const worker = new Worker(new URL('../workers/format-encode-worker.ts', import.meta.url), {
       type: 'module',
     });
