@@ -1,7 +1,8 @@
 <script lang="ts">
-  import LongTailTool from '$lib/LongTailTool.svelte';
+  import T18HtmlToImage from '$lib/T18HtmlToImage.svelte';
   import type { PageData } from './$types';
+
   let { data }: { data: PageData } = $props();
 </script>
 
-<LongTailTool kind="html-to-image" locale={data.locale} />
+<T18HtmlToImage locale={data.locale} />

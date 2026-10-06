@@ -891,7 +891,8 @@ Justification Register short.
 #### P6-02 · File System Access integration
 - [ ] Folder input, folder output, `showSaveFilePicker`, T74 watch loop
 - [ ] Hidden where unsupported; ZIP fallback
-- **Spec:** README §7.2 · **Done when:** T74 processes new files into an output folder on Chromium; degrades cleanly elsewhere
+- **Spec:** README §7.2 · **Done when:** T74 processes new files into an output folder on Chromium; degrades clea
+nly elsewhere
 
 #### P6-03 · Clipboard and drag-out
 - [ ] Paste image from anywhere (⌘V from any focus position); copy result as `ClipboardItem`
