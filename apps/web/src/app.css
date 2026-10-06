@@ -23,7 +23,8 @@ select {
 button:focus-visible,
 input:focus-visible,
 select:focus-visible,
-a:focus-visible {
+a:focus-visible,
+[role='button']:focus-visible {
   outline: 2px solid #1c1a17;
   outline-offset: 3px;
 }
@@ -371,6 +372,71 @@ details summary {
   width: 160px;
   text-align: center;
 }
+
+/*
+  P6-03 — the copy-to-clipboard control and drag-out handle that sit beside every result.
+  README §11.5. The handle is styled as a button rather than left as bare text so the drag
+  affordance is visible: a label nobody can tell is draggable is a feature nobody finds. The
+  `cursor: grab` / `:active` pair is the only part that differs from a normal button, and it is
+  what makes it read as draggable before the user tries.
+*/
+.transfer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.action-bar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+.transfer-note {
+  color: #5c5a56;
+  font-size: 12px;
+  max-width: 30ch;
+}
+.transfer-status {
+  color: #3f6b3a;
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 0;
+  flex-basis: 100%;
+}
+.transfer-failure {
+  color: #7c1e16;
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 0;
+  flex-basis: 100%;
+}
+.transfer-drag {
+  display: inline-block;
+  border: 1px solid #1c1a1720;
+  border-radius: 999px;
+  padding: 10px 24px;
+  background: transparent;
+  cursor: grab;
+  user-select: none;
+  text-align: center;
+}
+.transfer-drag[aria-disabled='true'],
+.transfer-drag[data-draggable='false'] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.transfer-drag[data-draggable='true']:active {
+  cursor: grabbing;
+}
+/*
+  RTL: the row is laid out with logical properties so the copy button, drag handle, and status
+  message mirror correctly under `dir="rtl"` without a second rule set.
+*/
+[dir='rtl'] .transfer,
+[dir='rtl'] .action-bar-actions {
+  direction: rtl;
+}
 .faq {
   max-width: 800px;
   margin: 100px auto;
@@ -437,6 +503,10 @@ details summary {
   }
   .action-bar {
     padding: 12px 20px;
+  }
+  .action-bar-actions {
+    width: 100%;
+    justify-content: flex-end;
   }
   .hero {
     margin: 80px auto;

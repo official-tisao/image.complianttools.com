@@ -28,6 +28,9 @@
     type RasterImage,
   } from '@complianttools/image-engine';
   import GeneratedControls from './GeneratedControls.svelte';
+  import ResultTransfer from './ResultTransfer.svelte';
+  import { pasteImage } from './transfer/paste-action';
+  import { publishResult, type PublishedResult } from './transfer/result-file';
   import { localizeOptions, type Locale } from './i18n';
 
   type ErrorKind =
@@ -200,6 +203,8 @@
   let status = $state('');
   let error = $state<ErrorKind>();
   let abort = $state<AbortController>();
+  /** P6-03: the bytes behind `outputUrl`, kept for the clipboard write and the drag-out. */
+  let published = $state<PublishedResult | null>(null);
 
   const pseudo = (value: string) =>
     `［${value.replace(/[aeiou]/giu, (vowel) => ({ a: 'á', e: 'ë', i: 'ï', o: 'ô', u: 'ü' })[vowel.toLowerCase()] ?? vowel)}］`;
@@ -270,6 +275,9 @@
     outputQuality = 0;
     attemptCount = 0;
     metTarget = false;
+    // A cleared output is also a withdrawn result: the clipboard and drag-out must not keep
+    // offering bytes for a preview that is no longer on screen.
+    published = null;
   }
 
   function updateOption(path: string, value: unknown) {
@@ -283,10 +291,12 @@
     }
   }
 
-  function chooseImage(event: Event) {
-    const input = event.currentTarget as HTMLInputElement;
-    const file = input.files?.[0];
-    input.value = '';
+  /**
+   * Adopts an image as the new source, shared by the file input and the paste listener. `undefined`
+   * is the input's "no file" case, which clears the source; a paste always supplies a file and so
+   * goes through exactly the same clearing and state reset a chosen image does.
+   */
+  function adopt(file: File | undefined) {
     clearOutput();
     status = '';
     error = undefined;
@@ -298,6 +308,13 @@
       selected = file;
       sourceUrl = URL.createObjectURL(file);
     }
+  }
+
+  function chooseImage(event: Event) {
+    const input = event.currentTarget as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    adopt(file);
   }
 
   async function decodeSource(
@@ -468,6 +485,12 @@
       // The engine's own tolerance test decides whether the target was met, so the status line
       // cannot claim a hit the search itself did not consider a hit.
       metTarget = Math.abs(blob.size - goal) / goal <= options.tolerancePercent / 100;
+      // The search encodes JPEG or WebP and never PNG, so the published extension names the format
+      // the bytes are actually in rather than the PNG the source may have been.
+      published = publishResult(blob, {
+        sourceName: file.name.replace(/\.[^.]+$/u, ''),
+        extension: options.format === 'webp' ? 'webp' : 'jpg',
+      });
 
       const summary = metTarget
         ? localized(tr('metTarget'))
@@ -490,6 +513,8 @@
         error = cause.kind === 'decode-failed' ? 'decode-failed' : 'encode-failed';
         status = engineErrorMessage(cause);
       } else error = 'encode-failed';
+      // A failed or cancelled run never produced bytes, so any earlier result is withdrawn.
+      published = null;
     } finally {
       if (abort === controller) abort = undefined;
       busy = false;
@@ -535,7 +560,12 @@
   >
 </svelte:head>
 
-<main class="tool-page t21-page" lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}>
+<main
+  class="tool-page t21-page"
+  lang={locale}
+  dir={locale === 'ar' ? 'rtl' : 'ltr'}
+  use:pasteImage={(files) => adopt(files[0])}
+>
   <header class="tool-intro">
     <p class="eyebrow">{tr('eyebrow')}</p>
     <h1>{tr('title')}</h1>
@@ -635,6 +665,7 @@
         href={outputUrl}
         download={downloadName()}>{tr('download')}</a
       >
+      <ResultTransfer result={published} {busy} {locale} testIdPrefix="t21-transfer" />
     </section>
   {/if}
 

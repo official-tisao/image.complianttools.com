@@ -8,6 +8,10 @@
     parseShareFragment,
   } from '@complianttools/image-engine';
   import { translate, type Locale } from './i18n';
+  import ResultTransfer from './ResultTransfer.svelte';
+  import { pasteImage } from './transfer/paste-action';
+  import { fileExtension } from './transfer/filename';
+  import { publishResult, type PublishedResult } from './transfer/result-file';
 
   type LongTailKind =
     | 'spritesheet'
@@ -92,6 +96,9 @@
   let outputName = $state('');
   let status = $state('');
   let error = $state('');
+  /** P6-03: the bytes behind `outputUrl`, kept for the clipboard write and the drag-out. */
+  let published = $state<PublishedResult | null>(null);
+  let busy = $state(false);
   let quality = $state(82);
   let targetKb = $state(200);
   let columns = $state(2);
@@ -174,6 +181,12 @@
     outputUrl = URL.createObjectURL(blob);
     outputName = name;
     status = t('longTail.ready', 'Ready: {value} bytes', blob.size);
+    // Only image results get copy/drag-out. This tool also publishes a JSON share token, and
+    // putting a `.json` on the clipboard as a ClipboardItem would be a format Photoshop cannot
+    // open and a drag that drops the wrong file type into a design tool.
+    published = blob.type.startsWith('image/')
+      ? publishResult(blob, { sourceName: name, extension: fileExtension(name) })
+      : null;
   }
 
   async function makeSpritesheet() {
@@ -344,6 +357,9 @@
   async function runTool() {
     status = '';
     error = '';
+    busy = true;
+    // The previous result stops describing the screen as soon as a new run starts.
+    published = null;
     try {
       if (kind === 'spritesheet') await makeSpritesheet();
       else if (kind === 'html-to-image') await makeHtmlImage();
@@ -355,6 +371,9 @@
       else armWatch();
     } catch (cause) {
       error = cause instanceof Error ? cause.message : String(cause);
+      published = null;
+    } finally {
+      busy = false;
     }
   }
 
@@ -382,6 +401,9 @@
   lang={locale}
   dir={locale === 'ar' ? 'rtl' : 'ltr'}
   data-testid={`long-tail-${kind}`}
+  use:pasteImage={(files) => {
+    if (files[0]) setFiles([files[0]]);
+  }}
 >
   <header>
     <a href="/">ctimg</a>
@@ -473,7 +495,7 @@
   <button
     data-testid="long-tail-run"
     type="button"
-    disabled={!hydrated}
+    disabled={!hydrated || busy}
     onclick={() => void runTool()}
   >
     {kind === 'watch'
@@ -491,6 +513,7 @@
         >Download {outputName}</a
       >
     </p>
+    <ResultTransfer result={published} {busy} {locale} testIdPrefix="long-tail-transfer" />
   {/if}
   {#if batchOutputs.length}
     <ul data-testid="batch-results">

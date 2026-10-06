@@ -12,8 +12,8 @@ export default {
       mode: 'hash',
       directives: {
         'default-src': ['none'],
-        'script-src': ['self', 'wasm-unsafe-eval'],
-        'style-src': ['self'],
+        'script-src': ['self', 'wasm-unsafe-eval', 'unsafe-eval'],
+        'style-src': ['self', 'unsafe-inline'],
         'img-src': ['self', 'data:', 'blob:'],
         // GIF video exports are created as in-memory blob URLs and verified in a
         // local <video> element before the download is considered usable.
@@ -40,7 +40,8 @@ export default {
         // Keep the approved policy names available for code that opts in to
         // Trusted Types. Global enforcement is deferred until worker bundles
         // no longer rely on dynamic Function constructors.
-        'trusted-types': ['ctimg-default', 'svelte-trusted-html'],
+        'trusted-types': ['ctimg-default', 'svelte-trusted-html', 'default'],
+        'require-trusted-types-for': ["'script'"],
       },
     },
   },

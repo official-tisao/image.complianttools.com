@@ -16,6 +16,9 @@
     type T47DuotoneOptions,
   } from '@complianttools/image-engine';
   import GeneratedControls from './GeneratedControls.svelte';
+  import ResultTransfer from './ResultTransfer.svelte';
+  import { pasteImage } from './transfer/paste-action';
+  import { publishResult, type PublishedResult } from './transfer/result-file';
   import { localizeOptions, type Locale } from './i18n';
 
   type Kind = 'threshold' | 'sharpen' | 'duotone';
@@ -175,6 +178,8 @@
   let status = $state('');
   let busy = $state(false);
   let error = $state('');
+  /** P6-03: the bytes behind `outputUrl`, kept for the clipboard write and the drag-out. */
+  let published = $state<PublishedResult | null>(null);
 
   const updateOption = (path: string, value: unknown) => {
     if (kind === 'threshold') {
@@ -221,9 +226,12 @@
     }
   }
 
-  async function choose(event: Event) {
-    const file = (event.currentTarget as HTMLInputElement).files?.[0];
-    if (!file) return;
+  /**
+   * Adopts an image as the new source, shared by the file input and the paste listener. Both go
+   * through `inspect()`, so a pasted image is held to the same size and pixel limits as a chosen
+   * one and reports the same failure.
+   */
+  async function adopt(file: File) {
     error = '';
     try {
       const next = await inspect(file);
@@ -233,9 +241,18 @@
       if (outputUrl) URL.revokeObjectURL(outputUrl);
       outputUrl = '';
       outputBytes = undefined;
+      // A new source invalidates the previous result outright.
+      published = null;
     } catch (cause) {
       error = cause instanceof Error ? cause.message : 'The image could not be opened.';
+      published = null;
     }
+  }
+
+  async function choose(event: Event) {
+    const file = (event.currentTarget as HTMLInputElement).files?.[0];
+    if (!file) return;
+    await adopt(file);
   }
 
   async function run() {
@@ -279,9 +296,11 @@
       if (outputUrl) URL.revokeObjectURL(outputUrl);
       outputUrl = URL.createObjectURL(blob);
       status = `${selected.width} × ${selected.height}`;
+      published = publishResult(blob, { sourceName: `${kind}-result`, extension: 'png' });
     } catch (cause) {
       error = cause instanceof Error ? cause.message : 'The local operation could not finish.';
       status = '';
+      published = null;
     } finally {
       busy = false;
     }
@@ -293,7 +312,7 @@
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url;
-    anchor.download = `${kind}-result.png`;
+    anchor.download = published?.file.name ?? `${kind}-result.png`;
     anchor.click();
     URL.revokeObjectURL(url);
   }
@@ -350,7 +369,12 @@
   </script>
 </svelte:head>
 
-<main lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'} class="p3-colour-tool">
+<main
+  lang={locale}
+  dir={locale === 'ar' ? 'rtl' : 'ltr'}
+  class="p3-colour-tool"
+  use:pasteImage={(files) => void adopt(files[0]!)}
+>
   <p class="eyebrow">{t('Local image tool')}</p>
   <h1>{t(copy.title)}</h1>
   <p class="lede">{t(copy.description)}</p>
@@ -393,6 +417,7 @@
       <figcaption>{t(copy.preview)}</figcaption>
     </figure>
     <button type="button" data-testid="p3-download" onclick={download}>{t(copy.download)}</button>
+    <ResultTransfer result={published} {busy} {locale} testIdPrefix="p3-transfer" />
   {/if}
   <section class="tool-completion">
     <h2>{t('Questions about this tool')}</h2>

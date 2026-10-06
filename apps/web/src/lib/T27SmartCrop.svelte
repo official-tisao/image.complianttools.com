@@ -15,6 +15,9 @@
     smartCropAnalysisSize,
   } from '@complianttools/image-engine/ops/smart-crop';
   import GeneratedControls from '$lib/GeneratedControls.svelte';
+  import ResultTransfer from '$lib/ResultTransfer.svelte';
+  import { pasteImage } from '$lib/transfer/paste-action';
+  import { publishResult, type PublishedResult } from '$lib/transfer/result-file';
 
   type Locale = 'en' | 'en-XA' | 'ar';
   type Method = SmartCropOptions['method'];
@@ -198,6 +201,8 @@
   let status = $state('');
   let error = $state<ErrorKind>();
   let selectionNumber = 0;
+  /** P6-03: the bytes behind `outputUrl`, kept for the clipboard write and the drag-out. */
+  let published = $state<PublishedResult | null>(null);
 
   const pseudo = (value: string) =>
     `⟦${value.replace(/[aeiou]/giu, (vowel) => ({ a: 'á', e: 'ë', i: 'ï', o: 'ô', u: 'ü' })[vowel.toLowerCase()] ?? vowel)}⟧`;
@@ -254,6 +259,9 @@
     outputUrl = '';
     outputDimensions = undefined;
     cropBox = undefined;
+    // A cleared output is also a withdrawn result: the clipboard and drag-out must not keep
+    // offering bytes for a preview that is no longer on screen.
+    published = null;
   }
 
   async function inspectImage(file: File): Promise<Dimensions> {
@@ -325,11 +333,11 @@
     throw new Error('invalid-image');
   }
 
-  async function chooseImage(event: Event) {
-    const input = event.currentTarget as HTMLInputElement;
-    const file = input.files?.[0];
-    input.value = '';
-    if (!file) return;
+  /**
+   * Adopts an image as the new source, shared by the file input and the paste listener, so a pasted
+   * screenshot is held to the same still-PNG-or-JPEG checks and clears the same previous output.
+   */
+  async function adopt(file: File) {
     const task = ++selectionNumber;
     if (sourceUrl) URL.revokeObjectURL(sourceUrl);
     sourceUrl = '';
@@ -352,6 +360,14 @@
           ? (cause.message as ErrorKind)
           : 'invalid-image';
     }
+  }
+
+  function chooseImage(event: Event) {
+    const input = event.currentTarget as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    void adopt(file);
   }
 
   function targetCrop(dimensions: Dimensions, targetRatio: number): Crop {
@@ -423,11 +439,19 @@
       outputDimensions = { width, height };
       cropBox = crop;
       status = t('done');
+      // The crop is re-encoded to PNG whatever the source format was, so `png` is the format the
+      // published bytes are actually in.
+      published = publishResult(blob, {
+        sourceName: sourceFile?.name.replace(/\.[^.]+$/u, '') ?? 'image',
+        extension: 'png',
+      });
     } catch (cause) {
       error =
         cause instanceof Error && cause.message in en.errors
           ? (cause.message as ErrorKind)
           : 'processing-failed';
+      // The crop never encoded, so any earlier result no longer describes what is on screen.
+      published = null;
     } finally {
       bitmap?.close();
       busy = false;
@@ -506,7 +530,12 @@
   >
 </svelte:head>
 
-<main class="tool-page t27-page" lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}>
+<main
+  class="tool-page t27-page"
+  lang={locale}
+  dir={locale === 'ar' ? 'rtl' : 'ltr'}
+  use:pasteImage={(files) => void adopt(files[0]!)}
+>
   <header class="tool-intro">
     <p class="eyebrow">{t('eyebrow')}</p>
     <h1>{title}</h1>
@@ -596,6 +625,7 @@
             href={outputUrl}
             download={downloadName(sourceFile)}>{t('download')}</a
           >
+          <ResultTransfer result={published} {busy} {locale} testIdPrefix="t27-transfer" />
         </figure>
       {/if}
     </section>

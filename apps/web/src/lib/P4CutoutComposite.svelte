@@ -3,6 +3,9 @@
   import type { AiCapability } from '@complianttools/image-engine/ai/types';
   import type { RasterImage } from '@complianttools/image-engine/types';
   import LazyEscalationControl from './ai/LazyEscalationControl.svelte';
+  import ResultTransfer from './ResultTransfer.svelte';
+  import { pasteImage } from './transfer/paste-action';
+  import { publishResult, type PublishedResult } from './transfer/result-file';
 
   type Locale = 'en' | 'en-XA' | 'ar';
   type Kind = 'expand-image' | 'remove-background' | 'replace-background' | 'cutout' | 'composite';
@@ -125,6 +128,8 @@
   let status = $state('');
   let error = $state('');
   let busy = $state(false);
+  /** P6-03: the bytes behind `outputUrl`, kept for the clipboard write and the drag-out. */
+  let published = $state<PublishedResult | null>(null);
   let tolerance = $state(40);
   let fillColor = $state('#ffffff');
   let outputWidth = $state(0);
@@ -199,6 +204,28 @@
   function clearOutput() {
     if (outputUrl) URL.revokeObjectURL(outputUrl);
     outputUrl = '';
+    // A cleared output is also a withdrawn result: the clipboard and drag-out must not keep
+    // offering bytes for a preview that is no longer on screen.
+    published = null;
+  }
+
+  /**
+   * Adopts an image as the foreground source, shared by the file input and the paste listener. A
+   * pasted image is the foreground subject, which is the slot a user pasting a screenshot expects
+   * it to fill; the background stays whatever they chose.
+   */
+  function adopt(file: File) {
+    if (!file.type.startsWith('image/')) {
+      error = 'Choose a PNG, JPEG, or WebP image.';
+      published = null;
+      return;
+    }
+    if (foregroundUrl) URL.revokeObjectURL(foregroundUrl);
+    foregroundFile = file;
+    foregroundUrl = URL.createObjectURL(file);
+    clearOutput();
+    error = '';
+    status = file.name;
   }
 
   function chooseFile(event: Event, target: 'foreground' | 'background') {
@@ -206,17 +233,15 @@
     const file = input.files?.[0];
     input.value = '';
     if (!file) return;
+    if (target === 'foreground') {
+      adopt(file);
+      return;
+    }
     if (!file.type.startsWith('image/')) {
       error = 'Choose a PNG, JPEG, or WebP image.';
       return;
     }
-    if (target === 'foreground') {
-      if (foregroundUrl) URL.revokeObjectURL(foregroundUrl);
-      foregroundFile = file;
-      foregroundUrl = URL.createObjectURL(file);
-    } else {
-      backgroundFile = file;
-    }
+    backgroundFile = file;
     clearOutput();
     error = '';
     status = file.name;
@@ -368,8 +393,13 @@
       const blob = await encode(output);
       outputUrl = URL.createObjectURL(blob);
       status = t(copy.download);
+      published = publishResult(blob, {
+        sourceName: (foregroundFile?.name ?? 'image').replace(/\.[^.]+$/u, ''),
+        extension: 'png',
+      });
     } catch (cause) {
       error = cause instanceof Error ? cause.message : 'Processing failed.';
+      published = null;
     } finally {
       busy = false;
     }
@@ -410,7 +440,12 @@
   </script>
 </svelte:head>
 
-<main class="tool-page p4-page" lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}>
+<main
+  class="tool-page p4-page"
+  lang={locale}
+  dir={locale === 'ar' ? 'rtl' : 'ltr'}
+  use:pasteImage={(files) => adopt(files[0]!)}
+>
   <header class="tool-intro">
     <p class="eyebrow">{t('Local image tool')}</p>
     <h1>{title}</h1>
@@ -520,6 +555,7 @@
       <a data-testid="p4-download" class="button primary" href={outputUrl} download={downloadName()}
         >{t(copy.download)}</a
       >
+      <ResultTransfer result={published} {busy} {locale} testIdPrefix="p4-transfer" />
     </section>
 
     <!--
