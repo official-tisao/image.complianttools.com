@@ -11,7 +11,6 @@
   import { pasteImage } from './transfer/paste-action';
   import { markStale, publishResult, type PublishedResult } from './transfer/result-file';
   import { localizeOptions, translate, type Locale } from './i18n';
-  import { createScriptURL } from './trustedTypes';
 
   type ToolKind = 'convert' | 'compress' | 'resize';
   let {
@@ -218,12 +217,9 @@
   }
   function workerProcess(image: ImageData, recipe: Recipe): Promise<ImageData> {
     return new Promise((resolve, reject) => {
-      const worker = new Worker(
-        createScriptURL(new URL('../workers/tool-worker.ts', import.meta.url)),
-        {
-          type: 'module',
-        },
-      );
+      const worker = new Worker(new URL('../workers/tool-worker.ts', import.meta.url), {
+        type: 'module',
+      });
       worker.onmessage = (event) => {
         worker.terminate();
         if (event.data.error) reject(new Error(event.data.error));
@@ -236,25 +232,26 @@
             ),
           );
       };
-      worker.onerror = reject;
+      worker.onerror = (event: ErrorEvent) => {
+        reject(new Error(event.message || 'Worker failed'));
+      };
       const copy = image.data.slice().buffer;
       worker.postMessage({ width: image.width, height: image.height, data: copy, recipe }, [copy]);
     });
   }
   function workerEncode(image: ImageData, format: 'jpeg' | 'png' | 'webp', quality: number) {
     return new Promise<ArrayBuffer>((resolve, reject) => {
-      const worker = new Worker(
-        createScriptURL(new URL('../workers/encode-worker.ts', import.meta.url)),
-        {
-          type: 'module',
-        },
-      );
+      const worker = new Worker(new URL('../workers/encode-worker.ts', import.meta.url), {
+        type: 'module',
+      });
       worker.onmessage = (event) => {
         worker.terminate();
         if (event.data.error) reject(new Error(event.data.error));
         else resolve(event.data.bytes as ArrayBuffer);
       };
-      worker.onerror = reject;
+      worker.onerror = (event: ErrorEvent) => {
+        reject(new Error(event.message || 'Worker failed'));
+      };
       const copy = image.data.slice().buffer;
       worker.postMessage(
         { width: image.width, height: image.height, data: copy, format, quality },
@@ -351,7 +348,12 @@
         extension: format,
       });
     } catch (cause) {
-      error = cause instanceof Error ? cause.message : String(cause);
+      error =
+        cause instanceof Error
+          ? cause.message
+          : cause && typeof cause === 'object' && 'message' in cause
+            ? String(cause.message)
+            : String(cause);
       // A failed run invalidates whatever is on screen. Leaving the previous result copyable
       // would let the user take away bytes from a run that is known to have failed.
       published = null;
