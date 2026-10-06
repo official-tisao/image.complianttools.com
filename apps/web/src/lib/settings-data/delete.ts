@@ -95,7 +95,11 @@ async function clearOpfsScratch(): Promise<boolean> {
     const dir = await navigator.storage.getDirectory();
     try {
       const scratch = await dir.getDirectoryHandle('scratch', { create: false });
-      for await (const [name, handle] of (scratch as FileSystemDirectoryHandle).entries()) {
+      for await (const [name, handle] of (
+        scratch as FileSystemDirectoryHandle & {
+          entries(): AsyncIterableIterator<[string, FileSystemHandle]>;
+        }
+      ).entries()) {
         if (handle.kind === 'file') await scratch.removeEntry(name);
       }
       return true;

@@ -148,7 +148,11 @@ export async function measureOpfsScratch(): Promise<{
       bytes = 0;
     try {
       const scratch = await dir.getDirectoryHandle('scratch', { create: false });
-      for await (const entry of (scratch as FileSystemDirectoryHandle).entries()) {
+      for await (const entry of (
+        scratch as FileSystemDirectoryHandle & {
+          entries(): AsyncIterableIterator<[string, FileSystemHandle]>;
+        }
+      ).entries()) {
         const [_name, handle] = entry as [string, FileSystemHandle];
         if (handle.kind === 'file') {
           files++;
