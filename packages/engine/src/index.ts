@@ -77,6 +77,7 @@ export * from './ops/spritesheet.js';
 export * from './ops/html-card.js';
 export * from './ops/video-gif.js';
 export * from './ops/folder-watch.js';
+export * from './ops/file-access.js';
 export * from './ops/adjust.js';
 export * from './ops/curves.js';
 export * from './ops/levels.js';

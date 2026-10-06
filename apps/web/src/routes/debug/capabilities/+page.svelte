@@ -8,7 +8,11 @@
     webGpu: 'WebGPU',
     webGl2: 'WebGL 2',
     offscreenCanvas: 'OffscreenCanvas',
-    fileSystemAccess: 'File System Access',
+    fileSystemAccess: 'File System Access (file picker)',
+    // README §7.2 lists the directory picker and `showSaveFilePicker` as their own APIs with
+    // their own fallbacks, so each is reported separately rather than folded into the file picker.
+    fileSystemDirectoryAccess: 'File System Access (directory picker)',
+    saveFilePicker: 'showSaveFilePicker',
     opfs: 'Origin private file system',
     webCodecs: 'WebCodecs',
   };

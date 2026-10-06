@@ -19,6 +19,15 @@ export interface RuntimeCapabilities {
   readonly webGl2: boolean;
   readonly offscreenCanvas: boolean;
   readonly fileSystemAccess: boolean;
+  /**
+   * The directory half of the File System Access API, which README §7.2 lists separately: T74
+   * folder input and folder output need it, and `fileSystemAccess` alone does not imply it. A
+   * browser may expose the file picker without the directory picker, and reporting the pair as
+   * one flag is how T74 ended up offering a "watch this folder" button that cannot work.
+   */
+  readonly fileSystemDirectoryAccess: boolean;
+  /** Whether save-as can ask the user for a destination through the platform file picker. */
+  readonly saveFilePicker: boolean;
   readonly opfs: boolean;
   readonly webCodecs: boolean;
 }
@@ -32,6 +41,10 @@ export interface CapabilityEnvironment {
   readonly ImageDecoder?: unknown;
   readonly VideoFrame?: unknown;
   readonly showOpenFilePicker?: unknown;
+  readonly showDirectoryPicker?: unknown;
+  readonly showSaveFilePicker?: unknown;
+  readonly FileSystemDirectoryHandle?: unknown;
+  readonly FileSystemWritableFileStream?: unknown;
   readonly navigator?: {
     readonly gpu?: unknown;
     readonly storage?: { readonly getDirectory?: unknown };
@@ -68,6 +81,13 @@ export function probeRuntimeCapabilities(
     webGl2,
     offscreenCanvas: environment.OffscreenCanvas !== undefined,
     fileSystemAccess: typeof environment.showOpenFilePicker === 'function',
+    // The picker alone is not enough: without the handle constructors there is nothing to
+    // enumerate and nothing to write through, so this reports what the tool can actually do.
+    fileSystemDirectoryAccess:
+      typeof environment.showDirectoryPicker === 'function' &&
+      typeof environment.FileSystemDirectoryHandle === 'function' &&
+      typeof environment.FileSystemWritableFileStream === 'function',
+    saveFilePicker: typeof environment.showSaveFilePicker === 'function',
     opfs: typeof environment.navigator?.storage?.getDirectory === 'function',
     webCodecs: environment.ImageDecoder !== undefined || environment.VideoFrame !== undefined,
   };

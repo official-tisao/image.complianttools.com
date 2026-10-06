@@ -167,6 +167,24 @@ describe('diffSnapshots', () => {
     expect(diff.added.map((entry) => entry.path)).toEqual(['new.png']);
     expect(diff.removed).toEqual(['old.png']);
   });
+
+  it('reports an existing folder as wholly new against an empty baseline', async () => {
+    // The sweep records its first snapshot as the baseline. With "ignore existing files" off,
+    // those files are meant to be processed, which only works if the first diff is taken against
+    // an *empty* baseline — diffing a snapshot against itself reports zero additions and the
+    // folder is silently never processed.
+    const baseline = { entries: new Map(), scanned: 0 };
+    const after = await scanFolder(folder('root', [file('a.png'), file('b.jpg')]));
+    expect(diffSnapshots(baseline, after).added.map((entry) => entry.path)).toEqual([
+      'a.png',
+      'b.jpg',
+    ]);
+  });
+
+  it('reports an existing folder as unchanged against itself', async () => {
+    const snapshot = await scanFolder(folder('root', [file('a.png')]));
+    expect(diffSnapshots(snapshot, snapshot).added).toHaveLength(0);
+  });
 });
 
 describe('outputFileName', () => {
