@@ -2239,5 +2239,37 @@
     "licenseUrl": "https://github.com/opencv/opencv/blob/4.9.0/data/haarcascades/haarcascade_frontalface_default.xml",
     "sha256": "0f7d4527844eb514d4a4948e822da90fbb16a34a0bbbbc6adc6498747a5aafb0",
     "dateChecked": "2026-09-17"
+  },
+  {
+    "path": "apps/web/static/icons/icon-192.png",
+    "sourceUrl": "https://image.complianttools.com/static/icons/icon-192.png",
+    "license": "CC0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "sha256": "c414cd0e204de974f73753c7e28d7638e7b3691bb8b1a2bab6b25bb7fed7ce77",
+    "dateChecked": "2026-10-06"
+  },
+  {
+    "path": "apps/web/static/icons/icon-512.png",
+    "sourceUrl": "https://image.complianttools.com/static/icons/icon-512.png",
+    "license": "CC0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "sha256": "c414cd0e204de974f73753c7e28d7638e7b3691bb8b1a2bab6b25bb7fed7ce77",
+    "dateChecked": "2026-10-06"
+  },
+  {
+    "path": "apps/web/static/icons/icon-maskable-512.png",
+    "sourceUrl": "https://image.complianttools.com/static/icons/icon-maskable-512.png",
+    "license": "CC0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "sha256": "c414cd0e204de974f73753c7e28d7638e7b3691bb8b1a2bab6b25bb7fed7ce77",
+    "dateChecked": "2026-10-06"
+  },
+  {
+    "path": "apps/web/static/manifest.webmanifest",
+    "sourceUrl": "https://image.complianttools.com/static/manifest.webmanifest",
+    "license": "CC0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "sha256": "d23580bb462dc09cf6af5741213c4bdd05eeb9abd680db9b465005eb5c5eaafc",
+    "dateChecked": "2026-10-06"
   }
 ]
