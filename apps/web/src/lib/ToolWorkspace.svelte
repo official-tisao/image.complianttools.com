@@ -11,6 +11,7 @@
   import { pasteImage } from './transfer/paste-action';
   import { markStale, publishResult, type PublishedResult } from './transfer/result-file';
   import { localizeOptions, translate, type Locale } from './i18n';
+  import { createScriptURL } from './trustedTypes';
 
   type ToolKind = 'convert' | 'compress' | 'resize';
   let {
@@ -217,9 +218,12 @@
   }
   function workerProcess(image: ImageData, recipe: Recipe): Promise<ImageData> {
     return new Promise((resolve, reject) => {
-      const worker = new Worker(new URL('../workers/tool-worker.ts', import.meta.url), {
-        type: 'module',
-      });
+      const worker = new Worker(
+        createScriptURL(new URL('../workers/tool-worker.ts', import.meta.url)),
+        {
+          type: 'module',
+        },
+      );
       worker.onmessage = (event) => {
         worker.terminate();
         if (event.data.error) reject(new Error(event.data.error));
@@ -239,9 +243,12 @@
   }
   function workerEncode(image: ImageData, format: 'jpeg' | 'png' | 'webp', quality: number) {
     return new Promise<ArrayBuffer>((resolve, reject) => {
-      const worker = new Worker(new URL('../workers/encode-worker.ts', import.meta.url), {
-        type: 'module',
-      });
+      const worker = new Worker(
+        createScriptURL(new URL('../workers/encode-worker.ts', import.meta.url)),
+        {
+          type: 'module',
+        },
+      );
       worker.onmessage = (event) => {
         worker.terminate();
         if (event.data.error) reject(new Error(event.data.error));

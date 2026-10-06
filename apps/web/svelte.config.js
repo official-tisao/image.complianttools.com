@@ -12,7 +12,7 @@ export default {
       mode: 'hash',
       directives: {
         'default-src': ['none'],
-        'script-src': ['self', 'wasm-unsafe-eval'],
+        'script-src': ['self', 'wasm-unsafe-eval', 'unsafe-eval'],
         'style-src': ['self', 'unsafe-inline'],
         'img-src': ['self', 'data:', 'blob:'],
         // GIF video exports are created as in-memory blob URLs and verified in a
