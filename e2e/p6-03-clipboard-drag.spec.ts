@@ -58,9 +58,21 @@ async function pasteImage(page: Page, focusSelector?: string) {
       }
       const transfer = new DataTransfer();
       transfer.items.add(new File([blob], 'pasted.png', { type: 'image/png' }));
-      document.body.dispatchEvent(
-        new ClipboardEvent('paste', { clipboardData: transfer, bubbles: true, cancelable: true }),
-      );
+      const clipboardEvent = new ClipboardEvent('paste', {
+        clipboardData: transfer,
+        bubbles: true,
+        cancelable: true,
+      });
+      // Firefox exposes clipboardData on a constructed ClipboardEvent but drops the synthetic
+      // DataTransfer payload. Use an ordinary event with the same read-only property so this test
+      // still exercises the app's real paste listener with a browser-independent image payload.
+      if (clipboardEvent.clipboardData?.items.length) {
+        document.body.dispatchEvent(clipboardEvent);
+      } else {
+        const fallbackEvent = new Event('paste', { bubbles: true, cancelable: true });
+        Object.defineProperty(fallbackEvent, 'clipboardData', { value: transfer });
+        document.body.dispatchEvent(fallbackEvent);
+      }
     },
     { focusSelector },
   );
