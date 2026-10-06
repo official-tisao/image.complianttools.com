@@ -1,0 +1,60 @@
+{
+  "name": "Compliant Image Tools",
+  "short_name": "ctimg",
+  "description": "Image editing, conversion, and enhancement — all local until you choose AI.",
+  "display": "standalone",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "background_color": "#f0eeea",
+  "theme_color": "#f0eeea",
+  "related_applications": [],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    { "name": "Resize Image", "short_name": "Resize", "description": "Resize an image to custom dimensions", "url": "/resize" },
+    { "name": "Crop Image", "short_name": "Crop", "description": "Crop and adjust image framing", "url": "/crop" },
+    { "name": "Compress Image", "short_name": "Compress", "description": "Reduce file size with quality control", "url": "/compress" },
+    { "name": "Convert Format", "short_name": "Convert", "description": "Convert between image formats", "url": "/convert" },
+    { "name": "Generate Image", "short_name": "Generate", "description": "Create an image from a text prompt", "url": "/ai/generate" }
+  ],
+  "file_handlers": [
+    {
+      "action": "/",
+      "accept": {
+        "image/png": ".png",
+        "image/jpeg": ".jpg,.jpeg",
+        "image/webp": ".webp",
+        "image/gif": ".gif",
+        "image/avif": ".avif",
+        "image/svg+xml": ".svg"
+      }
+    }
+  ],
+  "share_target": {
+    "action": "/",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "Shared image",
+      "text": "Image shared to Compliant Tools"
+    }
+  }
+}
