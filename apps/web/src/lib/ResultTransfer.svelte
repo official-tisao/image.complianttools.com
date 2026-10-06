@@ -130,6 +130,7 @@
     type="button"
     data-testid={`${testIdPrefix}-copy`}
     disabled={!canExport}
+    aria-label={unavailable ? t('transfer.copy', 'Copy to clipboard') : undefined}
     aria-describedby={unavailable ? `${testIdPrefix}-copy-note` : undefined}
     onclick={() => void copy()}
   >
