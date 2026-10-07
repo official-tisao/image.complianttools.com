@@ -109,13 +109,23 @@ test('T81 retargets a generated PNG, paints an approximate mask, and downloads t
   if (!bounds) throw new Error('The protection mask canvas is not visible.');
   await canvas.click({ position: { x: bounds.width / 2, y: bounds.height / 2 } });
   const beforeKeyboardMark = Number(
-    (await page.locator('.t81-mask-actions').textContent())?.match(/\d+/u)?.[0] ?? 0,
+    (
+      await page
+        .locator('.t81-mask-actions span')
+        .filter({ hasText: /Marked pixels/ })
+        .textContent()
+    )?.match(/\d+/u)?.[0] ?? 0,
   );
   await canvas.focus();
   await page.keyboard.press('ArrowLeft');
   await page.keyboard.press('Space');
   const afterKeyboardMark = Number(
-    (await page.locator('.t81-mask-actions').textContent())?.match(/\d+/u)?.[0] ?? 0,
+    (
+      await page
+        .locator('.t81-mask-actions span')
+        .filter({ hasText: /Marked pixels/ })
+        .textContent()
+    )?.match(/\d+/u)?.[0] ?? 0,
   );
   expect(afterKeyboardMark).toBeGreaterThan(beforeKeyboardMark);
 
