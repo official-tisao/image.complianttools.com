@@ -58,14 +58,25 @@
 {@render children()}
 
 {#if updateReady}
-  <div class="sw-update-toast" role="status" aria-live="polite">
+  <div class="sw-update-toast" role="alert" aria-live="polite">
     <span>A new version is ready.</span>
     <button onclick={reloadForUpdate}>Reload</button>
   </div>
 {/if}
 
 {#if offline}
-  <div class="offline-badge" role="status" aria-live="polite">Offline</div>
+  <div
+    class="offline-badge"
+    role="status"
+    aria-live="polite"
+    aria-describedby="offline-reassurance"
+  >
+    Offline — local tools still work
+    <span id="offline-reassurance" hidden
+      >Your local image processing continues; AI-only provider requests are paused until
+      connectivity returns.</span
+    >
+  </div>
 {/if}
 
 <style>

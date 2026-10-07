@@ -58,6 +58,8 @@
   // the initial value is read once here. The `state_referenced_locally` lint concern is real for
   // changing props and not for a one-time default: `guide` is fixed for this page's lifetime, and a
   // client-side navigation to another provider remounts the component.
+  // eslint-disable-next-line svelte/no-unused-svelte-ignore
+  // svelte-ignore state_referenced_locally -- `guide` fixed for this page's lifetime
   let baseUrl = $state(guide.descriptor.defaultBaseUrl);
 
   type Phase = 'idle' | 'running' | 'confirmed' | 'failed';
