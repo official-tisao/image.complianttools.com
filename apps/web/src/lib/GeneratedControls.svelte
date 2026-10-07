@@ -58,6 +58,10 @@
           id={`control-${path}`}
           type="range"
           aria-describedby={description.help ? helpId : undefined}
+          aria-valuetext={'showing ' +
+            Number(current(path, description)) +
+            (description.unit || '%') +
+            ' of the edited image'}
           min={description.min}
           max={description.max}
           step={description.step}
