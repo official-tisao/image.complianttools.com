@@ -65,7 +65,18 @@
 {/if}
 
 {#if offline}
-  <div class="offline-badge" role="status" aria-live="polite">Offline</div>
+  <div
+    class="offline-badge"
+    role="status"
+    aria-live="polite"
+    aria-describedby="offline-reassurance"
+  >
+    Offline — local tools still work
+    <span id="offline-reassurance" hidden
+      >Your local image processing continues; AI-only provider requests are paused until
+      connectivity returns.</span
+    >
+  </div>
 {/if}
 
 <style>
