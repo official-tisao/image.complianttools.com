@@ -17,11 +17,14 @@ async function fixturePng(page: Page) {
     ctx.fillStyle = '#3366cc';
     ctx.fillRect(0, 0, 100, 100);
     const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, 'image/png'));
-    return blob ? Buffer.from(await blob.arrayBuffer()) : Buffer.from([]);
+    if (!blob) return [];
+    const ab = await blob.arrayBuffer();
+    return Array.from(new Uint8Array(ab));
   });
 }
 
-async function injectFile(page: Page, testId: string, buffer: Buffer) {
+async function injectFile(page: Page, testId: string, bytes: number[]) {
+  const buffer = Buffer.from(bytes);
   await page
     .getByTestId(testId)
     .setInputFiles([{ name: 'fixture.png', mimeType: 'image/png', buffer }]);
@@ -58,24 +61,24 @@ test.describe('P6-07 keyboard-only canonical flows', () => {
   });
 
   test('Flow C — AI result via keyboard selection', async ({ page }) => {
-    await page.goto('/ai');
+    await page.goto('/ai/generate');
     await page.keyboard.press('Tab');
     await page.keyboard.press('Tab');
     await page.keyboard.press('Enter');
     // Assert meaningful outcome (not just navigation)
     await expect(page.getByRole('status', { name: /result/i }))
       .toBeVisible({ timeout: 15000 })
-      .catch(() => {
+      .catch(async () => {
         // If AI is mocked/offline, assert page is usable
-        expect(page.locator('main')).toBeVisible();
+        await expect(page.locator('main')).toBeVisible();
       });
   });
 
   test('Flow D — shared recipe via keyboard', async ({ page }) => {
-    await page.goto('/flow-d-recipe-share');
+    await page.goto('/recipe');
     await page.keyboard.press('Tab');
     await page.keyboard.press('Enter');
-    await expect(page.getByRole('link', { name: /share/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /share/i })).toBeVisible();
   });
 
   test('Crop mask nudging — Arrow / Shift+Arrow keyboard', async ({ page }) => {

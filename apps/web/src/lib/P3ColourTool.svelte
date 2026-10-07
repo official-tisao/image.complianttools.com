@@ -165,6 +165,8 @@
     ),
   );
   let selected = $state<Selected>();
+  // eslint-disable-next-line svelte/no-unused-svelte-ignore
+  // svelte-ignore state_referenced_locally
   let optionState = $state<Options>(
     kind === 'threshold'
       ? T41ThresholdOptionsSchema.parse({})

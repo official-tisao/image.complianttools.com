@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { denyAllNetwork, allowAllNetwork, LOCAL_ORIGIN } from './support/network.js';
 
 /**
@@ -26,8 +26,16 @@ const FIXTURE = {
   ),
 };
 
-async function warmShell(page: unknown) {
+async function warmShell(page: Page) {
   await page.goto('/');
+  await page.waitForFunction(() => document.querySelector('html[data-hydrated="true"]') !== null, {
+    timeout: 30_000,
+  });
+  // Ensure service worker is active and controlling for offline navigation
+  await page.evaluate(async () => {
+    await navigator.serviceWorker.ready;
+  });
+  await page.reload();
   await page.waitForFunction(() => document.querySelector('html[data-hydrated="true"]') !== null, {
     timeout: 30_000,
   });
@@ -102,10 +110,13 @@ test.describe('P6-06 Offline hardening', () => {
     // Catalog count assertion: 72 tools whose mode is Local (exclude 3 AI-only, 6 Local⇗AI counted
     // as local, and CLI/library). We assert via the feature inventory combined with the route tree.
     const localRouteCount = await page.evaluate(() => {
-      // Count routes that are genuinely local (not /ai/* AI-only, not /connect-ai external-only)
       const links = Array.from(document.querySelectorAll('a[href^="/"]'));
-      const unique = new Set(links.map((a) => a.getAttribute('href')!.split('?')[0]));
-      // This is a proxy; the real assertion is below with explicit counts
+      const unique = new Set(
+        links.map((a) => {
+          const h = a.getAttribute('href') || '';
+          return h.split('?')[0].split('#')[0];
+        }),
+      );
       return unique.size;
     });
     expect(localRouteCount, 'at least representative local routes present').toBeGreaterThanOrEqual(

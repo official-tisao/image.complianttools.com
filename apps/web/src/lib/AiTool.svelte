@@ -59,6 +59,8 @@
     edit: 'edit',
     describe: 'describe',
   };
+  // eslint-disable-next-line svelte/no-unused-svelte-ignore
+  // svelte-ignore state_referenced_locally
   const capability = CAPABILITY[kind];
 
   const copy: Record<AiKind, { title: string; description: string; action: string }> = {

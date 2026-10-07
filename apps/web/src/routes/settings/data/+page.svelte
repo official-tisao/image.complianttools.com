@@ -10,10 +10,16 @@
     measureStorageEstimate,
     type Measurement,
   } from '$lib/settings-data/measure';
-  import { deleteEverything, clearDownloadedModules, type DeleteResult } from '$lib/settings-data/delete';
+  import {
+    deleteEverything,
+    clearDownloadedModules,
+    type DeleteResult,
+  } from '$lib/settings-data/delete';
 
   let measurements = $state<Record<string, Measurement>>({});
-  let storageEstimate = $state<{ usage?: number; quota?: number; note: string }>({ note: 'Not yet measured' });
+  let storageEstimate = $state<{ usage?: number; quota?: number; note: string }>({
+    note: 'Not yet measured',
+  });
   let deletingAll = $state(false);
   let deletingModule = $state(false);
   let statusMessage = $state('');
@@ -43,7 +49,9 @@
     };
 
     // Recipes
-    const recipesDB = dbNames.includes('recipes') ? await measureIndexedDBStore('recipes', 'recipes') : { records: 0, bytes: 0, note: 'Database not found.' };
+    const recipesDB = dbNames.includes('recipes')
+      ? await measureIndexedDBStore('recipes', 'recipes')
+      : { records: 0, bytes: 0, note: 'Database not found.' };
     m['indexedDB-recipes'] = {
       storeId: 'indexedDB-recipes',
       label: 'Saved recipes',
@@ -54,7 +62,9 @@
     };
 
     // Providers
-    const providersDB = dbNames.includes('providers') ? await measureIndexedDBStore('providers') : { records: 0, bytes: 0, note: 'Database not found.' };
+    const providersDB = dbNames.includes('providers')
+      ? await measureIndexedDBStore('providers')
+      : { records: 0, bytes: 0, note: 'Database not found.' };
     m['indexedDB-providers'] = {
       storeId: 'indexedDB-providers',
       label: 'Provider config (non-secret)',
@@ -65,7 +75,9 @@
     };
 
     // Credentials (measured only if DB exists; avoid creating it)
-    const credDB = dbNames.includes('credentials') ? await measureIndexedDBStore('credentials') : { records: 0, bytes: 0, note: 'Not implemented or database not found.' };
+    const credDB = dbNames.includes('credentials')
+      ? await measureIndexedDBStore('credentials')
+      : { records: 0, bytes: 0, note: 'Not implemented or database not found.' };
     m['indexedDB-credentials'] = {
       storeId: 'indexedDB-credentials',
       label: 'Credentials',
@@ -76,7 +88,9 @@
     };
 
     // Ledger (measure from existing DB only)
-    const ledgerDB = dbNames.includes('ctimg-cost-ledger') ? await measureIndexedDBStore('ctimg-cost-ledger', 'records') : { records: 0, bytes: 0, note: 'Database not found.' };
+    const ledgerDB = dbNames.includes('ctimg-cost-ledger')
+      ? await measureIndexedDBStore('ctimg-cost-ledger', 'records')
+      : { records: 0, bytes: 0, note: 'Database not found.' };
     m['indexedDB-ledger'] = {
       storeId: 'indexedDB-ledger',
       label: 'Cost ledger',
@@ -87,7 +101,9 @@
     };
 
     // Model cache
-    const modelCacheDB = dbNames.includes('ctimg-t32-models') ? await measureIndexedDBStore('ctimg-t32-models', 'registered-models') : { records: 0, bytes: 0, note: 'No cached models found.' };
+    const modelCacheDB = dbNames.includes('ctimg-t32-models')
+      ? await measureIndexedDBStore('ctimg-t32-models', 'registered-models')
+      : { records: 0, bytes: 0, note: 'No cached models found.' };
     m['indexedDB-modelCache'] = {
       storeId: 'indexedDB-modelCache',
       label: 'Cached model lists',
@@ -172,11 +188,12 @@
     const failed = results.filter((r: DeleteResult) => !r.ok);
     const deletedAny = results.some((r: DeleteResult) => r.deleted);
     const messages = results.map((r: DeleteResult) => r.message).join(' ');
-    statusMessage = failed.length > 0
-      ? `Partial failure: ${messages}`
-      : deletedAny
-        ? `All persistent data removed: ${messages}`
-        : `No persistent data found: ${messages}`;
+    statusMessage =
+      failed.length > 0
+        ? `Partial failure: ${messages}`
+        : deletedAny
+          ? `All persistent data removed: ${messages}`
+          : `No persistent data found: ${messages}`;
     await refreshMeasurements();
     await refreshStorageEstimate();
   }
@@ -192,7 +209,10 @@
 
 <svelte:head>
   <title>Settings → Data — ctimg</title>
-  <meta name="description" content="Review and manage stored data: recipes, models, settings, and module caches." />
+  <meta
+    name="description"
+    content="Review and manage stored data: recipes, models, settings, and module caches."
+  />
 </svelte:head>
 
 <main class="reference" lang="en" dir="ltr" data-testid="settings-data">
@@ -206,15 +226,15 @@
 
   <h1>Settings → Data</h1>
   <p class="eyebrow" style="margin-top: 0; color: #5c5a56; font-size: 15px;">
-    Every store listed in §18.1, with its actual measured size and record/file count.
-    No fabricated values. Memory-only stores are clearly labelled.
+    Every store listed in §18.1, with its actual measured size and record/file count. No fabricated
+    values. Memory-only stores are clearly labelled.
   </p>
 
   <section aria-label="Overall browser-origin storage">
     <h2>Browser-origin storage context</h2>
     <p>
-      <code>navigator.storage.estimate()</code> gives overall usage and quota for this origin —
-      it is shown as context, not a substitute for per-store measurements.
+      <code>navigator.storage.estimate()</code> gives overall usage and quota for this origin — it is
+      shown as context, not a substitute for per-store measurements.
     </p>
     <dl class="store-detail-list" style="margin-top: 12px;">
       <dt>Usage</dt>
@@ -235,11 +255,29 @@
     <table class="store-table" style="width: 100%; border-collapse: collapse; margin-top: 16px;">
       <thead>
         <tr>
-          <th scope="col" style="text-align: left; padding: 8px; border-bottom: 2px solid #1c1a1720;">Store</th>
-          <th scope="col" style="text-align: left; padding: 8px; border-bottom: 2px solid #1c1a1720;">Measured size</th>
-          <th scope="col" style="text-align: left; padding: 8px; border-bottom: 2px solid #1c1a1720;">Records / files</th>
-          <th scope="col" style="text-align: left; padding: 8px; border-bottom: 2px solid #1c1a1720;">Status / note</th>
-          <th scope="col" style="text-align: left; padding: 8px; border-bottom: 2px solid #1c1a1720;">Action</th>
+          <th
+            scope="col"
+            style="text-align: left; padding: 8px; border-bottom: 2px solid #1c1a1720;">Store</th
+          >
+          <th
+            scope="col"
+            style="text-align: left; padding: 8px; border-bottom: 2px solid #1c1a1720;"
+            >Measured size</th
+          >
+          <th
+            scope="col"
+            style="text-align: left; padding: 8px; border-bottom: 2px solid #1c1a1720;"
+            >Records / files</th
+          >
+          <th
+            scope="col"
+            style="text-align: left; padding: 8px; border-bottom: 2px solid #1c1a1720;"
+            >Status / note</th
+          >
+          <th
+            scope="col"
+            style="text-align: left; padding: 8px; border-bottom: 2px solid #1c1a1720;">Action</th
+          >
         </tr>
       </thead>
       <tbody>
@@ -250,11 +288,19 @@
               <strong>{store.label}</strong><br />
               <span style="font-size: 12px; color: #5c5a56;">{store.id}</span>
             </th>
-            <td style="padding: 10px 8px; vertical-align: top; font-family: ui-monospace, monospace; font-size: 12px;">
+            <td
+              style="padding: 10px 8px; vertical-align: top; font-family: ui-monospace, monospace; font-size: 12px;"
+            >
               {m ? formatBytes(m.measuredBytes) : 'Measuring...'}
             </td>
             <td style="padding: 10px 8px; vertical-align: top; font-size: 13px;">
-              {m ? (m.recordCount > 0 ? `${m.recordCount} record${m.recordCount === 1 ? '' : 's'}` : (m.fileCount > 0 ? `${m.fileCount} file${m.fileCount === 1 ? '' : 's'}` : 'None')) : '—'}
+              {m
+                ? m.recordCount > 0
+                  ? `${m.recordCount} record${m.recordCount === 1 ? '' : 's'}`
+                  : m.fileCount > 0
+                    ? `${m.fileCount} file${m.fileCount === 1 ? '' : 's'}`
+                    : 'None'
+                : '—'}
             </td>
             <td style="padding: 10px 8px; vertical-align: top; font-size: 12px; color: #5c5a56;">
               {#if store.kind === 'memory-only'}
@@ -262,7 +308,8 @@
               {:else if store.kind === 'not-yet-implemented'}
                 <span style="color: #c23b22; font-weight: 600;">Not yet implemented.</span>
               {:else}
-                {m?.note || (m ? (m.measuredBytes === 0 ? 'No data found.' : 'Active.') : 'Measuring...')}
+                {m?.note ||
+                  (m ? (m.measuredBytes === 0 ? 'No data found.' : 'Active.') : 'Measuring...')}
               {/if}
             </td>
             <td style="padding: 10px 8px; vertical-align: top;">
@@ -281,8 +328,8 @@
                   class="button"
                   data-testid="btn-delete-{store.id}"
                   onclick={() => handleDelete(store.id)}
-                  aria-label="Delete {store.label}"
-                >Delete</button>
+                  aria-label="Delete {store.label}">Delete</button
+                >
               {:else if store.kind === 'memory-only'}
                 <span style="font-size: 12px; color: #5c5a56;">Not applicable</span>
               {:else}
@@ -295,7 +342,10 @@
     </table>
   </section>
 
-  <section aria-label="Reset all" style="margin-top: 32px; padding-top: 24px; border-top: 2px solid #1c1a1720;">
+  <section
+    aria-label="Reset all"
+    style="margin-top: 32px; padding-top: 24px; border-top: 2px solid #1c1a1720;"
+  >
     <h2>Delete everything and reset</h2>
     <p>
       Removes all app-owned persistent user data (localStorage, IndexedDB, Cache Storage modules,
@@ -307,8 +357,8 @@
           class="button primary"
           data-testid="btn-confirm-reset"
           onclick={() => (confirmResetOpen = true)}
-          aria-label="Open confirmation for deleting everything"
-        >Confirm reset</button>
+          aria-label="Open confirmation for deleting everything">Confirm reset</button
+        >
       {:else}
         <p role="alert" aria-live="assertive" style="margin: 0; font-weight: 600;">
           Confirm you want to delete everything. This cannot be undone.
@@ -319,27 +369,26 @@
           onclick={handleReset}
           disabled={deletingAll}
           aria-label="Delete everything and reset"
-        >{deletingAll ? 'Deleting...' : 'Delete everything'}</button>
+          >{deletingAll ? 'Deleting...' : 'Delete everything'}</button
+        >
         <button
           class="button"
           data-testid="btn-cancel-reset"
           onclick={() => (confirmResetOpen = false)}
-          aria-label="Cancel reset"
-        >Cancel</button>
+          aria-label="Cancel reset">Cancel</button
+        >
       {/if}
     </div>
   </section>
 
-  {#if statusMessage}
-    <p
-      role="status"
-      aria-live="polite"
-      data-testid="status-message"
-      style="margin-top: 16px; padding: 10px 12px; background: #ebe6de; border-radius: 6px; font-size: 14px;"
-    >
-      {statusMessage}
-    </p>
-  {/if}
+  <p
+    role="status"
+    aria-live="polite"
+    data-testid="status-message"
+    style="margin-top: 16px; padding: 10px 12px; background: #ebe6de; border-radius: 6px; font-size: 14px;"
+  >
+    {statusMessage || '—'}
+  </p>
 </main>
 
 <style>
