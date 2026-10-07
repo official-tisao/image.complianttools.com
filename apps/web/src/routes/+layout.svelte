@@ -58,7 +58,7 @@
 {@render children()}
 
 {#if updateReady}
-  <div class="sw-update-toast" role="status" aria-live="polite">
+  <div class="sw-update-toast" role="alert" aria-live="polite">
     <span>A new version is ready.</span>
     <button onclick={reloadForUpdate}>Reload</button>
   </div>
