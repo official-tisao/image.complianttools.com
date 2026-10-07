@@ -55,6 +55,9 @@
   }
 </script>
 
+<a href="#main" class="skip-link">Skip to main content</a>
+<a href="#options" class="skip-link">Skip to options</a>
+<a href="#actions" class="skip-link">Skip to actions</a>
 {@render children()}
 
 {#if updateReady}
