@@ -70,10 +70,12 @@
 </script>
 
 <section
+  aria-label={alt || 'Image comparison'}
   class="compare"
   data-testid="compare-canvas"
   style={`--split:${options.split}%;--opacity:${options.opacity / 100};--gain:${options.gain};--zoom:${zoomScale};--pan-x:${panX}px;--pan-y:${panY}px`}
 >
+  <p class="transparency-indicator" aria-live="polite">Image has no transparency (opaque)</p>
   <div class="compare-options">
     <GeneratedControls
       descriptions={visibleDescriptions}
