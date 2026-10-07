@@ -57,6 +57,7 @@
 
 <a href="#main" class="skip-link">Skip to main content</a>
 <a href="#options" class="skip-link">Skip to options</a>
+<div id="options" tabindex="-1"></div>
 <a href="#actions" class="skip-link">Skip to actions</a>
 <main id="main">{@render children()}</main>
 

@@ -1,12 +1,9 @@
 // P6-08 contrast assertion against packages/ui/src/tokens.css
 // README §20 thresholds: body >=7:1 AAA / >=4.5:1 AA; UI/graphical >=3:1
-const fs = require('fs');
-const css = fs.readFileSync('packages/ui/src/tokens.css', 'utf8');
-
 function parseColor(str) {
   const m = str.match(/oklch\(([^)]+)\)/);
   if (!m) return null;
-  const [l, a, b] = m[1].split(/\s+/).map(Number);
+  const [l] = m[1].split(/\s+/).map(Number);
   // Simple luminance approximation from oklch lightness for ratio
   // Using linear approximation for check: L/100 as relative luminance proxy
   return { l: l / 100, raw: m[1] };
