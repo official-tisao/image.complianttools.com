@@ -70,7 +70,6 @@
 </script>
 
 <section
-  role="region"
   aria-label={alt || 'Image comparison'}
   class="compare"
   data-testid="compare-canvas"
