@@ -14,14 +14,27 @@ function seedIndexedDB(page: Page): void {
       r.onsuccess = () => res(r.result);
       r.onupgradeneeded = (e) => {
         const d = (e.target as IDBOpenDBRequest).result;
-        if (!d.objectStoreNames.contains('records')) d.createObjectStore('records', { keyPath: 'timestamp' });
-        if (!d.objectStoreNames.contains('price-table')) d.createObjectStore('price-table', { keyPath: 'version' });
-        if (!d.objectStoreNames.contains('thresholds')) d.createObjectStore('thresholds', { keyPath: 'id' });
+        if (!d.objectStoreNames.contains('records'))
+          d.createObjectStore('records', { keyPath: 'timestamp' });
+        if (!d.objectStoreNames.contains('price-table'))
+          d.createObjectStore('price-table', { keyPath: 'version' });
+        if (!d.objectStoreNames.contains('thresholds'))
+          d.createObjectStore('thresholds', { keyPath: 'id' });
       };
     });
     const tx = db.transaction('records', 'readwrite');
-    tx.objectStore('records').put({ timestamp: '2026-01-01T00:00:00Z', provider: 'openai', model: 'gpt-image-1', capability: 'generate', usage: { providerCost: '0.0425', requestId: 'req-test' }, estimatedCost: '0.0400' });
-    await new Promise<void>((res, rej) => { tx.oncomplete = () => res(undefined); tx.onerror = () => rej(tx.error); });
+    tx.objectStore('records').put({
+      timestamp: '2026-01-01T00:00:00Z',
+      provider: 'openai',
+      model: 'gpt-image-1',
+      capability: 'generate',
+      usage: { providerCost: '0.0425', requestId: 'req-test' },
+      estimatedCost: '0.0400',
+    });
+    await new Promise<void>((res, rej) => {
+      tx.oncomplete = () => res(undefined);
+      tx.onerror = () => rej(tx.error);
+    });
     db.close();
   });
 }
@@ -30,7 +43,10 @@ function seedCacheStorage(page: Page): void {
   return page.evaluate(async () => {
     if (!caches) return;
     const cache = await caches.open('assets-v1');
-    await cache.put(new Request('/fake-module'), new Response('fake module bytes', { headers: { 'content-length': '32' } }));
+    await cache.put(
+      new Request('/fake-module'),
+      new Response('fake module bytes', { headers: { 'content-length': '32' } }),
+    );
   });
 }
 
@@ -46,7 +62,9 @@ test('P6-05 settings-data screen shows stores and measurements', async ({ page }
 
   // Memory-only rows clearly labelled
   await expect(page.locator('[data-testid="store-row-memory-undo"]')).toContainText('Memory only');
-  await expect(page.locator('[data-testid="store-row-memory-input-output"]')).toContainText('Memory only');
+  await expect(page.locator('[data-testid="store-row-memory-input-output"]')).toContainText(
+    'Memory only',
+  );
 
   // Status live region exists
   await expect(page.locator('[data-testid="status-message"]')).toBeVisible({ visible: false });
@@ -79,16 +97,20 @@ test('P6-05 settings-data measures after seeding data', async ({ page }) => {
 
   // After reset, module caches cleared
   const moduleRowAfter = page.locator('[data-testid="store-row-cache-module-assets"]');
-  await expect(moduleRowAfter.locator('td')).toContainText(/No downloaded module caches/i);
+  await expect(
+    moduleRowAfter.locator('td').filter({ hasText: /No downloaded module caches/i }),
+  ).toContainText(/No downloaded module caches/i);
 });
 
 test('P6-05 settings-data keyboard accessible and live-region exposed', async ({ page }) => {
   await page.goto('/settings/data');
-  await expect(page.getByTestId('btn-confirm-reset')).toBeFocused({ timeout: 2000 }).catch(async () => {
-    // Tab to it
-    await page.keyboard.press('Tab');
-    await page.keyboard.press('Tab');
-  });
+  await expect(page.getByTestId('btn-confirm-reset'))
+    .toBeFocused({ timeout: 2000 })
+    .catch(async () => {
+      // Tab to it
+      await page.keyboard.press('Tab');
+      await page.keyboard.press('Tab');
+    });
 
   // Status message region has aria-live
   const status = page.locator('[data-testid="status-message"]');

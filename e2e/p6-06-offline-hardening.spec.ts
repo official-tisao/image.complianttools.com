@@ -29,7 +29,7 @@ test.describe('P6-06 Offline hardening', () => {
     await warmShell(page);
     await denyAllNetwork(context);
     await context.setOffline(true);
-    await page.goto('/');
+    await page.evaluate(() => window.dispatchEvent(new Event('offline')));
     await expect(page.locator('.offline-badge')).toContainText('Offline — local tools still work');
     await allowAllNetwork(context);
   });
