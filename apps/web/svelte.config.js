@@ -5,6 +5,7 @@ export default {
     adapter: adapter({ pages: 'build', assets: 'build', fallback: undefined, precompress: true }),
     inlineStyleThreshold: Infinity,
     output: { preloadStrategy: 'preload-mjs' },
+    prerender: { handleMissingId: 'ignore' },
     // Let SvelteKit hash the generated hydration script and inline styles in
     // prerendered pages. A hand-written CSP cannot authorize those hashes and
     // leaves static pages rendered but permanently unhydrated.
