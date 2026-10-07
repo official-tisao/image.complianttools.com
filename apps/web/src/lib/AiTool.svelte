@@ -126,6 +126,17 @@
   let consent = $state(false);
   let busy = $state(false);
   let hydrated = $state(false);
+  let online = $state(typeof navigator !== 'undefined' ? navigator.onLine : true);
+  onMount(() => {
+    const update = () => (online = navigator.onLine);
+    window.addEventListener('online', update);
+    window.addEventListener('offline', update);
+    update();
+    return () => {
+      window.removeEventListener('online', update);
+      window.removeEventListener('offline', update);
+    };
+  });
 
   // P5-13 (README §15.4) — Connection: Direct (recommended) | Via my relay. The relay URL and
   // token are component and module state only: never localStorage, sessionStorage, or IndexedDB.
@@ -610,7 +621,7 @@
         data-testid="ai-submit"
         data-hydrated={hydrated ? 'true' : 'false'}
         type="submit"
-        disabled={busy}>{busy ? 'Waiting…' : copy[kind].action}</button
+        disabled={busy || !online}>{busy ? 'Waiting…' : copy[kind].action}</button
       >
     </form>
 
