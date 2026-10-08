@@ -32,6 +32,10 @@ test.describe('P6-06 Offline hardening', () => {
       navigator['onLine'] = false;
       window.dispatchEvent(new Event('offline'));
     });
+    await page.waitForTimeout(500);
+    await page.evaluate(() => {
+      window.dispatchEvent(new Event('offline'));
+    });
     await expect(page.locator('.offline-badge')).toContainText('Offline — local tools still work');
     await allowAllNetwork(context);
   });
@@ -60,6 +64,10 @@ test.describe('P6-06 Offline hardening', () => {
     await denyAllNetwork(context);
     await page.evaluate(() => {
       navigator['onLine'] = false;
+      window.dispatchEvent(new Event('offline'));
+    });
+    await page.waitForTimeout(500);
+    await page.evaluate(() => {
       window.dispatchEvent(new Event('offline'));
     });
     await page.goto('/ai/generate');
