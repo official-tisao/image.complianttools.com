@@ -28,7 +28,10 @@ test.describe('P6-06 Offline hardening', () => {
   test('offline badge reassures local tools continue', async ({ page, context }) => {
     await warmShell(page);
     await denyAllNetwork(context);
-    await page.evaluate(() => window.dispatchEvent(new Event('offline')));
+    await page.evaluate(() => {
+      navigator['onLine'] = false;
+      window.dispatchEvent(new Event('offline'));
+    });
     await expect(page.locator('.offline-badge')).toContainText('Offline — local tools still work');
     await allowAllNetwork(context);
   });
@@ -55,6 +58,10 @@ test.describe('P6-06 Offline hardening', () => {
   test('AI-only disabled offline', async ({ page, context }) => {
     await warmShell(page);
     await denyAllNetwork(context);
+    await page.evaluate(() => {
+      navigator['onLine'] = false;
+      window.dispatchEvent(new Event('offline'));
+    });
     await page.goto('/ai/generate');
     await expect(page.getByTestId('ai-submit')).toBeDisabled();
     await allowAllNetwork(context);
