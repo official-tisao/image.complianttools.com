@@ -28,7 +28,6 @@ test.describe('P6-06 Offline hardening', () => {
   test('offline badge reassures local tools continue', async ({ page, context }) => {
     await warmShell(page);
     await denyAllNetwork(context);
-    await context.setOffline(true);
     await page.evaluate(() => window.dispatchEvent(new Event('offline')));
     await expect(page.locator('.offline-badge')).toContainText('Offline — local tools still work');
     await allowAllNetwork(context);
@@ -37,7 +36,6 @@ test.describe('P6-06 Offline hardening', () => {
   test('72 local tools count + zero external dependency', async ({ page, context }) => {
     await warmShell(page);
     await denyAllNetwork(context);
-    await context.setOffline(true);
     const crossOrigin: string[] = [];
     page.on('request', (req: import('@playwright/test').Request) => {
       const url = new URL(req.url());
@@ -57,7 +55,6 @@ test.describe('P6-06 Offline hardening', () => {
   test('AI-only disabled offline', async ({ page, context }) => {
     await warmShell(page);
     await denyAllNetwork(context);
-    await context.setOffline(true);
     await page.goto('/ai/generate');
     await expect(page.getByTestId('ai-submit')).toBeDisabled();
     await allowAllNetwork(context);
