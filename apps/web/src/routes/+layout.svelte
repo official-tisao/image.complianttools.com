@@ -5,9 +5,21 @@
   import '../app.css';
   let { children } = $props();
 
-  let offline = $state(false);
+  let offline = $state(typeof navigator !== 'undefined' ? !navigator.onLine : false);
   let updateReady = $state(false);
   let swRegistration: ServiceWorkerRegistration | undefined = $state();
+
+  $effect(() => {
+    if (typeof window === 'undefined') return;
+    const update = () => (offline = !navigator.onLine);
+    window.addEventListener('online', update);
+    window.addEventListener('offline', update);
+    update();
+    return () => {
+      window.removeEventListener('online', update);
+      window.removeEventListener('offline', update);
+    };
+  });
 
   onMount(() => {
     document.documentElement.dataset.hydrated = 'true';

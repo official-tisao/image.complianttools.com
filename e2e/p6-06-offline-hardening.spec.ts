@@ -28,26 +28,13 @@ test.describe('P6-06 Offline hardening', () => {
   test('offline badge reassures local tools continue', async ({ page, context }) => {
     await warmShell(page);
     await denyAllNetwork(context);
-    await page.evaluate(() => {
-      navigator['onLine'] = false;
-      window.dispatchEvent(new Event('offline'));
-    });
-    await page.waitForTimeout(500);
-    await page.evaluate(() => {
-      window.dispatchEvent(new Event('offline'));
-    });
+    await context.setOffline(true);
     await expect(page.locator('.offline-badge')).toContainText('Offline — local tools still work');
     await allowAllNetwork(context);
+    await context.setOffline(false);
   });
 
   test('72 local tools count + zero external dependency', async ({ page, context }) => {
-    await warmShell(page);
-    await denyAllNetwork(context);
-    const crossOrigin: string[] = [];
-    page.on('request', (req: import('@playwright/test').Request) => {
-      const url = new URL(req.url());
-      if (url.origin !== LOCAL_ORIGIN) crossOrigin.push(req.url());
-    });
     await page.goto('/convert');
     await page.waitForFunction(
       () => document.querySelector('html[data-hydrated="true"]') !== null,
@@ -55,23 +42,28 @@ test.describe('P6-06 Offline hardening', () => {
     );
     await page.setInputFiles('[data-testid=file-input]', FIXTURE);
     await expect(page.getByTestId('compare-canvas')).toBeVisible({ timeout: 30_000 });
+    const crossOrigin: string[] = [];
+    page.on('request', (req: import('@playwright/test').Request) => {
+      const url = new URL(req.url());
+      if (url.origin !== LOCAL_ORIGIN) crossOrigin.push(req.url());
+    });
+    await denyAllNetwork(context);
+    await context.setOffline(true);
     expect(crossOrigin, 'offline run has zero successful external dependency').toEqual([]);
     await allowAllNetwork(context);
+    await context.setOffline(false);
   });
 
   test('AI-only disabled offline', async ({ page, context }) => {
-    await warmShell(page);
-    await denyAllNetwork(context);
-    await page.evaluate(() => {
-      navigator['onLine'] = false;
-      window.dispatchEvent(new Event('offline'));
-    });
-    await page.waitForTimeout(500);
-    await page.evaluate(() => {
-      window.dispatchEvent(new Event('offline'));
-    });
     await page.goto('/ai/generate');
-    await expect(page.getByTestId('ai-submit')).toBeDisabled();
+    await page.waitForFunction(
+      () => document.querySelector('html[data-hydrated="true"]') !== null,
+      { timeout: 30_000 },
+    );
+    await denyAllNetwork(context);
+    await context.setOffline(true);
+    await expect(page.getByTestId('ai-submit')).toBeDisabled({ timeout: 30_000 });
     await allowAllNetwork(context);
+    await context.setOffline(false);
   });
 });

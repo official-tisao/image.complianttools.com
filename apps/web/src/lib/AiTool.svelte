@@ -127,7 +127,8 @@
   let busy = $state(false);
   let hydrated = $state(false);
   let online = $state(typeof navigator !== 'undefined' ? navigator.onLine : true);
-  onMount(() => {
+  $effect(() => {
+    if (typeof window === 'undefined') return;
     const update = () => (online = navigator.onLine);
     window.addEventListener('online', update);
     window.addEventListener('offline', update);
@@ -234,6 +235,7 @@
    * which reads as "no cost information exists at all" rather than "we could not load the table".
    */
   $effect(() => {
+    if (typeof window === 'undefined') return;
     const choice = providerChoice;
     if (choice === undefined) return;
     const model = choice.model?.id ?? '';
@@ -621,8 +623,9 @@
         data-testid="ai-submit"
         data-hydrated={hydrated ? 'true' : 'false'}
         type="submit"
-        disabled={busy || !online}>{busy ? 'Waiting…' : copy[kind].action}</button
+        disabled={busy || !online}
       >
+      </button>
     </form>
 
     <!--
