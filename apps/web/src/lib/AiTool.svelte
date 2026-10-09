@@ -625,6 +625,7 @@
         type="submit"
         disabled={busy || !online}
       >
+        {busy ? 'Waiting…' : copy[kind].action}
       </button>
     </form>
 
