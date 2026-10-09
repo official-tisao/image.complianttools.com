@@ -5,28 +5,18 @@
   // Per README §18.1 / PLAN.md P6-05: list every store with measured size
   // and a delete button for each; one "Delete everything and reset".
 
-  // Safe interfaces for storage APIs (avoid `any`)
+  // OPFS types: use built-in DOM types with safe feature detection
+  // NavigatorStorage mirrors the WHATWG File System Access API
   interface NavigatorStorage {
     getDirectory(): Promise<FileSystemDirectoryHandle>;
   }
 
-  interface FileSystemDirectoryHandle {
-    kind: 'directory';
-    getDirectoryHandle(
-      name: string,
-      options?: { create?: boolean },
-    ): Promise<FileSystemDirectoryHandle>;
-    getFileHandle(name: string, options?: { create?: boolean }): Promise<FileSystemFileHandle>;
-    entries(): AsyncIterableIterator<[string, FileSystemHandle]>;
-    removeEntry(name: string, options?: { recursive?: boolean }): Promise<void>;
+  // Helper to safely check if OPFS is available and return typed navigator.storage
+  function getOPFSOrNull(): NavigatorStorage | null {
+    const nav = navigator as unknown as { storage?: NavigatorStorage };
+    if (!nav.storage || typeof nav.storage.getDirectory !== 'function') return null;
+    return nav.storage;
   }
-
-  interface FileSystemFileHandle {
-    kind: 'file';
-    getFile(): Promise<File>;
-  }
-
-  type FileSystemHandle = FileSystemDirectoryHandle | FileSystemFileHandle;
 
   interface StoreInfo {
     id: string;
@@ -173,17 +163,14 @@
 
   async function measureOPFS(): Promise<string> {
     try {
-      if (
-        !('navigator' in window) ||
-        !(navigator as { storage?: NavigatorStorage }).storage?.getDirectory
-      )
-        return '—';
-      const dir = await (navigator as { storage: NavigatorStorage }).storage.getDirectory();
+      const opfs = getOPFSOrNull();
+      if (!opfs) return '—';
+      const dir = await opfs.getDirectory();
       // Recursively inspect scratch/ if present (approximate)
       let total = 0;
       async function recurse(d: FileSystemDirectoryHandle): Promise<number> {
         let s = 0;
-        for await (const [_name, handle] of (d as FileSystemDirectoryHandle).entries()) {
+        for await (const [, handle] of d as unknown as Iterable<[string, FileSystemHandle]>) {
           if (handle.kind === 'file') {
             const file = await (handle as FileSystemFileHandle).getFile();
             s += file.size;
@@ -282,8 +269,10 @@
         }
       } else if (id === 'scratch') {
         // OPFS deletion if directory exists
-        if (navigator.storage?.getDirectory) {
-          const dir = await (navigator as { storage: NavigatorStorage }).storage.getDirectory();
+        if (typeof navigator.storage?.getDirectory === 'function') {
+          const opfs = getOPFSOrNull();
+          if (!opfs) return;
+          const dir = await opfs.getDirectory();
           try {
             const scratch = await dir.getDirectoryHandle('scratch', { create: false });
             await scratch.removeEntry('scratch'); // approximate
@@ -339,9 +328,11 @@
         if (n.includes('assets')) await caches.delete(n);
       }
       // OPFS scratch
-      if (navigator.storage?.getDirectory) {
+      if (typeof navigator.storage?.getDirectory === 'function') {
         try {
-          const dir = await (navigator as { storage: NavigatorStorage }).storage.getDirectory();
+          const opfs = getOPFSOrNull();
+          if (!opfs) return;
+          const dir = await opfs.getDirectory();
           await dir.removeEntry('scratch', { recursive: true });
         } catch {
           /* ignore */
