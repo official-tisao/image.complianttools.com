@@ -5,9 +5,21 @@
   import '../app.css';
   let { children } = $props();
 
-  let offline = $state(false);
+  let offline = $state(typeof navigator !== 'undefined' ? !navigator.onLine : false);
   let updateReady = $state(false);
   let swRegistration: ServiceWorkerRegistration | undefined = $state();
+
+  $effect(() => {
+    if (typeof window === 'undefined') return;
+    const update = () => (offline = !navigator.onLine);
+    window.addEventListener('online', update);
+    window.addEventListener('offline', update);
+    update();
+    return () => {
+      window.removeEventListener('online', update);
+      window.removeEventListener('offline', update);
+    };
+  });
 
   onMount(() => {
     document.documentElement.dataset.hydrated = 'true';
@@ -65,7 +77,18 @@
 {/if}
 
 {#if offline}
-  <div class="offline-badge" role="status" aria-live="polite">Offline</div>
+  <div
+    class="offline-badge"
+    role="status"
+    aria-live="polite"
+    aria-describedby="offline-reassurance"
+  >
+    Offline — local tools still work
+    <span id="offline-reassurance" hidden
+      >Your local image processing continues; AI-only provider requests are paused until
+      connectivity returns.</span
+    >
+  </div>
 {/if}
 
 <style>
