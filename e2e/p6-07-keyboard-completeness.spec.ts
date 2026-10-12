@@ -30,6 +30,14 @@ async function injectFile(page: Page, testId: string, bytes: number[]) {
     .setInputFiles([{ name: 'fixture.png', mimeType: 'image/png', buffer }]);
 }
 
+const recipeJson = JSON.stringify({
+  version: 1,
+  id: 'p6-07-keyboard-recipe',
+  name: 'Keyboard recipe',
+  steps: [],
+  export: { format: 'webp', quality: 82 },
+});
+
 test.describe('P6-07 keyboard-only canonical flows', () => {
   test('Flow A — single conversion via keyboard', async ({ page }) => {
     await page.goto('/crop');
@@ -46,59 +54,62 @@ test.describe('P6-07 keyboard-only canonical flows', () => {
   test('Flow B — batch enqueue via keyboard', async ({ page }) => {
     await page.goto('/batch');
     const buffer = await fixturePng(page);
-    // File input injection (browser boundary)
-    await injectFile(page, 'batch-input', buffer);
-    await expect(page.getByText(/enqueued/i)).toBeVisible();
+    await injectFile(page, 'long-tail-input', buffer);
+    await page.getByTestId('long-tail-run').press('Enter');
+    await expect(page.getByTestId('long-tail-status')).toContainText(/processed 1 file/i);
+    await expect(page.getByTestId('batch-results')).toBeVisible();
   });
 
   test('Flow C′ — connection setup via keyboard', async ({ page }) => {
-    await page.goto('/connect-ai');
-    // Focus connection form; use keyboard to navigate to submit
-    await page.keyboard.press('Tab');
-    await page.keyboard.press('Tab');
-    await page.keyboard.press('Enter');
-    await expect(page.getByTestId('connection-status')).toContainText(/connected|ready/i);
+    await page.route('https://api.openai.com/**', async (route) => {
+      await route.fulfill({
+        status: 401,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: { message: 'keyboard fixture rejected' } }),
+      });
+    });
+    await page.goto('/connect-ai/openai');
+    const key = page.getByTestId('test-cred-apiKey');
+    await key.pressSequentially('sk-keyboard-fixture');
+    await page.getByTestId('test-run').press('Enter');
+    await expect(page.getByTestId('test-result-error')).toBeVisible({ timeout: 15_000 });
   });
 
   test('Flow C — AI result via keyboard selection', async ({ page }) => {
-    await page.goto('/ai/generate');
-    await page.keyboard.press('Tab');
-    await page.keyboard.press('Tab');
-    await page.keyboard.press('Enter');
-    // Assert meaningful outcome (not just navigation)
-    await expect(page.getByRole('status', { name: /result/i }))
-      .toBeVisible({ timeout: 15000 })
-      .catch(async () => {
-        // If AI is mocked/offline, assert page is usable
-        await expect(page.locator('main')).toBeVisible();
-      });
+    await page.goto('/ai/describe');
+    await expect(page.getByTestId('ai-submit')).toHaveAttribute('data-hydrated', 'true', {
+      timeout: 15_000,
+    });
+    await injectFile(page, 'ai-local-image', await fixturePng(page));
+    await expect(page.getByTestId('describe-skeleton')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId('skeleton-field-dimensions')).toContainText('100');
   });
 
   test('Flow D — shared recipe via keyboard', async ({ page }) => {
     await page.goto('/recipe');
-    await page.keyboard.press('Tab');
-    await page.keyboard.press('Enter');
-    await expect(page.getByRole('button', { name: /share/i })).toBeVisible();
+    const recipe = page.getByTestId('recipe-input');
+    await recipe.press('ControlOrMeta+A');
+    await recipe.pressSequentially(recipeJson);
+    await page.getByTestId('long-tail-run').press('Enter');
+    await expect(page.getByTestId('generated-output')).toContainText('/recipe#recipe=r1.');
   });
 
   test('Crop mask nudging — Arrow / Shift+Arrow keyboard', async ({ page }) => {
     await page.goto('/adaptive-resize');
     const buffer = await fixturePng(page);
     await injectFile(page, 't81-input', buffer);
-    // Enable mask
-    await page.keyboard.press('Tab');
-    await page.keyboard.press('Tab'); // mask toggle
-    await page.keyboard.press('Enter');
-    // Focus canvas via keyboard (tab to it)
-    await page.keyboard.press('Tab');
-    await page.keyboard.press('Tab');
+    await expect(page.getByTestId('t81-run')).toBeEnabled({ timeout: 15_000 });
+    const protectToggle = page.getByTestId('option-t81-protectEnabled').locator('input');
+    await protectToggle.press('Space');
+    const canvas = page.getByTestId('t81-mask-canvas');
+    await expect(canvas).toBeVisible();
+    await canvas.press('ArrowRight');
     // Arrow keys move 1 px; Shift+Arrow 10 px
-    await page.keyboard.press('ArrowRight');
-    await page.keyboard.press('ArrowDown');
-    await page.keyboard.press('Shift+ArrowLeft');
-    await page.keyboard.press('Shift+ArrowUp');
+    await canvas.press('ArrowDown');
+    await canvas.press('Shift+ArrowLeft');
+    await canvas.press('Shift+ArrowUp');
     // Paint with Space
-    await page.keyboard.press('Space');
+    await canvas.press('Space');
     // Assert cursor position announced
     await expect(page.getByTestId('t81-cursor-pos')).toBeVisible();
     // Numeric alternatives exist
