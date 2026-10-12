@@ -67,11 +67,12 @@
   }
 </script>
 
-<a href="#main" class="skip-link">Skip to main content</a>
-<a href="#options" class="skip-link">Skip to options</a>
-<div id="options" tabindex="-1"></div>
-<a href="#actions" class="skip-link">Skip to actions</a>
-<main id="main">{@render children()}</main>
+<nav class="skip-links" aria-label="Page shortcuts">
+  <a href="#main" class="skip-link">Skip to main content</a>
+  <a href="#options" class="skip-link">Skip to options</a>
+  <a href="#actions" class="skip-link">Skip to actions</a>
+</nav>
+<div id="main">{@render children()}</div>
 
 {#if updateReady}
   <div class="sw-update-toast" role="status" aria-live="polite">
@@ -96,6 +97,27 @@
 {/if}
 
 <style>
+  .skip-links {
+    position: fixed;
+    inset-block-start: 0.5rem;
+    inset-inline-start: 0.5rem;
+    z-index: 100;
+    display: flex;
+    gap: 0.5rem;
+  }
+  .skip-link {
+    position: absolute;
+    inset-inline-start: -10000px;
+    padding: 0.5rem 0.75rem;
+    background: var(--c-bg, #f0eeea);
+    color: var(--c-text, #1c1a17);
+    border: 2px solid currentColor;
+    border-radius: 0.25rem;
+    white-space: nowrap;
+  }
+  .skip-link:focus {
+    position: static;
+  }
   .sw-update-toast {
     position: fixed;
     bottom: 1rem;
