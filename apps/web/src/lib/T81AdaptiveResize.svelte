@@ -74,6 +74,9 @@
       'Keyboard: focus the image area, use arrow keys to move the brush, press Space or Enter to paint, and press Delete to clear the mask.',
     maskCanvasLabel:
       'Protection mask drawing area. Arrow keys move the brush; Space or Enter paints; Delete clears.',
+    maskCursor: 'Brush position',
+    brushX: 'Brush X',
+    brushY: 'Brush Y',
     clearMask: 'Clear protection mask',
     maskCount: 'Marked pixels',
     apply: 'Resize image',
@@ -161,6 +164,9 @@
       'لوحة المفاتيح: ركّز على مساحة الصورة، واستخدم الأسهم لتحريك الفرشاة، واضغط مسافة أو Enter للرسم، واضغط Delete لمسح القناع.',
     maskCanvasLabel:
       'مساحة رسم قناع الحماية. تحرك الأسهم الفرشاة، ويرسم Space أو Enter، ويمسح Delete القناع.',
+    maskCursor: 'موضع الفرشاة',
+    brushX: 'فرشاة X',
+    brushY: 'فرشاة Y',
     clearMask: 'امسح قناع الحماية',
     maskCount: 'البكسلات المحددة',
     apply: 'غيّر حجم الصورة',
@@ -733,7 +739,7 @@
 
   function maskKeydown(event: KeyboardEvent) {
     if (!selected) return;
-    const step = 8;
+    const step = event.shiftKey ? 10 : 1;
     if (event.key === 'ArrowLeft')
       maskCursor = { ...maskCursor, x: Math.max(0, maskCursor.x - step) };
     else if (event.key === 'ArrowRight')
@@ -822,13 +828,46 @@
       <p id="t81-mask-help" class="t81-help">{tr('maskHelp')}</p>
       {#if options.protectEnabled && selected}
         <p id="t81-mask-keyboard" class="t81-help">{tr('maskKeyboard')}</p>
-        <div class="t81-mask-actions">
+        <div class="t81-mask-actions" aria-label={tr('maskCursor')}>
+          <label>
+            <span>{tr('brushX')}</span>
+            <input
+              type="number"
+              data-testid="t81-brush-x"
+              min="0"
+              max={selected ? selected.dimensions.width - 1 : 0}
+              step="1"
+              bind:value={maskCursor.x}
+              oninput={() => {
+                maskCursor = { ...maskCursor, x: maskCursor.x };
+              }}
+              aria-label={tr('brushX')}
+            />
+          </label>
+          <label>
+            <span>{tr('brushY')}</span>
+            <input
+              type="number"
+              data-testid="t81-brush-y"
+              min="0"
+              max={selected ? selected.dimensions.height - 1 : 0}
+              step="1"
+              bind:value={maskCursor.y}
+              oninput={() => {
+                maskCursor = { ...maskCursor, y: maskCursor.y };
+              }}
+              aria-label={tr('brushY')}
+            />
+          </label>
           <button
             class="button"
             data-testid="t81-clear-mask"
             type="button"
             disabled={busy}
             onclick={clearMask}>{tr('clearMask')}</button
+          >
+          <span aria-live="polite" aria-atomic="true" data-testid="t81-cursor-pos"
+            >{maskCursor.x}, {maskCursor.y}</span
           >
           <span>{tr('maskCount')}: {protectedPixelCount}</span>
         </div>
@@ -840,7 +879,7 @@
           <canvas
             bind:this={maskCanvas}
             data-testid="t81-mask-canvas"
-            aria-label={tr('maskCanvasLabel')}
+            aria-label={`${tr('maskCanvasLabel')} — ${maskCursor.x}, ${maskCursor.y}`}
             aria-describedby="t81-mask-help t81-mask-keyboard"
             tabindex={busy ? -1 : 0}
             style:pointer-events={busy ? 'none' : 'auto'}
