@@ -67,7 +67,7 @@
   }
 </script>
 
-<nav class="skip-links" aria-label="Page shortcuts">
+<nav class="skip-links" aria-label="Skip links">
   <a href="#main" class="skip-link">Skip to main content</a>
   <a href="#options" class="skip-link">Skip to options</a>
   <a href="#actions" class="skip-link">Skip to actions</a>
@@ -79,7 +79,7 @@
 </div>
 
 {#if updateReady}
-  <div class="sw-update-toast" role="status" aria-live="polite">
+  <div class="sw-update-toast" aria-live="polite">
     <span>A new version is ready.</span>
     <button onclick={reloadForUpdate}>Reload</button>
   </div>
