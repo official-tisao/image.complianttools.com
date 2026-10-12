@@ -71,8 +71,12 @@
   <a href="#main" class="skip-link">Skip to main content</a>
   <a href="#options" class="skip-link">Skip to options</a>
   <a href="#actions" class="skip-link">Skip to actions</a>
+  <span id="options" class="skip-target" tabindex="-1"></span>
+  <span id="actions" class="skip-target" tabindex="-1"></span>
 </nav>
-<div id="main">{@render children()}</div>
+<div id="main" tabindex="-1">
+  {@render children()}
+</div>
 
 {#if updateReady}
   <div class="sw-update-toast" role="status" aria-live="polite">
@@ -117,6 +121,18 @@
   }
   .skip-link:focus {
     position: static;
+  }
+  /* Keep the global skip destinations focusable without changing the page layout. */
+  .skip-target {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
   }
   .sw-update-toast {
     position: fixed;
