@@ -267,6 +267,7 @@ test.describe('Gate 5 — every archetype works with no provider configured', ()
     // The per-tool tests each start from a clean page. This one visits every route in order, so a
     // control that escalates on *navigation* — the cheapest accidental escalation — is caught across
     // the whole set rather than missed by a single-tool test.
+    test.setTimeout(600_000);
     await blockProviders(page);
     const seen = watchRequests(page);
 

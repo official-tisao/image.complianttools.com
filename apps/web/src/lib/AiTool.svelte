@@ -126,6 +126,18 @@
   let consent = $state(false);
   let busy = $state(false);
   let hydrated = $state(false);
+  let online = $state(typeof navigator !== 'undefined' ? navigator.onLine : true);
+  $effect(() => {
+    if (typeof window === 'undefined') return;
+    const update = () => (online = navigator.onLine);
+    window.addEventListener('online', update);
+    window.addEventListener('offline', update);
+    update();
+    return () => {
+      window.removeEventListener('online', update);
+      window.removeEventListener('offline', update);
+    };
+  });
 
   // P5-13 (README §15.4) — Connection: Direct (recommended) | Via my relay. The relay URL and
   // token are component and module state only: never localStorage, sessionStorage, or IndexedDB.
@@ -223,6 +235,7 @@
    * which reads as "no cost information exists at all" rather than "we could not load the table".
    */
   $effect(() => {
+    if (typeof window === 'undefined') return;
     const choice = providerChoice;
     if (choice === undefined) return;
     const model = choice.model?.id ?? '';
@@ -610,8 +623,10 @@
         data-testid="ai-submit"
         data-hydrated={hydrated ? 'true' : 'false'}
         type="submit"
-        disabled={busy}>{busy ? 'Waiting…' : copy[kind].action}</button
+        disabled={busy || !online}
       >
+        {busy ? 'Waiting…' : copy[kind].action}
+      </button>
     </form>
 
     <!--
