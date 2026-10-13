@@ -420,8 +420,8 @@
       </p>
       {#if busy}
         <div class="t60-progress">
-          <p data-testid="t60-status" aria-live="polite">
-            {t('t60.comparing', 'Comparing locally…')}
+          <p data-testid="t60-status" aria-live="polite" aria-atomic="true">
+            {t('t60.comparing', 'Comparing locally…')} — progress: 0%
           </p>
           <button data-testid="t60-cancel" type="button" onclick={cancelComparison}
             >{t('t60.cancel', 'Cancel comparison')}</button

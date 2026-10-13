@@ -67,10 +67,19 @@
   }
 </script>
 
-{@render children()}
+<nav class="skip-links" aria-label="Skip links">
+  <a href="#main" class="skip-link">Skip to main content</a>
+  <a href="#options" class="skip-link">Skip to options</a>
+  <a href="#actions" class="skip-link">Skip to actions</a>
+  <span id="options" class="skip-target" tabindex="-1"></span>
+  <span id="actions" class="skip-target" tabindex="-1"></span>
+</nav>
+<div id="main" tabindex="-1">
+  {@render children()}
+</div>
 
 {#if updateReady}
-  <div class="sw-update-toast" role="status" aria-live="polite">
+  <div class="sw-update-toast" aria-live="polite">
     <span>A new version is ready.</span>
     <button onclick={reloadForUpdate}>Reload</button>
   </div>
@@ -92,6 +101,39 @@
 {/if}
 
 <style>
+  .skip-links {
+    position: fixed;
+    inset-block-start: 0.5rem;
+    inset-inline-start: 0.5rem;
+    z-index: 100;
+    display: flex;
+    gap: 0.5rem;
+  }
+  .skip-link {
+    position: absolute;
+    inset-inline-start: -10000px;
+    padding: 0.5rem 0.75rem;
+    background: var(--c-bg, #f0eeea);
+    color: var(--c-text, #1c1a17);
+    border: 2px solid currentColor;
+    border-radius: 0.25rem;
+    white-space: nowrap;
+  }
+  .skip-link:focus {
+    position: static;
+  }
+  /* Keep the global skip destinations focusable without changing the page layout. */
+  .skip-target {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+  }
   .sw-update-toast {
     position: fixed;
     bottom: 1rem;
