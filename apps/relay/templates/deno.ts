@@ -14,7 +14,7 @@
  * Deno Deploy is a server platform: it terminates TLS and handles your traffic, and its runtime is
  * outside our control. See README.md "What the relay can and cannot see".
  */
-import { ALLOWED_DESTINATIONS, DEFAULT_ALLOWED_ORIGIN } from '../src/index.ts';
+import { ALLOWED_DESTINATIONS, DEFAULT_ALLOWED_ORIGIN } from '../src/constants.ts';
 import {
   buildCorsHeaders,
   buildUpstreamHeaders,

@@ -29,3 +29,4 @@ apps/web/static/tessdata/script/**
 !apps/web/static/tessdata/script/Cyrillic.traineddata
 
 tmp-*.cjs
+.wrangler/

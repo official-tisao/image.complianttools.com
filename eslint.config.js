@@ -9,6 +9,7 @@ export default tseslint.config(
   {
     ignores: [
       '**/.svelte-kit/**',
+      '**/.wrangler/**',
       // Local scratch: probe harnesses, downloaded corpora, TLS pairs, and generated measurement
       // artifacts. `.gitignore` already treats the directory as untracked, so linting it would make
       // `pnpm lint` depend on whatever a developer happens to have on disk.

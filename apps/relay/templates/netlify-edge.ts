@@ -16,7 +16,7 @@
  * argument. See README.md "What the relay can and cannot see" for what Netlify records on your
  * behalf.
  */
-import { ALLOWED_DESTINATIONS } from '../src/index.js';
+import { ALLOWED_DESTINATIONS } from '../src/constants.js';
 import {
   buildCorsHeaders,
   buildUpstreamHeaders,

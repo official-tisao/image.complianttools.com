@@ -10,3 +10,4 @@ pnpm-lock.yaml
 PLAN.md
 README.md
 docs/THIRD-PARTY-LICENSES.md
+.wrangler/

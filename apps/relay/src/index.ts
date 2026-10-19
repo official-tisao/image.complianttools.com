@@ -23,33 +23,10 @@ export interface Env {
   fetchImpl?: typeof fetch;
 }
 
-/**
- * Exact destination hosts, compiled in at deploy time (README §15.3). HTTPS only; entries are
- * matched against `URL.hostname`, which is already lower-cased and excludes any port.
- *
- * This is an *exact* allowlist: a listed host does not grant its subdomains, and an unlisted
- * subdomain is not inferred. If you run a self-hosted OpenAI-compatible endpoint you control,
- * deploy your own relay with that host added — that is the whole point of the user-deployed model.
- */
-export const ALLOWED_DESTINATIONS: readonly string[] = [
-  'api.anthropic.com',
-  'api.openai.com',
-  'generativelanguage.googleapis.com',
-  'api.stability.ai',
-  'api.bfl.ai',
-  'fal.run',
-  'queue.fal.run',
-  'api.replicate.com',
-  'api.remove-bg.com',
-  'api.remove.bg',
-  'clipdrop-api.co',
-];
-
-/** The app's own origin, used when the deployer sets no `ALLOWED_ORIGINS`. */
-export const DEFAULT_ALLOWED_ORIGIN = 'https://image.complianttools.com';
-
 /** Only the methods the provider adapters in `packages/engine/src/ai/adapters` actually use. */
 const ALLOWED_METHODS = new Set(['GET', 'POST', 'OPTIONS']);
+
+import { ALLOWED_DESTINATIONS } from './constants.js';
 
 import {
   buildCorsHeaders,
