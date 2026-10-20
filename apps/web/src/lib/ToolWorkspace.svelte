@@ -11,6 +11,10 @@
   import { pasteImage } from './transfer/paste-action';
   import { markStale, publishResult, type PublishedResult } from './transfer/result-file';
   import { localizeOptions, translate, type Locale } from './i18n';
+  import {
+    imageProcessingFailureMessage,
+    UnsupportedImageFileError,
+  } from './image-processing-errors';
 
   type ToolKind = 'convert' | 'compress' | 'resize';
   let {
@@ -171,10 +175,15 @@
       context.drawImage(bitmap, 0, 0);
       bitmap.close();
       return context.getImageData(0, 0, canvas.width, canvas.height);
-    } catch (cause) {
-      if (file.type !== 'image/bmp' && !file.name.toLowerCase().endsWith('.bmp')) throw cause;
-      const decoded = decodeBmp(await file.arrayBuffer());
-      return new ImageData(decoded.frames[0].data.slice(), decoded.width, decoded.height);
+    } catch {
+      if (file.type !== 'image/bmp' && !file.name.toLowerCase().endsWith('.bmp'))
+        throw new UnsupportedImageFileError();
+      try {
+        const decoded = decodeBmp(await file.arrayBuffer());
+        return new ImageData(decoded.frames[0].data.slice(), decoded.width, decoded.height);
+      } catch {
+        throw new UnsupportedImageFileError();
+      }
     }
   }
   function proxyDimensions(image: ImageData) {
@@ -348,12 +357,7 @@
         extension: format,
       });
     } catch (cause) {
-      error =
-        cause instanceof Error
-          ? cause.message
-          : cause && typeof cause === 'object' && 'message' in cause
-            ? String(cause.message)
-            : String(cause);
+      error = imageProcessingFailureMessage(cause, locale);
       // A failed run invalidates whatever is on screen. Leaving the previous result copyable
       // would let the user take away bytes from a run that is known to have failed.
       published = null;
@@ -468,7 +472,6 @@
       />{#if error}<p class="error">
           <strong>{translate(locale, 'error.process', 'Couldn’t process this image.')}</strong>
           {error}
-          {translate(locale, 'error.remedy', 'Try JPEG, PNG, or WebP.')}
         </p>{/if}
     </div>
   </section>

@@ -31,7 +31,23 @@
     window.addEventListener('offline', updateOnlineStatus);
     updateOnlineStatus();
 
-    if (
+    if (import.meta.env.DEV && 'serviceWorker' in navigator) {
+      // A previous dev session's worker can serve cached Vite modules from another server
+      // instance, leading to mixed Svelte runtimes and a client-side 500 during hydration.
+      void navigator.serviceWorker.getRegistrations().then((registrations) => {
+        for (const registration of registrations) void registration.unregister();
+        void caches
+          .keys()
+          .then((keys) =>
+            Promise.all(
+              keys
+                .filter((key) => key.startsWith('complianttools-shell-'))
+                .map((key) => caches.delete(key)),
+            ),
+          );
+      });
+    } else if (
+      !import.meta.env.DEV &&
       'serviceWorker' in navigator &&
       (location.protocol === 'https:' ||
         location.hostname === 'localhost' ||

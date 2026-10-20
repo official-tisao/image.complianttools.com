@@ -2,4 +2,4 @@
   import ImageInspector from '$lib/ImageInspector.svelte';
 </script>
 
-<ImageInspector />
+<ImageInspector locale="en" />

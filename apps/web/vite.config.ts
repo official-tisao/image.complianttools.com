@@ -14,7 +14,7 @@ const isolationHeaders = {
 const immutableOcrRuntimeCache = 'public, max-age=31536000, immutable';
 const versionedOcrRuntimePath = /^\/ocr-runtime\/v\d+\.\d+\.\d+\//u;
 
-export default defineConfig({
+export default defineConfig(({ command, mode }) => ({
   plugins: [
     {
       name: 'preview-security-headers',
@@ -34,8 +34,14 @@ export default defineConfig({
     },
     sveltekit(),
   ],
-  server: { headers: isolationHeaders },
+  // Keep JSquash modules out of Vite's dependency prebundle. Their WASM loaders resolve a
+  // sibling `.wasm` URL relative to `import.meta.url`; the optimized module lives under
+  // `node_modules/.vite/deps`, where that sibling is not emitted and the dev server returns 404.
+  optimizeDeps: {
+    exclude: ['@jsquash/jpeg', '@jsquash/png', '@jsquash/webp', '@jsquash/oxipng'],
+  },
+  server: { headers: command === 'serve' ? isolationHeaders : {} },
   preview: { headers: isolationHeaders },
-  worker: { format: 'es' },
+  worker: mode === 'development' ? {} : { format: 'es' },
   build: { target: 'es2022', sourcemap: true },
-});
+}));

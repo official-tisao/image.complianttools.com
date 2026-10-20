@@ -216,7 +216,12 @@ export const arabic: Readonly<Record<string, string>> = {
   'status.choose': 'اختر صورة للبدء',
   'status.updated': 'تم التحديث خلال {value} مللي ثانية',
   'error.process': 'تعذرت معالجة هذه الصورة.',
-  'error.remedy': 'جرّب JPEG أو PNG أو WebP.',
+  'error.unsupportedImage':
+    'تعذر على المتصفح قراءة الصورة. اختر JPEG أو PNG أو WebP صالحة ثم أعد المحاولة.',
+  'error.codecLoad':
+    'تعذر تحميل مرمّز الصور المحلي. حدّث الصفحة وأعد المحاولة؛ وإذا استمرت المشكلة فقد يكون ملف المرمّز غير متاح.',
+  'error.processingLocal':
+    'تعذرت معالجة الصورة محليًا. تحقق من أنها JPEG أو PNG أو WebP صالحة ثم أعد المحاولة.',
   'error.remedyLabel': 'الحل',
   'inspector.back': '← تحويل',
   'inspector.title': 'فاحص الصور',

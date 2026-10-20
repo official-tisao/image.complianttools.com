@@ -1,19 +1,8 @@
 /**
- * Trusted Types support required by the Content-Security-Policy
- * (`require-trusted-types-for 'script'; trusted-types ctimg-default
- * svelte-trusted-html`).
- *
- * `svelte-trusted-html` is created by Svelte itself (see
- * `svelte/src/internal/client/dom/reconciler.js`), so only `ctimg-default` is
- * created here.
- *
- * Under `require-trusted-types-for 'script'`, `new Worker(url)` treats `url` as
- * a `TrustedScriptURL` assignment and throws unless the value is a Trusted
- * Script URL. `new URL('./x.worker.ts', import.meta.url)` yields a plain string,
- * so every worker must be constructed through {@link createWorker}.
- *
- * This module is imported for its side effect by `+layout.svelte`, before any
- * route component runs.
+ * Trusted Types — idempotent installation.
+ * The CSP allows `ctimg-default`, `svelte-trusted-html`, `default`
+ * but does not allow duplicates (`allow-duplicates` is absent).
+ * We guard with a global symbol so reload/HMR never tries to recreate.
  */
 
 type TrustedTypePolicy = {
@@ -29,56 +18,50 @@ type TrustedTypePolicyFactory = {
 };
 
 const factory = (globalThis as { trustedTypes?: TrustedTypePolicyFactory }).trustedTypes;
+const INSTALLED_KEY = Symbol.for('ctimg-trusted-types-installed');
+
+function getInstalled(): TrustedTypePolicy | undefined {
+  return (globalThis as Record<symbol, unknown>)[INSTALLED_KEY] as TrustedTypePolicy | undefined;
+}
+
+function markInstalled(p: TrustedTypePolicy | undefined) {
+  (globalThis as Record<symbol, unknown>)[INSTALLED_KEY] = p;
+}
 
 function installPolicy(): TrustedTypePolicy | undefined {
-  if (!factory) return undefined;
+  const existing = getInstalled();
+  if (existing !== undefined) return existing;
+  if (!factory) {
+    markInstalled(undefined);
+    return undefined;
+  }
   const rules = {
     createScriptURL: (url: string) => url,
     createScript: (code: string) => code,
   };
-  let applicationPolicy: TrustedTypePolicy | undefined;
   try {
-    applicationPolicy = factory.createPolicy('ctimg-default', rules);
+    const p = factory.createPolicy('ctimg-default', rules);
+    try {
+      factory.createPolicy('default', rules);
+    } catch {
+      /* already present */
+    }
+    markInstalled(p);
+    return p;
   } catch {
-    // Already created by an earlier evaluation; safe to continue.
+    // Policy already exists from earlier evaluation or Svelte reconciler.
+    // Recover with a wrapper; do not throw.
+    const p = {
+      createScriptURL: (url: string) => url,
+      createScript: (code: string) => code,
+    } as TrustedTypePolicy;
+    markInstalled(p);
+    return p;
   }
-
-  // A default policy is required for browser sinks such as Worker(string). The
-  // application policy above is still useful to callers that explicitly need
-  // createScriptURL(), but it does not make implicit TrustedScriptURL
-  // conversions legal. Create both policies independently so the order of
-  // module evaluation cannot leave Worker() blocked by require-trusted-types.
-  try {
-    factory.createPolicy('default', rules);
-  } catch {
-    // Already created by an earlier evaluation; safe to continue.
-  }
-
-  return applicationPolicy;
 }
 
-let policy = installPolicy();
+const policy = installPolicy();
 
-if (!policy && factory) {
-  // Recover the policy created by an earlier evaluation. A duplicate policy
-  // cannot be created, so wrap the factory to hand out the original instance.
-  policy = {
-    createScriptURL: (url) => url,
-    createScript: (code) => code,
-  } as TrustedTypePolicy;
-}
-
-/**
- * Wrap a worker module specifier in a Trusted Script URL.
- *
- * NOTE: keep `new Worker(new URL('./x.worker.ts', import.meta.url))` written out
- * literally at each call site. Vite statically analyses that form to emit the
- * worker as a separate chunk; passing the URL through a function makes it
- * opaque, and Vite inlines the worker as a `data:` URL, which `worker-src
- * 'self' blob:` then blocks.
- *
- * This helper is therefore only for URLs Vite cannot statically analyse.
- */
 export function createScriptURL(url: string | URL): string {
   return policy ? policy.createScriptURL(String(url)) : String(url);
 }

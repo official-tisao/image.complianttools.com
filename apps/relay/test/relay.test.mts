@@ -10,7 +10,8 @@ import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
-import relay, { ALLOWED_DESTINATIONS, DEFAULT_ALLOWED_ORIGIN, type Env } from '../dist/index.js';
+import relay, { type Env } from '../dist/index.js';
+import { ALLOWED_DESTINATIONS, DEFAULT_ALLOWED_ORIGIN } from '../dist/constants.js';
 import {
   FALLBACK_ORIGIN,
   buildCorsHeaders,
