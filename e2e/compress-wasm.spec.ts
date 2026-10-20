@@ -49,22 +49,22 @@ test.describe('compress codec WASM delivery', () => {
     test(`/compress uploads valid ${format.id} and returns a valid local result`, async ({
       page,
     }) => {
-      const wasmResponses: Array<
-        Promise<{ url: string; status: number; contentType: string; magic: number[] }>
-      > = [];
-      page.on('response', (response) => {
-        if (!/\.wasm(?:[?#]|$)/iu.test(response.url())) return;
-        wasmResponses.push(
-          (async () => {
-            const bytes = await response.body();
-            return {
-              url: response.url(),
-              status: response.status(),
-              contentType: response.headers()['content-type'] ?? '',
-              magic: [...bytes.subarray(0, 4)],
-            };
-          })(),
-        );
+      const wasmResponses: Array<{
+        url: string;
+        status: number;
+        contentType: string;
+        magic: number[];
+      }> = [];
+      await page.route(/\.wasm(?:[?#]|$)/iu, async (route) => {
+        const response = await route.fetch();
+        const bytes = await response.body();
+        wasmResponses.push({
+          url: response.url(),
+          status: response.status(),
+          contentType: response.headers()['content-type'] ?? '',
+          magic: [...bytes.subarray(0, 4)],
+        });
+        await route.fulfill({ response });
       });
       const networkFailures: string[] = [];
       page.on('requestfailed', (request) => networkFailures.push(request.url()));
@@ -80,7 +80,7 @@ test.describe('compress codec WASM delivery', () => {
       await expect(page.getByTestId('compare-canvas')).toBeVisible({ timeout: 15_000 });
       await expect(page.locator('.options-panel .error')).toHaveCount(0);
 
-      const codecResponses = await Promise.all(wasmResponses);
+      const codecResponses = wasmResponses;
       expect(
         codecResponses.length,
         'the local codec WASM request should be observed',
@@ -149,7 +149,10 @@ test.describe('compress codec WASM delivery', () => {
     let intercepted = 0;
     await page.route(/\.wasm(?:\?.*)?$/iu, async (route) => {
       intercepted += 1;
-      await route.fulfill({ status: 302, headers: { location: '/compress' } });
+      // WebKit does not allow route.fulfill() to synthesize a redirect status. Rewriting the
+      // request to the app shell produces the same HTML response a bad deployment redirect would
+      // return, while keeping the fixture portable across all three browsers.
+      await route.continue({ url: new URL('/compress', route.request().url()).toString() });
     });
     await page.goto('/compress');
     await page.waitForLoadState('networkidle');
