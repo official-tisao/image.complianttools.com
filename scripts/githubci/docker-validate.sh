@@ -47,6 +47,34 @@ probe() {
     wget -qO /dev/null http://127.0.0.1/ & second=$!
     wait "$first"
     wait "$second"
+
+    # These legacy non-localized entry points are the routes most likely to expose a
+    # static-host clean-URL regression. Probe every one through nginx, not only the root.
+    for route in \
+      /enlarge \
+      /exif-viewer \
+      /expand-image \
+      /favicon-generator \
+      /filters \
+      /find-duplicates \
+      /flip \
+      /generate \
+      /gif-converter \
+      /gif-maker \
+      /heic-converter \
+      /html-to-image \
+      /image-to-base64 \
+      /image-to-svg \
+      /meme-generator \
+      /optimize-for-web \
+      /pdf-to-image \
+      /replace-background \
+      /round-corners \
+      /svg-to-png \
+      /upscale \
+      /video-to-gif; do
+      wget -qO /dev/null "http://127.0.0.1$route"
+    done
   '
 }
 
