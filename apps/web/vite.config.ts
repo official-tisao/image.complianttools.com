@@ -1,6 +1,9 @@
+import { resolve } from 'node:path';
+
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
 
+const repositoryRoot = resolve(__dirname, '../..');
 const isolationHeaders = {
   'Cross-Origin-Opener-Policy': 'same-origin',
   'Cross-Origin-Embedder-Policy': 'require-corp',
@@ -38,9 +41,21 @@ export default defineConfig(({ command, mode }) => ({
   // sibling `.wasm` URL relative to `import.meta.url`; the optimized module lives under
   // `node_modules/.vite/deps`, where that sibling is not emitted and the dev server returns 404.
   optimizeDeps: {
-    exclude: ['@jsquash/jpeg', '@jsquash/png', '@jsquash/webp', '@jsquash/oxipng'],
+    exclude: [
+      '@jsquash/jpeg',
+      '@jsquash/png',
+      '@jsquash/webp',
+      '@jsquash/oxipng',
+      // ONNX Runtime Web uses import.meta.url to locate its sibling `ort-wasm-*.wasm` files.
+      // Vite's optimized deps directory does not contain those siblings, so prebundling turns
+      // an explicit Tier 2 model run into a browser 404 before inference can start.
+      'onnxruntime-web',
+    ],
   },
-  server: { headers: command === 'serve' ? isolationHeaders : {} },
+  server: {
+    fs: { allow: [repositoryRoot] },
+    headers: command === 'serve' ? isolationHeaders : {},
+  },
   preview: { headers: isolationHeaders },
   worker: mode === 'development' ? {} : { format: 'es' },
   build: { target: 'es2022', sourcemap: true },
