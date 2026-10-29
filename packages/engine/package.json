@@ -80,9 +80,17 @@
       "types": "./dist/metadata/container.d.ts",
       "default": "./dist/metadata/container.js"
     },
+    "./schemas/pixel-art": {
+      "types": "./dist/schemas/pixel-art.d.ts",
+      "default": "./dist/schemas/pixel-art.js"
+    },
     "./schemas/options": {
       "types": "./dist/schemas/options.d.ts",
       "default": "./dist/schemas/options.js"
+    },
+    "./ai/types": {
+      "types": "./dist/ai/types.d.ts",
+      "default": "./dist/ai/types.js"
     },
     "./types": {
       "types": "./dist/types.d.ts",
