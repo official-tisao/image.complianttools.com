@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises';
-
+import { Buffer } from 'node:buffer';
 import { expect, test, type Page } from '@playwright/test';
 import { allowAllNetwork, denyAllNetwork, LOCAL_ORIGIN } from './support/network.js';
 
@@ -40,6 +40,59 @@ test('encodes bytes with HTML and CSS snippets on the canonical local page', asy
   expect(crossOrigin).toEqual([]);
 });
 
+test('the copied output decodes back to the expected image bytes', async ({ page, context }) => {
+  test.skip(test.info().project.name !== 'chromium', 'Clipboard verification runs in Chromium.');
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await page.goto('/base64-image');
+  await waitForHydration(page);
+  await page.getByLabel('Choose an image').setInputFiles({
+    name: 'round-trip.png',
+    mimeType: 'image/png',
+    buffer: Buffer.from([0, 1, 2, 253, 254, 255]),
+  });
+  await expect(page.getByLabel('Base64 data URL')).toHaveValue('data:image/png;base64,AAEC/f7/');
+  await page.getByRole('button', { name: 'Copy Base64' }).click();
+  await expect(page.getByRole('status')).toContainText('Copied');
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
+    'data:image/png;base64,AAEC/f7/',
+  );
+
+  // Paste the copied output into the decode direction and prove the round trip returns the
+  // original bytes — the copied value is exactly what the decoder consumed.
+  await page.getByLabel('Direction').selectOption('decode');
+  const dataUrl = await page.evaluate(() => navigator.clipboard.readText());
+  await page.getByLabel('Base64 data URL').fill(dataUrl);
+  const pending = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Decode and download' }).click();
+  const download = await pending;
+  expect(download.suggestedFilename()).toBe('decoded.png');
+  const path = await download.path();
+  expect(await readFile(path!)).toEqual(Buffer.from([0, 1, 2, 253, 254, 255]));
+});
+
+test('files over the 10 MiB limit are rejected with the remedy', async ({ page }) => {
+  test.setTimeout(60_000);
+  await page.goto('/base64-image');
+  await waitForHydration(page);
+  const oversized = Buffer.from([
+    0x89,
+    0x50,
+    0x4e,
+    0x47,
+    0x0d,
+    0x0a,
+    0x1a,
+    0x0a, // PNG signature
+    ...new Uint8Array(11 * 1024 * 1024),
+  ]);
+  await page.getByLabel('Choose an image').setInputFiles({
+    name: 'oversized.png',
+    mimeType: 'image/png',
+    buffer: oversized,
+  });
+  await expect(page.getByRole('alert')).toContainText('below the 10 MiB limit');
+});
+
 test('decodes a bounded data URL back to exact local bytes', async ({ page }) => {
   test.setTimeout(60_000);
   await page.goto('/base64-image');
@@ -75,6 +128,30 @@ test('Base64 decoding is keyboard-operable end to end', async ({ page }) => {
   const path = await (await pending).path();
   expect(path).not.toBeNull();
   expect(await readFile(path!)).toEqual(Buffer.from([0, 1, 2]));
+});
+
+test('the legacy /image-to-base64 alias serves the working tool end to end', async ({ page }) => {
+  const crossOrigin: string[] = [];
+  page.on('request', (request) => {
+    if (new URL(request.url()).origin !== LOCAL_ORIGIN) crossOrigin.push(request.url());
+  });
+  await page.goto('/image-to-base64');
+  await waitForHydration(page);
+  await page.getByLabel('Choose an image').setInputFiles({
+    name: 'alias.png',
+    mimeType: 'image/png',
+    buffer: Buffer.from([0, 1, 2]),
+  });
+  await expect(page.getByLabel('Base64 data URL')).toHaveValue('data:image/png;base64,AAEC');
+  await expect(page.getByLabel('HTML snippet')).toHaveValue(
+    '<img src="data:image/png;base64,AAEC" alt="">',
+  );
+
+  // The alias serves the same static completion content as the canonical page, so both URLs
+  // present the same document rather than a thinner second copy.
+  await expect(page.locator('script[type="application/ld+json"]')).toHaveCount(1);
+  await expect(page.locator('.format-completion')).toHaveCount(1);
+  expect(crossOrigin).toEqual([]);
 });
 
 for (const locale of ['en-XA', 'ar'] as const) {
