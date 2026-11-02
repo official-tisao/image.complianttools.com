@@ -152,6 +152,7 @@ test('T61 finds exact copies and conservative near matches locally; review CSV d
   const report = await readFile(await download.path(), 'utf8');
   expect(report).toContain('Pixel similarity');
   expect(report).toContain('scan-adjusted.png');
+  expect(report.split('\n').find((row) => row.includes('scan-adjusted.png'))).toMatch(/"\d+\.\d%"/);
   await expect(
     page.getByText('This page never deletes or changes your original files.'),
   ).toBeVisible();
