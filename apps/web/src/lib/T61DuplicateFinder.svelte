@@ -179,6 +179,8 @@
   let failure = $state<Failure | undefined>();
   let scanning = $state(false);
   let progress = $state('');
+  let percent = $state(0);
+  let resultsSection = $state<HTMLElement>();
   let task = 0;
   let reportUrl: string | undefined;
   let options = $state<T61DuplicateOptions>(T61DuplicateOptionsSchema.parse({}));
@@ -312,9 +314,12 @@
     resetResults();
     failure = undefined;
     scanning = true;
+    percent = 0;
     const currentTask = ++task;
     const checked: LocalImage[] = [];
     try {
+      resultsSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
       for (let index = 0; index < files.length; index += 1) {
         if (currentTask !== task) return;
         const file = files[index]!;
@@ -333,6 +338,7 @@
         const image = await decodeHashes(file, index, sha256);
         if (currentTask !== task) return;
         checked.push(image);
+        percent = Math.round((checked.length / files.length) * 90);
         // Give the browser a paint opportunity between bounded image decodes.
         await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
       }
@@ -385,6 +391,7 @@
       for (const group of exact) defaults[group.id] = group.images[0]!.id;
       for (const pair of possible) defaults[pair.id] = pair.first.id;
       keepers = defaults;
+      percent = 100;
     } catch (cause) {
       if (currentTask !== task) return;
       if (cause && typeof cause === 'object' && 'kind' in cause) {
@@ -556,11 +563,17 @@
     </div>
   </section>
 
-  <section class="t61-results" aria-busy={scanning} aria-labelledby="t61-results-heading">
+  <section
+    bind:this={resultsSection}
+    class="t61-results"
+    aria-busy={scanning}
+    aria-labelledby="t61-results-heading"
+  >
     <h2 id="t61-results-heading" class="t61-visually-hidden">{copy.match}</h2>
     <div class="t61-status" aria-live="polite" aria-atomic="true">
       {#if scanning}
-        <p data-testid="t61-status">{progress || copy.scanning}</p>
+        <p data-testid="t61-status">{progress || copy.scanning} ({percent}%)</p>
+        <progress max="100" value={percent} aria-label={copy.scanning}></progress>
         <button class="button" data-testid="t61-cancel" type="button" onclick={cancel}
           >{copy.cancel}</button
         >
