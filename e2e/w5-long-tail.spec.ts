@@ -33,6 +33,7 @@ test.describe('W5 long-tail tools', () => {
     await page.goto('/recipe');
     await page.getByTestId('long-tail-run').click();
     await expect(page.getByTestId('long-tail-status')).toContainText('validated');
+    await expect(page.getByTestId('long-tail-progress')).toContainText('100%');
     await expect(page.getByTestId('generated-output')).toContainText('/recipe#recipe=r1.');
   });
 
@@ -45,6 +46,7 @@ test.describe('W5 long-tail tools', () => {
       '@complianttools/image-engine/pipeline/execute',
     );
     await expect(page.getByTestId('long-tail-status')).toContainText('generated');
+    await expect(page.getByTestId('long-tail-progress')).toContainText('100%');
   });
 
   test('web export produces a local download link', async ({ page }) => {
