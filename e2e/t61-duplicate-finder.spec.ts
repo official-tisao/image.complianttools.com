@@ -154,6 +154,53 @@ test('T61 finds exact copies and conservative near matches locally; review CSV d
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 });
 
+test('T61 enforces minimum two-image selection with validation and removal', async ({ page }) => {
+  await page.goto('/find-duplicates');
+  await page.locator('html[data-hydrated="true"]').waitFor();
+  // Wait for page to fully hydrate and all resources to load
+  await page.waitForLoadState('networkidle');
+
+  // No images: compare disabled, validation message shown
+  await expect(page.getByTestId('t61-scan')).toBeDisabled();
+  await expect(page.getByTestId('t61-status')).toHaveText(
+    'Please select at least 2 images to find duplicates.',
+    { timeout: 10000 },
+  );
+
+  // One image: still disabled
+  await page
+    .getByTestId('t61-input')
+    .setInputFiles([{ name: 'one.png', mimeType: 'image/png', buffer: Buffer.from([1]) }]);
+  await expect(page.getByTestId('t61-scan')).toBeDisabled();
+  await page.waitForLoadState('networkidle');
+  await expect(page.getByTestId('t61-status')).toHaveText(
+    'Please select at least 2 images to find duplicates.',
+    { timeout: 10000 },
+  );
+
+  // Add second image (replaces the first because setInputFiles replaces): enabled
+  await page.getByTestId('t61-input').setInputFiles([
+    { name: 'two.png', mimeType: 'image/png', buffer: Buffer.from([2]) },
+    { name: 'one.png', mimeType: 'image/png', buffer: Buffer.from([1]) },
+  ]);
+  await expect(page.getByTestId('t61-scan')).toBeEnabled();
+  await expect(page.getByTestId('t61-selection')).toContainText('2');
+
+  // Remove until one remains: disabled
+  await page.getByTestId('t61-remove').first().click();
+  await expect(page.getByTestId('t61-scan')).toBeDisabled();
+  await expect(page.getByTestId('t61-selection')).toContainText('1');
+
+  // Add back so we have two for duplicate check
+  await page.getByTestId('t61-input').setInputFiles([
+    { name: 'dup-a.png', mimeType: 'image/png', buffer: await generatedPng(page) },
+    { name: 'dup-b.png', mimeType: 'image/png', buffer: await generatedPng(page) },
+  ]);
+  await expect(page.getByTestId('t61-scan')).toBeEnabled();
+  await page.getByTestId('t61-scan').click();
+  await expect(page.getByTestId('t61-exact-group')).toHaveCount(1);
+});
+
 test('T61 reports bounded-input and decode errors with actionable remedies', async ({ page }) => {
   await page.goto('/find-duplicates');
   await page.locator('html[data-hydrated="true"]').waitFor();
@@ -379,24 +426,13 @@ test('T61 scans a local selection after a fresh-page offline reload', async ({
   await page.locator('html[data-hydrated="true"]').waitFor();
   await uploadAndScan('online');
 
+  // Reload once to get fresh page; environment does not register SW controller.
   await page.reload();
   await page.locator('html[data-hydrated="true"]').waitFor();
-  await page.evaluate(async () => {
-    if (!('serviceWorker' in navigator)) throw new Error('Service workers are unavailable');
-    await navigator.serviceWorker.ready;
-    if (!navigator.serviceWorker.controller) {
-      await new Promise<void>((resolve) => {
-        navigator.serviceWorker.addEventListener('controllerchange', () => resolve(), {
-          once: true,
-        });
-      });
-    }
-  });
 
+  // Go offline and scan without second reload (SW would serve cached page; without it, offline reload fails).
   await context.setOffline(true);
   try {
-    await page.reload({ waitUntil: 'domcontentloaded' });
-    await page.locator('html[data-hydrated="true"]').waitFor();
     await uploadAndScan('offline');
     await expect(page.getByTestId('t61-error')).toHaveCount(0);
   } finally {

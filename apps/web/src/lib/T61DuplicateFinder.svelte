@@ -64,6 +64,7 @@
       cancel: 'Cancel scan',
       clear: 'Clear selection',
       ready: 'Choose at least two images, then scan them on this device.',
+      minSelection: 'Please select at least 2 images to find duplicates.',
       progress: (done: number, total: number) => `Checking image ${done} of ${total}…`,
       empty: 'No exact or likely visual matches were found.',
       emptyRemedy:
@@ -123,6 +124,7 @@
       cancel: 'إلغاء الفحص',
       clear: 'مسح الاختيار',
       ready: 'اختر صورتين على الأقل، ثم افحصهما على هذا الجهاز.',
+      minSelection: 'يرجى اختيار صورتين على الأقل للعثور على الصور المكررة.',
       progress: (done: number, total: number) => `جارٍ فحص الصورة ${done} من ${total}…`,
       empty: 'لم يتم العثور على نسخ مطابقة أو صور يُرجح تشابهها.',
       emptyRemedy: 'جرّب مجموعة أخرى. فحوص التشابه متحفظة وقد لا تكتشف التعديلات أو الاقتصاص.',
@@ -249,6 +251,10 @@
       failure = failureFor('too-large');
     else if (selected.some((file) => !SUPPORTED_MIME.has(file.type)))
       failure = failureFor('unsupported');
+  }
+
+  function removeFile(index: number) {
+    files = files.filter((_, i) => i !== index);
   }
 
   function totalSize(selected: File[]) {
@@ -529,6 +535,30 @@
     <p class="t61-limits">{copy.limits}</p>
     {#if files.length}
       <p data-testid="t61-selection">{files.length} · {formatBytes(totalBytes)}</p>
+      <div class="t61-file-list" role="list" aria-label={copy.select}>
+        {#each files as file, index (file.name + file.size)}}
+          <div class="t61-file-preview" role="listitem">
+            <img
+              src={URL.createObjectURL(file)}
+              alt={file.name}
+              width="72"
+              height="72"
+              loading="lazy"
+            />
+            <div>
+              <strong>{file.name}</strong>
+              <small>{formatBytes(file.size)}</small>
+            </div>
+            <button
+              class="button"
+              data-testid="t61-remove"
+              type="button"
+              onclick={() => removeFile(index)}
+              aria-label={`Remove ${file.name}`}>×</button
+            >
+          </div>
+        {/each}
+      </div>
     {/if}
     <div class="t61-actions">
       <button
@@ -575,7 +605,7 @@
           {copy.emptyRemedy}
         </p>
       {:else if files.length < 2}
-        <p data-testid="t61-status">{copy.ready}</p>
+        <p data-testid="t61-status">{copy.minSelection}</p>
       {:else}
         <p data-testid="t61-status">{matchCount} {copy.match}</p>
       {/if}
