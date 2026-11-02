@@ -63,6 +63,7 @@
       limits: 'Up to 24 PNG, JPEG, WebP, or GIF images; 20 MiB each, 80 MiB total.',
       scan: 'Scan images',
       scanning: 'Scanning locally…',
+      complete: 'Scan complete',
       cancel: 'Cancel scan',
       clear: 'Clear selection',
       ready: 'Choose at least two images, then scan them on this device.',
@@ -124,6 +125,7 @@
       limits: 'حتى 24 صورة PNG أو JPEG أو WebP أو GIF؛ 20 ميبيبايت لكل ملف و80 ميبيبايت إجمالاً.',
       scan: 'فحص الصور',
       scanning: 'جارٍ الفحص محلياً…',
+      complete: 'اكتمل الفحص',
       cancel: 'إلغاء الفحص',
       clear: 'مسح الاختيار',
       ready: 'اختر صورتين على الأقل، ثم افحصهما على هذا الجهاز.',
@@ -235,6 +237,7 @@
   }
 
   function resetResults() {
+    percent = 0;
     scanned = false;
     exactGroups = [];
     nearPairs = [];
@@ -639,6 +642,9 @@
   >
     <h2 id="t61-results-heading" class="t61-visually-hidden">{copy.match}</h2>
     <div class="t61-status" aria-live="polite" aria-atomic="true">
+      {#if !scanning && percent === 100 && !failure}
+        <p data-testid="t61-complete">{copy.complete} (100%)</p>
+      {/if}
       {#if scanning}
         <p data-testid="t61-status">{progress || copy.scanning} ({percent}%)</p>
         <progress max="100" value={percent} aria-label={copy.scanning}></progress>
