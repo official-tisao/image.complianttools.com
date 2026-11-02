@@ -25,6 +25,7 @@
     sha256: string;
     averageHash: number[];
     differenceHash: number[];
+    pixels: Uint8ClampedArray;
     thumbnail: string;
   };
   type ExactGroup = { id: string; images: LocalImage[] };
@@ -34,6 +35,7 @@
     second: LocalImage;
     averageDistance: number;
     differenceDistance: number;
+    pixelSimilarity: number;
   };
   type Failure = { kind: FailureKind; message: string; remedy: string };
 
@@ -74,7 +76,7 @@
         'These files have the same SHA-256 hash. Keep one copy if you choose; originals are untouched.',
       nearHeading: 'Possible visual matches',
       nearNote:
-        'Perceptual hashes are approximate. Review these images yourself; a match does not prove identity. Animated images are checked using the browser-decoded first frame.',
+        'Visual similarity compares 8 × 8 image pixels and perceptual hashes locally. Results are approximate; review matches yourself. Animated images use the first frame.',
       first: (name: string) => `Keep this copy: ${name}`,
       other: (name: string) => `Keep this copy: ${name}`,
       decision: 'Decision',
@@ -90,6 +92,7 @@
       exact: 'Exact byte match',
       visual: 'Possible visual match',
       difference: 'Hash distance',
+      pixelSimilarity: 'Pixel similarity',
       remedy: 'Remedy',
       errTooMany: 'Choose no more than 24 images.',
       remedyTooMany: 'Split the selection into smaller batches and scan each batch.',
@@ -133,7 +136,7 @@
         'تحمل هذه الملفات بصمة SHA-256 نفسها. يمكنك الاحتفاظ بنسخة واحدة؛ ولا يتم تغيير الملفات الأصلية.',
       nearHeading: 'صور محتمل تشابهها',
       nearNote:
-        'بصمات التشابه تقريبية. راجع الصور بنفسك؛ فالتطابق لا يثبت الهوية. تُفحص الصور المتحركة باستخدام الإطار الأول الذي يفكّه المتصفح.',
+        'تُقارن بكسلات الصور بحجم 8 × 8 وبصمات التشابه محلياً. النتائج تقريبية؛ راجع الصور بنفسك. تُفحص الصور المتحركة باستخدام الإطار الأول.',
       first: (name: string) => `الاحتفاظ بهذه النسخة: ${name}`,
       other: (name: string) => `الاحتفاظ بهذه النسخة: ${name}`,
       decision: 'القرار',
@@ -148,6 +151,7 @@
       exact: 'تطابق البايتات',
       visual: 'تشابه بصري محتمل',
       difference: 'فرق البصمة',
+      pixelSimilarity: 'تشابه البكسلات',
       remedy: 'الحل',
       errTooMany: 'اختر 24 صورة كحد أقصى.',
       remedyTooMany: 'قسّم الاختيار إلى مجموعات أصغر وافحص كل مجموعة.',
@@ -284,6 +288,14 @@
     return distance;
   }
 
+  function pixelSimilarity(a: Uint8ClampedArray, b: Uint8ClampedArray) {
+    let difference = 0;
+    for (let index = 0; index < a.length; index += 1) {
+      difference += Math.abs(a[index]! - b[index]!);
+    }
+    return Math.max(0, 1 - difference / (a.length * 255));
+  }
+
   async function decodeHashes(file: File, id: number, sha256: string): Promise<LocalImage> {
     let bitmap: ImageBitmap | undefined;
     try {
@@ -313,6 +325,7 @@
         sha256,
         averageHash: perceptualHash(raster),
         differenceHash: differenceHash(raster),
+        pixels: pixels.slice(),
         thumbnail: previewCanvas.toDataURL('image/jpeg', 0.72),
       };
     } catch (cause) {
@@ -384,9 +397,11 @@
             continue;
           const averageDistance = hamming(first.averageHash, second.averageHash);
           const differenceDistance = hamming(first.differenceHash, second.differenceHash);
+          const similarity = pixelSimilarity(first.pixels, second.pixels);
           if (
             averageDistance <= options.averageDistance &&
-            differenceDistance <= options.differenceDistance
+            differenceDistance <= options.differenceDistance &&
+            similarity >= 0.9
           ) {
             possible.push({
               id: `near-${first.id}-${second.id}`,
@@ -394,6 +409,7 @@
               second,
               averageDistance,
               differenceDistance,
+              pixelSimilarity: similarity,
             });
           }
         }
@@ -442,7 +458,15 @@
 
   function downloadReport() {
     const rows: (string | number)[][] = [
-      [copy.match, copy.file, copy.dimensions, copy.size, copy.difference, copy.decision],
+      [
+        copy.match,
+        copy.file,
+        copy.dimensions,
+        copy.size,
+        copy.difference,
+        copy.pixelSimilarity,
+        copy.decision,
+      ],
     ];
     for (const group of exactGroups) {
       for (const image of group.images) {
@@ -452,6 +476,7 @@
           `${image.width}x${image.height}`,
           String(image.file.size),
           image.sha256,
+          '100.0%',
           keepers[group.id] === image.id ? copy.keep : copy.manual,
         ]);
       }
@@ -464,6 +489,7 @@
           `${image.width}x${image.height}`,
           String(image.file.size),
           `aHash ${pair.averageDistance}/64; dHash ${pair.differenceDistance}/56`,
+          `${(pair.pixelSimilarity * 100).toFixed(1)}%`,
           keepers[pair.id] === image.id ? copy.keep : copy.manual,
         ]);
       }
@@ -671,7 +697,8 @@
           {#each nearPairs as pair (pair.id)}
             <fieldset class="t61-match" data-testid="t61-near-pair">
               <legend
-                >{copy.visual} · {copy.difference}: aHash {pair.averageDistance}/64, dHash {pair.differenceDistance}/56</legend
+                >{copy.visual} · {copy.pixelSimilarity}: {(pair.pixelSimilarity * 100).toFixed(1)}%
+                · {copy.difference}: aHash {pair.averageDistance}/64, dHash {pair.differenceDistance}/56</legend
               >
               {#each [pair.first, pair.second] as image (image.id)}
                 <div class="t61-file">

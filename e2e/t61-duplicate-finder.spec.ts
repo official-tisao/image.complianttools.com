@@ -1,4 +1,5 @@
 import AxeBuilder from '@axe-core/playwright';
+import { readFile } from 'node:fs/promises';
 import { expect, test } from '@playwright/test';
 import { allowAllNetwork, denyAllNetwork } from './support/network.js';
 
@@ -139,6 +140,7 @@ test('T61 finds exact copies and conservative near matches locally; review CSV d
   await expect(page.getByTestId('t61-exact-group')).toContainText('scan-original.png');
   await expect(page.getByTestId('t61-exact-group')).toContainText('scan-copy.png');
   await expect(page.getByTestId('t61-near-pair').first()).toBeVisible();
+  await expect(page.getByTestId('t61-near-pair').first()).toContainText('Pixel similarity:');
   await expect(page.getByTestId('t61-report')).toBeVisible();
   await page.getByTestId('t61-near-pair').first().getByRole('radio').nth(1).check();
   await expect(page.getByTestId('t61-near-pair').first()).toContainText('Review for removal');
@@ -147,6 +149,9 @@ test('T61 finds exact copies and conservative near matches locally; review CSV d
   await page.getByTestId('t61-report').click();
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toBe('duplicate-review.csv');
+  const report = await readFile(await download.path(), 'utf8');
+  expect(report).toContain('Pixel similarity');
+  expect(report).toContain('scan-adjusted.png');
   await expect(
     page.getByText('This page never deletes or changes your original files.'),
   ).toBeVisible();
