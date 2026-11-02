@@ -178,13 +178,16 @@ test('T61 enforces minimum two-image selection with validation and removal', asy
     { timeout: 10000 },
   );
 
-  // Add second image (replaces the first because setInputFiles replaces): enabled
-  await page.getByTestId('t61-input').setInputFiles([
-    { name: 'two.png', mimeType: 'image/png', buffer: Buffer.from([2]) },
-    { name: 'one.png', mimeType: 'image/png', buffer: Buffer.from([1]) },
-  ]);
+  // Select a second image in a separate picker interaction.
+  await page.getByTestId('t61-input').setInputFiles({
+    name: 'two.png',
+    mimeType: 'image/png',
+    buffer: Buffer.from([2]),
+  });
   await expect(page.getByTestId('t61-scan')).toBeEnabled();
   await expect(page.getByTestId('t61-selection')).toContainText('2');
+  await expect(page.getByRole('listitem').filter({ hasText: 'one.png' })).toBeVisible();
+  await expect(page.getByRole('listitem').filter({ hasText: 'two.png' })).toBeVisible();
 
   // Remove until one remains: disabled
   await page.getByTestId('t61-remove').first().click();
@@ -192,6 +195,7 @@ test('T61 enforces minimum two-image selection with validation and removal', asy
   await expect(page.getByTestId('t61-selection')).toContainText('1');
 
   // Add back so we have two for duplicate check
+  await page.getByTestId('t61-clear').click();
   await page.getByTestId('t61-input').setInputFiles([
     { name: 'dup-a.png', mimeType: 'image/png', buffer: await generatedPng(page) },
     { name: 'dup-b.png', mimeType: 'image/png', buffer: await generatedPng(page) },
@@ -199,6 +203,26 @@ test('T61 enforces minimum two-image selection with validation and removal', asy
   await expect(page.getByTestId('t61-scan')).toBeEnabled();
   await page.getByTestId('t61-scan').click();
   await expect(page.getByTestId('t61-exact-group')).toHaveCount(1);
+});
+
+test('T61 compares images chosen separately and clears stale matches on removal', async ({
+  page,
+}) => {
+  await page.goto('/find-duplicates');
+  await page.locator('html[data-hydrated="true"]').waitFor();
+  const png = await generatedPng(page);
+  const input = page.getByTestId('t61-input');
+  await input.setInputFiles({ name: 'first.png', mimeType: 'image/png', buffer: png });
+  await input.setInputFiles({ name: 'second.png', mimeType: 'image/png', buffer: png });
+  await expect(page.getByTestId('t61-selection')).toContainText('2');
+  await expect(page.locator('.t61-file-preview img')).toHaveCount(2);
+  await expect(page.getByTestId('t61-empty')).toHaveCount(0);
+  await page.getByTestId('t61-scan').click();
+  await expect(page.getByTestId('t61-exact-group')).toContainText('first.png');
+  await expect(page.getByTestId('t61-exact-group')).toContainText('second.png');
+  await page.getByTestId('t61-remove').first().click();
+  await expect(page.getByTestId('t61-exact-group')).toHaveCount(0);
+  await expect(page.getByTestId('t61-scan')).toBeDisabled();
 });
 
 test('T61 reports bounded-input and decode errors with actionable remedies', async ({ page }) => {
@@ -215,6 +239,7 @@ test('T61 reports bounded-input and decode errors with actionable remedies', asy
   await expect(page.getByTestId('t61-error')).toContainText('Choose no more than 24 images.');
   await expect(page.getByTestId('t61-error')).toContainText('Remedy: Split the selection');
 
+  await page.getByTestId('t61-clear').click();
   await input.setInputFiles([
     { name: 'invalid-a.png', mimeType: 'image/png', buffer: Buffer.from('not a png') },
     { name: 'invalid-b.png', mimeType: 'image/png', buffer: Buffer.from('not a png either') },
@@ -235,6 +260,7 @@ test('T61 rejects per-file and batch sizes above the advertised limits', async (
   await expect(error).toHaveAttribute('data-error-kind', 'too-large');
   await expect(error).toContainText('Each image must be at most 20 MiB');
 
+  await page.getByTestId('t61-clear').click();
   await setMockFiles(
     page,
     Array.from({ length: 5 }, (_, index) => ({

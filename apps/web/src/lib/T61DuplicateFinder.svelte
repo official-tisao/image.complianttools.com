@@ -181,6 +181,7 @@
   let keepers = $state<Record<string, number>>({});
   let failure = $state<Failure | undefined>();
   let scanning = $state(false);
+  let scanned = $state(false);
   let progress = $state('');
   let task = 0;
   let reportUrl: string | undefined;
@@ -228,6 +229,7 @@
   }
 
   function resetResults() {
+    scanned = false;
     exactGroups = [];
     nearPairs = [];
     keepers = {};
@@ -399,6 +401,7 @@
       if (currentTask !== task) return;
       exactGroups = exact;
       nearPairs = possible;
+      scanned = true;
       const defaults: Record<string, number> = {};
       for (const group of exact) defaults[group.id] = group.images[0]!.id;
       for (const pair of possible) defaults[pair.id] = pair.first.id;
@@ -608,13 +611,15 @@
           {failure.message}<br /><strong>{copy.remedy}:</strong>
           {failure.remedy}
         </p>
-      {:else if exactGroups.length === 0 && nearPairs.length === 0 && files.length >= 2}
+      {:else if scanned && exactGroups.length === 0 && nearPairs.length === 0}
         <p data-testid="t61-empty">
           {copy.empty}<br /><strong>{copy.remedy}:</strong>
           {copy.emptyRemedy}
         </p>
       {:else if files.length < 2}
         <p data-testid="t61-status">{copy.minSelection}</p>
+      {:else if !scanned}
+        <p data-testid="t61-status">{copy.ready}</p>
       {:else}
         <p data-testid="t61-status">{matchCount} {copy.match}</p>
       {/if}
@@ -712,6 +717,36 @@
 </main>
 
 <style>
+  .t61-file-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin-block: 16px;
+  }
+  .t61-file-preview {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    padding: 10px;
+    border: 1px solid #d8d6d2;
+    border-radius: 8px;
+    background: white;
+    text-align: start;
+  }
+  .t61-file-preview img {
+    width: 72px;
+    height: 72px;
+    object-fit: contain;
+  }
+  .t61-file-preview div {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .t61-file-preview small {
+    display: block;
+  }
   .duplicate-header {
     display: flex;
     align-items: center;
