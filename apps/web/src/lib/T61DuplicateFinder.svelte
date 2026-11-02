@@ -719,7 +719,7 @@
 <style>
   .t61-file-list {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
     gap: 12px;
     margin-block: 16px;
   }
@@ -737,6 +737,7 @@
   .t61-file-preview img {
     width: 72px;
     height: 72px;
+    flex: 0 0 72px;
     object-fit: contain;
   }
   .t61-file-preview div {
