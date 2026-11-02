@@ -175,6 +175,7 @@
   } = $props();
   let input = $state<HTMLInputElement>();
   let files = $state<File[]>([]);
+  let previews = $state<string[]>([]);
   let exactGroups = $state<ExactGroup[]>([]);
   let nearPairs = $state<NearPair[]>([]);
   let keepers = $state<Record<string, number>>({});
@@ -237,24 +238,35 @@
     const picker = event.currentTarget as HTMLInputElement;
     const selected = Array.from(picker.files ?? []);
     picker.value = '';
+    if (!selected.length) return;
     task += 1;
     scanning = false;
     progress = '';
     failure = undefined;
     resetResults();
-    files = selected;
-    if (selected.length > MAX_FILES) failure = failureFor('too-many');
-    else if (
-      selected.some((file) => file.size > MAX_FILE_BYTES) ||
-      totalSize(selected) > MAX_BATCH_BYTES
-    )
+    files = [...files, ...selected];
+    previews = [...previews, ...selected.map((file) => URL.createObjectURL(file))];
+    validateSelection();
+  }
+
+  function validateSelection() {
+    failure = undefined;
+    if (files.length > MAX_FILES) failure = failureFor('too-many');
+    else if (files.some((file) => file.size > MAX_FILE_BYTES) || totalSize(files) > MAX_BATCH_BYTES)
       failure = failureFor('too-large');
-    else if (selected.some((file) => !SUPPORTED_MIME.has(file.type)))
+    else if (files.some((file) => !SUPPORTED_MIME.has(file.type)))
       failure = failureFor('unsupported');
   }
 
   function removeFile(index: number) {
+    task += 1;
+    scanning = false;
+    progress = '';
+    URL.revokeObjectURL(previews[index]!);
     files = files.filter((_, i) => i !== index);
+    previews = previews.filter((_, i) => i !== index);
+    resetResults();
+    validateSelection();
   }
 
   function totalSize(selected: File[]) {
@@ -468,6 +480,8 @@
     scanning = false;
     progress = '';
     files = [];
+    previews.forEach((url) => URL.revokeObjectURL(url));
+    previews = [];
     failure = undefined;
     resetResults();
     if (input) input.value = '';
@@ -479,6 +493,7 @@
 
   onDestroy(() => {
     task += 1;
+    previews.forEach((url) => URL.revokeObjectURL(url));
     revokeReport();
   });
 </script>
@@ -536,15 +551,9 @@
     {#if files.length}
       <p data-testid="t61-selection">{files.length} · {formatBytes(totalBytes)}</p>
       <div class="t61-file-list" role="list" aria-label={copy.select}>
-        {#each files as file, index (file.name + file.size)}}
+        {#each files as file, index (previews[index])}
           <div class="t61-file-preview" role="listitem">
-            <img
-              src={URL.createObjectURL(file)}
-              alt={file.name}
-              width="72"
-              height="72"
-              loading="lazy"
-            />
+            <img src={previews[index]} alt={file.name} width="72" height="72" loading="lazy" />
             <div>
               <strong>{file.name}</strong>
               <small>{formatBytes(file.size)}</small>
