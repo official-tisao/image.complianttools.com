@@ -18,10 +18,10 @@
     y: number;
     size: number;
     colour: string;
-    strokeColor: string;
+    strokeColor?: string;
     strokeWidth?: number;
-    fontFamily: string;
-    textAlign: 'left' | 'center' | 'right';
+    fontFamily?: string;
+    textAlign?: 'left' | 'center' | 'right';
     opacity: number;
     stroke: boolean;
   };
@@ -113,6 +113,9 @@
     bottomAlignment: string;
     strokeColor: string;
     strokeWidth: string;
+    left: string;
+    center: string;
+    right: string;
   };
 
   const EN: Record<ToolMode, Copy> = {
@@ -145,6 +148,7 @@
       left: 'Left',
       center: 'Center',
       right: 'Right',
+      strokeWidth: 'Stroke width',
       faq: 'About this tool',
       faqAnswer: 'Text is drawn locally into the exported PNG.',
       error: {
@@ -184,6 +188,7 @@
       left: 'Left',
       center: 'Center',
       right: 'Right',
+      strokeWidth: 'Stroke width',
       faq: 'About this tool',
       faqAnswer: 'Watermark pixels are rendered locally with the selected opacity.',
       error: {
@@ -263,6 +268,7 @@
       left: 'Left',
       center: 'Center',
       right: 'Right',
+      strokeWidth: 'Stroke width',
       faq: 'About this tool',
       faqAnswer: 'Pointer marks are rendered locally into the downloaded PNG.',
       error: {
@@ -302,6 +308,7 @@
       left: 'Left',
       center: 'Center',
       right: 'Right',
+      strokeWidth: 'Stroke width',
       faq: 'About this tool',
       faqAnswer: 'The signature is drawn locally and exported as a PNG.',
       error: {
@@ -454,7 +461,7 @@
     for (const layer of textLayers) {
       context.save();
       context.globalAlpha = layer.opacity;
-      context.font = `bold ${layer.size}px "${layer.fontFamily}"`;
+      context.font = `bold ${layer.size}px "${layer.fontFamily ?? 'sans-serif'}"`;
       context.textBaseline = 'top';
       context.lineJoin = 'round';
       context.miterLimit = 2;
@@ -476,7 +483,7 @@
       }
 
       context.fillStyle = layer.colour;
-      context.strokeStyle = layer.strokeColor;
+      context.strokeStyle = layer.strokeColor ?? '#000';
 
       if (layer.stroke && layer.strokeWidth !== 0) {
         context.strokeText(layer.text, xPos, layer.y);
@@ -758,7 +765,7 @@
         >{/if}
       {#if mode === 'meme'}
         <div class="caption-section">
-          <h3 class="section-heading">Top Caption</h3>
+          <h2 class="section-heading">Top Caption</h2>
           <label
             >{localized(copy.top)}<input
               data-testid="t51-top"
@@ -778,7 +785,7 @@
         </div>
 
         <div class="caption-section">
-          <h3 class="section-heading">Bottom Caption</h3>
+          <h2 class="section-heading">Bottom Caption</h2>
           <label
             >{localized(copy.bottom)}<input
               data-testid="t51-bottom"
@@ -798,7 +805,7 @@
         </div>
 
         <div class="caption-section">
-          <h3 class="section-heading">Shared Typography Settings</h3>
+          <h2 class="section-heading">Shared Typography Settings</h2>
           <label
             >{localized(copy.fontFamily)}<select data-testid="t51-font" bind:value={fontFamily}
               >{#each localFonts as font (font)}<option value={font}>{font}</option>{/each}
@@ -971,13 +978,6 @@
     cursor: pointer;
   }
 
-  /* Global Appearance side-by-side group */
-  .global-appearance {
-    display: flex;
-    gap: 14px;
-    align-items: center;
-    margin-bottom: 12px;
-  }
   .button {
     min-height: 42px;
     padding: 8px 14px;
