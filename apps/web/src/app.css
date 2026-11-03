@@ -472,6 +472,11 @@ details summary {
   border-radius: 8px;
 }
 @media (max-width: 767px) {
+  .format-completion,
+  .tool-completion {
+    padding-inline: 0.75rem;
+    margin-block: 2rem;
+  }
   .landing {
     padding: 24px;
   }
@@ -528,7 +533,8 @@ details summary {
 }
 .format-completion,
 .tool-completion {
-  margin-block: 2rem;
+  margin-block: 3rem;
+  padding-inline: 1.25rem;
 }
 
 .format-completion details,

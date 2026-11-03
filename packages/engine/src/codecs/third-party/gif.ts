@@ -822,7 +822,7 @@ export function encodeGif(
     bytes.push(...remapTransparency(globalPalette, new Uint8Array(), transparencyIndex).palette);
   if (loopCount !== null) {
     bytes.push(0x21, 0xff, 11, ...new TextEncoder().encode('NETSCAPE2.0'), 3, 1);
-    push16(bytes, loopCount);
+    push16(bytes, loopCount === 0 ? 0 : loopCount);
     bytes.push(0);
   }
   for (const { frame, rectangle, palette, indexes } of prepared) {
