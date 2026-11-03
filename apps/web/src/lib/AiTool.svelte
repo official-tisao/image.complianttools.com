@@ -59,7 +59,7 @@
     edit: 'edit',
     describe: 'describe',
   };
-  const capability = CAPABILITY[kind];
+  const capability = $derived(CAPABILITY[kind]);
 
   const copy: Record<AiKind, { title: string; description: string; action: string }> = {
     generate: {
