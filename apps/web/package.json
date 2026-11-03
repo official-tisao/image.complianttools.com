@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev --host 127.0.0.1 --port 4173",
-    "prebuild": "node ../../scripts/prune-ocr-tessdata-cache.mjs",
+    "predev": "node ../../scripts/build-relay-installer.mjs",
+    "prebuild": "node ../../scripts/prune-ocr-tessdata-cache.mjs && node ../../scripts/build-relay-installer.mjs",
     "build": "vite build",
     "preview": "vite preview --host 127.0.0.1 --port 4173",
     "test": "node --experimental-strip-types --test test/*.test.ts",

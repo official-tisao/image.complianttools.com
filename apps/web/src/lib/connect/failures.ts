@@ -105,12 +105,13 @@ export function failureMessage(
   failureClass: FailureClass,
   descriptor: ProviderDescriptor,
   status?: number,
+  relaySetupHref?: string,
 ): FailureMessage {
   const name = descriptor.name;
   const prefix = keyPrefixHint(descriptor);
   const relay: { href: string; label: string } = {
-    href: '/connect-ai/relay',
-    label: 'Deploy a relay',
+    href: relaySetupHref ?? '/connect-ai/relay',
+    label: relaySetupHref ? 'Set up my relay' : 'Learn about a relay',
   };
   const other: { href: string; label: string } = {
     href: '/connect-ai#chooser',

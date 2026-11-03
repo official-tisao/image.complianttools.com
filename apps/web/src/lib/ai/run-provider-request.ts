@@ -79,6 +79,8 @@ export interface GateInput {
   readonly baseUrl: string;
   /** The relay configuration, or `undefined` for a direct connection. */
   readonly relay?: RelayConfig;
+  /** Route that can create a user-owned relay after a browser CORS failure. */
+  readonly relaySetupHref?: string;
   /** The AiRequest body fields the capability needs. */
   readonly request: AiRequest;
 }
@@ -369,7 +371,12 @@ export async function runProviderRequest(
     };
   } catch (cause) {
     const { failureClass, status } = classifyFailure(cause);
-    return { ok: false, error: { message: failureMessage(failureClass, descriptor, status) } };
+    return {
+      ok: false,
+      error: {
+        message: failureMessage(failureClass, descriptor, status, input.relaySetupHref),
+      },
+    };
   }
 }
 
