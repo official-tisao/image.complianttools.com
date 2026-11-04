@@ -73,6 +73,7 @@
   let previews = $state<string[]>([]);
   let outputUrl = $state('');
   let outputs = $state<readonly { name: string; url: string }[]>([]);
+  let inputRef = $state<HTMLInputElement | null>(null);
   let status = $state('');
   let error = $state('');
   let width = $state(1200);
@@ -84,16 +85,21 @@
   let gap = $state(8);
   let sourceName = $state('image');
 
+  function fileCountText(files: readonly File[]): string {
+    if (files.length === 0) return 'No files selected';
+    return `${files.length} file${files.length === 1 ? '' : 's'} selected`;
+  }
+
   function removeFile(index: number) {
     URL.revokeObjectURL(previews[index]!);
     files = files.filter((_, i) => i !== index);
     previews = previews.filter((_, i) => i !== index);
     if (files.length === 0) {
       sourceName = 'image';
-      status = '';
+      status = fileCountText(files);
     } else {
       sourceName = files[0]!.name.replace(/\.[^.]+$/u, '') ?? 'image';
-      status = files.length ? t('longTail.files', '{value} file(s) selected', files.length) : '';
+      status = fileCountText(files);
     }
     error = '';
   }
@@ -109,7 +115,7 @@
     files = [...files, ...selected];
     previews = [...previews, ...selected.map((file) => URL.createObjectURL(file))];
     sourceName = files[0]?.name.replace(/\.[^.]+$/u, '') ?? 'image';
-    status = files.length ? t('longTail.files', '{value} file(s) selected', files.length) : '';
+    status = fileCountText(files);
     error = '';
   }
   async function decode(file: File): Promise<RasterImage> {
@@ -230,15 +236,26 @@
     <p>{copy.description}</p>
     <p>{t('privacy.copy', 'Processed on your device. Nothing is uploaded.')}</p>
   </section>
-  <label
-    >Choose image{kind === 'bulk-resize' || kind === 'collage' ? 's' : ''}<input
+  <div class="file-input-wrapper">
+    <input
       data-testid="expansion-input"
+      bind:this={inputRef}
       type="file"
       accept="image/*"
       multiple={kind === 'bulk-resize' || kind === 'collage'}
       onchange={onFiles}
-    /></label
-  >
+      class="file-input"
+    />
+    <button
+      type="button"
+      class="file-input-button"
+      aria-label="Choose images"
+      onclick={() => inputRef?.click()}
+    >
+      {t('transform.choose', 'Choose Images')}
+    </button>
+  </div>
+  <p data-testid="file-count" class="file-count">{fileCountText(files)}</p>
   {#if files.length && (kind === 'bulk-resize' || kind === 'collage')}
     <div class="previews" data-testid="expansion-previews">
       {#each files as file, index (previews[index])}
@@ -379,5 +396,46 @@
   }
   .remove:hover {
     background: #ff3333;
+  }
+  .file-count {
+    margin: 0.5rem 0;
+    font-size: 0.9rem;
+    color: #52627a;
+  }
+
+  .file-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 1rem 0;
+  }
+
+  .file-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .file-input-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.7rem 1.1rem;
+    background: #172033;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+
+  .file-input-button:hover {
+    background: #090a0f;
   }
 </style>

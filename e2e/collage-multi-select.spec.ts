@@ -33,6 +33,18 @@ async function generatedPng(page: import('@playwright/test').Page, width = 32, h
 }
 
 test.describe('collage multi-image selection', () => {
+  test('file input is hidden from visible interface with custom button shown', async ({ page }) => {
+    await page.goto('/collage');
+    const input = page.getByTestId('expansion-input');
+    await expect(input).toBeHidden();
+    await expect(page.getByRole('button', { name: /Choose Images/i })).toBeVisible();
+  });
+
+  test('custom choose-images button triggers file selection', async ({ page }) => {
+    await page.goto('/collage');
+    await expect(page.getByRole('button', { name: /Choose Images/i })).toBeVisible();
+  });
+
   test('file input has multiple enabled for collage mode', async ({ page }) => {
     await page.goto('/collage');
     await expect(page.getByTestId('expansion-input')).toHaveAttribute('multiple', '');
