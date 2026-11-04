@@ -337,7 +337,7 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `kleur` | `4.1.5` | MIT | [source](https://github.com/lukeed/kleur#readme) |
 | `known-css-properties` | `0.37.0` | MIT | [source](https://github.com/known-css/known-css-properties#readme) |
 | `lefthook` | `2.1.10` | MIT | [source](https://github.com/evilmartians/lefthook#readme) |
-| `legacy-javascript` | `0.0.1` | Apache-2.0 | [source](https://github.com/GoogleChrome/lighthouse#readme) |
+| `legacy-javascript` | `0.0.4` | Apache-2.0 | [source](https://github.com/GoogleChrome/lighthouse#readme) |
 | `levn` | `0.4.1` | MIT | [source](https://github.com/gkz/levn) |
 | `lie` | `3.1.1` | MIT | [source](https://github.com/calvinmetcalf/lie#readme) |
 | `lighthouse` | `12.6.1` | Apache-2.0 | [source](https://github.com/GoogleChrome/lighthouse#readme) |
