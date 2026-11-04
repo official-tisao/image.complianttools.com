@@ -39,6 +39,9 @@
   /** The 16 MiB bound the input help promises; enforced before any file is decoded. */
   const MAX_FILE_BYTES = 16 * 1024 * 1024;
 
+  /** The 12 megapixel bound the input help promises; enforced on the expanded canvas. */
+  const MAX_PIXELS = 12_000_000;
+
   const EN: Copy = {
     title: 'Cutout and Composite',
     description:
@@ -135,8 +138,10 @@
   let published = $state<PublishedResult | null>(null);
   let tolerance = $state(40);
   let fillColor = $state('#ffffff');
-  let outputWidth = $state(0);
-  let outputHeight = $state(0);
+  // `undefined` means "not entered": an empty field keeps the +128 default, while an explicitly
+  // typed 0 or negative value must be rejected (P6 bug: a 0 initial state silently masked it).
+  let outputWidth = $state<number>();
+  let outputHeight = $state<number>();
 
   const copy = $derived(locale === 'ar' ? AR : EN);
   const capability = $derived(PROVIDER_CAPABILITY[kind]);
@@ -353,8 +358,29 @@
 
       let output = sourceCanvas;
       if (kind === 'expand-image') {
-        const width = Math.max(sourceCanvas.width, outputWidth || sourceCanvas.width + 128);
-        const height = Math.max(sourceCanvas.height, outputHeight || sourceCanvas.height + 128);
+        // An unset field defaults to the source + 128 px of canvas on that axis.
+        const width = outputWidth ?? sourceCanvas.width + 128;
+        const height = outputHeight ?? sourceCanvas.height + 128;
+
+        // Validate dimensions
+        if (width < 1 || height < 1) {
+          error = 'Choose valid output dimensions (each must be at least 1).';
+          return;
+        }
+        if (width < sourceCanvas.width || height < sourceCanvas.height) {
+          error =
+            'Output dimensions must be at least the source image size (' +
+            sourceCanvas.width +
+            ' × ' +
+            sourceCanvas.height +
+            ').';
+          return;
+        }
+        if (width * height > MAX_PIXELS) {
+          error = 'Output image exceeds the 12 megapixel limit.';
+          return;
+        }
+
         output = document.createElement('canvas');
         output.width = width;
         output.height = height;
