@@ -25,6 +25,7 @@
     sha256: string;
     averageHash: number[];
     differenceHash: number[];
+    pixels: Uint8ClampedArray;
     thumbnail: string;
   };
   type ExactGroup = { id: string; images: LocalImage[] };
@@ -34,6 +35,7 @@
     second: LocalImage;
     averageDistance: number;
     differenceDistance: number;
+    pixelSimilarity: number;
   };
   type Failure = { kind: FailureKind; message: string; remedy: string };
 
@@ -74,7 +76,7 @@
         'These files have the same SHA-256 hash. Keep one copy if you choose; originals are untouched.',
       nearHeading: 'Possible visual matches',
       nearNote:
-        'Perceptual hashes are approximate. Review these images yourself; a match does not prove identity. Animated images are checked using the browser-decoded first frame.',
+        'Visual similarity compares 8 × 8 image pixels and perceptual hashes locally. Results are approximate; review matches yourself. Animated images use the first frame.',
       first: (name: string) => `Keep this copy: ${name}`,
       other: (name: string) => `Keep this copy: ${name}`,
       decision: 'Decision',
@@ -90,6 +92,7 @@
       exact: 'Exact byte match',
       visual: 'Possible visual match',
       difference: 'Hash distance',
+      pixelSimilarity: 'Pixel similarity',
       remedy: 'Remedy',
       errTooMany: 'Choose no more than 24 images.',
       remedyTooMany: 'Split the selection into smaller batches and scan each batch.',
@@ -133,7 +136,7 @@
         'تحمل هذه الملفات بصمة SHA-256 نفسها. يمكنك الاحتفاظ بنسخة واحدة؛ ولا يتم تغيير الملفات الأصلية.',
       nearHeading: 'صور محتمل تشابهها',
       nearNote:
-        'بصمات التشابه تقريبية. راجع الصور بنفسك؛ فالتطابق لا يثبت الهوية. تُفحص الصور المتحركة باستخدام الإطار الأول الذي يفكّه المتصفح.',
+        'تُقارن بكسلات الصور بحجم 8 × 8 وبصمات التشابه محلياً. النتائج تقريبية؛ راجع الصور بنفسك. تُفحص الصور المتحركة باستخدام الإطار الأول.',
       first: (name: string) => `الاحتفاظ بهذه النسخة: ${name}`,
       other: (name: string) => `الاحتفاظ بهذه النسخة: ${name}`,
       decision: 'القرار',
@@ -148,6 +151,7 @@
       exact: 'تطابق البايتات',
       visual: 'تشابه بصري محتمل',
       difference: 'فرق البصمة',
+      pixelSimilarity: 'تشابه البكسلات',
       remedy: 'الحل',
       errTooMany: 'اختر 24 صورة كحد أقصى.',
       remedyTooMany: 'قسّم الاختيار إلى مجموعات أصغر وافحص كل مجموعة.',
@@ -175,11 +179,13 @@
   } = $props();
   let input = $state<HTMLInputElement>();
   let files = $state<File[]>([]);
+  let previews = $state<string[]>([]);
   let exactGroups = $state<ExactGroup[]>([]);
   let nearPairs = $state<NearPair[]>([]);
   let keepers = $state<Record<string, number>>({});
   let failure = $state<Failure | undefined>();
   let scanning = $state(false);
+  let scanned = $state(false);
   let progress = $state('');
   let task = 0;
   let reportUrl: string | undefined;
@@ -227,6 +233,7 @@
   }
 
   function resetResults() {
+    scanned = false;
     exactGroups = [];
     nearPairs = [];
     keepers = {};
@@ -237,24 +244,35 @@
     const picker = event.currentTarget as HTMLInputElement;
     const selected = Array.from(picker.files ?? []);
     picker.value = '';
+    if (!selected.length) return;
     task += 1;
     scanning = false;
     progress = '';
     failure = undefined;
     resetResults();
-    files = selected;
-    if (selected.length > MAX_FILES) failure = failureFor('too-many');
-    else if (
-      selected.some((file) => file.size > MAX_FILE_BYTES) ||
-      totalSize(selected) > MAX_BATCH_BYTES
-    )
+    files = [...files, ...selected];
+    previews = [...previews, ...selected.map((file) => URL.createObjectURL(file))];
+    validateSelection();
+  }
+
+  function validateSelection() {
+    failure = undefined;
+    if (files.length > MAX_FILES) failure = failureFor('too-many');
+    else if (files.some((file) => file.size > MAX_FILE_BYTES) || totalSize(files) > MAX_BATCH_BYTES)
       failure = failureFor('too-large');
-    else if (selected.some((file) => !SUPPORTED_MIME.has(file.type)))
+    else if (files.some((file) => !SUPPORTED_MIME.has(file.type)))
       failure = failureFor('unsupported');
   }
 
   function removeFile(index: number) {
+    task += 1;
+    scanning = false;
+    progress = '';
+    URL.revokeObjectURL(previews[index]!);
     files = files.filter((_, i) => i !== index);
+    previews = previews.filter((_, i) => i !== index);
+    resetResults();
+    validateSelection();
   }
 
   function totalSize(selected: File[]) {
@@ -268,6 +286,14 @@
       if (a[index] !== b[index]) distance += 1;
     }
     return distance;
+  }
+
+  function pixelSimilarity(a: Uint8ClampedArray, b: Uint8ClampedArray) {
+    let difference = 0;
+    for (let index = 0; index < a.length; index += 1) {
+      difference += Math.abs(a[index]! - b[index]!);
+    }
+    return Math.max(0, 1 - difference / (a.length * 255));
   }
 
   async function decodeHashes(file: File, id: number, sha256: string): Promise<LocalImage> {
@@ -299,6 +325,7 @@
         sha256,
         averageHash: perceptualHash(raster),
         differenceHash: differenceHash(raster),
+        pixels: pixels.slice(),
         thumbnail: previewCanvas.toDataURL('image/jpeg', 0.72),
       };
     } catch (cause) {
@@ -370,9 +397,11 @@
             continue;
           const averageDistance = hamming(first.averageHash, second.averageHash);
           const differenceDistance = hamming(first.differenceHash, second.differenceHash);
+          const similarity = pixelSimilarity(first.pixels, second.pixels);
           if (
             averageDistance <= options.averageDistance &&
-            differenceDistance <= options.differenceDistance
+            differenceDistance <= options.differenceDistance &&
+            similarity >= 0.9
           ) {
             possible.push({
               id: `near-${first.id}-${second.id}`,
@@ -380,6 +409,7 @@
               second,
               averageDistance,
               differenceDistance,
+              pixelSimilarity: similarity,
             });
           }
         }
@@ -387,6 +417,7 @@
       if (currentTask !== task) return;
       exactGroups = exact;
       nearPairs = possible;
+      scanned = true;
       const defaults: Record<string, number> = {};
       for (const group of exact) defaults[group.id] = group.images[0]!.id;
       for (const pair of possible) defaults[pair.id] = pair.first.id;
@@ -427,7 +458,15 @@
 
   function downloadReport() {
     const rows: (string | number)[][] = [
-      [copy.match, copy.file, copy.dimensions, copy.size, copy.difference, copy.decision],
+      [
+        copy.match,
+        copy.file,
+        copy.dimensions,
+        copy.size,
+        copy.difference,
+        copy.pixelSimilarity,
+        copy.decision,
+      ],
     ];
     for (const group of exactGroups) {
       for (const image of group.images) {
@@ -437,6 +476,7 @@
           `${image.width}x${image.height}`,
           String(image.file.size),
           image.sha256,
+          '100.0%',
           keepers[group.id] === image.id ? copy.keep : copy.manual,
         ]);
       }
@@ -449,6 +489,7 @@
           `${image.width}x${image.height}`,
           String(image.file.size),
           `aHash ${pair.averageDistance}/64; dHash ${pair.differenceDistance}/56`,
+          `${(pair.pixelSimilarity * 100).toFixed(1)}%`,
           keepers[pair.id] === image.id ? copy.keep : copy.manual,
         ]);
       }
@@ -468,6 +509,8 @@
     scanning = false;
     progress = '';
     files = [];
+    previews.forEach((url) => URL.revokeObjectURL(url));
+    previews = [];
     failure = undefined;
     resetResults();
     if (input) input.value = '';
@@ -479,6 +522,7 @@
 
   onDestroy(() => {
     task += 1;
+    previews.forEach((url) => URL.revokeObjectURL(url));
     revokeReport();
   });
 </script>
@@ -536,15 +580,9 @@
     {#if files.length}
       <p data-testid="t61-selection">{files.length} · {formatBytes(totalBytes)}</p>
       <div class="t61-file-list" role="list" aria-label={copy.select}>
-        {#each files as file, index (file.name + file.size)}}
+        {#each files as file, index (previews[index])}
           <div class="t61-file-preview" role="listitem">
-            <img
-              src={URL.createObjectURL(file)}
-              alt={file.name}
-              width="72"
-              height="72"
-              loading="lazy"
-            />
+            <img src={previews[index]} alt={file.name} width="72" height="72" loading="lazy" />
             <div>
               <strong>{file.name}</strong>
               <small>{formatBytes(file.size)}</small>
@@ -599,13 +637,15 @@
           {failure.message}<br /><strong>{copy.remedy}:</strong>
           {failure.remedy}
         </p>
-      {:else if exactGroups.length === 0 && nearPairs.length === 0 && files.length >= 2}
+      {:else if scanned && exactGroups.length === 0 && nearPairs.length === 0}
         <p data-testid="t61-empty">
           {copy.empty}<br /><strong>{copy.remedy}:</strong>
           {copy.emptyRemedy}
         </p>
       {:else if files.length < 2}
         <p data-testid="t61-status">{copy.minSelection}</p>
+      {:else if !scanned}
+        <p data-testid="t61-status">{copy.ready}</p>
       {:else}
         <p data-testid="t61-status">{matchCount} {copy.match}</p>
       {/if}
@@ -657,7 +697,8 @@
           {#each nearPairs as pair (pair.id)}
             <fieldset class="t61-match" data-testid="t61-near-pair">
               <legend
-                >{copy.visual} · {copy.difference}: aHash {pair.averageDistance}/64, dHash {pair.differenceDistance}/56</legend
+                >{copy.visual} · {copy.pixelSimilarity}: {(pair.pixelSimilarity * 100).toFixed(1)}%
+                · {copy.difference}: aHash {pair.averageDistance}/64, dHash {pair.differenceDistance}/56</legend
               >
               {#each [pair.first, pair.second] as image (image.id)}
                 <div class="t61-file">
@@ -703,6 +744,37 @@
 </main>
 
 <style>
+  .t61-file-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+    gap: 12px;
+    margin-block: 16px;
+  }
+  .t61-file-preview {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    padding: 10px;
+    border: 1px solid #d8d6d2;
+    border-radius: 8px;
+    background: white;
+    text-align: start;
+  }
+  .t61-file-preview img {
+    width: 72px;
+    height: 72px;
+    flex: 0 0 72px;
+    object-fit: contain;
+  }
+  .t61-file-preview div {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .t61-file-preview small {
+    display: block;
+  }
   .duplicate-header {
     display: flex;
     align-items: center;
