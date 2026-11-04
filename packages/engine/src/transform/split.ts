@@ -3,6 +3,7 @@
  */
 import type { RasterImage } from '../types.js';
 import type { SplitOptions } from '../schemas/options.js';
+import { createRaster } from '../ops/raster.js';
 
 export function splitImage(image: RasterImage, options: SplitOptions): RasterImage[] {
   const srcW = image.width;
@@ -31,14 +32,7 @@ export function splitImage(image: RasterImage, options: SplitOptions): RasterIma
           output[dstOff + 3] = source[srcOff + 3]!;
         }
       }
-      results.push({
-        ...image,
-        width: outW,
-        height: outH,
-        frames: [
-          { ...image.frames[0]!, data: output, width: outW, height: outH },
-        ] as unknown as RasterImage['frames'],
-      });
+      results.push(createRaster(outW, outH, output));
     }
   }
   return results;

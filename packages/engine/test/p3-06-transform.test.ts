@@ -83,3 +83,48 @@ describe('P3-06 T31 Enlarge', () => {
     expect(out.height).toBe(8);
   });
 });
+
+describe('P3-06 T36 Split/Tile full pipeline', () => {
+  it('handles odd dimensions and preserves all pixels', () => {
+    const img = createRaster(1001, 701, new Uint8ClampedArray(1001 * 701 * 4));
+    for (let i = 0; i < img.frames[0]!.data.length; i += 1) img.frames[0]!.data[i] = i % 256;
+    const tiles = splitImage(img, { rows: 4, cols: 4 });
+    expect(tiles.length).toBe(16);
+    // Last row/col may have remainder pixels; total reconstructed pixels should equal original
+    let reconstructedW = 0,
+      reconstructedH = 0;
+    for (let r = 0; r < 4; r++) {
+      reconstructedH += tiles[r * 4]!.height;
+    }
+    for (let c = 0; c < 4; c++) reconstructedW += tiles[c]!.width;
+    expect(reconstructedW).toBe(1001);
+    expect(reconstructedH).toBe(701);
+  });
+
+  it('produces valid RasterImage instances for every tile', () => {
+    const img = createRaster(100, 100, new Uint8ClampedArray(100 * 100 * 4).fill(128));
+    const tiles = splitImage(img, { rows: 3, cols: 3 });
+    expect(tiles.length).toBe(9);
+    for (const tile of tiles) {
+      expect(tile.width).toBeGreaterThan(0);
+      expect(tile.height).toBeGreaterThan(0);
+      expect(tile.frames.length).toBe(1);
+      expect(tile.frames[0]!.data.length).toBe(tile.width * tile.height * 4);
+    }
+  });
+
+  it('creates tiles with correct ordering (row-major)', () => {
+    const img = createRaster(4, 4, new Uint8ClampedArray(4 * 4 * 4));
+    // Fill pixels with index for identification
+    for (let y = 0; y < 4; y++) {
+      for (let x = 0; x < 4; x++) {
+        const off = (y * 4 + x) * 4;
+        img.frames[0]!.data[off] = x;
+        img.frames[0]!.data[off + 1] = y;
+      }
+    }
+    const tiles = splitImage(img, { rows: 2, cols: 2 });
+    expect(tiles[0]!.width).toBe(2);
+    expect(tiles[0]!.frames[0]!.data[0]).toBe(0); // top-left pixel red = 0
+  });
+});

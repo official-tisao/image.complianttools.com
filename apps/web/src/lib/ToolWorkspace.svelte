@@ -78,7 +78,14 @@
   });
   const summary = $derived(
     sourceBytes && outputBytes
-      ? `${formatBytes(sourceBytes)} → ${formatBytes(outputBytes)} (${Math.round((outputBytes / sourceBytes - 1) * 100)}%)`
+      ? (() => {
+          const diff = outputBytes - sourceBytes;
+          const pct = Math.round((outputBytes / sourceBytes - 1) * 100);
+          if (diff > 0) {
+            return `${formatBytes(sourceBytes)} → ${formatBytes(outputBytes)} (+${pct}%, larger)`;
+          }
+          return `${formatBytes(sourceBytes)} → ${formatBytes(outputBytes)} (${pct}%)`;
+        })()
       : translate(locale, 'status.choose', 'Choose an image to begin'),
   );
   const canonical = $derived(`https://image.complianttools.com/${canonicalPath}`);

@@ -1,17 +1,18 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
   import {
-    canvasResize,
+    splitImage,
     createRaster,
     encodeRaster,
-    enlarge,
+    ResizeOptionsSchema,
     makeCollage,
     resizeRaster,
+    canvasResize,
+    enlarge,
     roundCorners,
-    splitImage,
-    ResizeOptionsSchema,
     type RasterImage,
   } from '@complianttools/image-engine';
+  import { zipSync } from 'fflate';
   import { translate, type Locale } from './i18n';
 
   type ExpansionKind =
@@ -72,6 +73,9 @@
   let files = $state<readonly File[]>([]);
   let outputUrl = $state('');
   let outputs = $state<readonly { name: string; url: string }[]>([]);
+  let zipUrl = $state('');
+  let zipStatus = $state('');
+  let zipError = $state('');
   let status = $state('');
   let error = $state('');
   let width = $state(1200);
@@ -82,6 +86,7 @@
   let rows = $state(2);
   let gap = $state(8);
   let sourceName = $state('image');
+  let dragOver = $state(false);
 
   function t(key: string, fallback: string, value?: string | number) {
     return translate(locale, key, fallback, value);
@@ -91,6 +96,28 @@
     sourceName = files[0]?.name.replace(/\.[^.]+$/u, '') ?? 'image';
     status = files.length ? t('longTail.files', '{value} file(s) selected', files.length) : '';
     error = '';
+  }
+  function handleDragOver(e: DragEvent) {
+    e.preventDefault();
+    dragOver = true;
+  }
+  function handleDragLeave(e: DragEvent) {
+    e.preventDefault();
+    dragOver = false;
+  }
+  function handleDrop(e: DragEvent) {
+    e.preventDefault();
+    dragOver = false;
+    const dropped = e.dataTransfer?.files;
+    if (dropped && dropped.length) {
+      const input = document.getElementById('file-input') as HTMLInputElement | null;
+      if (input) {
+        const dt = new DataTransfer();
+        for (let i = 0; i < dropped.length; i++) dt.items.add(dropped[i]!);
+        input.files = dt.files;
+        onFiles({ currentTarget: input } as unknown as Event);
+      }
+    }
   }
   async function decode(file: File): Promise<RasterImage> {
     const bitmap = await createImageBitmap(file);
@@ -141,8 +168,21 @@
           rows,
           output: 'array',
         });
-        for (const [index, tile] of tiles.entries())
-          await publish(tile, `${sourceName}-tile-${index + 1}.png`);
+        const tileEntries: [string, Uint8Array][] = [];
+        for (const [index, tile] of tiles.entries()) {
+          const bytes = await encodeRaster(tile, 'png');
+          const filename = `${sourceName}-tile-${index + 1}.png`;
+          tileEntries.push([filename, new Uint8Array(bytes)]);
+        }
+        const zipBuffer = zipSync(Object.fromEntries(tileEntries), {
+          level: 0,
+          mtime: new Date(1980, 0, 1),
+        });
+        zipStatus = 'Preparing ZIP...';
+        zipError = '';
+        zipUrl = URL.createObjectURL(new Blob([zipBuffer], { type: 'application/zip' }));
+        outputs = [...outputs, { name: 'split-image-tiles.zip', url: zipUrl }];
+        zipStatus = 'ZIP ready';
       } else {
         for (const [index, image] of decoded.entries()) {
           const result =
@@ -173,7 +213,10 @@
       error = cause instanceof Error ? cause.message : String(cause);
     }
   }
-  onDestroy(clearOutputs);
+  onDestroy(() => {
+    if (outputUrl) URL.revokeObjectURL(outputUrl);
+    if (zipUrl) URL.revokeObjectURL(zipUrl);
+  });
 </script>
 
 <svelte:head>
@@ -201,15 +244,80 @@
     <p>{copy.description}</p>
     <p>{t('privacy.copy', 'Processed on your device. Nothing is uploaded.')}</p>
   </section>
-  <label
-    >Choose image{kind === 'bulk-resize' || kind === 'collage' ? 's' : ''}<input
-      data-testid="expansion-input"
-      type="file"
-      accept="image/*"
-      multiple={kind === 'bulk-resize' || kind === 'collage'}
-      onchange={onFiles}
-    /></label
-  >
+  {#if !files[0]}
+    <div
+      class="upload-area custom-upload"
+      class:drag-over={dragOver}
+      role="button"
+      aria-label="Upload image"
+      tabindex="0"
+      ondragover={handleDragOver}
+      ondragleave={handleDragLeave}
+      ondrop={handleDrop}
+      onclick={() => document.getElementById('file-input')?.click()}
+      onkeydown={(e: KeyboardEvent) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          document.getElementById('file-input')?.click();
+        }
+      }}
+    >
+      <span class="upload-icon" aria-hidden="true">📁</span>
+      <span class="upload-label">Drop your image here</span>
+      <span class="upload-sub">or browse files from your device</span>
+      <button
+        type="button"
+        class="button primary"
+        aria-label="Browse files"
+        onclick={(e: MouseEvent) => {
+          e.stopPropagation();
+          document.getElementById('file-input')?.click();
+        }}>Browse Files</button
+      >
+      <span class="upload-formats">PNG, JPG, WEBP, AVIF</span>
+      <input
+        id="file-input"
+        data-testid="expansion-input"
+        type="file"
+        accept="image/*"
+        multiple={kind === 'bulk-resize' || kind === 'collage'}
+        onchange={onFiles}
+        style="position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none;"
+        aria-label="Choose an image file"
+      />
+    </div>
+  {/if}
+  {#if files[0]}
+    <div class="workspace" data-testid="file-preview">
+      <div class="preview-panel">
+        <div class="preview-card">
+          <img src={URL.createObjectURL(files[0])} alt={files[0].name} />
+        </div>
+        <div class="preview-meta">
+          <strong>{files[0].name}</strong>
+          <span>{files[0].type || 'image'} · {Math.round(files[0].size / 1024)} KB</span>
+          <button
+            type="button"
+            class="button secondary replace-button"
+            aria-label="Replace uploaded image"
+            onclick={() => document.getElementById('file-input')?.click()}>Replace image</button
+          >
+        </div>
+      </div>
+      {#if kind === 'split-image'}
+        <aside class="config-panel" aria-label="Split configuration">
+          <h3>Split configuration</h3>
+          <div class="controls split-controls">
+            <label>Columns <input type="number" min="1" max="16" bind:value={columns} /></label>
+            <label>Rows <input type="number" min="1" max="16" bind:value={rows} /></label>
+          </div>
+          <button data-testid="expansion-run" type="button" onclick={() => void runTool()}
+            >Split Image</button
+          >
+        </aside>
+      {/if}
+    </div>
+  {/if}
   {#if kind === 'bulk-resize' || kind === 'canvas-resize'}<div class="controls">
       <label>Width <input type="number" min="1" bind:value={width} /></label><label
         >Height <input type="number" min="1" bind:value={height} /></label
@@ -221,17 +329,45 @@
   {#if kind === 'round-corners'}<label
       >Radius <input type="number" min="0" bind:value={radius} /></label
     >{/if}
-  {#if kind === 'collage' || kind === 'split-image'}<div class="controls">
+  {#if kind === 'collage' || (kind === 'split-image' && !files[0])}<div class="controls">
       <label>Columns <input type="number" min="1" max="16" bind:value={columns} /></label
       >{#if kind === 'collage'}<label>Gap <input type="number" min="0" bind:value={gap} /></label
         >{:else}<label>Rows <input type="number" min="1" max="16" bind:value={rows} /></label>{/if}
     </div>{/if}
-  <button data-testid="expansion-run" type="button" onclick={() => void runTool()}
-    >Run locally</button
-  >
+  {#if kind !== 'split-image'}
+    <button data-testid="expansion-run" type="button" onclick={() => void runTool()}
+      >Run locally</button
+    >
+  {/if}
   {#if status}<p role="status" data-testid="expansion-status">{status}</p>{/if}
   {#if error}<p role="alert" data-testid="expansion-error">{error}</p>{/if}
-  {#if outputs.length}<ul data-testid="expansion-results">
+  {#if kind === 'split-image' && zipStatus === 'ZIP ready'}
+    <div
+      class="download-card"
+      data-testid="expansion-results"
+      role="region"
+      aria-label="Download split tiles"
+    >
+      <div class="download-header">
+        <span class="download-icon" aria-hidden="true">📦</span>
+        <h3>Your split images are ready</h3>
+      </div>
+      <div class="download-meta">
+        <strong>split-image-tiles.zip</strong>
+        <span>{columns * rows} tiles</span>
+      </div>
+      <p class="download-sub">All generated tiles are included in one ZIP archive.</p>
+      <a
+        class="button primary download-button"
+        href={zipUrl}
+        download="split-image-tiles.zip"
+        aria-label="Download ZIP archive of split tiles"
+      >
+        <span aria-hidden="true">⬇</span> Download ZIP
+      </a>
+    </div>
+  {/if}
+  {#if kind !== 'split-image' && outputs.length}<ul data-testid="expansion-results">
       {#each outputs as result (result.name)}<li>
           <a href={result.url} download={result.name}>{result.name}</a>
         </li>{/each}
@@ -243,6 +379,8 @@
       <p>{t('faq.upload.body', 'No. Processing happens locally in your browser.')}</p>
     </details>
   </section>
+  {#if zipStatus}<p role="status" data-testid="zip-status">{zipStatus}</p>{/if}
+  {#if zipError}<p role="alert" data-testid="zip-error">{zipError}</p>{/if}
 </main>
 
 <style>
@@ -280,6 +418,171 @@
     margin: 1rem 0;
     padding: 0.7rem 1.1rem;
     cursor: pointer;
+  }
+  .workspace {
+    display: grid;
+    gap: 2rem;
+    align-items: start;
+    grid-template-columns: 1fr;
+    margin: 1.5rem 0;
+  }
+  @media (min-width: 48rem) {
+    .workspace {
+      grid-template-columns: 1fr 1fr;
+      gap: 2.5rem;
+    }
+  }
+  .preview-panel {
+    min-width: 0;
+  }
+  .preview-card {
+    background: #fff;
+    border: 1px solid #1c1a1720;
+    border-radius: 12px;
+    padding: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    max-width: 100%;
+  }
+  .preview-card img {
+    max-height: 320px;
+    max-width: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    display: block;
+    border-radius: 6px;
+  }
+  @media (max-width: 47.99rem) {
+    .preview-card img {
+      max-height: 240px;
+    }
+  }
+  .preview-meta {
+    margin-top: 0.75rem;
+    font-size: 0.85rem;
+    color: #52627a;
+    word-break: break-word;
+  }
+  .config-panel {
+    background: #f8f6f3;
+    border: 1px solid #1c1a1720;
+    border-radius: 12px;
+    padding: 1.25rem;
+  }
+  .config-panel h3 {
+    margin: 0 0 1rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+  }
+  .split-controls {
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+  .config-panel button {
+    width: 100%;
+    margin: 0;
+  }
+  .custom-upload {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 2.5rem 2rem;
+    border: 2px dashed #1c1a1720;
+    border-radius: 16px;
+    background: #fff;
+    text-align: center;
+    cursor: pointer;
+    transition:
+      border-color 0.2s,
+      background 0.2s;
+    margin: 1.5rem 0;
+  }
+  .custom-upload.drag-over,
+  .custom-upload:focus-within {
+    border-color: #1c1a17;
+    background: #f8f6f3;
+  }
+  .custom-upload .upload-icon {
+    font-size: 2.5rem;
+    line-height: 1;
+  }
+  .custom-upload .upload-label {
+    font-size: 1.15rem;
+    font-weight: 600;
+    letter-spacing: -0.4px;
+    color: #1c1a17;
+  }
+  .custom-upload .upload-sub {
+    font-size: 0.9rem;
+    color: #52627a;
+  }
+  .custom-upload .upload-formats {
+    font-size: 0.78rem;
+    color: #8a8682;
+    letter-spacing: 0.02em;
+  }
+  .custom-upload .button {
+    margin: 0.25rem 0;
+  }
+  .replace-button {
+    font-size: 0.75rem;
+    padding: 0.35rem 0.7rem;
+    margin: 0.25rem 0 0;
+    border-radius: 999px;
+    background: #fff;
+    border: 1px solid #1c1a1720;
+  }
+  .download-card {
+    background: #fff;
+    border: 1px solid #1c1a1720;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    max-width: 480px;
+  }
+  .download-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+  .download-header h3 {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 600;
+    letter-spacing: -0.4px;
+  }
+  .download-icon {
+    font-size: 1.5rem;
+  }
+  .download-meta {
+    display: flex;
+    gap: 0.75rem;
+    align-items: baseline;
+    margin-bottom: 0.25rem;
+    font-size: 0.9rem;
+    color: #52627a;
+  }
+  .download-meta strong {
+    color: #1c1a17;
+    font-weight: 600;
+  }
+  .download-sub {
+    margin: 0.5rem 0 1rem;
+    font-size: 0.85rem;
+    color: #5c5a56;
+  }
+  .download-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.7rem 1.2rem;
+    border-radius: 999px;
+    text-decoration: none;
   }
   [role='status'] {
     color: #075e31;
