@@ -2578,6 +2578,21 @@ is selected the user supplies the relay URL and optional token; the transport re
 runtime CSP `connect-src` (§16.4). The UI must always show which path a request took, so there is never
 ambiguity about where an image went.
 
+For browser-blocked providers, the `/connect-ai/relay/setup` flow can install the bundled Worker
+directly into the user's Cloudflare account using OAuth Authorization Code + PKCE. No Cloudflare
+client secret or user API token is shipped to the browser. The build requires the public
+`PUBLIC_CLOUDFLARE_OAUTH_CLIENT_ID` value after the publisher registers and verifies the OAuth app;
+without it, setup remains visibly unavailable and manual relay setup still works. The OAuth scopes
+request account listing and Workers platform write access on the account the user approves. The
+Workers permission is account-wide; this flow only uses it to install and enable the relay Worker,
+and the consent page tells users that before authorization.
+The authorization token is held only for setup; the app requests revocation and discards its local
+copy afterward. The generated relay URL and
+relay token are stored in that browser's local storage so the user does not repeat setup after a
+reload; they can be removed by switching that AI tool back to Direct or clearing the site's data.
+Provider keys, prompts, and images are not stored by this setup flow. During an AI request, the
+user's own Cloudflare Worker and the selected provider receive the request as described in §15.3.
+
 ---
 
 ## 16. Key storage and security model

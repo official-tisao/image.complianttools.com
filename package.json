@@ -18,6 +18,7 @@
   },
   "scripts": {
     "dev": "turbo dev",
+    "preview": "pnpm --filter @complianttools/web preview",
     "build": "node scripts/prune-ocr-tessdata-cache.mjs && pnpm verify:attributions && tsx scripts/fetch-wasm.ts --verify && turbo build && pnpm verify:route-budgets && pnpm size",
     "test": "turbo test",
     "test:e2e": "playwright test",

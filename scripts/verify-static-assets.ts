@@ -118,6 +118,13 @@ const firstPartyControlFiles = new Set([
   'sw.js',
 ]);
 
+/** Generated from the first-party relay source as a build input, not a third-party shipped asset. */
+const firstPartyGeneratedAssets = new Set([
+  'relay-installer/index.js',
+  'relay-installer/index.js.map',
+  'relay-installer/README.md',
+]);
+
 export async function verifyStaticAssets(): Promise<void> {
   const register = JSON.parse(await readFile(registerPath, 'utf8')) as StaticAssetRecord[];
   const enginePackage = JSON.parse(
@@ -154,9 +161,13 @@ export async function verifyStaticAssets(): Promise<void> {
     rows.set(record.path, record);
   }
 
-  const files = (await walk(staticRoot)).filter(
-    (file) => !firstPartyControlFiles.has(path.basename(file)),
-  );
+  const files = (await walk(staticRoot)).filter((file) => {
+    const relativeToStatic = toPosix(path.relative(staticRoot, file));
+    return (
+      !firstPartyControlFiles.has(path.basename(file)) &&
+      !firstPartyGeneratedAssets.has(relativeToStatic)
+    );
+  });
   for (const absolute of files) {
     const relative = toPosix(path.relative(root, absolute));
     const record = rows.get(relative);

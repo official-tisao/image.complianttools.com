@@ -28,7 +28,7 @@
   import { onMount } from 'svelte';
   import type { AiCapability, ProviderAdapter } from '@complianttools/image-engine/ai/types';
   import type { RasterImage } from '@complianttools/image-engine/types';
-  import { setProviderRelay } from '@complianttools/image-engine/ai/connection';
+  import { getProviderRelay, setProviderRelay } from '@complianttools/image-engine/ai/connection';
   import ConnectEmptyState from './connect/ConnectEmptyState.svelte';
   import { AI_ONLY_STATE } from './connect/empty-states';
   import DescriptiveSkeleton from './ai/DescriptiveSkeleton.svelte';
@@ -59,9 +59,7 @@
     edit: 'edit',
     describe: 'describe',
   };
-  // eslint-disable-next-line svelte/no-unused-svelte-ignore
-  // svelte-ignore state_referenced_locally
-  const capability = CAPABILITY[kind];
+  const capability = $derived(CAPABILITY[kind]);
 
   const copy: Record<AiKind, { title: string; description: string; action: string }> = {
     generate: {
@@ -193,6 +191,11 @@
     return 'Direct — this request went straight to the provider.';
   }
 
+  function selectDirectConnection() {
+    connection = 'direct';
+    setProviderRelay(`ai-tool-${kind}`, undefined);
+  }
+
   /**
    * Turn an adapter result frame into a displayable URL.
    *
@@ -321,6 +324,7 @@
         credentials: { apiKey },
         baseUrl: baseUrl.trim(),
         relay: connection === 'relay' ? { relayUrl, token: relayToken } : undefined,
+        relaySetupHref: `/connect-ai/relay/setup?tool=${kind}&return=${encodeURIComponent(`/ai/${kind}`)}`,
         request: await buildRequest(choice.model?.id ?? ''),
       });
 
@@ -434,6 +438,12 @@
 
   onMount(() => {
     hydrated = true;
+    const savedRelay = getProviderRelay(`ai-tool-${kind}`);
+    if (savedRelay !== undefined) {
+      connection = 'relay';
+      relayUrl = savedRelay.relayUrl;
+      relayToken = savedRelay.token ?? '';
+    }
   });
 </script>
 
@@ -546,6 +556,7 @@
             name={`connection-${kind}`}
             data-testid="ai-connection-direct"
             bind:group={connection}
+            onchange={selectDirectConnection}
             value="direct"
           /> Direct (recommended)</label
         >
@@ -578,8 +589,9 @@
             /></label
           >
           <p class="hint">
-            Kept in memory for this page only — not saved, and cleared on reload. A relay must be
-            deployed by you, to your own account; we host none. See
+            Relay URL and token are saved in this browser after use so you do not need to set them
+            up again. Select Direct to remove them from this browser. A relay runs in your own
+            account; we host none. See
             <a href="/connect-ai">Connect an AI provider</a>.
           </p>
         {/if}

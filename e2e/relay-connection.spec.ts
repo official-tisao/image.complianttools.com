@@ -51,6 +51,142 @@ for (const capability of ['generate', 'edit', 'describe'] as const) {
   });
 }
 
+test('one-click relay setup is transparent and stays local until Cloudflare sign-in', async ({
+  page,
+}) => {
+  const externalRequests: string[] = [];
+  page.on('request', (request) => {
+    if (!isAppRequest(request.url())) externalRequests.push(request.url());
+  });
+
+  await page.goto('/connect-ai/relay/setup?tool=generate&return=%2Fai%2Fgenerate');
+  await expect(page.locator('html')).toHaveAttribute('data-hydrated', 'true', { timeout: 30_000 });
+  await expect(page.getByRole('heading', { name: 'Set up your private relay' })).toBeVisible();
+  await expect(page.getByTestId('relay-setup-privacy')).toContainText(
+    'CompliantTools does not receive your Cloudflare access token',
+  );
+  await expect(page.getByTestId('relay-setup-start')).toBeVisible();
+  if (process.env.PUBLIC_CLOUDFLARE_OAUTH_CLIENT_ID) {
+    await expect(page.getByTestId('relay-setup-start')).toBeEnabled();
+  } else {
+    await expect(page.getByTestId('relay-setup-start')).toBeDisabled();
+    await expect(page.getByTestId('relay-setup-unavailable')).toBeVisible();
+  }
+  await expect(page.getByTestId('relay-setup-progress')).toHaveCount(0);
+  expect(externalRequests).toEqual([]);
+
+  await page.screenshot({ path: 'test-results/relay-setup.png', fullPage: true });
+});
+
+test('one-click setup authorizes, installs, verifies, and saves a user-owned relay', async ({
+  page,
+}) => {
+  test.skip(
+    !process.env.PUBLIC_CLOUDFLARE_OAUTH_CLIENT_ID,
+    'requires a configured public OAuth client ID',
+  );
+  const appOrigin = 'http://127.0.0.1:4173';
+  let uploadedModule = '';
+  let deployedWorkerUrl = '';
+  await page.route('https://dash.cloudflare.com/oauth2/auth**', async (route) => {
+    const authorization = new URL(route.request().url());
+    expect(authorization.searchParams.get('client_id')).toBe(
+      process.env.PUBLIC_CLOUDFLARE_OAUTH_CLIENT_ID,
+    );
+    expect(authorization.searchParams.get('code_challenge_method')).toBe('S256');
+    expect(authorization.searchParams.get('scope')).toContain('workers-platform.write');
+    const callback = new URL(authorization.searchParams.get('redirect_uri')!);
+    callback.searchParams.set('code', 'mock-authorization-code');
+    callback.searchParams.set('state', authorization.searchParams.get('state')!);
+    await route.fulfill({ status: 302, headers: { location: callback.toString() } });
+  });
+
+  await page.route('https://dash.cloudflare.com/oauth2/token', async (route) => {
+    await route.fulfill({
+      json: { access_token: 'mock-cloudflare-token' },
+      headers: { 'access-control-allow-origin': appOrigin },
+    });
+  });
+  await page.route('https://dash.cloudflare.com/oauth2/revoke', async (route) => {
+    await route.fulfill({
+      json: { success: true },
+      headers: { 'access-control-allow-origin': appOrigin },
+    });
+  });
+  await page.route('https://api.cloudflare.com/**', async (route) => {
+    const request = route.request();
+    const corsHeaders = {
+      'access-control-allow-origin': appOrigin,
+      'access-control-allow-methods': 'GET, POST, PUT, OPTIONS',
+      'access-control-allow-headers': request.headers()['access-control-request-headers'] ?? '*',
+    };
+    if (request.method() === 'OPTIONS') {
+      await route.fulfill({ status: 204, headers: corsHeaders });
+    } else if (request.url().includes('/accounts?per_page=50')) {
+      await route.fulfill({
+        json: { success: true, result: [{ id: 'mock-account', name: 'My account' }] },
+        headers: corsHeaders,
+      });
+    } else if (request.url().endsWith('/workers/subdomain') && request.method() === 'GET') {
+      await route.fulfill({
+        json: { success: true, result: { subdomain: 'my-test-account' } },
+        headers: corsHeaders,
+      });
+    } else if (
+      /\/workers\/scripts\/ctimg-relay-[a-f0-9]+$/u.test(new URL(request.url()).pathname) &&
+      request.method() === 'PUT'
+    ) {
+      uploadedModule = request.postData() ?? '';
+      const workerName = new URL(request.url()).pathname.split('/').at(-1)!;
+      deployedWorkerUrl = `https://${workerName}.my-test-account.workers.dev`;
+      await route.fulfill({ json: { success: true, result: {} }, headers: corsHeaders });
+    } else if (
+      /\/workers\/scripts\/ctimg-relay-[a-f0-9]+\/subdomain$/u.test(new URL(request.url()).pathname)
+    ) {
+      await route.fulfill({
+        json: { success: true, result: { enabled: true } },
+        headers: corsHeaders,
+      });
+    } else {
+      await route.fulfill({
+        status: 500,
+        json: { success: false, errors: [{ message: 'Unexpected mock API call' }] },
+        headers: corsHeaders,
+      });
+    }
+  });
+  await page.route('https://*.workers.dev/**', async (route) => {
+    await route.fulfill({ status: 204, headers: { 'access-control-allow-origin': appOrigin } });
+  });
+
+  await page.goto('/connect-ai/relay/setup?tool=generate&return=%2Fai%2Fgenerate');
+  await expect(page.locator('html')).toHaveAttribute('data-hydrated', 'true', { timeout: 30_000 });
+  await expect(page.getByTestId('relay-setup-start')).toBeEnabled();
+  await page.getByTestId('relay-setup-start').click();
+  await expect(page).toHaveURL(/\/ai\/generate$/u, { timeout: 30_000 });
+  expect(uploadedModule).toContain('RELAY_TOKEN');
+  expect(uploadedModule).toContain('secret_text');
+  expect(uploadedModule).toContain(appOrigin);
+  expect(deployedWorkerUrl).toMatch(
+    /^https:\/\/ctimg-relay-[a-f0-9]+\.my-test-account\.workers\.dev$/u,
+  );
+  await expect(page.getByTestId('ai-connection-relay')).toBeChecked();
+  const saved = await page.evaluate(() => localStorage.getItem('ctimg:provider-relays:v1'));
+  expect(saved, 'the relay URL should be stored in browser local storage').toContain(
+    deployedWorkerUrl,
+  );
+  expect(saved).toMatch(/"token":"[a-f0-9]{64}"/u);
+  expect(saved).toContain('ai-tool-edit');
+  expect(saved).toContain('ai-tool-describe');
+  await page.getByTestId('ai-connection-direct').check();
+  const afterSwitchingToDirect = await page.evaluate(() =>
+    localStorage.getItem('ctimg:provider-relays:v1'),
+  );
+  expect(afterSwitchingToDirect).not.toContain('ai-tool-generate');
+  expect(afterSwitchingToDirect).toContain('ai-tool-edit');
+  expect(afterSwitchingToDirect).toContain('ai-tool-describe');
+});
+
 test('no consent or credentials still means no request, on either path', async ({ page }) => {
   const external: string[] = [];
   page.on('request', (request) => {

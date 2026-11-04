@@ -27,6 +27,7 @@ apps/web/static/tessdata/**
 !apps/web/static/tessdata/script/
 apps/web/static/tessdata/script/**
 !apps/web/static/tessdata/script/Cyrillic.traineddata
+apps/web/static/relay-installer/
 
 tmp-*.cjs
 .wrangler/

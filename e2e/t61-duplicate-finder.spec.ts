@@ -226,6 +226,7 @@ test('T61 compares images chosen separately and clears stale matches on removal'
   await page.getByTestId('t61-scan').click();
   await expect(page.getByTestId('t61-exact-group')).toContainText('first.png');
   await expect(page.getByTestId('t61-exact-group')).toContainText('second.png');
+  await expect(page.getByTestId('t61-complete')).toContainText('100%');
   await page.getByTestId('t61-remove').first().click();
   await expect(page.getByTestId('t61-exact-group')).toHaveCount(0);
   await expect(page.getByTestId('t61-scan')).toBeDisabled();
@@ -365,6 +366,8 @@ test('T61 supports keyboard operation and cancellation without uploading inputs'
   await page.getByTestId('t61-scan').focus();
   await page.keyboard.press('Enter');
   await expect(page.getByTestId('t61-status')).toBeVisible();
+  await expect(page.getByRole('progressbar', { name: 'Scanning locally…' })).toBeVisible();
+  await expect(page.getByTestId('t61-status')).toContainText('%');
   await page.getByTestId('t61-cancel').focus();
   await page.keyboard.press('Enter');
   await expect(page.getByTestId('t61-error')).toContainText('The scan was cancelled.');
