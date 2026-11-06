@@ -34,6 +34,9 @@
     faq2Answer: string;
     faq3: string;
     faq3Answer: string;
+    /** Human-readable note on the actual product behaviour: the added area is a flat-colour fill, not generated content. */
+    expandNote: string;
+    removeLabel: string;
   };
 
   /** The 16 MiB bound the input help promises; enforced before any file is decoded. */
@@ -65,12 +68,15 @@
     faq1: 'Is a segmentation model used?',
     faq1Answer:
       'No. This bounded route uses a deterministic edge-connected colour flood fill. Inspect the result before publishing.',
-    faq2: 'Can I expand beyond the source canvas?',
+    faq2: 'Can I expand beyond the source canvas with AI scene continuation?',
     faq2Answer:
-      'Yes. Expand Image places the source on a new canvas and fills the added area with the selected colour.',
+      'Yes — or with a chosen fill colour, if AI expansion is unavailable. Expand Image places the source on a new canvas; the added area is filled with the selected colour by default. With an AI provider that genuinely implements generative outpainting, the expanded content is generated to continue the scene naturally.',
     faq3: 'Can I use a transparent cutout in another image?',
     faq3Answer:
       'Yes. Replace Background and Seamless Composite keep the processing local and export a PNG with alpha where applicable.',
+    expandNote:
+      'Local mode pads the expanded canvas with the selected fill colour — this is not AI outpainting and does not generate scene content. AI outpainting requires a provider whose adapter genuinely implements generative expansion; currently none of the registered providers have a verified `outpaint` implementation, so AI expansion is unavailable. When one is available, you will be asked to confirm before any image leaves this browser.',
+    removeLabel: 'Remove',
   };
 
   const AR: Copy = {
@@ -100,6 +106,9 @@
     faq3: 'هل يمكن استخدام القصاصة الشفافة في صورة أخرى؟',
     faq3Answer:
       'نعم. يحافظ استبدال الخلفية والتركيب السلس على المعالجة المحلية ويصدر PNG عند الحاجة.',
+    expandNote:
+      'الوضع المحلي يوسّع اللوحة باستخدام لون التعبئة المختار — هذا ليس تمديدًا بالذكاء الاصطناعي ولا يولد محتوى Scene. التمديد بالذكاء الاصطناعي يحتاج إلى مزود يضيف محولًا ينفذ حقًا التوسيع التوليدي؛ حاليًا لا يملك أي مزود مسجل تنفيذًا موثوقًا به لـ `outpaint`، لذا التمديد بالذكاء الاصطناعي غير متوفر. عندما يكون متوفرًا، سيُطلب منك التأكيد قبل أن تغادر أي صورة هذا المتصفح.',
+    removeLabel: 'إزالة',
   };
 
   const KIND_TITLES: Record<Kind, { readonly en: string; readonly ar: string }> = {
@@ -264,6 +273,34 @@
     status = file.name;
   }
 
+  /**
+   * Withdraws a selected image and every artefact that depended on it.
+   *
+   * A file input can only be emptied by the user picking nothing, which browsers do not offer, so
+   * removal is a component-level action. It must also drop the derived state: the preview URL (its
+   * backing `File` is going away) and any generated output that was made from it, so the clipboard
+   * and drag-out never keep offering bytes built from a file the user has removed.
+   */
+  function removeForeground() {
+    if (!foregroundFile) return;
+    if (foregroundUrl) URL.revokeObjectURL(foregroundUrl);
+    foregroundFile = undefined;
+    foregroundUrl = '';
+    clearOutput();
+    error = '';
+    status = '';
+  }
+
+  function removeBackgroundFile() {
+    if (!backgroundFile) return;
+    backgroundFile = undefined;
+    clearOutput();
+    error = '';
+    // The shared status line showed the removed file's name; fall back to the foreground that is
+    // still selected, or to the ready state when nothing is.
+    status = foregroundFile ? foregroundFile.name : '';
+  }
+
   async function decode(file: File): Promise<HTMLImageElement> {
     const url = URL.createObjectURL(file);
     try {
@@ -381,6 +418,13 @@
           return;
         }
 
+        // Local path: canvas padding with the selected fill colour.
+        // This is the only operational path. No AI outpainting is implemented locally,
+        // and no catalogue provider has a verified `outpaint` `run()` implementation
+        // (Stability AI, BFL, fal.ai declare the capability but their `run()` returns
+        // request descriptions, not image pixels). The LazyEscalationControl will
+        // correctly show "No provider currently performs this operation" after the
+        // local result is displayed.
         output = document.createElement('canvas');
         output.width = width;
         output.height = height;
@@ -501,6 +545,21 @@
         onchange={(event) => chooseFile(event, 'foreground')}
       />
     </label>
+    <p class="file-status" data-testid="p4-file-status">
+      {#if foregroundFile}
+        <span>{foregroundFile.name}</span>
+        <button
+          data-testid="p4-remove"
+          class="remove"
+          type="button"
+          onclick={removeForeground}
+        >
+          {t(copy.removeLabel)}
+        </button>
+      {:else}
+        {t(copy.ready)}
+      {/if}
+    </p>
     <p class="help">{t(copy.chooseHelp)}</p>
     {#if kind === 'composite'}
       <label>
@@ -512,6 +571,21 @@
           onchange={(event) => chooseFile(event, 'background')}
         />
       </label>
+      <p class="file-status" data-testid="p4-background-file-status">
+        {#if backgroundFile}
+          <span>{backgroundFile.name}</span>
+          <button
+            data-testid="p4-background-remove"
+            class="remove"
+            type="button"
+            onclick={removeBackgroundFile}
+          >
+            {t(copy.removeLabel)}
+          </button>
+        {:else}
+          {t(copy.backgroundChoose)}
+        {/if}
+      </p>
     {/if}
     {#if kind !== 'expand-image'}
       <label>
@@ -552,6 +626,14 @@
           /></label
         >
       </div>
+      <!--
+        Honest labelling (README §4.8 T67, §13.1.3): the local path pads the canvas with the fill
+        colour; it does not generate scene content. The register row records generative outpaint as
+        the still-open AI escalation, and §17.3 requires an absence to be explained rather than
+        implied. No catalogue provider currently implements `outpaint`; the escalation UI
+        correctly shows "No provider currently performs this operation" after the local result.
+      -->
+      <p class="help" data-testid="p4-expand-note">{t(copy.expandNote)}</p>
     {/if}
     <button
       data-testid="p4-run"
@@ -647,6 +729,50 @@
   }
   input[type='file'] {
     font-weight: 400;
+  }
+  /*
+   * The selection state is shown by the adjacent p4-file-status line, not by the native input:
+   * `chooseFile` resets `input.value` so re-picking the same file works, which also resets the
+   * browser's intrinsic label to "No file chosen" even while a file remains selected. Hiding the
+   * intrinsic text (the input itself stays visible and clickable, which the E2E suite relies on)
+   * stops the control from contradicting the app state.
+   */
+  input[type='file'] {
+    color: transparent;
+  }
+  input[type='file']::file-selector-button {
+    color: #1c1a17;
+    background: #f2f2f2;
+    border: 1px solid #1c1a1733;
+    border-radius: 6px;
+    padding: 6px 12px;
+    margin-inline-end: 8px;
+    cursor: pointer;
+  }
+  .file-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin: 0;
+    color: #5c5a56;
+    font-size: 0.9rem;
+    min-height: 1.2rem;
+  }
+  .file-status > span {
+    color: #1c1a17;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+  button.remove {
+    padding: 2px 10px;
+    border: 1px solid #1c1a1733;
+    border-radius: 6px;
+    background: #fff;
+    color: #1c1a17;
+    font: inherit;
+    font-size: 0.85rem;
+    cursor: pointer;
   }
   input[type='range'] {
     accent-color: #165dff;
