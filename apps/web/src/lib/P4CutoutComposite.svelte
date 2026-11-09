@@ -37,8 +37,6 @@
     faq2Answer: string;
     faq3: string;
     faq3Answer: string;
-    /** Human-readable note on the actual product behaviour: the added area is a flat-colour fill, not generated content. */
-    expandNote: string;
     removeLabel: string;
   };
 
@@ -60,8 +58,6 @@
     toleranceHelp:
       'Pixels connected to the image edge and close to the top-left colour become transparent.',
     fill: 'Fill colour',
-    expandNote:
-      'Expand Image pads the canvas with a flat-colour fill; it does not generate new scene content.',
     remove: 'Remove selected image',
     width: 'Output width',
     height: 'Output height',
@@ -97,7 +93,6 @@
     tolerance: 'تسامح الخلفية',
     toleranceHelp: 'تصبح البكسلات المتصلة بحافة الصورة والقريبة من لون الزاوية العلوية شفافة.',
     fill: 'لون الملء',
-    expandNote: 'يوسّع توسيع الصورة اللوحة محليًا بملئها بلون ثابت؛ ولا ينشئ محتوى جديدًا للمشهد.',
     remove: 'إزالة الصورة المحددة',
     width: 'عرض الإخراج',
     height: 'ارتفاع الإخراج',
