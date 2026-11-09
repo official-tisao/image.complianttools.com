@@ -36,10 +36,8 @@ test.describe('collage multi-image selection', () => {
   test('file input is hidden from visible interface with custom button shown', async ({ page }) => {
     await page.goto('/collage');
     const input = page.getByTestId('expansion-input');
-    // The input uses a clipped 1px visually-hidden pattern so the custom button is the visible
-    // picker while the native input remains available for programmatic file selection. Playwright
-    // treats any non-zero bounding box as visible, even when `clip` removes every painted pixel.
-    await expect(input).toHaveCSS('clip', 'rect(0px, 0px, 0px, 0px)');
+    // Keep the native picker out of the visible layout; users interact with the accessible button.
+    await expect(input).toBeHidden();
     await expect(page.getByRole('button', { name: /Choose Images/i })).toBeVisible();
   });
 
