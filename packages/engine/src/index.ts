@@ -31,6 +31,8 @@ export * from './codecs/third-party/tiff.js';
 export * from './codecs/third-party/avif-decode.js';
 export * from './codecs/third-party/jxl-decode.js';
 export * from './codecs/platform/heic.js';
+export * from './codecs/platform/heic-wasm.js';
+export * from './codecs/platform/heic-libheif.js';
 export * from './codecs/platform/video.js';
 export * from './codecs/platform/animation-video.js';
 export * from './codecs/platform/mp4-track-dimensions.js';

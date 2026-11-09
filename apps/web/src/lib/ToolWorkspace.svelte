@@ -469,7 +469,7 @@
           </p>
         </div>{/if}
     </div>
-    <div class="options-panel" role="region" aria-labelledby="options-heading">
+    <aside class="options-panel" role="region" aria-labelledby="options-heading">
       <h2 id="options-heading">{translate(locale, 'workspace.options', 'Options')}</h2>
       <GeneratedControls
         descriptions={relevant}
@@ -480,11 +480,12 @@
           <strong>{translate(locale, 'error.process', 'Couldn’t process this image.')}</strong>
           {error}
         </p>{/if}
-    </div>
+    </aside>
   </section>
   <footer class="action-bar">
-    <div>
-      <strong data-testid="size-prediction">{summary}</strong><span
+    <div class="action-bar-meta">
+      <strong data-testid="size-prediction">{summary}</strong>
+      <span
         >{latency
           ? translate(locale, 'status.updated', 'Updated in {value} ms', Math.round(latency))
           : '\u00A0'}</span

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
+  import { SvelteMap } from 'svelte/reactivity';
   import {
     splitImage,
     createRaster,
@@ -85,17 +86,36 @@
   let columns = $state(2);
   let rows = $state(2);
   let gap = $state(8);
-  let sourceName = $state('image');
   let dragOver = $state(false);
+  // Track URLs per file to avoid leaks
+  const fileUrls = new SvelteMap<File, string>();
+  let previousFiles: File[] = [];
 
   function t(key: string, fallback: string, value?: string | number) {
     return translate(locale, key, fallback, value);
   }
   function onFiles(event: Event) {
-    files = [...((event.currentTarget as HTMLInputElement).files ?? [])];
-    sourceName = files[0]?.name.replace(/\.[^.]+$/u, '') ?? 'image';
+    const newFiles = [...((event.currentTarget as HTMLInputElement).files ?? [])];
+    // Revoke URLs for files that are no longer present
+    for (const file of previousFiles) {
+      const url = fileUrls.get(file);
+      if (url) {
+        URL.revokeObjectURL(url);
+        fileUrls.delete(file);
+      }
+    }
+    files = newFiles;
+    previousFiles = newFiles;
     status = files.length ? t('longTail.files', '{value} file(s) selected', files.length) : '';
     error = '';
+  }
+  function getPreviewUrl(file: File): string {
+    let url = fileUrls.get(file);
+    if (!url) {
+      url = URL.createObjectURL(file);
+      fileUrls.set(file, url);
+    }
+    return url;
   }
   function handleDragOver(e: DragEvent) {
     e.preventDefault();
@@ -134,12 +154,16 @@
       context.getImageData(0, 0, canvas.width, canvas.height).data,
     );
   }
-  async function publish(image: RasterImage, name: string) {
+  async function publish(file: File, image: RasterImage, name: string) {
     const bytes = await encodeRaster(image, 'png');
-    const url = URL.createObjectURL(new Blob([bytes], { type: 'image/png' }));
-    outputs = [...outputs, { name, url }];
+    let url = fileUrls.get(file);
+    if (!url) {
+      url = URL.createObjectURL(new Blob([bytes], { type: 'image/png' }));
+      fileUrls.set(file, url);
+    }
     if (outputUrl) URL.revokeObjectURL(outputUrl);
     outputUrl = url;
+    outputs = [...outputs, { name, url }];
   }
   function clearOutputs() {
     for (const result of outputs) URL.revokeObjectURL(result.url);
@@ -148,6 +172,11 @@
   }
   async function runTool() {
     clearOutputs();
+    // Revoke all file URLs before reprocessing
+    for (const url of fileUrls.values()) {
+      URL.revokeObjectURL(url);
+    }
+    fileUrls.clear();
     status = '';
     error = '';
     try {
@@ -160,7 +189,7 @@
           gap,
           background: '#ffffff',
         });
-        await publish(merged, 'collage.png');
+        await publish(files[0]!, merged, 'collage.png');
       } else if (kind === 'split-image') {
         const tiles = splitImage(decoded[0]!, {
           enabled: true,
@@ -171,7 +200,7 @@
         const tileEntries: [string, Uint8Array][] = [];
         for (const [index, tile] of tiles.entries()) {
           const bytes = await encodeRaster(tile, 'png');
-          const filename = `${sourceName}-tile-${index + 1}.png`;
+          const filename = `${files[0]?.name?.replace(/\.[^.]+$/u, '')}-tile-${index + 1}.png`;
           tileEntries.push([filename, new Uint8Array(bytes)]);
         }
         const zipBuffer = zipSync(Object.fromEntries(tileEntries), {
@@ -185,6 +214,10 @@
         zipStatus = 'ZIP ready';
       } else {
         for (const [index, image] of decoded.entries()) {
+          const file = files[index];
+          const fileBaseName = file.name.replace(/\.[^.]+$/u, '');
+          const fileSuffix = decoded.length > 1 ? `-${index + 1}` : '';
+          const fileName = `${fileBaseName}-${kind}${fileSuffix}.png`;
           const result =
             kind === 'bulk-resize'
               ? resizeRaster(
@@ -202,10 +235,7 @@
                 : kind === 'enlarge'
                   ? enlarge(image, { scale })
                   : roundCorners(image, { radius, background: 'transparent' });
-          await publish(
-            result,
-            `${sourceName}-${kind}${decoded.length > 1 ? `-${index + 1}` : ''}.png`,
-          );
+          await publish(file, result, fileName);
         }
       }
       status = t('longTail.ready', 'Created {value} output(s) locally', outputs.length);
@@ -214,6 +244,12 @@
     }
   }
   onDestroy(() => {
+    // Revoke all file URLs
+    for (const url of fileUrls.values()) {
+      URL.revokeObjectURL(url);
+    }
+    fileUrls.clear();
+    // Revoke main output and zip URLs
     if (outputUrl) URL.revokeObjectURL(outputUrl);
     if (zipUrl) URL.revokeObjectURL(zipUrl);
   });
@@ -226,9 +262,9 @@
   <meta property="og:title" content={copy.title} />
   <meta property="og:description" content={copy.description} />
   <meta property="og:image" content="https://image.complianttools.com/og/tools.svg" />
-  <svelte:element this={"script"} type="application/ld+json"
-    >{JSON.stringify(jsonLd)}</svelte:element
-  >
+  <svelte:element this={"script"} type="application/ld+json">
+    {JSON.stringify(jsonLd)}
+  </svelte:element>
 </svelte:head>
 
 <main
@@ -272,8 +308,10 @@
         onclick={(e: MouseEvent) => {
           e.stopPropagation();
           document.getElementById('file-input')?.click();
-        }}>Browse Files</button
+        }}
       >
+        Browse Files
+      </button>
       <span class="upload-formats">PNG, JPG, WEBP, AVIF</span>
       <input
         id="file-input"
@@ -282,20 +320,20 @@
         accept="image/*"
         multiple={kind === 'bulk-resize' || kind === 'collage'}
         onchange={onFiles}
-        style="position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none;"
+        style="position: absolute; opacity: 0; width: 0; height: 0;"
         aria-label="Choose an image file"
       />
     </div>
   {/if}
-  {#if files[0]}
+  {#each files as file (file.name)}
     <div class="workspace" data-testid="file-preview">
       <div class="preview-panel">
         <div class="preview-card">
-          <img src={URL.createObjectURL(files[0])} alt={files[0].name} />
+          <img src={getPreviewUrl(file)} alt={file.name} />
         </div>
         <div class="preview-meta">
-          <strong>{files[0].name}</strong>
-          <span>{files[0].type || 'image'} · {Math.round(files[0].size / 1024)} KB</span>
+          <strong>{file.name}</strong>
+          <span>{file.type || 'image'} · {Math.round(file.size / 1024)} KB</span>
           <button
             type="button"
             class="button secondary replace-button"
@@ -311,13 +349,13 @@
             <label>Columns <input type="number" min="1" max="16" bind:value={columns} /></label>
             <label>Rows <input type="number" min="1" max="16" bind:value={rows} /></label>
           </div>
-          <button data-testid="expansion-run" type="button" onclick={() => void runTool()}
-            >Split Image</button
-          >
+          <button data-testid="expansion-run" type="button" onclick={() => void runTool()}>
+            Split Image
+          </button>
         </aside>
       {/if}
     </div>
-  {/if}
+  {/each}
   {#if kind === 'bulk-resize' || kind === 'canvas-resize'}<div class="controls">
       <label>Width <input type="number" min="1" bind:value={width} /></label><label
         >Height <input type="number" min="1" bind:value={height} /></label
@@ -335,9 +373,9 @@
         >{:else}<label>Rows <input type="number" min="1" max="16" bind:value={rows} /></label>{/if}
     </div>{/if}
   {#if kind !== 'split-image'}
-    <button data-testid="expansion-run" type="button" onclick={() => void runTool()}
-      >Run locally</button
-    >
+    <button data-testid="expansion-run" type="button" onclick={() => void runTool()}>
+      Run locally
+    </button>
   {/if}
   {#if status}<p role="status" data-testid="expansion-status">{status}</p>{/if}
   {#if error}<p role="alert" data-testid="expansion-error">{error}</p>{/if}
