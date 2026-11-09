@@ -5,8 +5,7 @@
     decodeHeic,
     detectHeicMimeType,
     isHeicContainer,
-  } from '@complianttools/image-engine/codecs/platform/heic-wasm';
-  import { decodeHeicWithLibheifJs } from '@complianttools/image-engine/codecs/platform/heic-libheif';
+  } from '@complianttools/image-engine/codecs/platform/heic';
   import { engineErrorMessage, isEngineError } from '@complianttools/image-engine/errors';
   import type { RasterImage } from '@complianttools/image-engine/types';
   import { translate, type Locale } from './i18n';
@@ -45,9 +44,8 @@
 
   onDestroy(() => URL.revokeObjectURL(resultUrl));
 
-  /** Bounded promise helper: rejects after the deadline so long-running
-   * decoders (platform `ImageDecoder`, heic2any's libheif worker, animated
-   * canvases) cannot hold this UI in 'decoding'/'encoding' forever. */
+  /** Bounded promise helper so a stalled browser decoder cannot hold the UI
+   * in 'decoding'/'encoding' forever. */
   function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
     return Promise.race([
       promise,
@@ -263,19 +261,14 @@
         try {
           image = await withTimeout(decodeWithNativeImagePipeline(selectedBytes), decodeTimeoutMs);
         } catch {
-          // Fall back to the bundled libheif WASM decoder — works without any
-          // native browser HEIC support because it decodes entirely in WASM.
-          try {
-            image = await withTimeout(decodeHeicWithLibheifJs(selectedBytes), decodeTimeoutMs);
-          } catch {
-            // No available decoder — show useful error instead of hanging forever
-            throw new Error(
-              t(
-                'heic.noDecoder',
-                'No HEIC decoder available in this browser. Open the file on a device with HEIC support or export it as JPEG/PNG.',
-              ),
-            );
-          }
+          // Keep HEIC decoding to browser-native implementations. A third-party
+          // WASM decoder would reintroduce the excluded libheif dependency.
+          throw new Error(
+            t(
+              'heic.noDecoder',
+              'No HEIC decoder available in this browser. Open the file on a device with HEIC support or export it as JPEG/PNG.',
+            ),
+          );
         }
       }
       if (generation !== convertGeneration) return;

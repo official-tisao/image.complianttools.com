@@ -31,31 +31,3 @@ declare module '@resvg/resvg-wasm/index_bg.wasm?url' {
   const url: string;
   export default url;
 }
-
-declare module 'libheif-js/wasm-bundle.js' {
-  // libheif-js/wasm-bundle exports an Emscripten Module factory function.
-  // Calling it returns the initialized Module with HeifDecoder, etc.
-  interface HeifDecoder {
-    decode(input: Uint8Array): HeifImage[];
-    decoder: { delete(): void };
-  }
-
-  interface HeifImage {
-    get_width(): number;
-    get_height(): number;
-    display(
-      buffer: { data: Uint8ClampedArray; width: number; height: number },
-      callback: (result: unknown) => void,
-    ): void;
-    free(): void;
-  }
-
-  interface LibheifModule {
-    HeifDecoder: new () => HeifDecoder;
-    [key: string]: unknown;
-  }
-
-  // The module exports a factory function that creates the Module
-  const libheifFactory: () => Promise<LibheifModule>;
-  export default libheifFactory;
-}

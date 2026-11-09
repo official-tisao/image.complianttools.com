@@ -89,9 +89,8 @@ test('surfaces the named platform limitation when HEIC is unavailable', async ({
   });
   await page.getByTestId('heic-convert').click();
 
-  // Without a platform decoder the page falls back to the bundled libheif WASM decoder. These
-  // truncated fixture bytes are not a decodable HEIC/HEIF image, so the honest outcome is a
-  // decode failure carrying a remedy — not the old platform-unavailable notice.
+  // Without a platform decoder, these truncated bytes cannot reach a native decode path. The
+  // honest outcome is a typed unavailable/decode error with a remedy, never a fabricated result.
   await expect(page.getByRole('alert')).toContainText('Remedy:', { timeout: 60_000 });
 });
 
