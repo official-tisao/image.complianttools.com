@@ -542,11 +542,6 @@
     </p>
     <p class="help">{t(copy.chooseHelp)}</p>
     {#if kind === 'composite'}
-      <p class="file-status" data-testid="p4-background-file-status" role="status" aria-live="polite">
-        {backgroundFile?.name ?? t(copy.backgroundReady)}
-      </p>
-    {/if}
-    {#if kind === 'composite'}
       <label>
         <span>{t(copy.backgroundChoose)}</span>
         <input
