@@ -36,7 +36,10 @@ test.describe('collage multi-image selection', () => {
   test('file input is hidden from visible interface with custom button shown', async ({ page }) => {
     await page.goto('/collage');
     const input = page.getByTestId('expansion-input');
-    await expect(input).toBeHidden();
+    // The input uses a clipped 1px visually-hidden pattern so the custom button is the visible
+    // picker while the native input remains available for programmatic file selection. Playwright
+    // treats any non-zero bounding box as visible, even when `clip` removes every painted pixel.
+    await expect(input).toHaveCSS('clip', 'rect(0px, 0px, 0px, 0px)');
     await expect(page.getByRole('button', { name: /Choose Images/i })).toBeVisible();
   });
 
@@ -120,7 +123,7 @@ test.describe('collage multi-image selection', () => {
       { name: 'img-a.png', mimeType: 'image/png', buffer: file },
       { name: 'img-b.png', mimeType: 'image/png', buffer: file },
     ]);
-    await expect(page.getByTestId('expansion-run')).not.toHaveAttribute('data-disabled');
+    await expect(page.getByTestId('expansion-run')).toBeEnabled();
   });
 
   test('collage generation processes all selected images and produces a downloadable collage', async ({
