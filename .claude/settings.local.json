@@ -13,7 +13,21 @@
       "Read(//tmp/build_output)",
       "Bash(sed *)",
       "Bash(sed -i \"s/from '.\\\\/types.ts'/from '.\\\\/types.js'/g\" packages/engine/src/ops/layer/index.ts)",
-      "Bash(sed -i 's/isSupportedFontType ? isSupportedFontType\\(options\\) : false/isSupportedFontType ? isSupportedFontType\\(options.fontFamily\\) : false/' packages/engine/src/ops/text/text-render.ts)"
+      "Bash(sed -i 's/isSupportedFontType ? isSupportedFontType\\(options\\) : false/isSupportedFontType ? isSupportedFontType\\(options.fontFamily\\) : false/' packages/engine/src/ops/text/text-render.ts)",
+      "Bash(npm run *)",
+      "Bash(curl *)",
+      "Bash(node *)",
+      "Bash(pnpm --filter web test)",
+      "Bash(pnpm --filter web dev)",
+      "Bash(grep -v \"//\\\\|binding\\\\|data-testid\\\\|bind:value\\\\|type=\\\\\"text\\\\\"\\\\|localFonts\\\\=\")",
+      "Bash(pnpm build *)",
+      "Read(//codebase/**)",
+      "Bash(rg -n \"stroke-width|strokeWidth|Stroke Width\" --include=\"*.svelte\" apps/web/src)",
+      "Bash(rg *)",
+      "Bash(pnpm test:e2e *)",
+      "Bash(npx prettier *)",
+      "Bash(npx eslint *)",
+      "Bash(pnpm --filter @complianttools/image-engine build)"
     ]
   }
 }

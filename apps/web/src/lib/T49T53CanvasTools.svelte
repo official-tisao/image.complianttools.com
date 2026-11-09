@@ -18,6 +18,10 @@
     y: number;
     size: number;
     colour: string;
+    strokeColor?: string;
+    strokeWidth?: number;
+    fontFamily?: string;
+    textAlign?: 'left' | 'center' | 'right';
     opacity: number;
     stroke: boolean;
   };
@@ -28,6 +32,55 @@
   const PNG_SIGNATURE = [137, 80, 78, 71, 13, 10, 26, 10];
   const modes = ['text', 'watermark', 'meme', 'draw', 'signature'] as const;
   type DrawShape = 'brush' | 'line' | 'rectangle' | 'circle' | 'sticker';
+
+  // Font management
+  let localFonts = $state<string[]>([]);
+  let fontLoading = $state(false);
+
+  async function loadLocalFonts() {
+    if (fontLoading) return;
+    fontLoading = true;
+    try {
+      // Try modern browser queryLocalFonts API first
+      if (typeof window !== 'undefined' && 'queryLocalFonts' in window) {
+        try {
+          const fonts = await (
+            window as unknown as { queryLocalFonts: () => Promise<Array<{ family: string }>> }
+          ).queryLocalFonts();
+          localFonts = fonts.map((f: { family: string }) => f.family);
+        } catch {
+          localFonts = [
+            'Impact',
+            'Arial Black',
+            'Comic Sans MS',
+            'Montserrat',
+            'Roboto',
+            'Open Sans',
+            'sans-serif',
+          ];
+        }
+      } else {
+        localFonts = [
+          'Impact',
+          'Arial',
+          'Comic Sans MS',
+          'Montserrat',
+          'Roboto',
+          'Open Sans',
+          'sans-serif',
+        ];
+      }
+    } catch {
+      localFonts = ['Impact', 'Arial', 'Comic Sans MS', 'Montserrat', 'sans-serif'];
+    } finally {
+      fontLoading = false;
+    }
+  }
+
+  // Initialize on mount
+  onMount(() => {
+    loadLocalFonts();
+  });
 
   type Copy = {
     title: string;
@@ -54,6 +107,15 @@
     faq: string;
     faqAnswer: string;
     error: Record<ErrorKind, string>;
+    // New typography controls
+    fontFamily: string;
+    topAlignment: string;
+    bottomAlignment: string;
+    strokeColor: string;
+    strokeWidth: string;
+    left: string;
+    center: string;
+    right: string;
   };
 
   const EN: Record<ToolMode, Copy> = {
@@ -79,6 +141,14 @@
       shape: 'Shape',
       sticker: 'Sticker',
       brush: 'Brush width',
+      fontFamily: 'Font family',
+      topAlignment: 'Alignment',
+      bottomAlignment: 'Alignment',
+      strokeColor: 'Stroke',
+      left: 'Left',
+      center: 'Center',
+      right: 'Right',
+      strokeWidth: 'Stroke width',
       faq: 'About this tool',
       faqAnswer: 'Text is drawn locally into the exported PNG.',
       error: {
@@ -111,6 +181,14 @@
       shape: 'Shape',
       sticker: 'Sticker',
       brush: 'Brush width',
+      fontFamily: 'Font family',
+      topAlignment: 'Alignment',
+      bottomAlignment: 'Alignment',
+      strokeColor: 'Stroke',
+      left: 'Left',
+      center: 'Center',
+      right: 'Right',
+      strokeWidth: 'Stroke width',
       faq: 'About this tool',
       faqAnswer: 'Watermark pixels are rendered locally with the selected opacity.',
       error: {
@@ -143,6 +221,14 @@
       shape: 'Shape',
       sticker: 'Sticker',
       brush: 'Brush width',
+      fontFamily: 'Font family',
+      topAlignment: 'Alignment',
+      bottomAlignment: 'Alignment',
+      strokeColor: 'Stroke',
+      left: 'Left',
+      center: 'Center',
+      right: 'Right',
+      strokeWidth: 'Stroke width',
       faq: 'About this tool',
       faqAnswer: 'Caption text is drawn locally with an outline for contrast.',
       error: {
@@ -175,6 +261,14 @@
       shape: 'Shape',
       sticker: 'Sticker',
       brush: 'Brush width',
+      fontFamily: 'Font family',
+      topAlignment: 'Alignment',
+      bottomAlignment: 'Alignment',
+      strokeColor: 'Stroke',
+      left: 'Left',
+      center: 'Center',
+      right: 'Right',
+      strokeWidth: 'Stroke width',
       faq: 'About this tool',
       faqAnswer: 'Pointer marks are rendered locally into the downloaded PNG.',
       error: {
@@ -207,6 +301,14 @@
       shape: 'Shape',
       sticker: 'Sticker',
       brush: 'Brush width',
+      fontFamily: 'Font family',
+      topAlignment: 'Alignment',
+      bottomAlignment: 'Alignment',
+      strokeColor: 'Stroke',
+      left: 'Left',
+      center: 'Center',
+      right: 'Right',
+      strokeWidth: 'Stroke width',
       faq: 'About this tool',
       faqAnswer: 'The signature is drawn locally and exported as a PNG.',
       error: {
@@ -243,6 +345,11 @@
   let strokes = $state<Stroke[]>([]);
   let activeStroke = $state<Stroke>();
   let drawing = $state(false);
+  let fontFamily = $state('Impact');
+  let topAlignment = $state<'left' | 'center' | 'right'>('center');
+  let bottomAlignment = $state<'left' | 'center' | 'right'>('center');
+  let strokeColor = $state('#000');
+  let strokeWidth = $state(Math.max(2, 48 / 8));
 
   const pseudo = (value: string) =>
     `⟦${value.replace(/[aeiou]/giu, (vowel) => ({ a: 'á', e: 'ë', i: 'ï', o: 'ô', u: 'ü' })[vowel.toLowerCase()] ?? vowel)}⟧`;
@@ -336,7 +443,7 @@
     }
   }
 
-  function render() {
+  async function render() {
     if (!canvas || !dimensions) return;
     const context = canvas.getContext('2d');
     if (!context) {
@@ -354,15 +461,34 @@
     for (const layer of textLayers) {
       context.save();
       context.globalAlpha = layer.opacity;
-      context.font = `700 ${layer.size}px sans-serif`;
+      context.font = `bold ${layer.size}px "${layer.fontFamily ?? 'sans-serif'}"`;
       context.textBaseline = 'top';
-      if (layer.stroke) {
-        context.lineWidth = Math.max(2, layer.size / 10);
-        context.strokeStyle = '#000';
-        context.strokeText(layer.text, layer.x, layer.y);
+      context.lineJoin = 'round';
+      context.miterLimit = 2;
+      context.lineWidth =
+        layer.strokeWidth !== undefined ? layer.strokeWidth : Math.max(2, layer.size / 8);
+
+      // Isolate coordinate offsets strictly by alignment state —
+      // one alignment per layer, no compounding loops or duplicate draws.
+      let xPos: number;
+      if (layer.textAlign === 'left') {
+        context.textAlign = 'left';
+        xPos = 32;
+      } else if (layer.textAlign === 'right') {
+        context.textAlign = 'right';
+        xPos = canvas!.width - 32;
+      } else {
+        context.textAlign = 'center';
+        xPos = canvas!.width / 2;
       }
+
       context.fillStyle = layer.colour;
-      context.fillText(layer.text, layer.x, layer.y);
+      context.strokeStyle = layer.strokeColor ?? '#000';
+
+      if (layer.stroke && layer.strokeWidth !== 0) {
+        context.strokeText(layer.text, xPos, layer.y);
+      }
+      context.fillText(layer.text, xPos, layer.y);
       context.restore();
     }
     for (const stroke of [...strokes, ...(activeStroke ? [activeStroke] : [])])
@@ -473,32 +599,38 @@
         },
       ];
     if (mode === 'meme') {
+      // Replace meme layers entirely rather than appending — prevents ghosting
+      // when the user re-applies captions with new fonts, alignments, or text.
+      const memeLayers: TextLayer[] = [];
       if (topText.trim())
-        textLayers = [
-          ...textLayers,
-          {
-            text: topText.trim(),
-            x: canvas!.width / 2,
-            y: 12,
-            size: textSize,
-            colour: '#fff',
-            opacity: 1,
-            stroke: true,
-          },
-        ];
+        memeLayers.push({
+          text: topText.trim(),
+          x: canvas!.width / 2,
+          y: 12,
+          size: textSize,
+          colour,
+          strokeColor,
+          strokeWidth: strokeWidth,
+          fontFamily,
+          textAlign: topAlignment,
+          opacity: 1,
+          stroke: true,
+        });
       if (bottomText.trim())
-        textLayers = [
-          ...textLayers,
-          {
-            text: bottomText.trim(),
-            x: canvas!.width / 2,
-            y: Math.max(12, canvas!.height - textSize - 12),
-            size: textSize,
-            colour: '#fff',
-            opacity: 1,
-            stroke: true,
-          },
-        ];
+        memeLayers.push({
+          text: bottomText.trim(),
+          x: canvas!.width / 2,
+          y: Math.max(12, canvas!.height - textSize - 12),
+          size: textSize,
+          colour,
+          strokeColor,
+          strokeWidth: strokeWidth,
+          fontFamily,
+          textAlign: bottomAlignment,
+          opacity: 1,
+          stroke: true,
+        });
+      textLayers = memeLayers;
     }
     render();
     notice = '';
@@ -631,27 +763,97 @@
           type="button"
           onclick={addLayer}>{localized(copy.add)}</button
         >{/if}
-      {#if mode === 'meme'}<label
-          >{localized(copy.top)}<input
-            data-testid="t51-top"
-            type="text"
-            bind:value={topText}
-          /></label
-        ><label
-          >{localized(copy.bottom)}<input
-            data-testid="t51-bottom"
-            type="text"
-            bind:value={bottomText}
-          /></label
-        ><label
-          >{localized(copy.size)}<input
-            data-testid="t51-size"
-            type="number"
-            min="8"
-            max="240"
-            bind:value={textSize}
-          /></label
-        ><button class="button" data-testid="t51-add" type="button" onclick={addLayer}
+      {#if mode === 'meme'}
+        <div class="caption-section">
+          <h2 class="section-heading">Top Caption</h2>
+          <label
+            >{localized(copy.top)}<input
+              data-testid="t51-top"
+              type="text"
+              bind:value={topText}
+            /></label
+          >
+          <label
+            >{localized(copy.topAlignment)}<select
+              data-testid="t51-top-align"
+              bind:value={topAlignment}
+              ><option value="left">{localized(copy.left)}</option><option value="center"
+                >{localized(copy.center)}</option
+              ><option value="right">{localized(copy.right)}</option></select
+            ></label
+          >
+        </div>
+
+        <div class="caption-section">
+          <h2 class="section-heading">Bottom Caption</h2>
+          <label
+            >{localized(copy.bottom)}<input
+              data-testid="t51-bottom"
+              type="text"
+              bind:value={bottomText}
+            /></label
+          >
+          <label
+            >{localized(copy.bottomAlignment)}<select
+              data-testid="t51-bottom-align"
+              bind:value={bottomAlignment}
+              ><option value="left">{localized(copy.left)}</option><option value="center"
+                >{localized(copy.center)}</option
+              ><option value="right">{localized(copy.right)}</option></select
+            ></label
+          >
+        </div>
+
+        <div class="caption-section">
+          <h2 class="section-heading">Shared Typography Settings</h2>
+          <label
+            >{localized(copy.fontFamily)}<select data-testid="t51-font" bind:value={fontFamily}
+              >{#each localFonts as font (font)}<option value={font}>{font}</option>{/each}
+              {#if localFonts.length === 0}
+                <option value="Impact">Impact</option>
+                <option value="Arial">Arial</option>
+                <option value="Comic Sans MS">Comic Sans MS</option>
+                <option value="Montserrat">Montserrat</option>
+                <option value="sans-serif">sans-serif</option>
+              {/if}
+            </select></label
+          >
+          <label
+            >{localized(copy.size)}<input
+              data-testid="t51-size"
+              type="number"
+              min="8"
+              max="240"
+              bind:value={textSize}
+            /></label
+          >
+          <label
+            >{localized(copy.colour)}<input
+              data-testid="t51-colour"
+              type="color"
+              bind:value={colour}
+            /></label
+          >
+          <label
+            >{localized(copy.strokeColor)}<input
+              data-testid="t51-stroke"
+              type="color"
+              bind:value={strokeColor}
+            /></label
+          >
+          <label
+            >Stroke Width (px)<input
+              data-testid="t51-stroke-width"
+              type="number"
+              min="0"
+              max="10"
+              step="0.5"
+              bind:value={strokeWidth}
+            /></label
+          >
+        </div>
+
+        <button class="button" data-testid="t51-add" type="button" onclick={addLayer}
           >{localized(copy.add)}</button
         >{/if}
       {#if mode === 'draw' || mode === 'signature'}<label
@@ -747,6 +949,35 @@
     border-radius: 12px;
     background: #fff;
   }
+
+  /* Typography control stacking */
+  .workspace label {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 0 14px 12px 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #17243a;
+    vertical-align: top;
+  }
+  .workspace label input,
+  .workspace label select {
+    min-height: 34px;
+    padding: 6px 10px;
+    border: 1px solid #9fb0c3;
+    border-radius: 6px;
+    background: #fff;
+    font: inherit;
+  }
+  .workspace label input[type='color'] {
+    padding: 2px;
+    height: 34px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+
   .button {
     min-height: 42px;
     padding: 8px 14px;
@@ -800,6 +1031,21 @@
     gap: 10px;
     flex-wrap: wrap;
     margin-top: 18px;
+  }
+
+  .caption-section {
+    border: 1px solid #d6dbe3;
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    background: #f8fafc;
+  }
+  .section-heading {
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin: 0 0 10px 0;
+    color: #174ea6;
+    letter-spacing: 0.02em;
   }
   .faq {
     max-width: 800px;
