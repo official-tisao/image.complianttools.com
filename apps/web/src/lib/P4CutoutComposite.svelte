@@ -75,7 +75,7 @@
     faq3Answer:
       'Yes. Replace Background and Seamless Composite keep the processing local and export a PNG with alpha where applicable.',
     expandNote:
-      'Local mode pads the expanded canvas with the selected fill colour — this is not AI outpainting and does not generate scene content. AI outpainting requires a provider whose adapter genuinely implements generative expansion; currently none of the registered providers have a verified `outpaint` implementation, so AI expansion is unavailable. When one is available, you will be asked to confirm before any image leaves this browser.',
+      'Local mode pads the expanded canvas with a selected flat-colour fill — this is not AI outpainting and does not generate scene content. AI outpainting requires a provider whose adapter genuinely implements generative expansion; currently none of the registered providers have a verified `outpaint` implementation, so AI expansion is unavailable. When one is available, you will be asked to confirm before any image leaves this browser.',
     removeLabel: 'Remove',
   };
 
@@ -288,7 +288,7 @@
     foregroundUrl = '';
     clearOutput();
     error = '';
-    status = '';
+    status = copy.choose;
   }
 
   function removeBackgroundFile() {
@@ -557,7 +557,7 @@
           {t(copy.removeLabel)}
         </button>
       {:else}
-        {t(copy.ready)}
+        {status ? t(status) : t(copy.ready)}
       {/if}
     </p>
     <p class="help">{t(copy.chooseHelp)}</p>

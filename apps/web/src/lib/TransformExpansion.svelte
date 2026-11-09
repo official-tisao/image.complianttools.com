@@ -293,7 +293,8 @@
     data-testid="expansion-run"
     type="button"
     onclick={() => void runTool()}
-    data-disabled={kind === 'collage' && files.length < 2}>Run locally</button
+    disabled={kind === 'collage' && files.length < 2}
+    data-disabled={kind === 'collage' && files.length < 2 ? 'true' : undefined}>Run locally</button
   >
   {#if status}<p role="status" data-testid="expansion-status">{status}</p>{/if}
   {#if error}<p role="alert" data-testid="expansion-error">{error}</p>{/if}
@@ -411,14 +412,7 @@
   }
 
   .file-input {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border: 0;
+    display: none;
   }
 
   .file-input-button {
