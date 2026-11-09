@@ -116,11 +116,9 @@ test('rejects AVIF bytes renamed as HEIC before invoking a platform decoder', as
     buffer: Buffer.from([0, 0, 0, 16, 0x66, 0x74, 0x79, 0x70, 0x61, 0x76, 0x69, 0x66, 0, 0, 0, 0]),
   });
   await expect(page.getByRole('alert')).toContainText('not a valid HEIC or HEIF');
-  await page.getByTestId('heic-convert').click();
-  // The invalid file never enables conversion and the decoder is still never constructed.
-  await expect(page.getByTestId('heic-convert')).toBeEnabled();
-  await expect(page.getByTestId('heic-convert')).click();
-  await expect(page.getByRole('alert')).toContainText('Remedy:', { timeout: 60_000 });
+  // Invalid container bytes are rejected during file selection, before conversion is enabled.
+  await expect(page.getByTestId('heic-convert')).toBeDisabled();
+  await expect(page.getByTestId('heic-download')).toHaveCount(0);
 });
 
 test('uses the native browser image pipeline when WebCodecs ImageDecoder is unavailable', async ({

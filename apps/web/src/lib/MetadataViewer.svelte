@@ -281,7 +281,7 @@
         {#if fileName}
           <div class="exif-file-selected">
             <span class="exif-file-icon">📷</span>
-            <span class="exif-file-name">{fileName}</span>
+            <h2 class="exif-file-name">{fileName}</h2>
           </div>
         {/if}
       </div>
@@ -304,15 +304,24 @@
     <section class="exif-metadata-section">
       <div class="exif-card">
         <h2 class="exif-section-title">{t('viewer.metadata', 'Metadata Fields')}</h2>
-        <div class="exif-metadata-grid">
-          {#each tags as tag (`${tag.namespace}:${tag.name}:${tag.value}`)}
-            <div class="exif-metadata-row">
-              <span class="exif-metadata-namespace">{tag.namespace}</span>
-              <span class="exif-metadata-field">{tag.name}</span>
-              <span class="exif-metadata-value">{tag.value}</span>
-            </div>
-          {/each}
-        </div>
+        <table class="exif-metadata-grid">
+          <thead>
+            <tr>
+              <th scope="col">{t('viewer.namespace', 'Namespace')}</th>
+              <th scope="col">{t('viewer.field', 'Field')}</th>
+              <th scope="col">{t('viewer.value', 'Value')}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {#each tags as tag (`${tag.namespace}:${tag.name}:${tag.value}`)}
+              <tr class="exif-metadata-row">
+                <td class="exif-metadata-namespace">{tag.namespace}</td>
+                <td class="exif-metadata-field">{tag.name}</td>
+                <td class="exif-metadata-value">{tag.value}</td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
       </div>
     </section>
   {/if}
@@ -416,7 +425,22 @@
   }
 
   .exif-dropzone input[type='file'] {
-    display: none;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .exif-dropzone label:focus-within {
+    outline: 2px solid var(--c-accent);
+    outline-offset: 3px;
+    border-radius: var(--r-md);
   }
 
   .exif-dropzone:hover {
@@ -446,6 +470,9 @@
   }
 
   .exif-file-name {
+    margin: 0;
+    font-size: var(--fs-sm);
+    font-weight: 600;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -507,19 +534,45 @@
   }
 
   .exif-metadata-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: var(--sp-3);
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 var(--sp-3);
+  }
+
+  .exif-metadata-grid th {
+    padding: 0 var(--sp-4) var(--sp-1);
+    color: var(--c-text-subtle);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    text-align: start;
   }
 
   .exif-metadata-row {
-    padding: var(--sp-3) var(--sp-4);
     background: var(--c-bg);
-    border: 1px solid var(--c-border);
-    border-radius: var(--r-md);
-    display: flex;
-    flex-direction: column;
-    gap: var(--sp-1);
+  }
+
+  .exif-metadata-row td {
+    padding: var(--sp-3) var(--sp-4);
+    border-block: 1px solid var(--c-border);
+    vertical-align: top;
+  }
+
+  .exif-metadata-row td:first-child {
+    width: 20%;
+    border-inline-start: 1px solid var(--c-border);
+    border-start-start-radius: var(--r-md);
+    border-end-start-radius: var(--r-md);
+  }
+
+  .exif-metadata-row td:nth-child(2) {
+    width: 25%;
+  }
+
+  .exif-metadata-row td:last-child {
+    width: 55%;
+    border-inline-end: 1px solid var(--c-border);
+    border-start-end-radius: var(--r-md);
+    border-end-end-radius: var(--r-md);
   }
 
   .exif-metadata-namespace {
@@ -596,17 +649,6 @@
     .exif-dropzone {
       padding: var(--sp-4);
       min-height: 140px;
-    }
-
-    .exif-metadata-grid {
-      grid-template-columns: 1fr;
-    }
-
-    .exif-metadata-row {
-      flex-direction: row;
-      flex-wrap: wrap;
-      align-items: baseline;
-      justify-content: space-between;
     }
 
     .exif-metadata-namespace,

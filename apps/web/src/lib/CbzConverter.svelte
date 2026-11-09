@@ -252,27 +252,6 @@
         </p>
       </div>
 
-      <!-- Operation Selection -->
-      <div class="operation-section">
-        <div class="control-group">
-          <label for="operation-select" class="control-label"
-            >{t('cbz.operationLabel', 'Operation')}</label
-          >
-          <select
-            id="operation-select"
-            class="operation-select"
-            value={options.operation}
-            onchange={(event) =>
-              setControl('cbz.operation', (event.currentTarget as HTMLSelectElement).value)}
-            disabled={files.length === 0}
-          >
-            <option value="create">Images to CBZ</option>
-            <option value="extract">CBZ/ZIP to image files</option>
-            <option value="pdf">CBZ/ZIP to PDF</option>
-          </select>
-        </div>
-      </div>
-
       <!-- File Selection Area -->
       <div class="file-section">
         <div class="upload-area">
@@ -283,8 +262,7 @@
             ondragleave={handleDragLeave}
             ondrop={handleFileSelect}
             aria-label={t('cbz.drop', 'Drop comic page images here')}
-            role="button"
-            tabindex="0"
+            role="group"
           >
             <span class="upload-icon" aria-hidden="true">📁</span>
             <span class="upload-heading">{t('cbz.chooseImages', 'Choose comic page images')}</span>
@@ -335,6 +313,7 @@
           onclick={() => void generate()}
           disabled={files.length === 0}
           class:disabled={files.length === 0}
+          data-testid="cbz-generate"
         >
           {t('cbz.generate', 'Generate Output')}
         </button>
@@ -344,20 +323,21 @@
             class="secondary-button"
             onclick={downloadOutput}
             class:disabled={!output}
+            data-testid="cbz-download"
           >
             {t('cbz.download', 'Download')}
             {outputName}
           </button>
-          {#if extractedPages.length}
-            <button
-              type="button"
-              class="tertiary-button"
-              onclick={downloadPages}
-              class:disabled={extractedPages.length === 0}
-            >
-              {t('cbz.downloadPages', 'Download extracted pages')}
-            </button>
-          {/if}
+        {/if}
+        {#if extractedPages.length}
+          <button
+            type="button"
+            class="tertiary-button"
+            onclick={downloadPages}
+            data-testid="cbz-download-pages"
+          >
+            {t('cbz.downloadPages', 'Download extracted pages')}
+          </button>
         {/if}
       </div>
 
@@ -559,37 +539,6 @@
     margin: 0;
   }
 
-  .operation-section {
-    margin-bottom: 24px;
-  }
-
-  .control-group {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-  }
-
-  .control-label {
-    font-weight: 600;
-    margin-bottom: 4px;
-    color: #1c1a17;
-  }
-
-  .operation-select {
-    width: 100%;
-    padding: 12px 16px;
-    border: 1px solid var(--c-border, #e2e2e7);
-    border-radius: var(--r-md, 5px);
-    background: var(--c-surface, #fff);
-    font-size: 1rem;
-    transition: border-color var(--dur-fast, 140ms) ease;
-  }
-
-  .operation-select:focus-visible {
-    outline: 2px solid var(--c-accent, #1c1a17);
-    outline-offset: 2px;
-  }
-
   .file-section {
     margin-bottom: 24px;
   }
@@ -609,11 +558,6 @@
       background var(--dur-fast, 140ms) ease;
   }
 
-  .upload-area.drag-over {
-    border-color: var(--c-accent, #1c1a17);
-    background: var(--c-accent-subtle, rgba(28, 26, 23, 0.06));
-  }
-
   .upload-button {
     display: flex;
     flex-direction: column;
@@ -630,7 +574,7 @@
       background var(--dur-fast, 140ms) ease;
   }
 
-  .upload-area.drag-over .upload-button {
+  .upload-button.drag-over {
     border-color: var(--c-accent, #1c1a17);
     background: var(--c-accent-subtle, rgba(28, 26, 23, 0.06));
   }
@@ -649,11 +593,6 @@
     color: var(--c-text-muted, #5c5a56);
     font-size: 0.9rem;
     margin: 0;
-  }
-
-  .browse-chip {
-    margin-top: 8px;
-    pointer-events: none;
   }
 
   .browse-button {
@@ -902,11 +841,6 @@
       padding: 16px;
     }
 
-    .operation-select {
-      padding: 8px 12px;
-      font-size: 0.9rem;
-    }
-
     .upload-area {
       padding: 16px;
     }
@@ -976,11 +910,6 @@
 
     .card {
       padding: 12px;
-    }
-
-    .operation-select {
-      padding: 8px 12px;
-      font-size: 0.9rem;
     }
 
     .upload-area {
