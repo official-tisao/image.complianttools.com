@@ -288,7 +288,7 @@
     foregroundUrl = '';
     clearOutput();
     error = '';
-    status = copy.choose;
+    status = '';
   }
 
   function removeBackgroundFile() {
@@ -557,7 +557,7 @@
           {t(copy.removeLabel)}
         </button>
       {:else}
-        {status ? t(status) : t(copy.ready)}
+        {t(copy.ready)}
       {/if}
     </p>
     <p class="help">{t(copy.chooseHelp)}</p>
