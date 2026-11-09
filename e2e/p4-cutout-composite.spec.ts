@@ -130,3 +130,97 @@ test('localized cutout routes keep direction and canonical metadata', async ({ p
   await expect(page.locator('main')).toHaveAttribute('lang', 'en-XA');
   await expect(page.getByRole('heading', { level: 1 })).toContainText('⟦');
 });
+
+test('selecting a foreground image displays its filename next to the input', async ({ page }) => {
+  await page.goto('/composite');
+  await page.getByTestId('p4-file-input').setInputFiles({
+    name: 'foreground.png',
+    mimeType: 'image/png',
+    buffer: await fixture(page, [255, 255, 255]),
+  });
+  await expect(page.getByTestId('p4-file-status')).toContainText('foreground.png');
+});
+
+test('selecting a background image displays its filename next to the input', async ({ page }) => {
+  await page.goto('/composite');
+  await page.getByTestId('p4-background-input').setInputFiles({
+    name: 'background.png',
+    mimeType: 'image/png',
+    buffer: await fixture(page, [20, 30, 40]),
+  });
+  await page.getByTestId('p4-background-file-status').waitFor({ state: 'visible', timeout: 10000 });
+  await expect(page.getByTestId('p4-background-file-status')).toContainText('background.png');
+});
+
+test('selecting both images displays their filenames independently', async ({ page }) => {
+  await page.goto('/composite');
+  await page.getByTestId('p4-file-input').setInputFiles({
+    name: 'foreground.png',
+    mimeType: 'image/png',
+    buffer: await fixture(page, [255, 255, 255]),
+  });
+  await page.getByTestId('p4-background-input').setInputFiles({
+    name: 'background.png',
+    mimeType: 'image/png',
+    buffer: await fixture(page, [20, 30, 40]),
+  });
+  await expect(page.getByTestId('p4-file-status')).toContainText('foreground.png');
+  await expect(page.getByTestId('p4-background-file-status')).toContainText('background.png');
+});
+
+test('selecting a replacement image updates the displayed filename', async ({ page }) => {
+  await page.goto('/composite');
+  await page.getByTestId('p4-file-input').setInputFiles({
+    name: 'first.png',
+    mimeType: 'image/png',
+    buffer: await fixture(page, [255, 255, 255]),
+  });
+  await expect(page.getByTestId('p4-file-status')).toContainText('first.png');
+  await page.getByTestId('p4-file-input').setInputFiles({
+    name: 'second.png',
+    mimeType: 'image/png',
+    buffer: await fixture(page, [20, 30, 40]),
+  });
+  await expect(page.getByTestId('p4-file-status')).toContainText('second.png');
+  await expect(page.getByTestId('p4-file-status')).not.toContainText('first.png');
+});
+
+test('invalid file selection does not update the displayed filename', async ({ page }) => {
+  await page.goto('/composite');
+  await page.getByTestId('p4-file-input').setInputFiles({
+    name: 'not-an-image.txt',
+    mimeType: 'text/plain',
+    buffer: Buffer.from('definitely not an image'),
+  });
+  await expect(page.getByTestId('p4-error')).toContainText('Choose a PNG, JPEG, or WebP image.');
+  await expect(page.getByTestId('p4-file-status')).not.toContainText('not-an-image.txt');
+  await expect(page.getByTestId('p4-file-status')).toContainText('Choose an image to begin.');
+});
+
+test('clearing a foreground selection resets the displayed filename', async ({ page }) => {
+  await page.goto('/composite');
+  await page.getByTestId('p4-file-input').setInputFiles({
+    name: 'foreground.png',
+    mimeType: 'image/png',
+    buffer: await fixture(page, [255, 255, 255]),
+  });
+  await expect(page.getByTestId('p4-file-status')).toContainText('foreground.png');
+  await page.getByTestId('p4-remove').click();
+  await expect(page.getByTestId('p4-file-status')).not.toContainText('foreground.png');
+  await expect(page.getByTestId('p4-file-status')).toContainText('Choose a foreground image');
+});
+
+test('clearing a background selection resets the displayed filename', async ({ page }) => {
+  await page.goto('/composite');
+  await page.getByTestId('p4-background-input').setInputFiles({
+    name: 'background.png',
+    mimeType: 'image/png',
+    buffer: await fixture(page, [20, 30, 40]),
+  });
+  await expect(page.getByTestId('p4-background-file-status')).toContainText('background.png');
+  await page.getByTestId('p4-background-remove').click();
+  await expect(page.getByTestId('p4-background-file-status')).not.toContainText('background.png');
+  await expect(page.getByTestId('p4-background-file-status')).toContainText(
+    'Choose a background image',
+  );
+});

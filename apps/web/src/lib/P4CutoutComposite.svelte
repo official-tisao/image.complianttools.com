@@ -736,11 +736,15 @@
    * browser's intrinsic label to "No file chosen" even while a file remains selected. Hiding the
    * intrinsic text (the input itself stays visible and clickable, which the E2E suite relies on)
    * stops the control from contradicting the app state.
+   *
+   * `font-size: 0` is more reliable than `color: transparent` for hiding the native file input's
+   * "No file chosen" text across browsers, while keeping the ::file-selector-button readable.
    */
   input[type='file'] {
-    color: transparent;
+    font-size: 0;
   }
   input[type='file']::file-selector-button {
+    font-size: 0.9rem;
     color: #1c1a17;
     background: #f2f2f2;
     border: 1px solid #1c1a1733;
