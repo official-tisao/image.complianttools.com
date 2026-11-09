@@ -37,7 +37,6 @@
     faq2Answer: string;
     faq3: string;
     faq3Answer: string;
-    removeLabel: string;
   };
 
   /** The 16 MiB bound the input help promises; enforced before any file is decoded. */
@@ -78,8 +77,7 @@
     faq3Answer:
       'Yes. Replace Background and Seamless Composite keep the processing local and export a PNG with alpha where applicable.',
     expandNote:
-      'Local mode pads the expanded canvas with the selected fill colour — this is not AI outpainting and does not generate scene content. AI outpainting requires a provider whose adapter genuinely implements generative expansion; currently none of the registered providers have a verified `outpaint` implementation, so AI expansion is unavailable. When one is available, you will be asked to confirm before any image leaves this browser.',
-    removeLabel: 'Remove',
+      'Local mode pads the expanded canvas with a flat-colour fill of your selected colour — this is not AI outpainting and does not generate scene content. AI outpainting requires a provider whose adapter genuinely implements generative expansion; currently none of the registered providers have a verified `outpaint` implementation, so AI expansion is unavailable. When one is available, you will be asked to confirm before any image leaves this browser.',
   };
 
   const AR: Copy = {
@@ -113,7 +111,6 @@
       'نعم. يحافظ استبدال الخلفية والتركيب السلس على المعالجة المحلية ويصدر PNG عند الحاجة.',
     expandNote:
       'الوضع المحلي يوسّع اللوحة باستخدام لون التعبئة المختار — هذا ليس تمديدًا بالذكاء الاصطناعي ولا يولد محتوى Scene. التمديد بالذكاء الاصطناعي يحتاج إلى مزود يضيف محولًا ينفذ حقًا التوسيع التوليدي؛ حاليًا لا يملك أي مزود مسجل تنفيذًا موثوقًا به لـ `outpaint`، لذا التمديد بالذكاء الاصطناعي غير متوفر. عندما يكون متوفرًا، سيُطلب منك التأكيد قبل أن تغادر أي صورة هذا المتصفح.',
-    removeLabel: 'إزالة',
   };
 
   const KIND_TITLES: Record<Kind, { readonly en: string; readonly ar: string }> = {
@@ -294,34 +291,6 @@
     status = '';
     error = '';
     clearOutput();
-  }
-
-  /**
-   * Withdraws a selected image and every artefact that depended on it.
-   *
-   * A file input can only be emptied by the user picking nothing, which browsers do not offer, so
-   * removal is a component-level action. It must also drop the derived state: the preview URL (its
-   * backing `File` is going away) and any generated output that was made from it, so the clipboard
-   * and drag-out never keep offering bytes built from a file the user has removed.
-   */
-  function removeForeground() {
-    if (!foregroundFile) return;
-    if (foregroundUrl) URL.revokeObjectURL(foregroundUrl);
-    foregroundFile = undefined;
-    foregroundUrl = '';
-    clearOutput();
-    error = '';
-    status = '';
-  }
-
-  function removeBackgroundFile() {
-    if (!backgroundFile) return;
-    backgroundFile = undefined;
-    clearOutput();
-    error = '';
-    // The shared status line showed the removed file's name; fall back to the foreground that is
-    // still selected, or to the ready state when nothing is.
-    status = foregroundFile ? foregroundFile.name : '';
   }
 
   async function decode(file: File): Promise<HTMLImageElement> {
@@ -568,32 +537,14 @@
         onchange={(event) => chooseFile(event, 'foreground')}
       />
     </label>
-    <p class="file-status" data-testid="p4-file-status">
-      {#if foregroundFile}
-        <span>{foregroundFile.name}</span>
-        <button
-          data-testid="p4-remove"
-          class="remove"
-          type="button"
-          onclick={removeForeground}
-        >
-          {t(copy.removeLabel)}
-        </button>
-      {:else}
-        {t(copy.ready)}
-      {/if}
-    </p>
-    <p class="help">{t(copy.chooseHelp)}</p>
-    <p data-testid="p4-file-status" role="status" aria-live="polite">
+    <p class="file-status" data-testid="p4-file-status" role="status" aria-live="polite">
       {foregroundFile?.name ?? t(copy.ready)}
     </p>
+    <p class="help">{t(copy.chooseHelp)}</p>
     {#if kind === 'composite'}
-      <p data-testid="p4-background-file-status" role="status" aria-live="polite">
+      <p class="file-status" data-testid="p4-background-file-status" role="status" aria-live="polite">
         {backgroundFile?.name ?? t(copy.backgroundReady)}
       </p>
-    {/if}
-    {#if kind === 'expand-image'}
-      <p class="help" data-testid="p4-expand-note">{t(copy.expandNote)}</p>
     {/if}
     {#if kind === 'composite'}
       <label>
@@ -605,21 +556,6 @@
           onchange={(event) => chooseFile(event, 'background')}
         />
       </label>
-      <p class="file-status" data-testid="p4-background-file-status">
-        {#if backgroundFile}
-          <span>{backgroundFile.name}</span>
-          <button
-            data-testid="p4-background-remove"
-            class="remove"
-            type="button"
-            onclick={removeBackgroundFile}
-          >
-            {t(copy.removeLabel)}
-          </button>
-        {:else}
-          {t(copy.backgroundChoose)}
-        {/if}
-      </p>
     {/if}
     {#if kind !== 'expand-image'}
       <label>
@@ -806,21 +742,6 @@
     color: #5c5a56;
     font-size: 0.9rem;
     min-height: 1.2rem;
-  }
-  .file-status > span {
-    color: #1c1a17;
-    font-weight: 600;
-    overflow-wrap: anywhere;
-  }
-  button.remove {
-    padding: 2px 10px;
-    border: 1px solid #1c1a1733;
-    border-radius: 6px;
-    background: #fff;
-    color: #1c1a17;
-    font: inherit;
-    font-size: 0.85rem;
-    cursor: pointer;
   }
   input[type='range'] {
     accent-color: #165dff;
