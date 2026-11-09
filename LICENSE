@@ -1,0 +1,162 @@
+# TISAO INTERNAL AND COMMERCIAL USE LICENSE
+**Version 1.0 — November 2026**
+
+Copyright (c) 2026 TISAO Technologies LLC. All rights reserved.
+
+## 1. DEFINITIONS
+
+For purposes of this License:
+
+**"Licensor"** means TISAO Technologies LLC, the copyright holder and owner of the Software.
+
+**"Software"** means the source code, executable code, documentation, modifications, updates, and related materials provided under this License.
+
+**"Licensee"** means any individual, company, organization, or other legal entity exercising rights granted under this License.
+
+**"Internal Use"** means using the Software within the Licensee's own operations, systems, infrastructure, or business processes without distributing, sublicensing, reselling, or commercially providing the Software itself to third parties.
+
+**"Commercial Distribution"** means selling, licensing, sublicensing, renting, leasing, transferring, publishing, or otherwise providing copies of the Software or its modified versions to third parties as a product, component, or service offering.
+
+**"Hosted Software Service"** means providing third parties with paid or unpaid hosted access to the Software's core functionality as a standalone or substantially equivalent software product, including through SaaS, managed services, or APIs.
+
+## 2. GRANT OF LICENSE
+
+Subject to compliance with this License, the Licensor grants the Licensee a non-exclusive, worldwide, royalty-free, non-transferable, and revocable-upon-breach license to:
+
+a. Download, install, execute, and use the Software for personal, educational, academic, research, and non-commercial purposes.
+
+b. Use the Software for internal commercial and business operations, including operations that directly or indirectly generate revenue.
+
+c. Modify, customize, adapt, and create derivative works of the Software solely for personal or Internal Use.
+
+d. Deploy the Software on infrastructure owned, leased, or lawfully controlled by the Licensee, including private servers, cloud environments, and internal enterprise systems.
+
+e. Permit employees and contractors acting on behalf of the Licensee to access and use the Software for authorized Internal Use, provided such persons are bound by obligations consistent with this License.
+
+No license fees or royalties are required for the uses expressly permitted under this Section.
+
+## 3. PERMITTED COMMERCIAL ACTIVITIES
+
+The Licensee may use the Software in connection with commercial activities, including:
+
+a. Operating internal business applications and enterprise systems.
+
+b. Processing business transactions, financial records, customer information, and other operational data.
+
+c. Supporting commercial applications, products, or services where the Software functions as an internal component and is not itself distributed or provided as a Hosted Software Service.
+
+d. Developing internal tools, automation systems, and operational infrastructure that contribute to the Licensee's revenue-generating activities.
+
+e. Using modified versions of the Software internally, provided all other terms of this License are satisfied.
+
+Generating revenue through activities supported by the Software does not, by itself, constitute prohibited Commercial Distribution.
+
+## 4. RESTRICTIONS
+
+Except with the Licensor's prior express written authorization, the Licensee shall not:
+
+a. Sell, resell, license, sublicense, rent, lease, or otherwise commercially distribute the Software or any modified version.
+
+b. Redistribute, publish, share, or transfer copies of the Software, whether for payment or without charge, except for access by authorized employees or contractors under Section 2.
+
+c. Incorporate the Software into another software product that is distributed to third parties, whether commercially or free of charge.
+
+d. Offer the Software or its core functionality as a Hosted Software Service to external customers.
+
+e. Operate a competing software product or service derived substantially from the Software's source code.
+
+f. Remove, alter, conceal, or misrepresent copyright notices, license notices, or ownership information.
+
+g. Represent themselves as the original author, copyright owner, or authorized commercial distributor of the Software.
+
+h. Transfer or sublicense the rights granted by this License to another organization, subsidiary, affiliate, or third party without written authorization, except as expressly permitted under Section 2.
+
+The restrictions in this Section apply equally to modified, adapted, or derivative versions of the Software.
+
+## 5. OWNERSHIP AND INTELLECTUAL PROPERTY
+
+The Software remains the intellectual property of TISAO Technologies LLC and its applicable licensors.
+
+All copyrights and other intellectual property rights in the original Software are reserved.
+
+Modifications independently created by the Licensee may remain owned by their respective creators, subject to the Licensor's underlying intellectual property rights and the restrictions of this License.
+
+Creating a modification or derivative work does not grant the Licensee any right to distribute or commercially license the original Software or any derivative work incorporating protected portions of it.
+
+No ownership rights are transferred under this License.
+
+## 6. EXCLUSIVE DISTRIBUTION AND COMMERCIAL LICENSING RIGHTS
+
+TISAO Technologies LLC retains the exclusive authority, subject to applicable law and third-party rights, to authorize distribution, sublicensing, resale, and commercial licensing of the Software.
+
+The Licensor may independently offer the Software under commercial, enterprise, OEM, SaaS, distribution, or other licensing arrangements.
+
+Any Licensee wishing to commercially distribute, resell, embed, sublicense, or provide the Software as a Hosted Software Service must first obtain a separate written agreement from TISAO Technologies LLC.
+
+Permission granted under a separate written agreement shall apply only to the scope expressly authorized in that agreement.
+
+## 7. THIRD-PARTY COMPONENTS
+
+This License applies only to the Software components for which the Licensor has authority to grant rights.
+
+Third-party dependencies, libraries, frameworks, and other materials remain governed by their respective licenses.
+
+Nothing in this License restricts rights independently granted to the Licensee under applicable third-party or open-source licenses.
+
+## 8. NO TRADEMARK LICENSE
+
+This License does not grant permission to use the Licensor's names, trademarks, service marks, logos, or branding to advertise, endorse, or promote products or services without prior written authorization.
+
+Required attribution and factual identification of the Software's origin are permitted.
+
+## 9. DISCLAIMER OF WARRANTIES
+
+THE SOFTWARE IS PROVIDED "AS IS" AND "AS AVAILABLE", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT, OR FITNESS FOR A PARTICULAR PURPOSE.
+
+THE LICENSOR DOES NOT WARRANT THAT THE SOFTWARE WILL BE UNINTERRUPTED, ERROR-FREE, SECURE, OR SUITABLE FOR ANY PARTICULAR PURPOSE.
+
+USE OF THE SOFTWARE IS AT THE LICENSEE'S OWN RISK.
+
+## 10. LIMITATION OF LIABILITY
+
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, THE LICENSOR SHALL NOT BE LIABLE FOR INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, EXEMPLARY, OR PUNITIVE DAMAGES, INCLUDING LOSS OF PROFITS, DATA, BUSINESS OPPORTUNITIES, OR INTERRUPTION OF OPERATIONS, ARISING OUT OF THE USE OF OR INABILITY TO USE THE SOFTWARE.
+
+THE LICENSOR'S TOTAL AGGREGATE LIABILITY ARISING FROM THIS LICENSE SHALL NOT EXCEED THE AMOUNT PAID BY THE LICENSEE TO THE LICENSOR UNDER THIS LICENSE DURING THE TWELVE MONTHS PRECEDING THE CLAIM.
+
+NOTHING IN THIS LICENSE EXCLUDES LIABILITY THAT CANNOT LAWFULLY BE EXCLUDED.
+
+## 11. TERMINATION
+
+This License automatically terminates if the Licensee materially violates its terms and fails to remedy the violation within thirty (30) days after receiving written notice from the Licensor.
+
+Upon termination, the Licensee must cease all use of the Software and delete or destroy copies under its control, except where retention is required by applicable law.
+
+Termination does not affect rights or remedies accrued before the termination date.
+
+Sections concerning ownership, intellectual property, warranty disclaimers, limitation of liability, and restrictions on unauthorized distribution survive termination.
+
+## 12. SEVERABILITY
+
+If any provision of this License is held invalid or unenforceable, the remaining provisions shall continue in full force and effect to the extent permitted by applicable law.
+
+## 13. ENTIRE AGREEMENT
+
+This License constitutes the entire agreement governing the rights granted herein, unless superseded by a separate written agreement executed by the Licensor and Licensee.
+
+No waiver or modification shall be effective unless made in writing by an authorized representative of the Licensor.
+
+## 14. COMMERCIAL LICENSING AND AUTHORIZATION
+
+For permissions beyond those expressly granted by this License, including commercial distribution, resale, sublicensing, OEM integration, or hosted software commercialization, contact:
+
+**TISAO Technologies LLC**
+
+Website: https://tisaotechnologies.com
+
+Any additional permission must be expressly granted in writing by an authorized representative of TISAO Technologies LLC.
+
+---
+
+**END OF LICENSE**
+
+SPDX-License-Identifier: LicenseRef-TISAO-Internal-Commercial-1.0
