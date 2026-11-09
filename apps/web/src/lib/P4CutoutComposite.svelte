@@ -20,6 +20,7 @@
     tolerance: string;
     toleranceHelp: string;
     fill: string;
+    /** Human-readable note that local expansion fills added pixels instead of generating content. */
     expandNote: string;
     remove: string;
     width: string;
@@ -37,8 +38,6 @@
     faq2Answer: string;
     faq3: string;
     faq3Answer: string;
-    /** Human-readable note on the actual product behaviour: the added area is a flat-colour fill, not generated content. */
-    expandNote: string;
     removeLabel: string;
   };
 
@@ -789,7 +788,7 @@
   }
   input[type='file']::file-selector-button {
     font-size: 0.9rem;
-   */
+  }
   input[type='file'] {
     color: transparent;
   }
