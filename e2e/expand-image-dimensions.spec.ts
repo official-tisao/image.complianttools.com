@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { LOCAL_ORIGIN } from './support/network';
 
 /**
  * Regression tests for /expand-image dimension handling.
@@ -230,5 +231,141 @@ test.describe('expand-image dimensions', () => {
       }));
     expect(beforeDimsAfter.naturalWidth).toBe(8);
     expect(beforeDimsAfter.naturalHeight).toBe(8);
+  });
+
+  test('source pixels survive verbatim at their centred coordinates', async ({ page }) => {
+    // The dimension fix is a canvas re-composition, so the one thing it must never do is alter the
+    // source content. A non-uniform fixture with an exact corner marker makes any resample or
+    // re-encode drift visible at the pixel level.
+    await page.goto('/expand-image');
+    await page.getByTestId('p4-file-input').setInputFiles({
+      name: 'source.png',
+      mimeType: 'image/png',
+      buffer: await fixture(page, 10, 6, [200, 30, 90]),
+    });
+    await page.getByTestId('p4-width').fill('18');
+    await page.getByTestId('p4-height').fill('14');
+    await page.getByTestId('p4-run').click();
+    await expect(page.getByTestId('p4-preview')).toBeVisible();
+
+    const sampled = await page.getByTestId('p4-preview').evaluate(async (el) => {
+      const image = el as HTMLImageElement;
+      const canvas = document.createElement('canvas');
+      canvas.width = image.naturalWidth;
+      canvas.height = image.naturalHeight;
+      const context = canvas.getContext('2d');
+      if (!context) throw new Error('Canvas 2D context unavailable');
+      context.drawImage(image, 0, 0);
+      const left = Math.round((18 - 10) / 2); // 4
+      const top = Math.round((14 - 6) / 2); // 4
+      const at = (x: number, y: number) => Array.from(context.getImageData(x, y, 1, 1).data);
+      return {
+        centre: at(left + 5, top + 3), // interior of the pasted source
+        corner: at(left + 10 - 1, top + 6 - 1), // the red 4x4 corner marker's far pixel
+      };
+    });
+    expect(sampled.centre).toEqual([200, 30, 90, 255]);
+    expect(sampled.corner).toEqual([220, 40, 40, 255]);
+  });
+
+  test('expanded region is the chosen flat fill, not generated scene content', async ({ page }) => {
+    // Honest labelling (README §4.8 T67 / §13.1.3): the local path is canvas padding. The added
+    // area must equal the selected fill colour exactly — a test that asserted "plausible texture"
+    // here would be asserting a capability the route does not have.
+    await page.goto('/expand-image');
+    await page.getByTestId('p4-fill').fill('#3a6fd8');
+    await page.getByTestId('p4-file-input').setInputFiles({
+      name: 'source.png',
+      mimeType: 'image/png',
+      buffer: await fixture(page, 10, 6, [200, 30, 90]),
+    });
+    await page.getByTestId('p4-width').fill('18');
+    await page.getByTestId('p4-height').fill('14');
+    await page.getByTestId('p4-run').click();
+    await expect(page.getByTestId('p4-preview')).toBeVisible();
+
+    const fills = await page.getByTestId('p4-preview').evaluate(async (el) => {
+      const image = el as HTMLImageElement;
+      const canvas = document.createElement('canvas');
+      canvas.width = image.naturalWidth;
+      canvas.height = image.naturalHeight;
+      const context = canvas.getContext('2d');
+      if (!context) throw new Error('Canvas 2D context unavailable');
+      context.drawImage(image, 0, 0);
+      const left = Math.round((18 - 10) / 2); // 4
+      const top = Math.round((14 - 6) / 2); // 4
+      const at = (x: number, y: number) => Array.from(context.getImageData(x, y, 1, 1).data);
+      return {
+        border: at(0, 0), // corner of the expanded area
+        besideSource: at(left - 1, top + 3), // immediately outside the pasted source
+      };
+    });
+    expect(fills.border).toEqual([58, 111, 216, 255]);
+    expect(fills.besideSource).toEqual([58, 111, 216, 255]);
+  });
+
+  test('downloaded bytes match the After preview exactly', async ({ page }) => {
+    // §8.5 / STCC 8: the preview must be faithful to the export, byte for byte.
+    await page.goto('/expand-image');
+    await page.getByTestId('p4-file-input').setInputFiles({
+      name: 'source.png',
+      mimeType: 'image/png',
+      buffer: await fixture(page, 8, 8, [255, 255, 255]),
+    });
+    await page.getByTestId('p4-width').fill('16');
+    await page.getByTestId('p4-height').fill('12');
+    await page.getByTestId('p4-run').click();
+    await expect(page.getByTestId('p4-preview')).toBeVisible();
+
+    const href = await page.getByTestId('p4-download').getAttribute('href');
+    expect(href).toBeTruthy();
+    const previewSrc = await page.getByTestId('p4-preview').getAttribute('src');
+    // The preview <img> and the download <a> point at the same blob: one object URL for the one
+    // result, not two encodes that could drift.
+    expect(href).toBe(previewSrc);
+
+    const downloadName = await page.getByTestId('p4-download').getAttribute('download');
+    expect(downloadName).toBe('source-expand-image.png');
+
+    const blob = await page.evaluate(async (url) => {
+      const response = await fetch(url);
+      return Array.from(new Uint8Array(await response.arrayBuffer()));
+    }, href!);
+    // A real PNG: signature, IHDR at the fixed offset, and the requested 16x12 dimensions in it.
+    expect(blob.slice(0, 8)).toEqual([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+    expect(blob.slice(16, 20)).toEqual([0, 0, 0, 16]);
+    expect(blob.slice(20, 24)).toEqual([0, 0, 0, 12]);
+  });
+
+  test('a local run issues zero provider requests even after the escalation control renders', async ({
+    page,
+  }) => {
+    // P12 / §13.2 (2): escalation is never automatic. The control appears with the local result and
+    // T67 has no implemented provider, so the whole flow must stay off the network. `LOCAL_ORIGIN`
+    // is read before the listener, because the listener itself is installed before `goto` and the
+    // app's own navigation would otherwise be the first "off-origin" entry.
+    const providerRequests: string[] = [];
+    const offOrigin: string[] = [];
+    page.on('request', (request) => {
+      const url = new URL(request.url());
+      if (url.origin !== LOCAL_ORIGIN) offOrigin.push(request.url());
+      if (/api\.(openai|stability|replicate)\.com|api\.bfl\.ai|fal\.run/u.test(url.hostname))
+        providerRequests.push(request.url());
+    });
+
+    await page.goto('/expand-image');
+    await page.getByTestId('p4-file-input').setInputFiles({
+      name: 'source.png',
+      mimeType: 'image/png',
+      buffer: await fixture(page, 8, 8, [255, 255, 255]),
+    });
+    await page.getByTestId('p4-run').click();
+    await expect(page.getByTestId('p4-preview')).toBeVisible();
+
+    // The escalation offer renders (with the explained absence) but must never act on its own.
+    await expect(page.getByTestId('escalation-unavailable')).toContainText(/no provider/i);
+    await expect(page.getByTestId('escalation-request-count')).toHaveText('0');
+    expect(providerRequests).toEqual([]);
+    expect(offOrigin).toEqual([]);
   });
 });

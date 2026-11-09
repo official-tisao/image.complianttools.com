@@ -57,8 +57,6 @@
     toleranceHelp:
       'Pixels connected to the image edge and close to the top-left colour become transparent.',
     fill: 'Fill colour',
-    expandNote:
-      'Expand Image pads the canvas with a flat-colour fill; it does not generate new scene content.',
     remove: 'Remove selected image',
     width: 'Output width',
     height: 'Output height',
@@ -72,12 +70,14 @@
     faq1: 'Is a segmentation model used?',
     faq1Answer:
       'No. This bounded route uses a deterministic edge-connected colour flood fill. Inspect the result before publishing.',
-    faq2: 'Can I expand beyond the source canvas?',
+    faq2: 'Can I expand beyond the source canvas with AI scene continuation?',
     faq2Answer:
-      'Yes. Expand Image places the source on a new canvas and fills the added area with the selected colour.',
+      'Yes — or with a chosen fill colour, if AI expansion is unavailable. Expand Image places the source on a new canvas; the added area is filled with the selected colour by default. With an AI provider that genuinely implements generative outpainting, the expanded content is generated to continue the scene naturally.',
     faq3: 'Can I use a transparent cutout in another image?',
     faq3Answer:
       'Yes. Replace Background and Seamless Composite keep the processing local and export a PNG with alpha where applicable.',
+    expandNote:
+      'Local mode pads the expanded canvas with a flat-colour fill of your selected colour — this is not AI outpainting and does not generate scene content. AI outpainting requires a provider whose adapter genuinely implements generative expansion; currently none of the registered providers have a verified `outpaint` implementation, so AI expansion is unavailable. When one is available, you will be asked to confirm before any image leaves this browser.',
   };
 
   const AR: Copy = {
@@ -91,7 +91,6 @@
     tolerance: 'تسامح الخلفية',
     toleranceHelp: 'تصبح البكسلات المتصلة بحافة الصورة والقريبة من لون الزاوية العلوية شفافة.',
     fill: 'لون الملء',
-    expandNote: 'يوسّع توسيع الصورة اللوحة محليًا بملئها بلون ثابت؛ ولا ينشئ محتوى جديدًا للمشهد.',
     remove: 'إزالة الصورة المحددة',
     width: 'عرض الإخراج',
     height: 'ارتفاع الإخراج',
@@ -110,6 +109,8 @@
     faq3: 'هل يمكن استخدام القصاصة الشفافة في صورة أخرى؟',
     faq3Answer:
       'نعم. يحافظ استبدال الخلفية والتركيب السلس على المعالجة المحلية ويصدر PNG عند الحاجة.',
+    expandNote:
+      'الوضع المحلي يوسّع اللوحة باستخدام لون التعبئة المختار — هذا ليس تمديدًا بالذكاء الاصطناعي ولا يولد محتوى Scene. التمديد بالذكاء الاصطناعي يحتاج إلى مزود يضيف محولًا ينفذ حقًا التوسيع التوليدي؛ حاليًا لا يملك أي مزود مسجل تنفيذًا موثوقًا به لـ `outpaint`، لذا التمديد بالذكاء الاصطناعي غير متوفر. عندما يكون متوفرًا، سيُطلب منك التأكيد قبل أن تغادر أي صورة هذا المتصفح.',
   };
 
   const KIND_TITLES: Record<Kind, { readonly en: string; readonly ar: string }> = {
@@ -409,6 +410,13 @@
           return;
         }
 
+        // Local path: canvas padding with the selected fill colour.
+        // This is the only operational path. No AI outpainting is implemented locally,
+        // and no catalogue provider has a verified `outpaint` `run()` implementation
+        // (Stability AI, BFL, fal.ai declare the capability but their `run()` returns
+        // request descriptions, not image pixels). The LazyEscalationControl will
+        // correctly show "No provider currently performs this operation" after the
+        // local result is displayed.
         output = document.createElement('canvas');
         output.width = width;
         output.height = height;
@@ -529,6 +537,9 @@
         onchange={(event) => chooseFile(event, 'foreground')}
       />
     </label>
+    <p class="file-status" data-testid="p4-file-status" role="status" aria-live="polite">
+      {foregroundFile?.name ?? t(copy.ready)}
+    </p>
     <p class="help">{t(copy.chooseHelp)}</p>
     <p data-testid="p4-file-status" role="status" aria-live="polite">
       {foregroundFile?.name ?? t(copy.ready)}
@@ -542,6 +553,11 @@
       <p class="help" data-testid="p4-expand-note">{t(copy.expandNote)}</p>
     {/if}
     {#if kind === 'composite'}
+      <p class="file-status" data-testid="p4-background-file-status" role="status" aria-live="polite">
+        {backgroundFile?.name ?? t(copy.backgroundReady)}
+      </p>
+    {/if}
+    {#if kind === 'composite'}
       <label>
         <span>{t(copy.backgroundChoose)}</span>
         <input
@@ -551,6 +567,9 @@
           onchange={(event) => chooseFile(event, 'background')}
         />
       </label>
+      <p class="file-status" data-testid="p4-background-file-status" role="status" aria-live="polite">
+        {backgroundFile?.name ?? t(copy.backgroundReady)}
+      </p>
     {/if}
     {#if kind !== 'expand-image'}
       <label>
@@ -591,6 +610,14 @@
           /></label
         >
       </div>
+      <!--
+        Honest labelling (README §4.8 T67, §13.1.3): the local path pads the canvas with the fill
+        colour; it does not generate scene content. The register row records generative outpaint as
+        the still-open AI escalation, and §17.3 requires an absence to be explained rather than
+        implied. No catalogue provider currently implements `outpaint`; the escalation UI
+        correctly shows "No provider currently performs this operation" after the local result.
+      -->
+      <p class="help" data-testid="p4-expand-note">{t(copy.expandNote)}</p>
     {/if}
     <button
       data-testid="p4-run"
@@ -700,6 +727,35 @@
   }
   input[type='file'] {
     font-weight: 400;
+  }
+  /*
+   * The selection state is shown by the adjacent p4-file-status line, not by the native input:
+   * `chooseFile` resets `input.value` so re-picking the same file works, which also resets the
+   * browser's intrinsic label to "No file chosen" even while a file remains selected. Hiding the
+   * intrinsic text (the input itself stays visible and clickable, which the E2E suite relies on)
+   * stops the control from contradicting the app state.
+   */
+  input[type='file'] {
+    color: transparent;
+  }
+  input[type='file']::file-selector-button {
+    color: #1c1a17;
+    background: #f2f2f2;
+    border: 1px solid #1c1a1733;
+    border-radius: 6px;
+    padding: 6px 12px;
+    margin-inline-end: 8px;
+    cursor: pointer;
+  }
+  .file-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin: 0;
+    color: #5c5a56;
+    font-size: 0.9rem;
+    min-height: 1.2rem;
   }
   input[type='range'] {
     accent-color: #165dff;
