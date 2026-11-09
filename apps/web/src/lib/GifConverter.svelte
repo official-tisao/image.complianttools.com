@@ -289,34 +289,30 @@
 
   <!-- Upload -->
   <section class="card" aria-label={t('gif.upload', 'Upload')}>
-    <button
-      type="button"
-      class="upload-zone button-reset"
+    <div
+      class="upload-zone"
       class:drag-over={dragOver}
+      role="group"
+      aria-label={t('gif.drop', 'Drop a GIF file here')}
       ondragover={handleDragOver}
       ondragleave={handleDragLeave}
       ondrop={handleDrop}
-      aria-label={t('gif.drop', 'Drop a GIF file here')}
-      onclick={() => {
-        const input = document.getElementById('gif-file-input') as HTMLInputElement | null;
-        input?.click();
-      }}
     >
       <span class="upload-icon" aria-hidden="true">📁</span>
       <h2>{t('gif.dropHeading', 'Drop your file here')}</h2>
       <p class="upload-sub">{t('gif.browseHint', 'Or browse files from your device')}</p>
-      <label class="browse-label">
+      <span class="browse-label">
         <span class="button secondary">{t('gif.browse', 'Browse Files')}</span>
-        <input
-          id="gif-file-input"
-          type="file"
-          accept="image/gif,.gif"
-          onchange={handleFileSelect}
-          style="position:absolute;opacity:0;pointer-events:none;"
-        />
-      </label>
+      </span>
       <p class="formats">{t('gif.supported', 'Supported: GIF (up to 100 MB)')}</p>
-    </button>
+      <input
+        id="gif-file-input"
+        type="file"
+        aria-label={t('gif.choose', 'Choose a GIF')}
+        accept="image/gif,.gif"
+        onchange={handleFileSelect}
+      />
+    </div>
   </section>
 
   <!-- Selected file + preview -->
@@ -417,7 +413,7 @@
     >
       {busy ? t('gif.busy', 'Converting…') : t('gif.convert', 'Convert to GIF')}
     </button>
-    <p class="action-note" aria-live="polite">{status}</p>
+    <p class="action-note" role="status" aria-live="polite">{status}</p>
     {#if error}<p class="error" role="alert">{error}</p>{/if}
   </section>
 
@@ -472,14 +468,27 @@
     margin: 0 0 0.75rem;
   }
   .upload-zone {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
     border: 2px dashed var(--color-border, #d0d0d5);
     border-radius: 1rem;
+    background: var(--color-surface, #fff);
+    color: var(--color-text, #111);
     padding: 2rem 1rem;
     text-align: center;
     transition:
       border-color 0.2s ease,
       background 0.2s ease;
     cursor: pointer;
+  }
+  .upload-zone input[type='file'] {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
   }
   .upload-zone.drag-over {
     border-color: var(--color-primary, #2563eb);

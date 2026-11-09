@@ -336,15 +336,15 @@
 
   <!-- Upload -->
   <section class="card" aria-label={t('heic.upload', 'Upload')}>
-    <button
-      type="button"
+    <div
       class="upload-zone"
       class:drag-over={dragOver}
+      class:is-disabled={phase === 'decoding' || phase === 'encoding'}
+      role="group"
+      aria-label={t('heic.drop', 'Drop a HEIC or HEIF file here')}
       ondragover={handleDragOver}
       ondragleave={handleDragLeave}
       ondrop={handleDrop}
-      disabled={phase === 'decoding' || phase === 'encoding'}
-      aria-label={t('heic.drop', 'Drop a HEIC or HEIF file here')}
     >
       <span class="upload-icon" aria-hidden="true">🖼️</span>
       <span class="upload-heading">{t('heic.dropHeading', 'Drop your HEIC or HEIF file here')}</span
@@ -363,7 +363,7 @@
         {t('heic.browse', 'Browse Files')}
       </span>
       <span class="formats">{t('heic.supported', 'Accepted: .heic, .heif (up to 200 MB)')}</span>
-    </button>
+    </div>
 
     {#if selectedFile}
       <div class="file-entry">
@@ -546,7 +546,7 @@
     border-color: var(--c-accent, #2b7a8c);
     background: var(--c-accent-subtle, rgba(43, 122, 140, 0.06));
   }
-  .upload-zone:disabled {
+  .upload-zone.is-disabled {
     opacity: 0.55;
     cursor: not-allowed;
   }
@@ -565,7 +565,7 @@
     pointer-events: none;
   }
   .formats {
-    color: var(--c-text-subtle, #8a867e);
+    color: var(--c-text-muted, #5c5a56);
     font-size: 0.8rem;
   }
   .upload-zone input[type='file'] {
@@ -691,7 +691,7 @@
     color: var(--c-text-muted, #5c5a56);
   }
   .status-line.muted {
-    color: var(--c-text-subtle, #8a867e);
+    color: var(--c-text-muted, #5c5a56);
   }
   .error {
     color: var(--c-danger, #b3261e);

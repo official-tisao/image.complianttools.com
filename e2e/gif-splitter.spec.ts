@@ -247,6 +247,7 @@ test('exports every GIF frame as an exact PNG download', async ({ page }) => {
     mimeType: 'image/gif',
     buffer: Buffer.from(animatedGifFixture()),
   });
+  await page.getByTestId('gif-convert').click();
   await expect(page.getByRole('status')).toContainText('Exported 2 GIF frames locally.');
   await expect.poll(() => downloads.length).toBe(2);
   expect(downloads.map((download) => download.suggestedFilename())).toEqual([

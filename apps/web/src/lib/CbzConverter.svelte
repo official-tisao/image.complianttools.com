@@ -303,6 +303,9 @@
           <input
             bind:this={fileInput}
             type="file"
+            aria-label={options.operation === 'create'
+              ? t('cbz.chooseImages', 'Choose comic page images')
+              : t('cbz.chooseArchive', 'Choose a CBZ, ZIP, or CBR archive')}
             multiple={options.operation === 'create'}
             accept={options.operation === 'create'
               ? 'image/avif,image/gif,image/jpeg,image/jxl,image/png,image/webp'
