@@ -1,6 +1,5 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
-  import { SvelteMap } from 'svelte/reactivity';
   import {
     splitImage,
     createRaster,
@@ -72,11 +71,12 @@
   });
 
   let files = $state<readonly File[]>([]);
-  let outputUrl = $state('');
+  let previews = $state<string[]>([]);
   let outputs = $state<readonly { name: string; url: string }[]>([]);
   let zipUrl = $state('');
   let zipStatus = $state('');
   let zipError = $state('');
+  let inputRef = $state<HTMLInputElement | null>(null);
   let status = $state('');
   let error = $state('');
   let width = $state(1200);
@@ -87,35 +87,40 @@
   let rows = $state(2);
   let gap = $state(8);
   let dragOver = $state(false);
-  // Track URLs per file to avoid leaks
-  const fileUrls = new SvelteMap<File, string>();
-  let previousFiles: File[] = [];
+
+  function fileCountText(files: readonly File[]): string {
+    if (files.length === 0) return 'No files selected';
+    return `${files.length} file${files.length === 1 ? '' : 's'} selected`;
+  }
+
+  function removeFile(index: number) {
+    const preview = previews[index];
+    if (preview) URL.revokeObjectURL(preview);
+    files = files.filter((_, i) => i !== index);
+    previews = previews.filter((_, i) => i !== index);
+    clearOutputs();
+    status = fileCountText(files);
+    error = '';
+  }
 
   function t(key: string, fallback: string, value?: string | number) {
     return translate(locale, key, fallback, value);
   }
   function onFiles(event: Event) {
-    const newFiles = [...((event.currentTarget as HTMLInputElement).files ?? [])];
-    // Revoke URLs for files that are no longer present
-    for (const file of previousFiles) {
-      const url = fileUrls.get(file);
-      if (url) {
-        URL.revokeObjectURL(url);
-        fileUrls.delete(file);
-      }
-    }
-    files = newFiles;
-    previousFiles = newFiles;
-    status = files.length ? t('longTail.files', '{value} file(s) selected', files.length) : '';
+    const picker = event.currentTarget as HTMLInputElement;
+    const selected = Array.from(picker.files ?? []);
+    picker.value = '';
+    if (!selected.length) return;
+    const acceptsBatches = kind === 'bulk-resize' || kind === 'collage';
+    const nextFiles = acceptsBatches ? [...files, ...selected] : selected;
+    if (!acceptsBatches) clearPreviews();
+    files = nextFiles;
+    previews = acceptsBatches
+      ? [...previews, ...selected.map((file) => URL.createObjectURL(file))]
+      : selected.map((file) => URL.createObjectURL(file));
+    status = fileCountText(files);
+    clearOutputs();
     error = '';
-  }
-  function getPreviewUrl(file: File): string {
-    let url = fileUrls.get(file);
-    if (!url) {
-      url = URL.createObjectURL(file);
-      fileUrls.set(file, url);
-    }
-    return url;
   }
   function handleDragOver(e: DragEvent) {
     e.preventDefault();
@@ -130,7 +135,7 @@
     dragOver = false;
     const dropped = e.dataTransfer?.files;
     if (dropped && dropped.length) {
-      const input = document.getElementById('file-input') as HTMLInputElement | null;
+      const input = inputRef;
       if (input) {
         const dt = new DataTransfer();
         for (let i = 0; i < dropped.length; i++) dt.items.add(dropped[i]!);
@@ -154,33 +159,30 @@
       context.getImageData(0, 0, canvas.width, canvas.height).data,
     );
   }
-  async function publish(file: File, image: RasterImage, name: string) {
+  async function publish(image: RasterImage, name: string) {
     const bytes = await encodeRaster(image, 'png');
-    let url = fileUrls.get(file);
-    if (!url) {
-      url = URL.createObjectURL(new Blob([bytes], { type: 'image/png' }));
-      fileUrls.set(file, url);
-    }
-    if (outputUrl) URL.revokeObjectURL(outputUrl);
-    outputUrl = url;
+    const url = URL.createObjectURL(new Blob([bytes], { type: 'image/png' }));
     outputs = [...outputs, { name, url }];
   }
   function clearOutputs() {
     for (const result of outputs) URL.revokeObjectURL(result.url);
     outputs = [];
-    outputUrl = '';
+    zipUrl = '';
+    zipStatus = '';
+    zipError = '';
+  }
+  function clearPreviews() {
+    for (const url of previews) URL.revokeObjectURL(url);
+    previews = [];
   }
   async function runTool() {
     clearOutputs();
-    // Revoke all file URLs before reprocessing
-    for (const url of fileUrls.values()) {
-      URL.revokeObjectURL(url);
-    }
-    fileUrls.clear();
     status = '';
     error = '';
     try {
       if (!files.length) throw new Error('Choose at least one image first.');
+      if (kind === 'collage' && files.length < 2)
+        throw new Error('Choose at least two images to make a collage.');
       const decoded = await Promise.all(files.map(decode));
       if (kind === 'collage') {
         const merged = makeCollage(decoded[0]!, {
@@ -189,7 +191,7 @@
           gap,
           background: '#ffffff',
         });
-        await publish(files[0]!, merged, 'collage.png');
+        await publish(merged, 'collage.png');
       } else if (kind === 'split-image') {
         const tiles = splitImage(decoded[0]!, {
           enabled: true,
@@ -235,7 +237,7 @@
                 : kind === 'enlarge'
                   ? enlarge(image, { scale })
                   : roundCorners(image, { radius, background: 'transparent' });
-          await publish(file, result, fileName);
+          await publish(result, fileName);
         }
       }
       status = t('longTail.ready', 'Created {value} output(s) locally', outputs.length);
@@ -244,14 +246,8 @@
     }
   }
   onDestroy(() => {
-    // Revoke all file URLs
-    for (const url of fileUrls.values()) {
-      URL.revokeObjectURL(url);
-    }
-    fileUrls.clear();
-    // Revoke main output and zip URLs
-    if (outputUrl) URL.revokeObjectURL(outputUrl);
-    if (zipUrl) URL.revokeObjectURL(zipUrl);
+    clearOutputs();
+    clearPreviews();
   });
 </script>
 
@@ -280,82 +276,80 @@
     <p>{copy.description}</p>
     <p>{t('privacy.copy', 'Processed on your device. Nothing is uploaded.')}</p>
   </section>
-  {#if !files[0]}
-    <div
-      class="upload-area custom-upload"
-      class:drag-over={dragOver}
-      role="button"
-      aria-label="Upload image"
-      tabindex="0"
-      ondragover={handleDragOver}
-      ondragleave={handleDragLeave}
-      ondrop={handleDrop}
-      onclick={() => document.getElementById('file-input')?.click()}
-      onkeydown={(e: KeyboardEvent) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          document.getElementById('file-input')?.click();
-        }
+  <div
+    class="upload-area custom-upload"
+    class:drag-over={dragOver}
+    role="group"
+    aria-label="Image drop area"
+    ondragover={handleDragOver}
+    ondragleave={handleDragLeave}
+    ondrop={handleDrop}
+  >
+    <span class="upload-icon" aria-hidden="true">📁</span>
+    <span class="upload-label">Drop your image here</span>
+    <span class="upload-sub">or browse files from your device</span>
+    <input
+      bind:this={inputRef}
+      data-testid="expansion-input"
+      type="file"
+      accept="image/*"
+      multiple={kind === 'bulk-resize' || kind === 'collage'}
+      onchange={onFiles}
+      class="file-input"
+      aria-label="Choose image files"
+    />
+    <button
+      type="button"
+      class="file-input-button"
+      aria-label={t('transform.choose', 'Choose Images')}
+      onclick={(event: MouseEvent) => {
+        event.stopPropagation();
+        inputRef?.click();
       }}
     >
-      <span class="upload-icon" aria-hidden="true">📁</span>
-      <span class="upload-label">Drop your image here</span>
-      <span class="upload-sub">or browse files from your device</span>
-      <button
-        type="button"
-        class="button primary"
-        aria-label="Browse files"
-        onclick={(e: MouseEvent) => {
-          e.stopPropagation();
-          document.getElementById('file-input')?.click();
-        }}
-      >
-        Browse Files
-      </button>
-      <span class="upload-formats">PNG, JPG, WEBP, AVIF</span>
-      <input
-        id="file-input"
-        data-testid="expansion-input"
-        type="file"
-        accept="image/*"
-        multiple={kind === 'bulk-resize' || kind === 'collage'}
-        onchange={onFiles}
-        style="position: absolute; opacity: 0; width: 0; height: 0;"
-        aria-label="Choose an image file"
-      />
-    </div>
-  {/if}
-  {#each files as file (file.name)}
-    <div class="workspace" data-testid="file-preview">
-      <div class="preview-panel">
-        <div class="preview-card">
-          <img src={getPreviewUrl(file)} alt={file.name} />
-        </div>
-        <div class="preview-meta">
-          <strong>{file.name}</strong>
-          <span>{file.type || 'image'} · {Math.round(file.size / 1024)} KB</span>
+      {t('transform.choose', 'Choose Images')}
+    </button>
+    <span class="upload-formats">PNG, JPG, WEBP, AVIF</span>
+  </div>
+  <p data-testid="file-count" class="file-count">{fileCountText(files)}</p>
+  {#if files.length && (kind === 'bulk-resize' || kind === 'collage')}
+    <div class="previews" data-testid="expansion-previews">
+      {#each files as file, index (previews[index])}
+        <div class="preview" data-testid={`preview-${index}`}>
+          <img src={previews[index]} alt={file.name} width="72" height="72" loading="lazy" />
           <button
             type="button"
-            class="button secondary replace-button"
-            aria-label="Replace uploaded image"
-            onclick={() => document.getElementById('file-input')?.click()}>Replace image</button
+            class="remove"
+            aria-label={t('collage.remove', 'Remove {name}', file.name)}
+            onclick={() => removeFile(index)}
           >
+            ×
+          </button>
+        </div>
+      {/each}
+    </div>
+  {/if}
+  {#if files.length && kind !== 'bulk-resize' && kind !== 'collage'}
+    {#each files as file, index (previews[index])}
+      <div class="workspace" data-testid="file-preview">
+        <div class="preview-panel">
+          <div class="preview-card">
+            <img src={previews[index]} alt={file.name} />
+          </div>
+          <div class="preview-meta">
+            <strong>{file.name}</strong>
+            <span>{file.type || 'image'} · {Math.round(file.size / 1024)} KB</span>
+            <button
+              type="button"
+              class="button secondary replace-button"
+              aria-label="Replace uploaded image"
+              onclick={() => inputRef?.click()}>Replace image</button
+            >
+          </div>
         </div>
       </div>
-      {#if kind === 'split-image'}
-        <aside class="config-panel" aria-label="Split configuration">
-          <h3>Split configuration</h3>
-          <div class="controls split-controls">
-            <label>Columns <input type="number" min="1" max="16" bind:value={columns} /></label>
-            <label>Rows <input type="number" min="1" max="16" bind:value={rows} /></label>
-          </div>
-          <button data-testid="expansion-run" type="button" onclick={() => void runTool()}>
-            Run Locally
-          </button>
-        </aside>
-      {/if}
-    </div>
-  {/each}
+    {/each}
+  {/if}
   {#if kind === 'bulk-resize' || kind === 'canvas-resize'}<div class="controls">
       <label>Width <input type="number" min="1" bind:value={width} /></label><label
         >Height <input type="number" min="1" bind:value={height} /></label
@@ -367,16 +361,20 @@
   {#if kind === 'round-corners'}<label
       >Radius <input type="number" min="0" bind:value={radius} /></label
     >{/if}
-  {#if kind === 'collage' || (kind === 'split-image' && !files[0])}<div class="controls">
+  {#if kind === 'collage' || kind === 'split-image'}<div class="controls">
       <label>Columns <input type="number" min="1" max="16" bind:value={columns} /></label
       >{#if kind === 'collage'}<label>Gap <input type="number" min="0" bind:value={gap} /></label
         >{:else}<label>Rows <input type="number" min="1" max="16" bind:value={rows} /></label>{/if}
     </div>{/if}
-  {#if kind !== 'split-image' && files[0]}
-    <button data-testid="expansion-run" type="button" onclick={() => void runTool()}>
-      Run locally
-    </button>
-  {/if}
+  <button
+    data-testid="expansion-run"
+    type="button"
+    onclick={() => void runTool()}
+    disabled={!files.length || (kind === 'collage' && files.length < 2)}
+    data-disabled={kind === 'collage' && files.length < 2 ? 'true' : undefined}
+  >
+    Run locally
+  </button>
   {#if status}<p role="status" data-testid="expansion-status">{status}</p>{/if}
   {#if error}<p role="alert" data-testid="expansion-error">{error}</p>{/if}
   {#if kind === 'split-image' && zipStatus === 'ZIP ready'}
@@ -452,6 +450,10 @@
     flex-wrap: wrap;
     gap: 1rem;
   }
+  button[data-disabled='true'] {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
   button {
     margin: 1rem 0;
     padding: 0.7rem 1.1rem;
@@ -503,26 +505,6 @@
     color: #52627a;
     word-break: break-word;
   }
-  .config-panel {
-    background: #f8f6f3;
-    border: 1px solid #1c1a1720;
-    border-radius: 12px;
-    padding: 1.25rem;
-  }
-  .config-panel h3 {
-    margin: 0 0 1rem;
-    font-size: 1.1rem;
-    font-weight: 600;
-    letter-spacing: -0.5px;
-  }
-  .split-controls {
-    gap: 0.75rem;
-    margin-bottom: 1rem;
-  }
-  .config-panel button {
-    width: 100%;
-    margin: 0;
-  }
   .custom-upload {
     display: flex;
     flex-direction: column;
@@ -560,11 +542,8 @@
   }
   .custom-upload .upload-formats {
     font-size: 0.78rem;
-    color: #8a8682;
+    color: #52627a;
     letter-spacing: 0.02em;
-  }
-  .custom-upload .button {
-    margin: 0.25rem 0;
   }
   .replace-button {
     font-size: 0.75rem;
@@ -627,5 +606,72 @@
   }
   [role='alert'] {
     color: #a12626;
+  }
+  .previews {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin: 1rem 0;
+  }
+  .preview {
+    position: relative;
+    width: 72px;
+    height: 72px;
+    border: 1px solid #c0c0c0;
+    border-radius: 4px;
+    background: #f8f8f8;
+  }
+  .preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .remove {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #ff4d4d;
+    color: white;
+    font-size: 12px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border: none;
+    padding: 0;
+  }
+  .remove:hover {
+    background: #ff3333;
+  }
+  .file-count {
+    margin: 0.5rem 0;
+    font-size: 0.9rem;
+    color: #52627a;
+  }
+
+  .file-input {
+    display: none;
+  }
+
+  .file-input-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.7rem 1.1rem;
+    background: #172033;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+
+  .file-input-button:hover {
+    background: #090a0f;
   }
 </style>
