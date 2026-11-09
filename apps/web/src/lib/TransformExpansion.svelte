@@ -71,11 +71,13 @@
   });
 
   let files = $state<readonly File[]>([]);
+  let previews = $state<string[]>([]);
   let outputUrl = $state('');
   let outputs = $state<readonly { name: string; url: string }[]>([]);
   let zipUrl = $state('');
   let zipStatus = $state('');
   let zipError = $state('');
+  let inputRef = $state<HTMLInputElement | null>(null);
   let status = $state('');
   let error = $state('');
   let width = $state(1200);
@@ -88,13 +90,47 @@
   let sourceName = $state('image');
   let dragOver = $state(false);
 
+  function fileCountText(files: readonly File[]): string {
+    if (files.length === 0) return 'No files selected';
+    return `${files.length} file${files.length === 1 ? '' : 's'} selected`;
+  }
+
+  function removeFile(index: number) {
+    URL.revokeObjectURL(previews[index]!);
+    files = files.filter((_, i) => i !== index);
+    previews = previews.filter((_, i) => i !== index);
+    clearOutputs();
+    if (files.length === 0) {
+      sourceName = 'image';
+      status = fileCountText(files);
+    } else {
+      sourceName = files[0]!.name.replace(/\.[^.]+$/u, '') ?? 'image';
+      status = fileCountText(files);
+    }
+    error = '';
+  }
+
   function t(key: string, fallback: string, value?: string | number) {
     return translate(locale, key, fallback, value);
   }
   function onFiles(event: Event) {
-    files = [...((event.currentTarget as HTMLInputElement).files ?? [])];
+    const picker = event.currentTarget as HTMLInputElement;
+    const selected = Array.from(picker.files ?? []);
+    picker.value = '';
+    if (!selected.length) return;
+    const supportsMultiple = kind === 'bulk-resize' || kind === 'collage';
+    const nextPreviews = selected.map((file) => URL.createObjectURL(file));
+    if (supportsMultiple) {
+      files = [...files, ...selected];
+      previews = [...previews, ...nextPreviews];
+    } else {
+      clearPreviews();
+      files = selected;
+      previews = nextPreviews;
+    }
+    clearOutputs();
     sourceName = files[0]?.name.replace(/\.[^.]+$/u, '') ?? 'image';
-    status = files.length ? t('longTail.files', '{value} file(s) selected', files.length) : '';
+    status = fileCountText(files);
     error = '';
   }
   function handleDragOver(e: DragEvent) {
@@ -110,7 +146,7 @@
     dragOver = false;
     const dropped = e.dataTransfer?.files;
     if (dropped && dropped.length) {
-      const input = document.getElementById('file-input') as HTMLInputElement | null;
+      const input = inputRef;
       if (input) {
         const dt = new DataTransfer();
         for (let i = 0; i < dropped.length; i++) dt.items.add(dropped[i]!);
@@ -142,9 +178,19 @@
     outputUrl = url;
   }
   function clearOutputs() {
-    for (const result of outputs) URL.revokeObjectURL(result.url);
+    const urls = outputs.map((result) => result.url);
+    if (outputUrl && !urls.includes(outputUrl)) urls.push(outputUrl);
+    if (zipUrl && !urls.includes(zipUrl)) urls.push(zipUrl);
+    for (const url of urls) URL.revokeObjectURL(url);
     outputs = [];
     outputUrl = '';
+    zipUrl = '';
+    zipStatus = '';
+    zipError = '';
+  }
+  function clearPreviews() {
+    for (const url of previews) URL.revokeObjectURL(url);
+    previews = [];
   }
   async function runTool() {
     clearOutputs();
@@ -152,6 +198,9 @@
     error = '';
     try {
       if (!files.length) throw new Error('Choose at least one image first.');
+      if (kind === 'collage' && files.length < 2) {
+        throw new Error('Choose at least two images to make a collage.');
+      }
       const decoded = await Promise.all(files.map(decode));
       if (kind === 'collage') {
         const merged = makeCollage(decoded[0]!, {
@@ -214,8 +263,8 @@
     }
   }
   onDestroy(() => {
-    if (outputUrl) URL.revokeObjectURL(outputUrl);
-    if (zipUrl) URL.revokeObjectURL(zipUrl);
+    clearOutputs();
+    clearPreviews();
   });
 </script>
 
@@ -244,23 +293,26 @@
     <p>{copy.description}</p>
     <p>{t('privacy.copy', 'Processed on your device. Nothing is uploaded.')}</p>
   </section>
+  <input
+    id="file-input"
+    bind:this={inputRef}
+    data-testid="expansion-input"
+    type="file"
+    accept="image/*"
+    multiple={kind === 'bulk-resize' || kind === 'collage'}
+    onchange={onFiles}
+    class="file-input"
+    aria-label={t('transform.choose', 'Choose Images')}
+  />
   {#if !files[0]}
     <div
       class="upload-area custom-upload"
       class:drag-over={dragOver}
-      role="button"
-      aria-label="Upload image"
-      tabindex="0"
+      role="group"
+      aria-label="Drop images to upload"
       ondragover={handleDragOver}
       ondragleave={handleDragLeave}
       ondrop={handleDrop}
-      onclick={() => document.getElementById('file-input')?.click()}
-      onkeydown={(e: KeyboardEvent) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          document.getElementById('file-input')?.click();
-        }
-      }}
     >
       <span class="upload-icon" aria-hidden="true">📁</span>
       <span class="upload-label">Drop your image here</span>
@@ -268,30 +320,20 @@
       <button
         type="button"
         class="button primary"
-        aria-label="Browse files"
+        aria-label={t('transform.choose', 'Choose Images')}
         onclick={(e: MouseEvent) => {
           e.stopPropagation();
-          document.getElementById('file-input')?.click();
-        }}>Browse Files</button
+          inputRef?.click();
+        }}>{t('transform.choose', 'Choose Images')}</button
       >
       <span class="upload-formats">PNG, JPG, WEBP, AVIF</span>
-      <input
-        id="file-input"
-        data-testid="expansion-input"
-        type="file"
-        accept="image/*"
-        multiple={kind === 'bulk-resize' || kind === 'collage'}
-        onchange={onFiles}
-        style="position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none;"
-        aria-label="Choose an image file"
-      />
     </div>
   {/if}
   {#if files[0]}
     <div class="workspace" data-testid="file-preview">
       <div class="preview-panel">
         <div class="preview-card">
-          <img src={URL.createObjectURL(files[0])} alt={files[0].name} />
+          <img src={previews[0]} alt={files[0].name} />
         </div>
         <div class="preview-meta">
           <strong>{files[0].name}</strong>
@@ -299,8 +341,13 @@
           <button
             type="button"
             class="button secondary replace-button"
-            aria-label="Replace uploaded image"
-            onclick={() => document.getElementById('file-input')?.click()}>Replace image</button
+            aria-label={kind === 'bulk-resize' || kind === 'collage'
+              ? t('transform.choose', 'Choose Images')
+              : 'Replace uploaded image'}
+            onclick={() => inputRef?.click()}
+            >{kind === 'bulk-resize' || kind === 'collage'
+              ? t('transform.choose', 'Choose Images')
+              : 'Replace image'}</button
           >
         </div>
       </div>
@@ -316,6 +363,24 @@
           >
         </aside>
       {/if}
+    </div>
+  {/if}
+  <p data-testid="file-count" class="file-count">{fileCountText(files)}</p>
+  {#if files.length && (kind === 'bulk-resize' || kind === 'collage')}
+    <div class="previews" data-testid="expansion-previews">
+      {#each files as file, index (previews[index])}
+        <div class="preview" data-testid={`preview-${index}`}>
+          <img src={previews[index]} alt={file.name} width="72" height="72" loading="lazy" />
+          <button
+            type="button"
+            class="remove"
+            aria-label={t('collage.remove', 'Remove {name}', file.name)}
+            onclick={() => removeFile(index)}
+          >
+            ×
+          </button>
+        </div>
+      {/each}
     </div>
   {/if}
   {#if kind === 'bulk-resize' || kind === 'canvas-resize'}<div class="controls">
@@ -335,7 +400,12 @@
         >{:else}<label>Rows <input type="number" min="1" max="16" bind:value={rows} /></label>{/if}
     </div>{/if}
   {#if kind !== 'split-image'}
-    <button data-testid="expansion-run" type="button" onclick={() => void runTool()}
+    <button
+      data-testid="expansion-run"
+      type="button"
+      onclick={() => void runTool()}
+      disabled={kind === 'collage' && files.length < 2}
+      data-disabled={kind === 'collage' && files.length < 2 ? 'true' : undefined}
       >Run locally</button
     >
   {/if}
@@ -413,6 +483,10 @@
     display: flex;
     flex-wrap: wrap;
     gap: 1rem;
+  }
+  button[data-disabled='true'] {
+    opacity: 0.55;
+    cursor: not-allowed;
   }
   button {
     margin: 1rem 0;
@@ -589,5 +663,54 @@
   }
   [role='alert'] {
     color: #a12626;
+  }
+  .previews {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin: 1rem 0;
+  }
+  .preview {
+    position: relative;
+    width: 72px;
+    height: 72px;
+    border: 1px solid #c0c0c0;
+    border-radius: 4px;
+    background: #f8f8f8;
+  }
+  .preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .remove {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #ff4d4d;
+    color: white;
+    font-size: 12px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border: none;
+    padding: 0;
+  }
+  .remove:hover {
+    background: #ff3333;
+  }
+  .file-count {
+    margin: 0.5rem 0;
+    font-size: 0.9rem;
+    color: #52627a;
+  }
+
+  .file-input {
+    display: none;
   }
 </style>

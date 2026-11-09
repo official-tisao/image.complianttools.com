@@ -42,6 +42,18 @@ export default defineConfig(({ command, mode }) => ({
   // `node_modules/.vite/deps`, where that sibling is not emitted and the dev server returns 404.
   optimizeDeps: {
     exclude: [
+      // @jsquash/avif and @jsquash/jxl both load their sibling `*.wasm` via `import.meta.url`.
+      // Prebundling these packages turns those fetches into `/node_modules/.vite/deps/*.wasm`,
+      // where the wasm binary is not emitted — Vite's dev server returns 404 HTML, and the
+      // production worker chunks reference a DASH variant (`avif_dec-B7YOdlSS.wasm`) that
+      // adapter-static never copies to assets, so even the correctly-named build asset 404s on
+      // adapter-static preview. Exclude them from the dep prebundle so each package keeps its
+      // own code, and adapter-static emits + copies both the module and its sibling wasm.
+      '@jsquash/avif',
+      '@jsquash/jxl',
+      // @jsquash/jpeg / @jsquash/png / @jsquash/webp / @jsquash/oxipng preserve WASM sibling
+      // URLs relative to import.meta.url too; see https://github.com/jsquash/jsquash issue #26.
+      // Exclude them to prevent the same 404-on-WASM-sibling issue in development.
       '@jsquash/jpeg',
       '@jsquash/png',
       '@jsquash/webp',
@@ -58,5 +70,14 @@ export default defineConfig(({ command, mode }) => ({
   },
   preview: { headers: isolationHeaders },
   worker: mode === 'development' ? {} : { format: 'es' },
-  build: { target: 'es2022', sourcemap: true },
+  build: {
+    target: 'es2022',
+    sourcemap: true,
+    rollupOptions: {
+      input: {
+        'encode-worker': resolve(__dirname, 'src/workers/encode-worker.ts'),
+        'format-encode-worker': resolve(__dirname, 'src/workers/format-encode-worker.ts'),
+      },
+    },
+  },
 }));
