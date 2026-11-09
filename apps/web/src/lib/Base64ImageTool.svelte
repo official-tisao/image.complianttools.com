@@ -52,7 +52,7 @@
       error = isEngineError(reason)
         ? t(
             'base64.encodeError',
-            'Unable to encode this image. Choose a valid file below the 32 MB limit.',
+            'Unable to encode this image. Choose a valid file below the 10 MiB limit.',
           )
         : reason instanceof Error
           ? reason.message
@@ -92,7 +92,7 @@
       error = isEngineError(reason)
         ? t(
             'base64.decodeError',
-            'Unable to decode this data URL. Paste valid Base64 below the 32 MB limit.',
+            'Unable to decode this data URL. Paste valid Base64 below the 10 MiB limit.',
           )
         : reason instanceof Error
           ? reason.message
