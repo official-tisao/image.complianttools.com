@@ -53,6 +53,10 @@ export default defineConfig(({ command, mode }) => {
     // `node_modules/.vite/deps`, where that sibling is not emitted and the dev server returns 404.
     optimizeDeps: {
       exclude: [
+        // @jsquash/avif and @jsquash/jxl load sibling WASM via import.meta.url. Exclude them
+        // so Vite and adapter-static preserve and emit those sibling assets.
+        '@jsquash/avif',
+        '@jsquash/jxl',
         '@jsquash/jpeg',
         '@jsquash/png',
         '@jsquash/webp',
@@ -69,6 +73,15 @@ export default defineConfig(({ command, mode }) => {
     },
     preview: { headers: isolationHeaders },
     worker: mode === 'development' ? {} : { format: 'es' },
-    build: { target: 'es2022', sourcemap: true },
+    build: {
+      target: 'es2022',
+      sourcemap: true,
+      rollupOptions: {
+        input: {
+          'encode-worker': resolve(__dirname, 'src/workers/encode-worker.ts'),
+          'format-encode-worker': resolve(__dirname, 'src/workers/format-encode-worker.ts'),
+        },
+      },
+    },
   };
 });
