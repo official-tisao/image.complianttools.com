@@ -20,11 +20,14 @@
     tolerance: string;
     toleranceHelp: string;
     fill: string;
+    expandNote: string;
+    remove: string;
     width: string;
     height: string;
     run: string;
     processing: string;
     ready: string;
+    backgroundReady: string;
     preview: string;
     download: string;
     privacy: string;
@@ -57,11 +60,13 @@
     toleranceHelp:
       'Pixels connected to the image edge and close to the top-left colour become transparent.',
     fill: 'Fill colour',
+    remove: 'Remove selected image',
     width: 'Output width',
     height: 'Output height',
     run: 'Prepare image',
     processing: 'Processing locally…',
     ready: 'Choose an image to begin.',
+    backgroundReady: 'Choose a background image.',
     preview: 'Processed image preview',
     download: 'Download PNG',
     privacy: 'Images stay in this browser. No upload, model, or network service is used.',
@@ -90,11 +95,13 @@
     tolerance: 'تسامح الخلفية',
     toleranceHelp: 'تصبح البكسلات المتصلة بحافة الصورة والقريبة من لون الزاوية العلوية شفافة.',
     fill: 'لون الملء',
+    remove: 'إزالة الصورة المحددة',
     width: 'عرض الإخراج',
     height: 'ارتفاع الإخراج',
     run: 'إعداد الصورة',
     processing: 'جارٍ التنفيذ محليًا…',
     ready: 'اختر صورة للبدء.',
+    backgroundReady: 'اختر صورة للخلفية.',
     preview: 'معاينة الصورة المعالجة',
     download: 'تنزيل PNG',
     privacy: 'تبقى الصور في هذا المتصفح. لا يتم رفعها ولا تُستخدم نماذج أو خدمات شبكة.',
@@ -247,7 +254,7 @@
     foregroundUrl = URL.createObjectURL(file);
     clearOutput();
     error = '';
-    status = file.name;
+    status = '';
   }
 
   function chooseFile(event: Event, target: 'foreground' | 'background') {
@@ -270,7 +277,25 @@
     backgroundFile = file;
     clearOutput();
     error = '';
-    status = file.name;
+    status = '';
+  }
+
+  function removeSelectedForeground() {
+    if (busy) return;
+    if (foregroundUrl) URL.revokeObjectURL(foregroundUrl);
+    foregroundUrl = '';
+    foregroundFile = undefined;
+    status = '';
+    error = '';
+    clearOutput();
+  }
+
+  function clearSelectedBackgroundFile() {
+    if (busy) return;
+    backgroundFile = undefined;
+    status = '';
+    error = '';
+    clearOutput();
   }
 
   /**
@@ -545,7 +570,7 @@
         onchange={(event) => chooseFile(event, 'foreground')}
       />
     </label>
-    <p class="file-status" data-testid="p4-file-status">
+    <p class="file-status" data-testid="p4-file-status" role="status" aria-live="polite">
       {#if foregroundFile}
         <span>{foregroundFile.name}</span>
         <button
@@ -571,7 +596,7 @@
           onchange={(event) => chooseFile(event, 'background')}
         />
       </label>
-      <p class="file-status" data-testid="p4-background-file-status">
+      <p class="file-status" data-testid="p4-background-file-status" role="status" aria-live="polite">
         {#if backgroundFile}
           <span>{backgroundFile.name}</span>
           <button
@@ -644,14 +669,28 @@
     >
       {busy ? t(copy.processing) : t(copy.run)}
     </button>
-    {#if status}<p data-testid="p4-status" role="status" aria-live="polite">{status}</p>{:else}<p
-        data-testid="p4-status"
-        role="status"
-        aria-live="polite"
-      >
-        {t(copy.ready)}
-      </p>{/if}
+    {#if status}<p data-testid="p4-status" role="status" aria-live="polite">{status}</p>{/if}
     {#if error}<p class="error" data-testid="p4-error" role="alert">{t(error)}</p>{/if}
+    {#if foregroundFile}
+      <button
+        data-testid="p4-remove"
+        type="button"
+        disabled={busy}
+        onclick={removeSelectedForeground}
+      >
+        {t(copy.remove)}
+      </button>
+    {/if}
+    {#if backgroundFile}
+      <button
+        data-testid="p4-background-remove"
+        type="button"
+        disabled={busy}
+        onclick={clearSelectedBackgroundFile}
+      >
+        {t(copy.remove)}
+      </button>
+    {/if}
   </section>
 
   {#if foregroundUrl}<figure class="source">
@@ -745,6 +784,11 @@
   }
   input[type='file']::file-selector-button {
     font-size: 0.9rem;
+   */
+  input[type='file'] {
+    color: transparent;
+  }
+  input[type='file']::file-selector-button {
     color: #1c1a17;
     background: #f2f2f2;
     border: 1px solid #1c1a1733;

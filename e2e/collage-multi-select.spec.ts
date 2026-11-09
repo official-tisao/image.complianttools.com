@@ -109,7 +109,7 @@ test.describe('collage multi-image selection', () => {
     await page
       .getByTestId('expansion-input')
       .setInputFiles([{ name: 'img-a.png', mimeType: 'image/png', buffer: file }]);
-    await expect(page.getByTestId('expansion-run')).toBeDisabled();
+    await expect(page.getByTestId('expansion-run')).toHaveAttribute('data-disabled', 'true');
   });
 
   test('run button is enabled once two images are selected', async ({ page }) => {
@@ -120,7 +120,7 @@ test.describe('collage multi-image selection', () => {
       { name: 'img-a.png', mimeType: 'image/png', buffer: file },
       { name: 'img-b.png', mimeType: 'image/png', buffer: file },
     ]);
-    await expect(page.getByTestId('expansion-run')).toBeEnabled();
+    await expect(page.getByTestId('expansion-run')).not.toHaveAttribute('data-disabled');
   });
 
   test('collage generation processes all selected images and produces a downloadable collage', async ({
