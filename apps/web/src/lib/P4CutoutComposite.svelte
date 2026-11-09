@@ -541,22 +541,6 @@
       {foregroundFile?.name ?? t(copy.ready)}
     </p>
     <p class="help">{t(copy.chooseHelp)}</p>
-    <p data-testid="p4-file-status" role="status" aria-live="polite">
-      {foregroundFile?.name ?? t(copy.ready)}
-    </p>
-    {#if kind === 'composite'}
-      <p data-testid="p4-background-file-status" role="status" aria-live="polite">
-        {backgroundFile?.name ?? t(copy.backgroundReady)}
-      </p>
-    {/if}
-    {#if kind === 'expand-image'}
-      <p class="help" data-testid="p4-expand-note">{t(copy.expandNote)}</p>
-    {/if}
-    {#if kind === 'composite'}
-      <p class="file-status" data-testid="p4-background-file-status" role="status" aria-live="polite">
-        {backgroundFile?.name ?? t(copy.backgroundReady)}
-      </p>
-    {/if}
     {#if kind === 'composite'}
       <label>
         <span>{t(copy.backgroundChoose)}</span>
