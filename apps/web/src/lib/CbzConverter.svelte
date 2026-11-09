@@ -76,7 +76,8 @@
   }
 
   async function handleFileSelect(event: Event) {
-    const file = (event.currentTarget as HTMLInputElement).files?.[0];
+    const input = event.currentTarget as HTMLInputElement;
+    const file = input?.files?.[0];
     if (!file) {
       selectFiles([]);
       return;
@@ -90,7 +91,7 @@
       selectFiles([]);
       return;
     }
-    selectFiles([...(event.currentTarget.files ?? [])]);
+    selectFiles([...(input.files ?? [])]);
   }
 
   async function generate() {
@@ -261,7 +262,8 @@
             id="operation-select"
             class="operation-select"
             value={options.operation}
-            on:change={(event) => setControl('cbz.operation', event.target.value)}
+            onchange={(event) =>
+              setControl('cbz.operation', (event.currentTarget as HTMLSelectElement).value)}
             disabled={files.length === 0}
           >
             <option value="create">Images to CBZ</option>
@@ -277,9 +279,9 @@
           <div
             class="upload-button"
             class:drag-over={files.length > 0}
-            on:dragover={handleDragOver}
-            on:dragleave={handleDragLeave}
-            on:drop={handleFileSelect}
+            ondragover={handleDragOver}
+            ondragleave={handleDragLeave}
+            ondrop={handleFileSelect}
             aria-label={t('cbz.drop', 'Drop comic page images here')}
             role="button"
             tabindex="0"
@@ -295,7 +297,7 @@
               )}
             </p>
           </div>
-          <button type="button" class="browse-button" on:click={() => fileInput?.click()}>
+          <button type="button" class="browse-button" onclick={() => fileInput?.click()}>
             {t('cbz.browse', 'Browse Files')}
           </button>
           <input
@@ -305,7 +307,7 @@
             accept={options.operation === 'create'
               ? 'image/avif,image/gif,image/jpeg,image/jxl,image/png,image/webp'
               : '.cbz,.zip,.cbr,application/zip,application/vnd.comicbook+zip'}
-            on:change={handleFileSelect}
+            onchange={handleFileSelect}
             class="file-input"
           />
         </div>
@@ -327,7 +329,7 @@
         <button
           type="button"
           class="primary-button"
-          on:click={() => void generate()}
+          onclick={() => void generate()}
           disabled={files.length === 0}
           class:disabled={files.length === 0}
         >
@@ -337,7 +339,7 @@
           <button
             type="button"
             class="secondary-button"
-            on:click={downloadOutput}
+            onclick={downloadOutput}
             class:disabled={!output}
           >
             {t('cbz.download', 'Download')}
@@ -347,7 +349,7 @@
             <button
               type="button"
               class="tertiary-button"
-              on:click={downloadPages}
+              onclick={downloadPages}
               class:disabled={extractedPages.length === 0}
             >
               {t('cbz.downloadPages', 'Download extracted pages')}

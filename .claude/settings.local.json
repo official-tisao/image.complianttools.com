@@ -113,7 +113,11 @@
       "PowerShell(cd \"C:\\\\Users\\\\ayomide\\\\codebase\\\\image.complianttools.com\\\\apps\\\\web\" && \\(Get-Content .\\\\src\\\\lib\\\\MetadataViewer.svelte\\) | ForEach-Object { $_ -replace 'let tags = \\\\$state<readonly MetadataTag>\\\\\\(\\\\$\\\\\\),`n    inputBytes = \\\\$state<Uint8Array>\\\\\\(\\\\$\\\\\\),`n  let canEdit = \\\\$state\\\\\\(false\\\\\\)', 'let tags = $state<readonly MetadataTag[]>\\([]\\),`n    inputBytes = $state<Uint8Array>\\(\\),`n  let fileInput: HTMLInputElement;`n  let canEdit = $state\\(false\\)' } | Set-Content .\\\\src\\\\lib\\\\MetadataViewer.svelte)",
       "Bash(findstr \"exif-viewer\\\\|MetadataViewer\")",
       "PowerShell(head *)",
-      "Bash(cd *)"
+      "Bash(cd *)",
+      "Bash(npm install *)",
+      "Bash(pkill -f \"vite dev\")",
+      "Bash(pkill -f vite)",
+      "Bash(fuser -k 4173/tcp)"
     ]
   }
 }

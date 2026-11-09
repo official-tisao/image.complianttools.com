@@ -350,7 +350,7 @@
             <label>Rows <input type="number" min="1" max="16" bind:value={rows} /></label>
           </div>
           <button data-testid="expansion-run" type="button" onclick={() => void runTool()}>
-            Split Image
+            Run Locally
           </button>
         </aside>
       {/if}
@@ -372,7 +372,7 @@
       >{#if kind === 'collage'}<label>Gap <input type="number" min="0" bind:value={gap} /></label
         >{:else}<label>Rows <input type="number" min="1" max="16" bind:value={rows} /></label>{/if}
     </div>{/if}
-  {#if kind !== 'split-image'}
+  {#if kind !== 'split-image' && files[0]}
     <button data-testid="expansion-run" type="button" onclick={() => void runTool()}>
       Run locally
     </button>

@@ -13,7 +13,7 @@
  */
 
 import type { EngineError, RasterImage } from '../../types.js';
-import { getGlobal, createCanvasFromRgba } from '../../capabilities.js';
+import { createCanvasFromRgba } from '../../capabilities.js';
 import {
   HEIC_UNSUPPORTED_MESSAGE,
   decodeHeic,
@@ -50,7 +50,7 @@ export async function decodeHeicWithLibHeicJs(
     const { default: decode } = await import('heic2any');
     // heic2any spins up a blob worker at module load; if that worker fails
     // (CSP, asm.js error, OOM), the returned promise never settles. Bound it.
-    const global = getGlobal();
+    const global = globalThis;
     const output = await Promise.race([
       decode({ blob, toType: 'image/png' }),
       new Promise<never>((_, reject) =>

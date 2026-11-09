@@ -301,12 +301,16 @@ export const arabic: Readonly<Record<string, string>> = {
   'viewer.editHeading': 'إضافة حقول EXIF أو تعديلها',
   'viewer.editDescription':
     'اختر الحقول المراد إضافتها أو تغييرها. تُلحق القيم الأطول والحقول الجديدة عبر بنية EXIF معاد بناؤها؛ وتبقى البيانات غير المحددة دون تغيير.',
+  'viewer.metadata': 'حقول البيانات الوصفية',
   'viewer.download': 'تنزيل JPEG المعدّل',
   'viewer.metaDescription': 'اقرأ بيانات الصور الوصفية المدعومة وعدّلها محليًا في متصفحك.',
   'viewer.inspectFailure': 'فشل فحص البيانات الوصفية',
   'viewer.inspectRemedy':
     'اختر ملف PNG أو JPEG أو GIF أو WebP أو AVIF أو HEIF صالحًا ثم حاول مجددًا.',
   'viewer.inspectUnable': 'تعذر على قارئ البيانات الوصفية المحلي فحص الملف.',
+  'viewer.inspecting': 'جاري استخراج البيانات الوصفية...',
+  'viewer.metadataReady': 'تم استخراج البيانات الوصفية بنجاح.',
+  'viewer.inspectionFailed': 'فشل استخراج البيانات الوصفية. يرجى المحاولة مرة أخرى.',
   'viewer.selectField': 'اختر حقل EXIF موجودًا واحدًا على الأقل لتعديله.',
   'viewer.gpsPair': 'اختر خط العرض وخط الطول معًا عند إضافة الإحداثيات أو تعديلها.',
   'viewer.editFailure': 'فشل تعديل EXIF',
