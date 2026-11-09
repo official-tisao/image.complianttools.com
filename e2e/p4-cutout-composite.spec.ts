@@ -60,6 +60,47 @@ test('cutout family routes process locally and expose route-specific metadata', 
   }
 });
 
+test('replace-background and composite reject invalid files with a useful error', async ({
+  page,
+}) => {
+  await page.goto('/replace-background');
+  await expect(page.locator('html')).toHaveAttribute('data-hydrated', 'true');
+  await page.getByTestId('p4-file-input').setInputFiles({
+    name: 'not-an-image.txt',
+    mimeType: 'text/plain',
+    buffer: Buffer.from('definitely not an image'),
+  });
+  await expect(page.getByTestId('p4-error')).toContainText('Choose a PNG, JPEG, or WebP image.');
+  await expect(page.getByTestId('p4-run')).toBeDisabled();
+
+  // A file that passes the type check but cannot be decoded must fail processing
+  // with a message, not a silent no-op.
+  await page.getByTestId('p4-file-input').setInputFiles({
+    name: 'corrupt.png',
+    mimeType: 'image/png',
+    buffer: Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x01]),
+  });
+  await page.getByTestId('p4-run').click();
+  await expect(page.getByTestId('p4-error')).not.toBeEmpty();
+  await expect(page.getByTestId('p4-preview')).toHaveCount(0);
+});
+
+test('replace-background rejects files over the promised 16 MiB limit', async ({ page }) => {
+  await page.goto('/replace-background');
+  await expect(page.locator('html')).toHaveAttribute('data-hydrated', 'true');
+  const oversized = Buffer.concat([
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), // PNG signature
+    Buffer.alloc(16 * 1024 * 1024 + 1),
+  ]);
+  await page.getByTestId('p4-file-input').setInputFiles({
+    name: 'oversized.png',
+    mimeType: 'image/png',
+    buffer: oversized,
+  });
+  await expect(page.getByTestId('p4-error')).toContainText('Choose an image smaller than 16 MiB.');
+  await expect(page.getByTestId('p4-run')).toBeDisabled();
+});
+
 test('seamless composite accepts a foreground and background locally', async ({ page }) => {
   await page.goto('/composite');
   await page.getByTestId('p4-file-input').setInputFiles({

@@ -36,6 +36,9 @@
     faq3Answer: string;
   };
 
+  /** The 16 MiB bound the input help promises; enforced before any file is decoded. */
+  const MAX_FILE_BYTES = 16 * 1024 * 1024;
+
   const EN: Copy = {
     title: 'Cutout and Composite',
     description:
@@ -220,6 +223,11 @@
       published = null;
       return;
     }
+    if (file.size > MAX_FILE_BYTES) {
+      error = 'Choose an image smaller than 16 MiB.';
+      published = null;
+      return;
+    }
     if (foregroundUrl) URL.revokeObjectURL(foregroundUrl);
     foregroundFile = file;
     foregroundUrl = URL.createObjectURL(file);
@@ -239,6 +247,10 @@
     }
     if (!file.type.startsWith('image/')) {
       error = 'Choose a PNG, JPEG, or WebP image.';
+      return;
+    }
+    if (file.size > MAX_FILE_BYTES) {
+      error = 'Choose an image smaller than 16 MiB.';
       return;
     }
     backgroundFile = file;
