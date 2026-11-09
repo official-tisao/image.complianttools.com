@@ -284,7 +284,7 @@
     clearOutput();
   }
 
-  function removeBackgroundFile() {
+  function clearSelectedBackgroundFile() {
     if (busy) return;
     backgroundFile = undefined;
     status = '';
@@ -618,7 +618,7 @@
         data-testid="p4-background-remove"
         type="button"
         disabled={busy}
-        onclick={removeBackgroundFile}
+        onclick={clearSelectedBackgroundFile}
       >
         {t(copy.remove)}
       </button>
