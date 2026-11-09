@@ -20,11 +20,14 @@
     tolerance: string;
     toleranceHelp: string;
     fill: string;
+    expandNote: string;
+    remove: string;
     width: string;
     height: string;
     run: string;
     processing: string;
     ready: string;
+    backgroundReady: string;
     preview: string;
     download: string;
     privacy: string;
@@ -39,6 +42,9 @@
   /** The 16 MiB bound the input help promises; enforced before any file is decoded. */
   const MAX_FILE_BYTES = 16 * 1024 * 1024;
 
+  /** The 12 megapixel bound the input help promises; enforced on the expanded canvas. */
+  const MAX_PIXELS = 12_000_000;
+
   const EN: Copy = {
     title: 'Cutout and Composite',
     description:
@@ -51,23 +57,27 @@
     toleranceHelp:
       'Pixels connected to the image edge and close to the top-left colour become transparent.',
     fill: 'Fill colour',
+    remove: 'Remove selected image',
     width: 'Output width',
     height: 'Output height',
     run: 'Prepare image',
     processing: 'Processing locally…',
     ready: 'Choose an image to begin.',
+    backgroundReady: 'Choose a background image.',
     preview: 'Processed image preview',
     download: 'Download PNG',
     privacy: 'Images stay in this browser. No upload, model, or network service is used.',
     faq1: 'Is a segmentation model used?',
     faq1Answer:
       'No. This bounded route uses a deterministic edge-connected colour flood fill. Inspect the result before publishing.',
-    faq2: 'Can I expand beyond the source canvas?',
+    faq2: 'Can I expand beyond the source canvas with AI scene continuation?',
     faq2Answer:
-      'Yes. Expand Image places the source on a new canvas and fills the added area with the selected colour.',
+      'Yes — or with a chosen fill colour, if AI expansion is unavailable. Expand Image places the source on a new canvas; the added area is filled with the selected colour by default. With an AI provider that genuinely implements generative outpainting, the expanded content is generated to continue the scene naturally.',
     faq3: 'Can I use a transparent cutout in another image?',
     faq3Answer:
       'Yes. Replace Background and Seamless Composite keep the processing local and export a PNG with alpha where applicable.',
+    expandNote:
+      'Local mode pads the expanded canvas with a flat-colour fill of your selected colour — this is not AI outpainting and does not generate scene content. AI outpainting requires a provider whose adapter genuinely implements generative expansion; currently none of the registered providers have a verified `outpaint` implementation, so AI expansion is unavailable. When one is available, you will be asked to confirm before any image leaves this browser.',
   };
 
   const AR: Copy = {
@@ -81,11 +91,13 @@
     tolerance: 'تسامح الخلفية',
     toleranceHelp: 'تصبح البكسلات المتصلة بحافة الصورة والقريبة من لون الزاوية العلوية شفافة.',
     fill: 'لون الملء',
+    remove: 'إزالة الصورة المحددة',
     width: 'عرض الإخراج',
     height: 'ارتفاع الإخراج',
     run: 'إعداد الصورة',
     processing: 'جارٍ التنفيذ محليًا…',
     ready: 'اختر صورة للبدء.',
+    backgroundReady: 'اختر صورة للخلفية.',
     preview: 'معاينة الصورة المعالجة',
     download: 'تنزيل PNG',
     privacy: 'تبقى الصور في هذا المتصفح. لا يتم رفعها ولا تُستخدم نماذج أو خدمات شبكة.',
@@ -97,6 +109,8 @@
     faq3: 'هل يمكن استخدام القصاصة الشفافة في صورة أخرى؟',
     faq3Answer:
       'نعم. يحافظ استبدال الخلفية والتركيب السلس على المعالجة المحلية ويصدر PNG عند الحاجة.',
+    expandNote:
+      'الوضع المحلي يوسّع اللوحة باستخدام لون التعبئة المختار — هذا ليس تمديدًا بالذكاء الاصطناعي ولا يولد محتوى Scene. التمديد بالذكاء الاصطناعي يحتاج إلى مزود يضيف محولًا ينفذ حقًا التوسيع التوليدي؛ حاليًا لا يملك أي مزود مسجل تنفيذًا موثوقًا به لـ `outpaint`، لذا التمديد بالذكاء الاصطناعي غير متوفر. عندما يكون متوفرًا، سيُطلب منك التأكيد قبل أن تغادر أي صورة هذا المتصفح.',
   };
 
   const KIND_TITLES: Record<Kind, { readonly en: string; readonly ar: string }> = {
@@ -135,8 +149,10 @@
   let published = $state<PublishedResult | null>(null);
   let tolerance = $state(40);
   let fillColor = $state('#ffffff');
-  let outputWidth = $state(0);
-  let outputHeight = $state(0);
+  // `undefined` means "not entered": an empty field keeps the +128 default, while an explicitly
+  // typed 0 or negative value must be rejected (P6 bug: a 0 initial state silently masked it).
+  let outputWidth = $state<number>();
+  let outputHeight = $state<number>();
 
   const copy = $derived(locale === 'ar' ? AR : EN);
   const capability = $derived(PROVIDER_CAPABILITY[kind]);
@@ -233,7 +249,7 @@
     foregroundUrl = URL.createObjectURL(file);
     clearOutput();
     error = '';
-    status = file.name;
+    status = '';
   }
 
   function chooseFile(event: Event, target: 'foreground' | 'background') {
@@ -256,7 +272,25 @@
     backgroundFile = file;
     clearOutput();
     error = '';
-    status = file.name;
+    status = '';
+  }
+
+  function removeSelectedForeground() {
+    if (busy) return;
+    if (foregroundUrl) URL.revokeObjectURL(foregroundUrl);
+    foregroundUrl = '';
+    foregroundFile = undefined;
+    status = '';
+    error = '';
+    clearOutput();
+  }
+
+  function clearSelectedBackgroundFile() {
+    if (busy) return;
+    backgroundFile = undefined;
+    status = '';
+    error = '';
+    clearOutput();
   }
 
   async function decode(file: File): Promise<HTMLImageElement> {
@@ -353,8 +387,36 @@
 
       let output = sourceCanvas;
       if (kind === 'expand-image') {
-        const width = Math.max(sourceCanvas.width, outputWidth || sourceCanvas.width + 128);
-        const height = Math.max(sourceCanvas.height, outputHeight || sourceCanvas.height + 128);
+        // An unset field defaults to the source + 128 px of canvas on that axis.
+        const width = outputWidth ?? sourceCanvas.width + 128;
+        const height = outputHeight ?? sourceCanvas.height + 128;
+
+        // Validate dimensions
+        if (width < 1 || height < 1) {
+          error = 'Choose valid output dimensions (each must be at least 1).';
+          return;
+        }
+        if (width < sourceCanvas.width || height < sourceCanvas.height) {
+          error =
+            'Output dimensions must be at least the source image size (' +
+            sourceCanvas.width +
+            ' × ' +
+            sourceCanvas.height +
+            ').';
+          return;
+        }
+        if (width * height > MAX_PIXELS) {
+          error = 'Output image exceeds the 12 megapixel limit.';
+          return;
+        }
+
+        // Local path: canvas padding with the selected fill colour.
+        // This is the only operational path. No AI outpainting is implemented locally,
+        // and no catalogue provider has a verified `outpaint` `run()` implementation
+        // (Stability AI, BFL, fal.ai declare the capability but their `run()` returns
+        // request descriptions, not image pixels). The LazyEscalationControl will
+        // correctly show "No provider currently performs this operation" after the
+        // local result is displayed.
         output = document.createElement('canvas');
         output.width = width;
         output.height = height;
@@ -475,7 +537,15 @@
         onchange={(event) => chooseFile(event, 'foreground')}
       />
     </label>
+    <p class="file-status" data-testid="p4-file-status" role="status" aria-live="polite">
+      {foregroundFile?.name ?? t(copy.ready)}
+    </p>
     <p class="help">{t(copy.chooseHelp)}</p>
+    {#if kind === 'composite'}
+      <p class="file-status" data-testid="p4-background-file-status" role="status" aria-live="polite">
+        {backgroundFile?.name ?? t(copy.backgroundReady)}
+      </p>
+    {/if}
     {#if kind === 'composite'}
       <label>
         <span>{t(copy.backgroundChoose)}</span>
@@ -486,6 +556,9 @@
           onchange={(event) => chooseFile(event, 'background')}
         />
       </label>
+      <p class="file-status" data-testid="p4-background-file-status" role="status" aria-live="polite">
+        {backgroundFile?.name ?? t(copy.backgroundReady)}
+      </p>
     {/if}
     {#if kind !== 'expand-image'}
       <label>
@@ -526,6 +599,14 @@
           /></label
         >
       </div>
+      <!--
+        Honest labelling (README §4.8 T67, §13.1.3): the local path pads the canvas with the fill
+        colour; it does not generate scene content. The register row records generative outpaint as
+        the still-open AI escalation, and §17.3 requires an absence to be explained rather than
+        implied. No catalogue provider currently implements `outpaint`; the escalation UI
+        correctly shows "No provider currently performs this operation" after the local result.
+      -->
+      <p class="help" data-testid="p4-expand-note">{t(copy.expandNote)}</p>
     {/if}
     <button
       data-testid="p4-run"
@@ -536,14 +617,28 @@
     >
       {busy ? t(copy.processing) : t(copy.run)}
     </button>
-    {#if status}<p data-testid="p4-status" role="status" aria-live="polite">{status}</p>{:else}<p
-        data-testid="p4-status"
-        role="status"
-        aria-live="polite"
-      >
-        {t(copy.ready)}
-      </p>{/if}
+    {#if status}<p data-testid="p4-status" role="status" aria-live="polite">{status}</p>{/if}
     {#if error}<p class="error" data-testid="p4-error" role="alert">{t(error)}</p>{/if}
+    {#if foregroundFile}
+      <button
+        data-testid="p4-remove"
+        type="button"
+        disabled={busy}
+        onclick={removeSelectedForeground}
+      >
+        {t(copy.remove)}
+      </button>
+    {/if}
+    {#if backgroundFile}
+      <button
+        data-testid="p4-background-remove"
+        type="button"
+        disabled={busy}
+        onclick={clearSelectedBackgroundFile}
+      >
+        {t(copy.remove)}
+      </button>
+    {/if}
   </section>
 
   {#if foregroundUrl}<figure class="source">
@@ -621,6 +716,35 @@
   }
   input[type='file'] {
     font-weight: 400;
+  }
+  /*
+   * The selection state is shown by the adjacent p4-file-status line, not by the native input:
+   * `chooseFile` resets `input.value` so re-picking the same file works, which also resets the
+   * browser's intrinsic label to "No file chosen" even while a file remains selected. Hiding the
+   * intrinsic text (the input itself stays visible and clickable, which the E2E suite relies on)
+   * stops the control from contradicting the app state.
+   */
+  input[type='file'] {
+    color: transparent;
+  }
+  input[type='file']::file-selector-button {
+    color: #1c1a17;
+    background: #f2f2f2;
+    border: 1px solid #1c1a1733;
+    border-radius: 6px;
+    padding: 6px 12px;
+    margin-inline-end: 8px;
+    cursor: pointer;
+  }
+  .file-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin: 0;
+    color: #5c5a56;
+    font-size: 0.9rem;
+    min-height: 1.2rem;
   }
   input[type='range'] {
     accent-color: #165dff;
