@@ -214,6 +214,7 @@ test.describe('Flow D — §11.4 share → open → run', () => {
     });
 
     await page.goto('/batch');
+    await page.locator('html[data-hydrated="true"]').waitFor();
     await expect(page.getByTestId('long-tail-input')).toBeVisible({ timeout: 30_000 });
 
     const file = await generatedPng(page);

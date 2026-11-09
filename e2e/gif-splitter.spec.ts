@@ -305,6 +305,10 @@ test('GIF output selection and file picker remain keyboard-operable', async ({ p
   await page.keyboard.press('ArrowDown');
   await page.keyboard.press('Enter');
   await expect(output).toHaveValue('apng');
+  // Close the native select popup before moving through the updated tab order.
+  await page.keyboard.press('Escape');
+  await page.keyboard.press('Shift+Tab');
+  await expect(page.getByRole('button', { name: 'Reset' })).toBeFocused();
   await page.keyboard.press('Shift+Tab');
   await expect(page.getByLabel('Choose a GIF')).toBeFocused();
 });
