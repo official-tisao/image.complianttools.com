@@ -20,11 +20,14 @@
     tolerance: string;
     toleranceHelp: string;
     fill: string;
+    expandNote: string;
+    remove: string;
     width: string;
     height: string;
     run: string;
     processing: string;
     ready: string;
+    backgroundReady: string;
     preview: string;
     download: string;
     privacy: string;
@@ -57,11 +60,15 @@
     toleranceHelp:
       'Pixels connected to the image edge and close to the top-left colour become transparent.',
     fill: 'Fill colour',
+    expandNote:
+      'Expand Image pads the canvas with a flat-colour fill; it does not generate new scene content.',
+    remove: 'Remove selected image',
     width: 'Output width',
     height: 'Output height',
     run: 'Prepare image',
     processing: 'Processing locally…',
     ready: 'Choose an image to begin.',
+    backgroundReady: 'Choose a background image.',
     preview: 'Processed image preview',
     download: 'Download PNG',
     privacy: 'Images stay in this browser. No upload, model, or network service is used.',
@@ -90,11 +97,14 @@
     tolerance: 'تسامح الخلفية',
     toleranceHelp: 'تصبح البكسلات المتصلة بحافة الصورة والقريبة من لون الزاوية العلوية شفافة.',
     fill: 'لون الملء',
+    expandNote: 'يوسّع توسيع الصورة اللوحة محليًا بملئها بلون ثابت؛ ولا ينشئ محتوى جديدًا للمشهد.',
+    remove: 'إزالة الصورة المحددة',
     width: 'عرض الإخراج',
     height: 'ارتفاع الإخراج',
     run: 'إعداد الصورة',
     processing: 'جارٍ التنفيذ محليًا…',
     ready: 'اختر صورة للبدء.',
+    backgroundReady: 'اختر صورة للخلفية.',
     preview: 'معاينة الصورة المعالجة',
     download: 'تنزيل PNG',
     privacy: 'تبقى الصور في هذا المتصفح. لا يتم رفعها ولا تُستخدم نماذج أو خدمات شبكة.',
@@ -247,7 +257,7 @@
     foregroundUrl = URL.createObjectURL(file);
     clearOutput();
     error = '';
-    status = file.name;
+    status = '';
   }
 
   function chooseFile(event: Event, target: 'foreground' | 'background') {
@@ -270,7 +280,25 @@
     backgroundFile = file;
     clearOutput();
     error = '';
-    status = file.name;
+    status = '';
+  }
+
+  function removeForeground() {
+    if (busy) return;
+    if (foregroundUrl) URL.revokeObjectURL(foregroundUrl);
+    foregroundUrl = '';
+    foregroundFile = undefined;
+    status = '';
+    error = '';
+    clearOutput();
+  }
+
+  function removeBackgroundFile() {
+    if (busy) return;
+    backgroundFile = undefined;
+    status = '';
+    error = '';
+    clearOutput();
   }
 
   /**
@@ -561,6 +589,17 @@
       {/if}
     </p>
     <p class="help">{t(copy.chooseHelp)}</p>
+    <p data-testid="p4-file-status" role="status" aria-live="polite">
+      {foregroundFile?.name ?? t(copy.ready)}
+    </p>
+    {#if kind === 'composite'}
+      <p data-testid="p4-background-file-status" role="status" aria-live="polite">
+        {backgroundFile?.name ?? t(copy.backgroundReady)}
+      </p>
+    {/if}
+    {#if kind === 'expand-image'}
+      <p class="help" data-testid="p4-expand-note">{t(copy.expandNote)}</p>
+    {/if}
     {#if kind === 'composite'}
       <label>
         <span>{t(copy.backgroundChoose)}</span>
@@ -644,14 +683,23 @@
     >
       {busy ? t(copy.processing) : t(copy.run)}
     </button>
-    {#if status}<p data-testid="p4-status" role="status" aria-live="polite">{status}</p>{:else}<p
-        data-testid="p4-status"
-        role="status"
-        aria-live="polite"
-      >
-        {t(copy.ready)}
-      </p>{/if}
+    {#if status}<p data-testid="p4-status" role="status" aria-live="polite">{status}</p>{/if}
     {#if error}<p class="error" data-testid="p4-error" role="alert">{t(error)}</p>{/if}
+    {#if foregroundFile}
+      <button data-testid="p4-remove" type="button" disabled={busy} onclick={removeForeground}>
+        {t(copy.remove)}
+      </button>
+    {/if}
+    {#if backgroundFile}
+      <button
+        data-testid="p4-background-remove"
+        type="button"
+        disabled={busy}
+        onclick={removeBackgroundFile}
+      >
+        {t(copy.remove)}
+      </button>
+    {/if}
   </section>
 
   {#if foregroundUrl}<figure class="source">
