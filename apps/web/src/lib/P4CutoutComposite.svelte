@@ -274,7 +274,7 @@
     status = '';
   }
 
-  function removeForeground() {
+  function removeSelectedForeground() {
     if (busy) return;
     if (foregroundUrl) URL.revokeObjectURL(foregroundUrl);
     foregroundUrl = '';
@@ -604,7 +604,12 @@
     {#if status}<p data-testid="p4-status" role="status" aria-live="polite">{status}</p>{/if}
     {#if error}<p class="error" data-testid="p4-error" role="alert">{t(error)}</p>{/if}
     {#if foregroundFile}
-      <button data-testid="p4-remove" type="button" disabled={busy} onclick={removeForeground}>
+      <button
+        data-testid="p4-remove"
+        type="button"
+        disabled={busy}
+        onclick={removeSelectedForeground}
+      >
         {t(copy.remove)}
       </button>
     {/if}
