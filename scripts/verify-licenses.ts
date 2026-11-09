@@ -90,12 +90,12 @@ function flatten(report: PnpmLicenseReport): PnpmLicenseEntry[] {
 }
 
 /**
- * pnpm installs only the optional native binary matching the current host. Those packages are
- * still checked above when present, but including them in the committed inventory makes a Windows
- * checkout and the Ubuntu CI runner generate different documents from the same lockfile.
+ * pnpm's licence report can include optional native binaries for multiple host triplets, including
+ * the `linuxmusl` variant used by Alpine. They are not browser-shipped assets, and including every
+ * host variant makes a Windows checkout and the Ubuntu CI runner generate different inventories.
  */
 function isHostSpecificBinaryPackage(name: string): boolean {
-  return /(?:^|[-/])(android|darwin|freebsd|linux|netbsd|openbsd|sunos|win32|windows)(?:[-/]|$)/i.test(
+  return /(?:^|[-/])(android|darwin|freebsd|linux(?:musl)?|netbsd|openbsd|sunos|win32|windows)(?:[-/]|$)/i.test(
     name,
   );
 }
