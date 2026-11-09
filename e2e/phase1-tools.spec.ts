@@ -47,6 +47,21 @@ for (const [route, heading] of [
 test('quality changes produce zero cumulative layout shift', async ({ page }) => {
   await page.goto('/compress');
   await page.waitForLoadState('networkidle');
+  await page.setInputFiles('[data-testid=file-input]', fixture);
+  await expect(page.getByTestId('compare-canvas')).toBeVisible();
+  await expect(page.locator('.workspace')).toHaveAttribute('aria-busy', 'false');
+  await expect(page.getByTestId('workspace-complete')).toBeVisible();
+  await expect
+    .poll(() =>
+      page
+        .locator('.compare-stage img')
+        .evaluateAll((images) => images.every((image) => image.complete && image.naturalWidth > 0)),
+    )
+    .toBe(true);
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
+  );
   await page.evaluate(() => {
     (globalThis as typeof globalThis & { layoutShiftScore: number }).layoutShiftScore = 0;
     (globalThis as typeof globalThis & { layoutShiftSources: string[] }).layoutShiftSources = [];
@@ -70,23 +85,32 @@ test('quality changes produce zero cumulative layout shift', async ({ page }) =>
           );
         }
       }
-    }).observe({ type: 'layout-shift', buffered: true });
-  });
-  await page.setInputFiles('[data-testid=file-input]', fixture);
-  await expect(page.getByTestId('compare-canvas')).toBeVisible();
-  await page.evaluate(() => {
-    (globalThis as typeof globalThis & { layoutShiftScore: number }).layoutShiftScore = 0;
+    }).observe({ type: 'layout-shift' });
   });
   await page.getByTestId('option-export-quality').locator('input[type=range]').fill('55');
-  await page.waitForTimeout(300);
+  await expect(page.locator('.workspace')).toHaveAttribute('aria-busy', 'false');
+  await expect(page.getByTestId('workspace-complete')).toBeVisible();
+  await expect
+    .poll(() =>
+      page
+        .locator('.compare-stage img')
+        .evaluateAll((images) => images.every((image) => image.complete && image.naturalWidth > 0)),
+    )
+    .toBe(true);
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
+  );
   const layoutResult = await page.evaluate(() => ({
     score: (globalThis as typeof globalThis & { layoutShiftScore: number }).layoutShiftScore,
     sources: (globalThis as typeof globalThis & { layoutShiftSources: string[] })
       .layoutShiftSources,
   }));
   expect(layoutResult.score, layoutResult.sources.join(', ')).toBe(0);
-  const latency = await page.locator('.action-bar span').first().textContent();
-  expect(Number(latency?.match(/\d+/u)?.[0])).toBeLessThanOrEqual(250);
+  const latencyStatus = page.locator('.action-bar > div').first().locator('span').first();
+  await expect(latencyStatus).toHaveText(/Updated in \d+ ms/u);
+  const latency = await latencyStatus.textContent();
+  expect(Number(latency?.match(/(\d+)\s*ms/u)?.[1])).toBeLessThanOrEqual(250);
 });
 
 test('tool pages remain useful with JavaScript disabled', async ({ browser }) => {
