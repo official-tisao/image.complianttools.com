@@ -14,6 +14,7 @@ WORKDIR /app
 # Copy workspace manifest and lockfile first for reproducible layer caching.
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml .nvmrc .env.example ./
 COPY apps/web/package.json ./apps/web/
+COPY apps/relay/package.json ./apps/relay/
 COPY packages/engine/package.json ./packages/engine/
 # The root manifest pins a patched ONNX Runtime package; make the patch available
 # before the lockfile install layer runs.
