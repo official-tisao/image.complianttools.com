@@ -289,18 +289,14 @@
 
   <!-- Upload -->
   <section class="card" aria-label={t('gif.upload', 'Upload')}>
-    <button
-      type="button"
-      class="upload-zone button-reset"
+    <div
+      class="upload-zone"
       class:drag-over={dragOver}
+      role="group"
+      aria-label={t('gif.drop', 'Drop a GIF file here')}
       ondragover={handleDragOver}
       ondragleave={handleDragLeave}
       ondrop={handleDrop}
-      aria-label={t('gif.drop', 'Drop a GIF file here')}
-      onclick={() => {
-        const input = document.getElementById('gif-file-input') as HTMLInputElement | null;
-        input?.click();
-      }}
     >
       <span class="upload-icon" aria-hidden="true">📁</span>
       <h2>{t('gif.dropHeading', 'Drop your file here')}</h2>
@@ -311,12 +307,13 @@
           id="gif-file-input"
           type="file"
           accept="image/gif,.gif"
+          aria-label={t('gif.choose', 'Choose a GIF')}
           onchange={handleFileSelect}
-          style="position:absolute;opacity:0;pointer-events:none;"
+          class="file-input"
         />
       </label>
       <p class="formats">{t('gif.supported', 'Supported: GIF (up to 100 MB)')}</p>
-    </button>
+    </div>
   </section>
 
   <!-- Selected file + preview -->
@@ -417,7 +414,7 @@
     >
       {busy ? t('gif.busy', 'Converting…') : t('gif.convert', 'Convert to GIF')}
     </button>
-    <p class="action-note" aria-live="polite">{status}</p>
+    <p class="action-note" role="status" aria-live="polite">{status}</p>
     {#if error}<p class="error" role="alert">{error}</p>{/if}
   </section>
 
@@ -479,7 +476,7 @@
     transition:
       border-color 0.2s ease,
       background 0.2s ease;
-    cursor: pointer;
+    cursor: default;
   }
   .upload-zone.drag-over {
     border-color: var(--color-primary, #2563eb);
@@ -501,6 +498,23 @@
   }
   .browse-label {
     display: inline-block;
+    cursor: pointer;
+  }
+  .browse-label:focus-within .button {
+    outline: 2px solid var(--color-primary, #2563eb);
+    outline-offset: 2px;
+  }
+  .file-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
   }
   .button {
     display: inline-flex;
