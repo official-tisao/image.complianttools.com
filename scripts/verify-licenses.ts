@@ -27,6 +27,7 @@ const allowed = new Set([
   'MPL-2.0',
   'Unlicense',
   'CC0',
+  'CC0-1.0',
 ]);
 const generatedPath = path.join(process.cwd(), 'docs', 'THIRD-PARTY-LICENSES.md');
 const licenceFileName = /^(?:licen[cs]e|copying|notice|readme\.ijg)(?:[._-].*)?$/i;

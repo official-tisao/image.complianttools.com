@@ -3687,6 +3687,7 @@ unreviewed by being absent from both.
 | `dxf-parser` 1.1.2, transitive `loglevel` 1.9.2 | **MIT — verified 2026-08-22** | Browser-local DXF parsing; both installed manifests and bundled MIT licence files verified |
 | `onnxruntime-web` 1.30.0 | **MIT — verified 2026-09-19** | Lazy browser ONNX inference. WebGPU is attempted when available, with WASM fallback; the model loader must obtain consent and provide a same-origin cached model URL or bytes |
 | `tesseract.js` 7.0.0 | **Apache-2.0 — verified 2026-09-19** | Browser-local OCR engine; package and transitive dependencies are pinned and checked by `verify:licenses`. Language data is registered separately as model assets |
+| `wrangler` 4.157.0 | **MIT OR Apache-2.0 — verified 2026-11-09** | Cloudflare Worker development and deployment CLI used to build the optional relay installer; build-time only, not included in the browser runtime |
 | `pako` 1.0.11 | **MIT AND Zlib — verified 2026-08-18** | Deflate, pulled in by `utif`. Both terms of the conjunction are allowlisted |
 
 ##### Candidate register — not installed, licences unverified
