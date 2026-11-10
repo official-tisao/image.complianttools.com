@@ -301,18 +301,17 @@
       <span class="upload-icon" aria-hidden="true">📁</span>
       <h2>{t('gif.dropHeading', 'Drop your file here')}</h2>
       <p class="upload-sub">{t('gif.browseHint', 'Or browse files from your device')}</p>
-      <label class="browse-label">
+      <span class="browse-label">
         <span class="button secondary">{t('gif.browse', 'Browse Files')}</span>
-        <input
-          id="gif-file-input"
-          type="file"
-          accept="image/gif,.gif"
-          aria-label={t('gif.choose', 'Choose a GIF')}
-          onchange={handleFileSelect}
-          class="file-input"
-        />
-      </label>
+      </span>
       <p class="formats">{t('gif.supported', 'Supported: GIF (up to 100 MB)')}</p>
+      <input
+        id="gif-file-input"
+        type="file"
+        aria-label={t('gif.choose', 'Choose a GIF')}
+        accept="image/gif,.gif"
+        onchange={handleFileSelect}
+      />
     </div>
   </section>
 
@@ -469,14 +468,28 @@
     margin: 0 0 0.75rem;
   }
   .upload-zone {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
     border: 2px dashed var(--color-border, #d0d0d5);
     border-radius: 1rem;
+    background: var(--color-surface, #fff);
+    color: var(--color-text, #111);
     padding: 2rem 1rem;
     text-align: center;
     transition:
       border-color 0.2s ease,
       background 0.2s ease;
     cursor: default;
+  }
+  .upload-zone input[type='file'] {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
   }
   .upload-zone.drag-over {
     border-color: var(--color-primary, #2563eb);
@@ -500,21 +513,9 @@
     display: inline-block;
     cursor: pointer;
   }
-  .browse-label:focus-within .button {
+  .upload-zone:focus-within .browse-label .button {
     outline: 2px solid var(--color-primary, #2563eb);
     outline-offset: 2px;
-  }
-  .file-input {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    clip-path: inset(50%);
-    white-space: nowrap;
-    border: 0;
   }
   .button {
     display: inline-flex;

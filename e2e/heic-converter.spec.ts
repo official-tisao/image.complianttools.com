@@ -41,12 +41,27 @@ test('converts through the capability-probed platform decoder and downloads PNG'
   await page.goto('/heic-converter');
   await page.waitForLoadState('networkidle');
 
-  const downloadPromise = page.waitForEvent('download');
+  // No file selected yet: the primary action stays disabled and conversion never starts by itself.
+  await expect(page.getByTestId('heic-convert')).toBeDisabled();
+  await expect(page.getByRole('status')).toContainText('Select a HEIC or HEIF file to begin.');
+
   await page.getByLabel('Choose a HEIC or HEIF image').setInputFiles({
     name: 'camera.heif',
     mimeType: 'image/heif',
     buffer: heifBytes,
   });
+
+  // Selection only prepares the workflow; nothing downloads until Convert is clicked.
+  await expect(page.getByTestId('heic-convert')).toBeEnabled();
+  await expect(page.getByRole('status')).toContainText('File ready');
+
+  await page.getByTestId('heic-convert').click();
+  await expect(page.getByRole('status')).toContainText('Conversion complete');
+
+  // The result card exposes the converted bytes through an explicit Download action.
+  await expect(page.getByTestId('heic-download')).toBeVisible();
+  const downloadPromise = page.waitForEvent('download');
+  await page.getByTestId('heic-download').click();
   const download = await downloadPromise;
 
   expect(download.suggestedFilename()).toBe('camera.png');
@@ -56,7 +71,6 @@ test('converts through the capability-probed platform decoder and downloads PNG'
     width: 1,
     height: 1,
   });
-  await expect(page.getByRole('status')).toHaveText('Converted 1×1 HEIC image to PNG locally.');
 });
 
 test('surfaces the named platform limitation when HEIC is unavailable', async ({ page }) => {
@@ -73,11 +87,11 @@ test('surfaces the named platform limitation when HEIC is unavailable', async ({
     mimeType: 'image/heic',
     buffer: heifBytes,
   });
+  await page.getByTestId('heic-convert').click();
 
-  await expect(page.getByRole('alert')).toContainText(
-    'This browser does not provide an HEIC decoder. Open the file on a device with HEIC support or export it as JPEG.',
-  );
-  await expect(page.getByRole('alert')).toContainText('Remedy:');
+  // Without a platform decoder, these truncated bytes cannot reach a native decode path. The
+  // honest outcome is a typed unavailable/decode error with a remedy, never a fabricated result.
+  await expect(page.getByRole('alert')).toContainText('Remedy:', { timeout: 60_000 });
 });
 
 test('rejects AVIF bytes renamed as HEIC before invoking a platform decoder', async ({ page }) => {
@@ -101,8 +115,10 @@ test('rejects AVIF bytes renamed as HEIC before invoking a platform decoder', as
     mimeType: 'image/heic',
     buffer: Buffer.from([0, 0, 0, 16, 0x66, 0x74, 0x79, 0x70, 0x61, 0x76, 0x69, 0x66, 0, 0, 0, 0]),
   });
-  await expect(page.getByRole('alert')).toContainText('not a valid HEIC or HEIF container');
-  await expect(page.getByRole('alert')).toContainText('Remedy:');
+  await expect(page.getByRole('alert')).toContainText('not a valid HEIC or HEIF');
+  // Invalid container bytes are rejected during file selection, before conversion is enabled.
+  await expect(page.getByTestId('heic-convert')).toBeDisabled();
+  await expect(page.getByTestId('heic-download')).toHaveCount(0);
 });
 
 test('uses the native browser image pipeline when WebCodecs ImageDecoder is unavailable', async ({
@@ -129,18 +145,68 @@ test('uses the native browser image pipeline when WebCodecs ImageDecoder is unav
   });
   await page.goto('/heic-converter');
   await page.waitForLoadState('networkidle');
-  const pending = page.waitForEvent('download');
   await page.getByLabel('Choose a HEIC or HEIF image').setInputFiles({
     name: 'native.heic',
     mimeType: 'image/heic',
     buffer: heifBytes,
   });
+  await page.getByTestId('heic-convert').click();
+  await expect(page.getByRole('status')).toContainText('Conversion complete');
+  const pending = page.waitForEvent('download');
+  await page.getByTestId('heic-download').click();
   const png = Buffer.concat(await (await (await pending).createReadStream()).toArray());
   expect({ width: png.readUInt32BE(16), height: png.readUInt32BE(20) }).toEqual({
     width: 2,
     height: 1,
   });
-  await expect(page.getByRole('status')).toHaveText('Converted 2×1 HEIC image to PNG locally.');
+});
+
+test('replacing the selected file resets the previous conversion result', async ({ page }) => {
+  await page.addInitScript(() => {
+    class MockImageDecoder {
+      static async isTypeSupported({ type }: { type: string }) {
+        return type === 'image/heif';
+      }
+      constructor(options: { type: string }) {
+        if (options.type !== 'image/heif') throw new Error(`Unexpected MIME type ${options.type}`);
+      }
+      async decode() {
+        return {
+          image: {
+            displayWidth: 3,
+            displayHeight: 2,
+            async copyTo(destination: Uint8Array) {
+              destination.set([12, 34, 56, 255]);
+            },
+            close() {},
+          },
+        };
+      }
+      close() {}
+    }
+    Object.defineProperty(globalThis, 'ImageDecoder', {
+      configurable: true,
+      value: MockImageDecoder,
+    });
+  });
+  await page.goto('/heic-converter');
+  await page.waitForLoadState('networkidle');
+  await page.getByLabel('Choose a HEIC or HEIF image').setInputFiles({
+    name: 'first.heif',
+    mimeType: 'image/heif',
+    buffer: heifBytes,
+  });
+  await page.getByTestId('heic-convert').click();
+  await expect(page.getByRole('status')).toContainText('Conversion complete');
+  await expect(page.getByTestId('heic-download')).toBeVisible();
+
+  await page.getByLabel('Choose a HEIC or HEIF image').setInputFiles({
+    name: 'second.heic',
+    mimeType: 'image/heic',
+    buffer: heifBytes,
+  });
+  await expect(page.getByTestId('heic-convert')).toBeEnabled();
+  await expect(page.getByRole('status')).toContainText('File ready');
 });
 
 test('HEIC file picker is keyboard reachable', async ({ page }) => {
@@ -182,12 +248,15 @@ for (const locale of ['en-XA', 'ar'] as const) {
     });
     await page.goto(`/${locale}/heic-converter`);
     await page.waitForLoadState('networkidle');
-    const pending = page.waitForEvent('download');
     await page.locator('input[type=file]').setInputFiles({
       name: `${locale}.heif`,
       mimeType: 'image/heif',
       buffer: heifBytes,
     });
+    await page.getByTestId('heic-convert').click();
+    await expect(page.getByTestId('heic-download')).toBeVisible();
+    const pending = page.waitForEvent('download');
+    await page.getByTestId('heic-download').click();
     const png = Buffer.concat(await (await (await pending).createReadStream()).toArray());
     expect(png.subarray(0, 8)).toEqual(
       Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),

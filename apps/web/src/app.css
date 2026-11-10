@@ -144,17 +144,20 @@ a:focus-visible,
 }
 .workspace {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
+  grid-template-columns: 1fr minmax(0, 320px);
   min-height: 620px;
   border-block: 1px solid #1c1a171a;
   background: #ebe6de;
+  max-width: 1280px;
+  margin-inline: auto;
+  padding-inline: 12px;
 }
 .canvas-panel {
   display: grid;
   place-items: center;
   padding: 32px;
   min-width: 0;
-  overflow: hidden;
+  overflow: visible;
 }
 .empty-canvas {
   display: grid;
@@ -169,14 +172,49 @@ a:focus-visible,
   padding: 28px 24px;
   background: white;
   border-left: 1px solid #1c1a171a;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 .options-panel h2 {
   margin: 0 0 24px;
   font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
 }
 .generated-control {
-  padding: 16px 0;
-  border-top: 1px solid #1c1a1712;
+  padding: 16px 4px;
+  border-bottom: 1px solid #1c1a1712;
+}
+
+.generated-control:last-child {
+  border-bottom: none;
+  padding-bottom: 8px;
+}
+
+.control-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin-block-end: 6px;
+}
+
+.generated-control label {
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.generated-control .control-label {
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.generated-control p {
+  margin: 4px 0 8px;
+  color: #5c5a56;
+  font-size: 12px;
+  line-height: 1.5;
 }
 .control-heading {
   display: flex;
@@ -257,7 +295,7 @@ details summary {
   align-items: center;
   justify-content: center;
   min-height: 460px;
-  overflow: auto;
+  overflow: hidden;
   border-radius: 8px;
   border: 1px solid #1c1a17;
   background-color: #eee;
@@ -275,10 +313,10 @@ details summary {
 }
 .compare-stage img {
   display: block;
-  max-width: none;
+  max-width: 100%;
+  max-height: 520px;
   width: auto;
   height: auto;
-  max-height: 520px;
   transform: translate(var(--pan-x), var(--pan-y)) scale(var(--zoom));
   transform-origin: center;
 }
@@ -520,6 +558,26 @@ details summary {
   .tool-intro h1 {
     font-size: 38px;
     letter-spacing: -2px;
+  }
+}
+
+@media (max-width: 767px) {
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .canvas-panel {
+    padding: 16px;
+  }
+
+  .empty-canvas {
+    min-height: 360px;
+  }
+
+  .options-panel {
+    border-left: 0;
+    border-top: 1px solid #1c1a171a;
+    padding: 20px;
   }
 }
 @media (prefers-reduced-motion: reduce) {

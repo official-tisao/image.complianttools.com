@@ -41,6 +41,7 @@ test.describe('collage multi-image selection', () => {
   test('file input is hidden from visible interface with custom button shown', async ({ page }) => {
     await gotoHydrated(page, '/collage');
     const input = page.getByTestId('expansion-input');
+    // Keep the native picker out of the visible layout; users interact with the accessible button.
     await expect(input).toBeHidden();
     await expect(page.getByRole('button', { name: /Choose Images/i })).toBeVisible();
   });
@@ -125,7 +126,7 @@ test.describe('collage multi-image selection', () => {
       { name: 'img-a.png', mimeType: 'image/png', buffer: file },
       { name: 'img-b.png', mimeType: 'image/png', buffer: file },
     ]);
-    await expect(page.getByTestId('expansion-run')).not.toHaveAttribute('data-disabled');
+    await expect(page.getByTestId('expansion-run')).toBeEnabled();
   });
 
   test('collage generation processes all selected images and produces a downloadable collage', async ({

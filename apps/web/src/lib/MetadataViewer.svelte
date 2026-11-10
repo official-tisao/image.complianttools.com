@@ -138,7 +138,7 @@
     fileName = file?.name ?? '';
     tags = [];
     error = '';
-    status = '';
+    status = t('viewer.inspecting', 'Extracting image metadata...');
     inputBytes = undefined;
     canEdit = false;
     editOptions = MetadataEditOptionsSchema.parse({});
@@ -168,10 +168,17 @@
           };
         }
       }
+      // Only show success when metadata was actually extracted; otherwise show empty state
+      if (tags.length > 0) {
+        status = t('viewer.metadataReady', 'Image metadata extracted successfully.');
+      } else {
+        status = '';
+      }
     } catch (reason) {
       error = isEngineError(reason)
         ? `${engineErrorMessage(reason)} ${t('error.remedyLabel', 'Remedy')}: ${reason.remedy}`
         : t('viewer.inspectUnable', 'This local metadata reader could not inspect the file.');
+      status = t('viewer.inspectionFailed', 'Failed to extract image metadata. Please try again.');
     }
   }
   function saveEdits() {
@@ -241,64 +248,109 @@
   }
 </script>
 
-<main lang={locale === 'en-XA' ? 'en-XA' : locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}>
+<main
+  class="exif-viewer"
+  lang={locale === 'en-XA' ? 'en-XA' : locale}
+  dir={locale === 'ar' ? 'rtl' : 'ltr'}
+>
   <a href={locale === 'en' ? '/convert' : `/${locale}/convert`}>{t('viewer.back', '← Convert')}</a>
-  <h1>{t('viewer.title', 'Metadata Viewer')}</h1>
-  <p>
-    {t(
-      'viewer.description',
-      'Your file stays in this browser. PNG, JPEG, GIF, WebP, AVIF, and HEIF metadata markers are read locally.',
-    )}
-  </p>
-  <label for="metadata-file-input">
-    <span>{t('viewer.choose', 'Choose an image')}</span>
-    <input
-      id="metadata-file-input"
-      aria-label={t('viewer.choose', 'Choose an image')}
-      type="file"
-      accept="image/png,image/jpeg,image/gif,image/webp,image/avif,image/heif"
-      onchange={(event) => void inspect(event.currentTarget.files?.[0])}
-    /></label
-  >
-  {#if fileName}<h2>{fileName}</h2>{/if}
-  {#if error}<p role="alert">{error}</p>{:else if status}<p role="status">
-      {status}
-    </p>{:else if fileName && tags.length === 0}<p>
+
+  <header class="exif-header">
+    <h1>{t('viewer.title', 'Metadata Viewer')}</h1>
+    <p class="exif-description">
+      {t(
+        'viewer.description',
+        'Your file stays in this browser. PNG, JPEG, GIF, WebP, AVIF, and HEIF metadata markers are read locally.',
+      )}
+    </p>
+  </header>
+
+  <section class="exif-upload-section">
+    <div class="exif-card">
+      <div class="exif-dropzone">
+        <label for="metadata-file-input">
+          <span class="exif-dropzone-label">{t('viewer.choose', 'Choose an image')}</span>
+          <input
+            id="metadata-file-input"
+            aria-label={t('viewer.choose', 'Choose an image')}
+            type="file"
+            accept="image/png,image/jpeg,image/gif,image/webp,image/avif,image/heif"
+            onchange={(event) => void inspect(event.currentTarget.files?.[0])}
+          />
+        </label>
+        {#if fileName}
+          <div class="exif-file-selected">
+            <span class="exif-file-icon">📷</span>
+            <h2 class="exif-file-name">{fileName}</h2>
+          </div>
+        {/if}
+      </div>
+    </div>
+  </section>
+
+  {#if error}
+    <div class="exif-error" role="alert">{error}</div>
+  {:else if status}
+    <div class="exif-status" role="status">{status}</div>
+  {/if}
+
+  {#if fileName && tags.length === 0}
+    <div class="exif-empty" role="status">
       {t('viewer.none', 'No readable metadata was found.')}
-    </p>{/if}
-  {#if tags.length}<table>
-      <thead
-        ><tr
-          ><th>{t('viewer.namespace', 'Namespace')}</th><th>{t('viewer.field', 'Field')}</th><th
-            >{t('viewer.value', 'Value')}</th
-          ></tr
-        ></thead
-      ><tbody
-        >{#each tags as tag (`${tag.namespace}:${tag.name}:${tag.value}`)}<tr
-            ><td>{tag.namespace}</td><td>{tag.name}</td><td>{tag.value}</td></tr
-          >{/each}</tbody
-      >
-    </table>{/if}
-  {#if canEdit}
-    <section aria-labelledby="edit-fields-heading">
-      <h2 id="edit-fields-heading">{t('viewer.editHeading', 'Add or edit EXIF fields')}</h2>
-      <p>
-        {t(
-          'viewer.editDescription',
-          'Choose fields to add or change. Longer values and new fields are appended through a rebuilt EXIF structure; unchecked metadata remains untouched.',
-        )}
-      </p>
-      <GeneratedControls
-        descriptions={editDescriptions}
-        values={controlValues}
-        onChange={setEditControl}
-        {locale}
-      />
-      <button type="button" onclick={saveEdits}
-        >{t('viewer.download', 'Download edited JPEG')}</button
-      >
+    </div>
+  {/if}
+
+  {#if tags.length}
+    <section class="exif-metadata-section">
+      <div class="exif-card">
+        <h2 class="exif-section-title">{t('viewer.metadata', 'Metadata Fields')}</h2>
+        <table class="exif-metadata-grid">
+          <thead>
+            <tr>
+              <th scope="col">{t('viewer.namespace', 'Namespace')}</th>
+              <th scope="col">{t('viewer.field', 'Field')}</th>
+              <th scope="col">{t('viewer.value', 'Value')}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {#each tags as tag (`${tag.namespace}:${tag.name}:${tag.value}`)}
+              <tr class="exif-metadata-row">
+                <td class="exif-metadata-namespace">{tag.namespace}</td>
+                <td class="exif-metadata-field">{tag.name}</td>
+                <td class="exif-metadata-value">{tag.value}</td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
+      </div>
     </section>
   {/if}
+
+  {#if canEdit}
+    <section class="exif-edit-section">
+      <div class="exif-card">
+        <h2 id="exif-edit-heading" class="exif-section-title">
+          {t('viewer.editHeading', 'Add or edit EXIF fields')}
+        </h2>
+        <p class="exif-edit-description">
+          {t(
+            'viewer.editDescription',
+            'Choose fields to add or change. Longer values and new fields are appended through a rebuilt EXIF structure; unchecked metadata remains untouched.',
+          )}
+        </p>
+        <GeneratedControls
+          descriptions={editDescriptions}
+          values={controlValues}
+          onChange={setEditControl}
+          {locale}
+        />
+        <button type="button" class="exif-download-button" onclick={saveEdits}
+          >{t('viewer.download', 'Download edited JPEG')}</button
+        >
+      </div>
+    </section>
+  {/if}
+
   <ToolPageCompletion
     {locale}
     route="exif-viewer"
@@ -311,3 +363,298 @@
     faqs={seoFaqs}
   />
 </main>
+
+<style>
+  .exif-viewer {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: var(--sp-6) var(--sp-4) var(--sp-12);
+    min-height: 100vh;
+  }
+
+  /* Header */
+  .exif-header {
+    margin-bottom: var(--sp-10);
+  }
+
+  .exif-header h1 {
+    font-size: clamp(1.75rem, 4vw, 2.25rem);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin: 0 0 var(--sp-2) 0;
+    line-height: var(--lh-tight);
+  }
+
+  .exif-description {
+    color: var(--c-text-muted);
+    font-size: var(--fs-sm);
+    line-height: var(--lh-relaxed);
+    margin: 0;
+    max-width: 640px;
+  }
+
+  /* Upload section */
+  .exif-upload-section {
+    margin-bottom: var(--sp-8);
+  }
+
+  .exif-dropzone {
+    border: 1px solid var(--c-border);
+    border-radius: var(--r-lg);
+    padding: var(--sp-6);
+    background: var(--c-surface);
+    position: relative;
+    min-height: 160px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    cursor: pointer;
+    transition:
+      border-color var(--dur-fast) var(--ease-out),
+      background-color var(--dur-fast) var(--ease-out);
+  }
+
+  .exif-dropzone-label {
+    display: block;
+    font-size: var(--fs-md);
+    font-weight: 500;
+    margin-bottom: var(--sp-2);
+    color: var(--c-text);
+  }
+
+  .exif-dropzone input[type='file'] {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .exif-dropzone label:focus-within {
+    outline: 2px solid var(--c-accent);
+    outline-offset: 3px;
+    border-radius: var(--r-md);
+  }
+
+  .exif-dropzone:hover {
+    border-color: var(--c-accent);
+    background-color: var(--c-accent-subtle);
+  }
+
+  .exif-file-selected {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    margin-top: var(--sp-4);
+    padding: var(--sp-2) var(--sp-4);
+    background: var(--c-accent-subtle);
+    border-radius: var(--r-md);
+    font-size: var(--fs-sm);
+    color: var(--c-text);
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .exif-file-icon {
+    font-size: var(--fs-md);
+    flex-shrink: 0;
+  }
+
+  .exif-file-name {
+    margin: 0;
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Cards */
+  .exif-card {
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    border-radius: var(--r-lg);
+    padding: var(--sp-6);
+    margin-bottom: var(--sp-6);
+  }
+
+  /* Status / Error */
+  .exif-error {
+    background: oklch(98% 0.02 25);
+    border: 1px solid oklch(85% 0.04 25);
+    color: var(--c-danger);
+    padding: var(--sp-3) var(--sp-4);
+    border-radius: var(--r-md);
+    margin-bottom: var(--sp-4);
+    font-size: var(--fs-sm);
+    line-height: var(--lh-relaxed);
+  }
+
+  .exif-status {
+    background: oklch(97% 0.03 145);
+    border: 1px solid oklch(90% 0.04 145);
+    color: var(--c-success);
+    padding: var(--sp-3) var(--sp-4);
+    border-radius: var(--r-md);
+    margin-bottom: var(--sp-4);
+    font-size: var(--fs-sm);
+    line-height: var(--lh-relaxed);
+  }
+
+  .exif-empty {
+    text-align: center;
+    color: var(--c-text-muted);
+    padding: var(--sp-6);
+    background: var(--c-surface);
+    border: 1px dashed var(--c-border);
+    border-radius: var(--r-md);
+    margin-bottom: var(--sp-6);
+  }
+
+  /* Metadata section */
+  .exif-metadata-section {
+    margin-bottom: var(--sp-8);
+  }
+
+  .exif-section-title {
+    font-size: var(--fs-lg);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin: 0 0 var(--sp-4) 0;
+    color: var(--c-text);
+  }
+
+  .exif-metadata-grid {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 var(--sp-3);
+  }
+
+  .exif-metadata-grid th {
+    padding: 0 var(--sp-4) var(--sp-1);
+    color: var(--c-text-subtle);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    text-align: start;
+  }
+
+  .exif-metadata-row {
+    background: var(--c-bg);
+  }
+
+  .exif-metadata-row td {
+    padding: var(--sp-3) var(--sp-4);
+    border-block: 1px solid var(--c-border);
+    vertical-align: top;
+  }
+
+  .exif-metadata-row td:first-child {
+    width: 20%;
+    border-inline-start: 1px solid var(--c-border);
+    border-start-start-radius: var(--r-md);
+    border-end-start-radius: var(--r-md);
+  }
+
+  .exif-metadata-row td:nth-child(2) {
+    width: 25%;
+  }
+
+  .exif-metadata-row td:last-child {
+    width: 55%;
+    border-inline-end: 1px solid var(--c-border);
+    border-start-end-radius: var(--r-md);
+    border-end-end-radius: var(--r-md);
+  }
+
+  .exif-metadata-namespace {
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--c-text-subtle);
+  }
+
+  .exif-metadata-field {
+    font-size: var(--fs-sm);
+    font-weight: 500;
+    color: var(--c-text);
+  }
+
+  .exif-metadata-value {
+    font-size: var(--fs-sm);
+    color: var(--c-text-muted);
+    word-break: break-all;
+    font-family: var(--font-mono);
+  }
+
+  /* Edit section */
+  .exif-edit-section {
+    margin-bottom: var(--sp-8);
+  }
+
+  .exif-edit-description {
+    color: var(--c-text-muted);
+    font-size: var(--fs-sm);
+    line-height: var(--lh-relaxed);
+    margin: 0 0 var(--sp-4) 0;
+    max-width: 640px;
+  }
+
+  .exif-download-button {
+    margin-top: var(--sp-2);
+    background: var(--c-accent);
+    color: var(--c-on-accent);
+    border: none;
+    border-radius: var(--r-md);
+    padding: var(--sp-2) var(--sp-4);
+    font-size: var(--fs-sm);
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color var(--dur-fast) var(--ease-out);
+  }
+
+  .exif-download-button:hover:not(:disabled) {
+    background: var(--c-accent-hover);
+  }
+
+  .exif-download-button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  .exif-download-button:focus-visible {
+    outline: 2px solid var(--c-accent);
+    outline-offset: 2px;
+  }
+
+  /* Responsive */
+  @media (max-width: 767px) {
+    .exif-viewer {
+      padding: var(--sp-4) var(--sp-3) var(--sp-8);
+    }
+
+    .exif-card {
+      padding: var(--sp-4);
+    }
+
+    .exif-dropzone {
+      padding: var(--sp-4);
+      min-height: 140px;
+    }
+
+    .exif-metadata-namespace,
+    .exif-metadata-field,
+    .exif-metadata-value {
+      font-size: var(--fs-xs);
+    }
+  }
+</style>

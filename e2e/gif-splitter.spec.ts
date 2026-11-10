@@ -297,20 +297,24 @@ test('converts a GIF to a real two-frame APNG locally', async ({ page, context }
   await allowAllNetwork(context);
 });
 
-test('GIF output selection and file picker remain keyboard-operable', async ({ page }) => {
+test('GIF file picker and output settings remain keyboard-operable', async ({ page }) => {
   await page.goto('/gif-converter');
   await page.waitForLoadState('networkidle');
+  const input = page.getByLabel('Choose a GIF');
+  await input.focus();
+  await expect(input).toBeFocused();
   const output = page.getByLabel('Output');
-  await output.focus();
+  await page.keyboard.press('Tab');
+  await expect(output).toBeFocused();
   await page.keyboard.press('ArrowDown');
-  await page.keyboard.press('Enter');
   await expect(output).toHaveValue('apng');
+  await page.keyboard.press('Enter');
   // Close the native select popup before moving through the updated tab order.
   await page.keyboard.press('Escape');
   await page.keyboard.press('Shift+Tab');
   await expect(page.getByRole('button', { name: 'Reset' })).toBeFocused();
   await page.keyboard.press('Shift+Tab');
-  await expect(page.getByLabel('Choose a GIF')).toBeFocused();
+  await expect(input).toBeFocused();
 });
 
 for (const locale of ['en-XA', 'ar'] as const) {

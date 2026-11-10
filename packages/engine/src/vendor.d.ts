@@ -1,3 +1,5 @@
+// Type declarations for external modules without built-in types
+
 declare module 'utif' {
   interface TiffIfd {
     width: number;

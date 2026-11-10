@@ -311,7 +311,7 @@ test('metadata pages remain useful with JavaScript disabled', async ({ browser }
 for (const locale of ['en-XA', 'ar'] as const) {
   test(`image inspector survives ${locale} localization`, async ({ page }) => {
     await page.goto(`/${locale}/image-info`);
-    await page.waitForLoadState('networkidle');
+    await expect(page.locator('html')).toHaveAttribute('data-hydrated', 'true');
     const main = page.locator('main');
     await expect(main).toHaveAttribute('lang', locale);
     await expect(main).toHaveAttribute('dir', locale === 'ar' ? 'rtl' : 'ltr');
