@@ -20,6 +20,7 @@
     tolerance: string;
     toleranceHelp: string;
     fill: string;
+    /** Human-readable note that local expansion fills added pixels instead of generating content. */
     expandNote: string;
     remove: string;
     width: string;
@@ -77,7 +78,7 @@
     faq3Answer:
       'Yes. Replace Background and Seamless Composite keep the processing local and export a PNG with alpha where applicable.',
     expandNote:
-      'Local mode pads the expanded canvas with a flat-colour fill of your selected colour — this is not AI outpainting and does not generate scene content. AI outpainting requires a provider whose adapter genuinely implements generative expansion; currently none of the registered providers have a verified `outpaint` implementation, so AI expansion is unavailable. When one is available, you will be asked to confirm before any image leaves this browser.',
+      'Local mode pads the expanded canvas with a selected flat-colour fill — this is not AI outpainting and does not generate scene content. AI outpainting requires a provider whose adapter genuinely implements generative expansion; currently none of the registered providers have a verified `outpaint` implementation, so AI expansion is unavailable. When one is available, you will be asked to confirm before any image leaves this browser.',
   };
 
   const AR: Copy = {
@@ -718,7 +719,16 @@
    * browser's intrinsic label to "No file chosen" even while a file remains selected. Hiding the
    * intrinsic text (the input itself stays visible and clickable, which the E2E suite relies on)
    * stops the control from contradicting the app state.
+   *
+   * `font-size: 0` is more reliable than `color: transparent` for hiding the native file input's
+   * "No file chosen" text across browsers, while keeping the ::file-selector-button readable.
    */
+  input[type='file'] {
+    font-size: 0;
+  }
+  input[type='file']::file-selector-button {
+    font-size: 0.9rem;
+  }
   input[type='file'] {
     color: transparent;
   }
@@ -732,14 +742,12 @@
     cursor: pointer;
   }
   .file-status {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
+    display: block;
     margin: 0;
     color: #5c5a56;
     font-size: 0.9rem;
     min-height: 1.2rem;
+    overflow-wrap: anywhere;
   }
   input[type='range'] {
     accent-color: #165dff;
