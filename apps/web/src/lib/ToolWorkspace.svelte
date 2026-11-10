@@ -80,7 +80,14 @@
   });
   const summary = $derived(
     sourceBytes && outputBytes
-      ? `${formatBytes(sourceBytes)} → ${formatBytes(outputBytes)} (${Math.round((outputBytes / sourceBytes - 1) * 100)}%)`
+      ? (() => {
+          const diff = outputBytes - sourceBytes;
+          const pct = Math.round((outputBytes / sourceBytes - 1) * 100);
+          if (diff > 0) {
+            return `${formatBytes(sourceBytes)} → ${formatBytes(outputBytes)} (+${pct}%, larger)`;
+          }
+          return `${formatBytes(sourceBytes)} → ${formatBytes(outputBytes)} (${pct}%)`;
+        })()
       : translate(locale, 'status.choose', 'Choose an image to begin'),
   );
   const canonical = $derived(`https://image.complianttools.com/${canonicalPath}`);
@@ -484,7 +491,7 @@
           </p>
         </div>{/if}
     </div>
-    <div class="options-panel" role="region" aria-labelledby="options-heading">
+    <aside class="options-panel" role="region" aria-labelledby="options-heading">
       <h2 id="options-heading">{translate(locale, 'workspace.options', 'Options')}</h2>
       <GeneratedControls
         descriptions={relevant}
@@ -495,11 +502,12 @@
           <strong>{translate(locale, 'error.process', 'Couldn’t process this image.')}</strong>
           {error}
         </p>{/if}
-    </div>
+    </aside>
   </section>
   <footer class="action-bar">
-    <div>
-      <strong data-testid="size-prediction">{summary}</strong><span
+    <div class="action-bar-meta">
+      <strong data-testid="size-prediction">{summary}</strong>
+      <span
         >{latency
           ? translate(locale, 'status.updated', 'Updated in {value} ms', Math.round(latency))
           : '\u00A0'}</span

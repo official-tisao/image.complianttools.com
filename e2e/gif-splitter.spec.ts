@@ -51,6 +51,7 @@ for (const format of ['webp', 'webm', 'mp4'] as const) {
       mimeType: 'image/gif',
       buffer: Buffer.from(animatedGifFixture()),
     });
+    await page.getByTestId('gif-convert').click();
 
     // WebM and MP4 export depends on a WebCodecs encoder for the relevant codec, and support is
     // genuinely uneven across engines. Rather than wait 30 s for a download the browser can never
@@ -247,6 +248,7 @@ test('exports every GIF frame as an exact PNG download', async ({ page }) => {
     mimeType: 'image/gif',
     buffer: Buffer.from(animatedGifFixture()),
   });
+  await page.getByTestId('gif-convert').click();
   await expect(page.getByRole('status')).toContainText('Exported 2 GIF frames locally.');
   await expect.poll(() => downloads.length).toBe(2);
   expect(downloads.map((download) => download.suggestedFilename())).toEqual([
@@ -270,6 +272,7 @@ test('converts a GIF to a real two-frame APNG locally', async ({ page, context }
     mimeType: 'image/gif',
     buffer: Buffer.from(animatedGifFixture()),
   });
+  await page.getByTestId('gif-convert').click();
   const bytes = Buffer.concat(await (await (await pending).createReadStream()).toArray());
   expect(bytes.includes(Buffer.from('acTL'))).toBe(true);
   expect(inspectImageContainer(bytes)).toMatchObject({
@@ -286,6 +289,7 @@ test('converts a GIF to a real two-frame APNG locally', async ({ page, context }
     mimeType: 'image/gif',
     buffer: Buffer.from(animatedGifFixture()),
   });
+  await page.getByTestId('gif-convert').click();
   const offlineBytes = Buffer.concat(
     await (await (await offlinePending).createReadStream()).toArray(),
   );
@@ -293,14 +297,16 @@ test('converts a GIF to a real two-frame APNG locally', async ({ page, context }
   await allowAllNetwork(context);
 });
 
-test('GIF output control leads to the file picker by keyboard', async ({ page }) => {
+test('GIF file picker and output settings are keyboard reachable', async ({ page }) => {
   await page.goto('/gif-converter');
   await page.waitForLoadState('networkidle');
-  await page.getByLabel('Output').focus();
-  await page.keyboard.press('ArrowDown');
+  const input = page.getByLabel('Choose a GIF');
+  await input.focus();
+  await expect(input).toBeFocused();
   await page.keyboard.press('Tab');
+  await expect(page.getByLabel('Output')).toBeFocused();
+  await page.keyboard.press('ArrowDown');
   await expect(page.getByLabel('Output')).toHaveValue('apng');
-  await expect(page.locator('input[type=file]')).toBeFocused();
 });
 
 for (const locale of ['en-XA', 'ar'] as const) {
@@ -314,6 +320,7 @@ for (const locale of ['en-XA', 'ar'] as const) {
       mimeType: 'image/gif',
       buffer: Buffer.from(animatedGifFixture()),
     });
+    await page.getByTestId('gif-convert').click();
     const bytes = Buffer.concat(await (await (await pending).createReadStream()).toArray());
     expect(inspectImageContainer(bytes)).toMatchObject({
       width: 32,

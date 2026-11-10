@@ -1,17 +1,18 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
   import {
-    canvasResize,
+    splitImage,
     createRaster,
     encodeRaster,
-    enlarge,
+    ResizeOptionsSchema,
     makeCollage,
     resizeRaster,
+    canvasResize,
+    enlarge,
     roundCorners,
-    splitImage,
-    ResizeOptionsSchema,
     type RasterImage,
   } from '@complianttools/image-engine';
+  import { zipSync } from 'fflate';
   import { translate, type Locale } from './i18n';
 
   type ExpansionKind =
@@ -71,8 +72,10 @@
 
   let files = $state<readonly File[]>([]);
   let previews = $state<string[]>([]);
-  let outputUrl = $state('');
   let outputs = $state<readonly { name: string; url: string }[]>([]);
+  let zipUrl = $state('');
+  let zipStatus = $state('');
+  let zipError = $state('');
   let inputRef = $state<HTMLInputElement | null>(null);
   let status = $state('');
   let error = $state('');
@@ -83,7 +86,7 @@
   let columns = $state(2);
   let rows = $state(2);
   let gap = $state(8);
-  let sourceName = $state('image');
+  let dragOver = $state(false);
 
   function fileCountText(files: readonly File[]): string {
     if (files.length === 0) return 'No files selected';
@@ -91,16 +94,12 @@
   }
 
   function removeFile(index: number) {
-    URL.revokeObjectURL(previews[index]!);
+    const preview = previews[index];
+    if (preview) URL.revokeObjectURL(preview);
     files = files.filter((_, i) => i !== index);
     previews = previews.filter((_, i) => i !== index);
-    if (files.length === 0) {
-      sourceName = 'image';
-      status = fileCountText(files);
-    } else {
-      sourceName = files[0]!.name.replace(/\.[^.]+$/u, '') ?? 'image';
-      status = fileCountText(files);
-    }
+    clearOutputs();
+    status = fileCountText(files);
     error = '';
   }
 
@@ -112,11 +111,38 @@
     const selected = Array.from(picker.files ?? []);
     picker.value = '';
     if (!selected.length) return;
-    files = [...files, ...selected];
-    previews = [...previews, ...selected.map((file) => URL.createObjectURL(file))];
-    sourceName = files[0]?.name.replace(/\.[^.]+$/u, '') ?? 'image';
+    const acceptsBatches = kind === 'bulk-resize' || kind === 'collage';
+    const nextFiles = acceptsBatches ? [...files, ...selected] : selected;
+    if (!acceptsBatches) clearPreviews();
+    files = nextFiles;
+    previews = acceptsBatches
+      ? [...previews, ...selected.map((file) => URL.createObjectURL(file))]
+      : selected.map((file) => URL.createObjectURL(file));
     status = fileCountText(files);
+    clearOutputs();
     error = '';
+  }
+  function handleDragOver(e: DragEvent) {
+    e.preventDefault();
+    dragOver = true;
+  }
+  function handleDragLeave(e: DragEvent) {
+    e.preventDefault();
+    dragOver = false;
+  }
+  function handleDrop(e: DragEvent) {
+    e.preventDefault();
+    dragOver = false;
+    const dropped = e.dataTransfer?.files;
+    if (dropped && dropped.length) {
+      const input = inputRef;
+      if (input) {
+        const dt = new DataTransfer();
+        for (let i = 0; i < dropped.length; i++) dt.items.add(dropped[i]!);
+        input.files = dt.files;
+        onFiles({ currentTarget: input } as unknown as Event);
+      }
+    }
   }
   async function decode(file: File): Promise<RasterImage> {
     const bitmap = await createImageBitmap(file);
@@ -137,13 +163,13 @@
     const bytes = await encodeRaster(image, 'png');
     const url = URL.createObjectURL(new Blob([bytes], { type: 'image/png' }));
     outputs = [...outputs, { name, url }];
-    if (outputUrl) URL.revokeObjectURL(outputUrl);
-    outputUrl = url;
   }
   function clearOutputs() {
     for (const result of outputs) URL.revokeObjectURL(result.url);
     outputs = [];
-    outputUrl = '';
+    zipUrl = '';
+    zipStatus = '';
+    zipError = '';
   }
   function clearPreviews() {
     for (const url of previews) URL.revokeObjectURL(url);
@@ -173,10 +199,27 @@
           rows,
           output: 'array',
         });
-        for (const [index, tile] of tiles.entries())
-          await publish(tile, `${sourceName}-tile-${index + 1}.png`);
+        const tileEntries: [string, Uint8Array][] = [];
+        for (const [index, tile] of tiles.entries()) {
+          const bytes = await encodeRaster(tile, 'png');
+          const filename = `${files[0]?.name?.replace(/\.[^.]+$/u, '')}-tile-${index + 1}.png`;
+          tileEntries.push([filename, new Uint8Array(bytes)]);
+        }
+        const zipBuffer = zipSync(Object.fromEntries(tileEntries), {
+          level: 0,
+          mtime: new Date(1980, 0, 1),
+        });
+        zipStatus = 'Preparing ZIP...';
+        zipError = '';
+        zipUrl = URL.createObjectURL(new Blob([zipBuffer], { type: 'application/zip' }));
+        outputs = [...outputs, { name: 'split-image-tiles.zip', url: zipUrl }];
+        zipStatus = 'ZIP ready';
       } else {
         for (const [index, image] of decoded.entries()) {
+          const file = files[index];
+          const fileBaseName = file.name.replace(/\.[^.]+$/u, '');
+          const fileSuffix = decoded.length > 1 ? `-${index + 1}` : '';
+          const fileName = `${fileBaseName}-${kind}${fileSuffix}.png`;
           const result =
             kind === 'bulk-resize'
               ? resizeRaster(
@@ -194,10 +237,7 @@
                 : kind === 'enlarge'
                   ? enlarge(image, { scale })
                   : roundCorners(image, { radius, background: 'transparent' });
-          await publish(
-            result,
-            `${sourceName}-${kind}${decoded.length > 1 ? `-${index + 1}` : ''}.png`,
-          );
+          await publish(result, fileName);
         }
       }
       status = t('longTail.ready', 'Created {value} output(s) locally', outputs.length);
@@ -218,9 +258,9 @@
   <meta property="og:title" content={copy.title} />
   <meta property="og:description" content={copy.description} />
   <meta property="og:image" content="https://image.complianttools.com/og/tools.svg" />
-  <svelte:element this={"script"} type="application/ld+json"
-    >{JSON.stringify(jsonLd)}</svelte:element
-  >
+  <svelte:element this={"script"} type="application/ld+json">
+    {JSON.stringify(jsonLd)}
+  </svelte:element>
 </svelte:head>
 
 <main
@@ -236,24 +276,40 @@
     <p>{copy.description}</p>
     <p>{t('privacy.copy', 'Processed on your device. Nothing is uploaded.')}</p>
   </section>
-  <div class="file-input-wrapper">
+  <div
+    class="upload-area custom-upload"
+    class:drag-over={dragOver}
+    role="group"
+    aria-label="Image drop area"
+    ondragover={handleDragOver}
+    ondragleave={handleDragLeave}
+    ondrop={handleDrop}
+  >
+    <span class="upload-icon" aria-hidden="true">📁</span>
+    <span class="upload-label">Drop your image here</span>
+    <span class="upload-sub">or browse files from your device</span>
     <input
-      data-testid="expansion-input"
       bind:this={inputRef}
+      data-testid="expansion-input"
       type="file"
       accept="image/*"
       multiple={kind === 'bulk-resize' || kind === 'collage'}
       onchange={onFiles}
       class="file-input"
+      aria-label="Choose image files"
     />
     <button
       type="button"
       class="file-input-button"
-      aria-label="Choose images"
-      onclick={() => inputRef?.click()}
+      aria-label={t('transform.choose', 'Choose Images')}
+      onclick={(event: MouseEvent) => {
+        event.stopPropagation();
+        inputRef?.click();
+      }}
     >
       {t('transform.choose', 'Choose Images')}
     </button>
+    <span class="upload-formats">PNG, JPG, WEBP, AVIF</span>
   </div>
   <p data-testid="file-count" class="file-count">{fileCountText(files)}</p>
   {#if files.length && (kind === 'bulk-resize' || kind === 'collage')}
@@ -272,6 +328,27 @@
         </div>
       {/each}
     </div>
+  {/if}
+  {#if files.length && kind !== 'bulk-resize' && kind !== 'collage'}
+    {#each files as file, index (previews[index])}
+      <div class="workspace" data-testid="file-preview">
+        <div class="preview-panel">
+          <div class="preview-card">
+            <img src={previews[index]} alt={file.name} />
+          </div>
+          <div class="preview-meta">
+            <strong>{file.name}</strong>
+            <span>{file.type || 'image'} · {Math.round(file.size / 1024)} KB</span>
+            <button
+              type="button"
+              class="button secondary replace-button"
+              aria-label="Replace uploaded image"
+              onclick={() => inputRef?.click()}>Replace image</button
+            >
+          </div>
+        </div>
+      </div>
+    {/each}
   {/if}
   {#if kind === 'bulk-resize' || kind === 'canvas-resize'}<div class="controls">
       <label>Width <input type="number" min="1" bind:value={width} /></label><label
@@ -293,12 +370,40 @@
     data-testid="expansion-run"
     type="button"
     onclick={() => void runTool()}
-    disabled={kind === 'collage' && files.length < 2}
-    data-disabled={kind === 'collage' && files.length < 2 ? 'true' : undefined}>Run locally</button
+    disabled={!files.length || (kind === 'collage' && files.length < 2)}
+    data-disabled={kind === 'collage' && files.length < 2 ? 'true' : undefined}
   >
+    Run locally
+  </button>
   {#if status}<p role="status" data-testid="expansion-status">{status}</p>{/if}
   {#if error}<p role="alert" data-testid="expansion-error">{error}</p>{/if}
-  {#if outputs.length}<ul data-testid="expansion-results">
+  {#if kind === 'split-image' && zipStatus === 'ZIP ready'}
+    <div
+      class="download-card"
+      data-testid="expansion-results"
+      role="region"
+      aria-label="Download split tiles"
+    >
+      <div class="download-header">
+        <span class="download-icon" aria-hidden="true">📦</span>
+        <h3>Your split images are ready</h3>
+      </div>
+      <div class="download-meta">
+        <strong>split-image-tiles.zip</strong>
+        <span>{columns * rows} tiles</span>
+      </div>
+      <p class="download-sub">All generated tiles are included in one ZIP archive.</p>
+      <a
+        class="button primary download-button"
+        href={zipUrl}
+        download="split-image-tiles.zip"
+        aria-label="Download ZIP archive of split tiles"
+      >
+        <span aria-hidden="true">⬇</span> Download ZIP
+      </a>
+    </div>
+  {/if}
+  {#if kind !== 'split-image' && outputs.length}<ul data-testid="expansion-results">
       {#each outputs as result (result.name)}<li>
           <a href={result.url} download={result.name}>{result.name}</a>
         </li>{/each}
@@ -310,6 +415,8 @@
       <p>{t('faq.upload.body', 'No. Processing happens locally in your browser.')}</p>
     </details>
   </section>
+  {#if zipStatus}<p role="status" data-testid="zip-status">{zipStatus}</p>{/if}
+  {#if zipError}<p role="alert" data-testid="zip-error">{zipError}</p>{/if}
 </main>
 
 <style>
@@ -351,6 +458,148 @@
     margin: 1rem 0;
     padding: 0.7rem 1.1rem;
     cursor: pointer;
+  }
+  .workspace {
+    display: grid;
+    gap: 2rem;
+    align-items: start;
+    grid-template-columns: 1fr;
+    margin: 1.5rem 0;
+  }
+  @media (min-width: 48rem) {
+    .workspace {
+      grid-template-columns: 1fr 1fr;
+      gap: 2.5rem;
+    }
+  }
+  .preview-panel {
+    min-width: 0;
+  }
+  .preview-card {
+    background: #fff;
+    border: 1px solid #1c1a1720;
+    border-radius: 12px;
+    padding: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    max-width: 100%;
+  }
+  .preview-card img {
+    max-height: 320px;
+    max-width: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    display: block;
+    border-radius: 6px;
+  }
+  @media (max-width: 47.99rem) {
+    .preview-card img {
+      max-height: 240px;
+    }
+  }
+  .preview-meta {
+    margin-top: 0.75rem;
+    font-size: 0.85rem;
+    color: #52627a;
+    word-break: break-word;
+  }
+  .custom-upload {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 2.5rem 2rem;
+    border: 2px dashed #1c1a1720;
+    border-radius: 16px;
+    background: #fff;
+    text-align: center;
+    cursor: pointer;
+    transition:
+      border-color 0.2s,
+      background 0.2s;
+    margin: 1.5rem 0;
+  }
+  .custom-upload.drag-over,
+  .custom-upload:focus-within {
+    border-color: #1c1a17;
+    background: #f8f6f3;
+  }
+  .custom-upload .upload-icon {
+    font-size: 2.5rem;
+    line-height: 1;
+  }
+  .custom-upload .upload-label {
+    font-size: 1.15rem;
+    font-weight: 600;
+    letter-spacing: -0.4px;
+    color: #1c1a17;
+  }
+  .custom-upload .upload-sub {
+    font-size: 0.9rem;
+    color: #52627a;
+  }
+  .custom-upload .upload-formats {
+    font-size: 0.78rem;
+    color: #52627a;
+    letter-spacing: 0.02em;
+  }
+  .replace-button {
+    font-size: 0.75rem;
+    padding: 0.35rem 0.7rem;
+    margin: 0.25rem 0 0;
+    border-radius: 999px;
+    background: #fff;
+    border: 1px solid #1c1a1720;
+  }
+  .download-card {
+    background: #fff;
+    border: 1px solid #1c1a1720;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    max-width: 480px;
+  }
+  .download-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+  .download-header h3 {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 600;
+    letter-spacing: -0.4px;
+  }
+  .download-icon {
+    font-size: 1.5rem;
+  }
+  .download-meta {
+    display: flex;
+    gap: 0.75rem;
+    align-items: baseline;
+    margin-bottom: 0.25rem;
+    font-size: 0.9rem;
+    color: #52627a;
+  }
+  .download-meta strong {
+    color: #1c1a17;
+    font-weight: 600;
+  }
+  .download-sub {
+    margin: 0.5rem 0 1rem;
+    font-size: 0.85rem;
+    color: #5c5a56;
+  }
+  .download-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.7rem 1.2rem;
+    border-radius: 999px;
+    text-decoration: none;
   }
   [role='status'] {
     color: #075e31;
@@ -402,13 +651,6 @@
     margin: 0.5rem 0;
     font-size: 0.9rem;
     color: #52627a;
-  }
-
-  .file-input-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin: 1rem 0;
   }
 
   .file-input {
