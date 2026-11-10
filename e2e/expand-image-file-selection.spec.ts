@@ -36,11 +36,16 @@ async function fixture(page: import('@playwright/test').Page): Promise<Buffer> {
   return Buffer.from(base64, 'base64');
 }
 
+async function gotoHydrated(page: import('@playwright/test').Page, path: string) {
+  await page.goto(path);
+  await page.locator('html[data-hydrated="true"]').waitFor();
+}
+
 test.describe('file selection state', () => {
   test('shows the selected filename and never "No file chosen" while a file is selected', async ({
     page,
   }) => {
-    await page.goto('/expand-image');
+    await gotoHydrated(page, '/expand-image');
     const status = page.getByTestId('p4-file-status');
 
     // Nothing selected yet: the ready copy stands in, and the input is visible and functional.
@@ -60,7 +65,7 @@ test.describe('file selection state', () => {
   });
 
   test('replacing the image updates the displayed filename', async ({ page }) => {
-    await page.goto('/expand-image');
+    await gotoHydrated(page, '/expand-image');
     const status = page.getByTestId('p4-file-status');
 
     await page.getByTestId('p4-file-input').setInputFiles({
@@ -83,7 +88,7 @@ test.describe('file selection state', () => {
   test('re-picking the same file still updates the selection state', async ({ page }) => {
     // The `input.value = ''` reset exists precisely so `change` fires again for the same file. This
     // is the behaviour a "fix" that keeps the native selection would silently break.
-    await page.goto('/expand-image');
+    await gotoHydrated(page, '/expand-image');
     const status = page.getByTestId('p4-file-status');
     const buffer = await fixture(page);
 
@@ -102,7 +107,7 @@ test.describe('file selection state', () => {
   test('Remove clears the selection, disables Run, and allows a fresh selection', async ({
     page,
   }) => {
-    await page.goto('/expand-image');
+    await gotoHydrated(page, '/expand-image');
     const status = page.getByTestId('p4-file-status');
 
     await page.getByTestId('p4-file-input').setInputFiles({
@@ -136,7 +141,7 @@ test.describe('file selection state', () => {
     // A removed file withdraws everything derived from it: the preview and the published bytes the
     // clipboard/drag-out would otherwise keep offering (the same invariant `clearOutput` enforces
     // when the input is replaced).
-    await page.goto('/expand-image');
+    await gotoHydrated(page, '/expand-image');
     await page.getByTestId('p4-file-input').setInputFiles({
       name: 'processed.png',
       mimeType: 'image/png',
@@ -152,7 +157,7 @@ test.describe('file selection state', () => {
   });
 
   test('composite background selection mirrors the same state rules', async ({ page }) => {
-    await page.goto('/composite');
+    await gotoHydrated(page, '/composite');
     const status = page.getByTestId('p4-background-file-status');
 
     await page.getByTestId('p4-background-input').setInputFiles({
@@ -171,16 +176,16 @@ test.describe('file selection state', () => {
   test('expand route states its flat-colour note beside the dimensions', async ({ page }) => {
     // Honest labelling (README §4.8 T67): the local path pads with the fill colour; it does not
     // generate scene content. Asserting the note here keeps that disclosure load-bearing.
-    await page.goto('/expand-image');
+    await gotoHydrated(page, '/expand-image');
     await expect(page.getByTestId('p4-expand-note')).toContainText(/flat-colour/i);
 
     // The note belongs to the expand branch only.
-    await page.goto('/remove-background');
+    await gotoHydrated(page, '/remove-background');
     await expect(page.getByTestId('p4-expand-note')).toHaveCount(0);
   });
 
   test('localized selection display follows the route locale', async ({ page }) => {
-    await page.goto('/ar/expand-image');
+    await gotoHydrated(page, '/ar/expand-image');
     const status = page.getByTestId('p4-file-status');
 
     await page.getByTestId('p4-file-input').setInputFiles({

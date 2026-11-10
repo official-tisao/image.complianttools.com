@@ -32,9 +32,14 @@ async function generatedPng(page: import('@playwright/test').Page, width = 32, h
   return Buffer.from(base64, 'base64');
 }
 
+async function gotoHydrated(page: import('@playwright/test').Page, path: string) {
+  await page.goto(path);
+  await page.locator('html[data-hydrated="true"]').waitFor();
+}
+
 test.describe('collage multi-image selection', () => {
   test('file input is hidden from visible interface with custom button shown', async ({ page }) => {
-    await page.goto('/collage');
+    await gotoHydrated(page, '/collage');
     const input = page.getByTestId('expansion-input');
     // Keep the native picker out of the visible layout; users interact with the accessible button.
     await expect(input).toBeHidden();
@@ -42,17 +47,17 @@ test.describe('collage multi-image selection', () => {
   });
 
   test('custom choose-images button triggers file selection', async ({ page }) => {
-    await page.goto('/collage');
+    await gotoHydrated(page, '/collage');
     await expect(page.getByRole('button', { name: /Choose Images/i })).toBeVisible();
   });
 
   test('file input has multiple enabled for collage mode', async ({ page }) => {
-    await page.goto('/collage');
+    await gotoHydrated(page, '/collage');
     await expect(page.getByTestId('expansion-input')).toHaveAttribute('multiple', '');
   });
 
   test('selecting two or more images in one batch shows every preview', async ({ page }) => {
-    await page.goto('/collage');
+    await gotoHydrated(page, '/collage');
     const file = await generatedPng(page);
     await page.getByTestId('expansion-input').setInputFiles([
       { name: 'img-a.png', mimeType: 'image/png', buffer: file },
@@ -66,7 +71,7 @@ test.describe('collage multi-image selection', () => {
   });
 
   test('adding images in a second batch keeps the first batch', async ({ page }) => {
-    await page.goto('/collage');
+    await gotoHydrated(page, '/collage');
     const file = await generatedPng(page);
 
     await page.getByTestId('expansion-input').setInputFiles([
@@ -84,7 +89,7 @@ test.describe('collage multi-image selection', () => {
   });
 
   test('removing one picture leaves the others untouched', async ({ page }) => {
-    await page.goto('/collage');
+    await gotoHydrated(page, '/collage');
     const file = await generatedPng(page);
 
     await page.getByTestId('expansion-input').setInputFiles([
@@ -104,7 +109,7 @@ test.describe('collage multi-image selection', () => {
   });
 
   test('run button is disabled when fewer than two images are selected', async ({ page }) => {
-    await page.goto('/collage');
+    await gotoHydrated(page, '/collage');
     const file = await generatedPng(page);
 
     await page
@@ -114,7 +119,7 @@ test.describe('collage multi-image selection', () => {
   });
 
   test('run button is enabled once two images are selected', async ({ page }) => {
-    await page.goto('/collage');
+    await gotoHydrated(page, '/collage');
     const file = await generatedPng(page);
 
     await page.getByTestId('expansion-input').setInputFiles([
@@ -127,7 +132,7 @@ test.describe('collage multi-image selection', () => {
   test('collage generation processes all selected images and produces a downloadable collage', async ({
     page,
   }) => {
-    await page.goto('/collage');
+    await gotoHydrated(page, '/collage');
     const file = await generatedPng(page);
 
     await page.getByTestId('expansion-input').setInputFiles([
@@ -145,7 +150,7 @@ test.describe('collage multi-image selection', () => {
   test('after removing one image, collage still processes the remaining images', async ({
     page,
   }) => {
-    await page.goto('/collage');
+    await gotoHydrated(page, '/collage');
     const file = await generatedPng(page);
 
     await page.getByTestId('expansion-input').setInputFiles([

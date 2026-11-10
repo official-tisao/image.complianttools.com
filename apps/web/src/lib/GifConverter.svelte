@@ -481,7 +481,7 @@
     transition:
       border-color 0.2s ease,
       background 0.2s ease;
-    cursor: pointer;
+    cursor: default;
   }
   .upload-zone input[type='file'] {
     position: absolute;
@@ -489,6 +489,7 @@
     width: 100%;
     height: 100%;
     opacity: 0;
+    cursor: pointer;
   }
   .upload-zone.drag-over {
     border-color: var(--color-primary, #2563eb);
@@ -510,6 +511,11 @@
   }
   .browse-label {
     display: inline-block;
+    cursor: pointer;
+  }
+  .upload-zone:focus-within .browse-label .button {
+    outline: 2px solid var(--color-primary, #2563eb);
+    outline-offset: 2px;
   }
   .button {
     display: inline-flex;

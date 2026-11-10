@@ -45,9 +45,14 @@ async function getPreviewDimensions(page: import('@playwright/test').Page) {
   }));
 }
 
+async function gotoHydrated(page: import('@playwright/test').Page, path: string) {
+  await page.goto(path);
+  await page.locator('html[data-hydrated="true"]').waitFor();
+}
+
 test.describe('expand-image dimensions', () => {
   test('applies specified target dimensions larger than source', async ({ page }) => {
-    await page.goto('/expand-image');
+    await gotoHydrated(page, '/expand-image');
     await expect(page.getByTestId('p4-file-input')).toBeVisible();
 
     // Upload an 8x8 source image
@@ -76,7 +81,7 @@ test.describe('expand-image dimensions', () => {
     // are pixels (README §4 register row T67), and the documented constraint is that the canvas
     // can only grow, so a 6×2 source expanded to exactly 10×3 must produce a 10×3 output — not
     // the source size and not the source + 128 default.
-    await page.goto('/expand-image');
+    await gotoHydrated(page, '/expand-image');
     await page.getByTestId('p4-file-input').setInputFiles({
       name: 'source.png',
       mimeType: 'image/png',
@@ -92,7 +97,7 @@ test.describe('expand-image dimensions', () => {
   });
 
   test('applies default +128 when dimensions are unset', async ({ page }) => {
-    await page.goto('/expand-image');
+    await gotoHydrated(page, '/expand-image');
     await page.getByTestId('p4-file-input').setInputFiles({
       name: 'source.png',
       mimeType: 'image/png',
@@ -109,7 +114,7 @@ test.describe('expand-image dimensions', () => {
   });
 
   test('rejects dimensions smaller than source with clear error', async ({ page }) => {
-    await page.goto('/expand-image');
+    await gotoHydrated(page, '/expand-image');
     await page.getByTestId('p4-file-input').setInputFiles({
       name: 'source.png',
       mimeType: 'image/png',
@@ -129,7 +134,7 @@ test.describe('expand-image dimensions', () => {
   });
 
   test('rejects zero and negative dimensions', async ({ page }) => {
-    await page.goto('/expand-image');
+    await gotoHydrated(page, '/expand-image');
     await page.getByTestId('p4-file-input').setInputFiles({
       name: 'source.png',
       mimeType: 'image/png',
@@ -153,7 +158,7 @@ test.describe('expand-image dimensions', () => {
   });
 
   test('rejects output exceeding 12 megapixel limit', async ({ page }) => {
-    await page.goto('/expand-image');
+    await gotoHydrated(page, '/expand-image');
     await page.getByTestId('p4-file-input').setInputFiles({
       name: 'source.png',
       mimeType: 'image/png',
@@ -171,7 +176,7 @@ test.describe('expand-image dimensions', () => {
   });
 
   test('output image contains expanded canvas with source centered', async ({ page }) => {
-    await page.goto('/expand-image');
+    await gotoHydrated(page, '/expand-image');
     await page.getByTestId('p4-file-input').setInputFiles({
       name: 'source.png',
       mimeType: 'image/png',
@@ -191,7 +196,7 @@ test.describe('expand-image dimensions', () => {
   });
 
   test('before preview remains original, after preview shows expanded', async ({ page }) => {
-    await page.goto('/expand-image');
+    await gotoHydrated(page, '/expand-image');
     await page.getByTestId('p4-file-input').setInputFiles({
       name: 'source.png',
       mimeType: 'image/png',
@@ -237,7 +242,7 @@ test.describe('expand-image dimensions', () => {
     // The dimension fix is a canvas re-composition, so the one thing it must never do is alter the
     // source content. A non-uniform fixture with an exact corner marker makes any resample or
     // re-encode drift visible at the pixel level.
-    await page.goto('/expand-image');
+    await gotoHydrated(page, '/expand-image');
     await page.getByTestId('p4-file-input').setInputFiles({
       name: 'source.png',
       mimeType: 'image/png',
@@ -272,7 +277,7 @@ test.describe('expand-image dimensions', () => {
     // Honest labelling (README §4.8 T67 / §13.1.3): the local path is canvas padding. The added
     // area must equal the selected fill colour exactly — a test that asserted "plausible texture"
     // here would be asserting a capability the route does not have.
-    await page.goto('/expand-image');
+    await gotoHydrated(page, '/expand-image');
     await page.getByTestId('p4-fill').fill('#3a6fd8');
     await page.getByTestId('p4-file-input').setInputFiles({
       name: 'source.png',
@@ -306,7 +311,7 @@ test.describe('expand-image dimensions', () => {
 
   test('downloaded bytes match the After preview exactly', async ({ page }) => {
     // §8.5 / STCC 8: the preview must be faithful to the export, byte for byte.
-    await page.goto('/expand-image');
+    await gotoHydrated(page, '/expand-image');
     await page.getByTestId('p4-file-input').setInputFiles({
       name: 'source.png',
       mimeType: 'image/png',
@@ -353,7 +358,7 @@ test.describe('expand-image dimensions', () => {
         providerRequests.push(request.url());
     });
 
-    await page.goto('/expand-image');
+    await gotoHydrated(page, '/expand-image');
     await page.getByTestId('p4-file-input').setInputFiles({
       name: 'source.png',
       mimeType: 'image/png',
