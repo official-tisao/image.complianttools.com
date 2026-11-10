@@ -90,7 +90,7 @@ test('extracts naturally ordered pages with exact original bytes', async ({ page
   await expect(page.getByRole('heading', { name: 'Exact extracted page order' })).toBeVisible();
   await expect(page.locator('section ol li')).toContainText('page1.png');
   const pending = page.waitForEvent('download');
-  await page.getByRole('button', { name: 'Download extracted pages' }).click();
+  await page.getByTestId('cbz-download-pages').click();
   const path = await (await pending).path();
   expect(path).not.toBeNull();
   expect(await readFile(path!)).toEqual(onePixelPng);
@@ -99,11 +99,24 @@ test('extracts naturally ordered pages with exact original bytes', async ({ page
 test('CBZ operation control leads to the file picker by keyboard', async ({ page }) => {
   await page.goto('/cbz-converter');
   await page.waitForLoadState('networkidle');
-  await page.getByLabel('Operation').focus();
+  const operation = page.getByLabel('Operation');
+  await operation.focus();
   await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('ArrowUp');
+  await expect(operation).toHaveValue('create');
   await page.keyboard.press('Tab');
-  await expect(page.getByLabel('Operation')).toHaveValue('extract');
-  await expect(page.locator('input[type=file]')).toBeFocused();
+  const browse = page.getByRole('button', { name: 'Browse Files' });
+  await expect(browse).toBeFocused();
+  const chooser = page.waitForEvent('filechooser');
+  await page.keyboard.press('Enter');
+  await (
+    await chooser
+  ).setFiles({
+    name: 'keyboard.png',
+    mimeType: 'image/png',
+    buffer: onePixelPng,
+  });
+  await expect(page.locator('.file-item')).toHaveText('keyboard.png');
 });
 
 for (const locale of ['en-XA', 'ar'] as const) {
@@ -117,9 +130,9 @@ for (const locale of ['en-XA', 'ar'] as const) {
       mimeType: 'image/png',
       buffer: onePixelPng,
     });
-    await page.locator('main > button').first().click();
+    await page.getByTestId('cbz-generate').click();
     const pending = page.waitForEvent('download');
-    await page.locator('main > button').nth(1).click();
+    await page.getByTestId('cbz-download').click();
     const path = await (await pending).path();
     expect(path).not.toBeNull();
     const pages = decodeCbz(await readFile(path!));
