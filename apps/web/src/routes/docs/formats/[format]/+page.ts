@@ -142,6 +142,12 @@ const supportedFormats = {
     notes:
       'The local codec decodes animation and encodes GIF89a with configurable global, per-frame, or adaptive palettes; Wu, median-cut, octree, and independent neural quantizers; five dither modes; transparency, disposal, interlacing, looping, frame differencing, and reverse, bounce, or crossfade frame generation.',
   },
+  jpeg: {
+    name: 'JPEG',
+    summary: 'JPEG is a widely supported lossy image format suited to photographs.',
+    notes:
+      'The local MozJPEG codec round-trips JPEG pixels with configurable quality, progressive encoding, and chroma subsampling. The generic exporter also offers local lossless JPEG optimization (metadata stripping only).',
+  },
   jxl: {
     name: 'JPEG XL',
     summary: 'JPEG XL is a modern still-image format supporting lossless and lossy coding.',
