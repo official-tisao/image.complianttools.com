@@ -231,6 +231,47 @@ test('T61 compares images chosen separately and clears stale matches on removal'
   await expect(page.getByTestId('t61-scan')).toBeDisabled();
 });
 
+test('T61 input reflects selected files and never shows "No file chosen"', async ({ page }) => {
+  await page.goto('/find-duplicates');
+  await page.locator('html[data-hydrated="true"]').waitFor();
+
+  const input = page.getByTestId('t61-input');
+  await expect(input).toBeVisible();
+
+  // No files selected yet: nothing pending in component state.
+  await expect(page.getByTestId('t61-selection')).toHaveCount(0);
+
+  const png = await generatedPng(page);
+  await input.setInputFiles([
+    { name: 'first.png', mimeType: 'image/png', buffer: png },
+    { name: 'second.png', mimeType: 'image/png', buffer: png },
+  ]);
+  await expect(page.getByTestId('t61-selection')).toContainText('2');
+
+  // Selecting files again adds to the selection (no overwrite).
+  const third = await generatedPng(page, { variation: 1 });
+  await input.setInputFiles({ name: 'third.png', mimeType: 'image/png', buffer: third });
+  await expect(page.getByTestId('t61-selection')).toContainText('3');
+  await expect(page.getByRole('listitem').filter({ hasText: 'first.png' })).toBeVisible();
+  await expect(page.getByRole('listitem').filter({ hasText: 'third.png' })).toBeVisible();
+
+  // Removing one file decrements the count.
+  await page.getByTestId('t61-remove').first().click();
+  await expect(page.getByTestId('t61-selection')).toContainText('2');
+  await expect(page.getByRole('listitem').filter({ hasText: 'first.png' })).toHaveCount(0);
+
+  // Clearing selection empties everything.
+  await page.getByTestId('t61-clear').click();
+  await expect(page.getByTestId('t61-selection')).toHaveCount(0);
+  await expect(page.getByTestId('t61-scan')).toBeDisabled();
+
+  // Fresh selection after clearing works.
+  const fourth = await generatedPng(page, { variation: 2 });
+  await input.setInputFiles({ name: 'fourth.png', mimeType: 'image/png', buffer: fourth });
+  await expect(page.getByTestId('t61-selection')).toContainText('1');
+  await expect(page.getByRole('listitem').filter({ hasText: 'fourth.png' })).toBeVisible();
+});
+
 test('T61 reports bounded-input and decode errors with actionable remedies', async ({ page }) => {
   await page.goto('/find-duplicates');
   await page.locator('html[data-hydrated="true"]').waitFor();
