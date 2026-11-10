@@ -96,9 +96,41 @@ a:focus-visible,
   color: white;
   border-color: #1c1a17;
 }
+.button.primary:hover {
+  background: #2f2e2b;
+  border-color: #2f2e2b;
+}
+.button.primary:active {
+  background: #121110;
+  border-color: #121110;
+}
+.button.primary:focus-visible {
+  outline: 2px solid #1c1a17;
+  outline-offset: 3px;
+}
 .button:disabled {
   opacity: 0.45;
   cursor: not-allowed;
+}
+.cta {
+  margin: 28px 0 0;
+  text-align: center;
+}
+.cta .button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: auto;
+}
+.cta .button svg {
+  width: 16px;
+  height: 16px;
+}
+@media (max-width: 767px) {
+  .cta .button {
+    width: 100%;
+  }
 }
 .tool-header {
   padding: 0 40px;

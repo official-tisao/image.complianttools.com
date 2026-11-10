@@ -61,6 +61,37 @@ test('format tool pages stay within SEO title and description length limits', as
   }
 });
 
+test('format reference pages expose a prominent local convert button', async ({ page }) => {
+  await page.goto('/docs/formats/jpeg');
+  await expect(page.locator('.cta .button.primary')).toHaveCount(1);
+  await expect(page.locator('.cta .button.primary')).toHaveText('Convert Image Now');
+  await expect(page.locator('.cta .button.primary')).toHaveAttribute('href', '/convert');
+  await expect(page.locator('.cta .button.primary')).toHaveAttribute(
+    'aria-label',
+    'Convert an image locally',
+  );
+  await expect(page.locator('.cta .button svg')).toHaveCount(1);
+
+  // Keyboard-focusable and reachable via Enter.
+  await page.locator('.cta .button.primary').focus();
+  await expect(page.locator('.cta .button.primary')).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(page).toHaveURL('/convert');
+});
+
+test('unavailable format reference pages expose a prominent local convert button', async ({
+  page,
+}) => {
+  await page.goto('/docs/formats/ktx');
+  await expect(page.locator('.cta .button.primary')).toHaveCount(1);
+  await expect(page.locator('.cta .button.primary')).toHaveText('Convert Image Now');
+  await expect(page.locator('.cta .button.primary')).toHaveAttribute('href', '/convert');
+  await expect(page.locator('.cta .button.primary')).toHaveAttribute(
+    'aria-label',
+    'See available local conversion formats',
+  );
+});
+
 test('format pages retain their static entry points with JavaScript disabled', async ({
   browser,
 }) => {
