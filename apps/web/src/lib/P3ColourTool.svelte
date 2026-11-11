@@ -179,11 +179,14 @@
   let outputBytes = $state<Uint8Array>();
   let status = $state('');
   let busy = $state(false);
+  let processingStep = $state(0);
+  let resultArea = $state<HTMLElement>();
   let error = $state('');
   /** P6-03: the bytes behind `outputUrl`, kept for the clipboard write and the drag-out. */
   let published = $state<PublishedResult | null>(null);
 
   const updateOption = (path: string, value: unknown) => {
+    processingStep = 0;
     if (kind === 'threshold') {
       const current = options as T41ThresholdOptions;
       optionState = T41ThresholdOptionsSchema.parse({
@@ -234,6 +237,7 @@
    * one and reports the same failure.
    */
   async function adopt(file: File) {
+    processingStep = 0;
     error = '';
     try {
       const next = await inspect(file);
@@ -260,9 +264,12 @@
   async function run() {
     if (!selected || busy) return;
     busy = true;
+    processingStep = 0;
     error = '';
     status = t(copy.processing);
     try {
+      resultArea?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      await new Promise<void>((resolve) => requestAnimationFrame(() => setTimeout(resolve, 0)));
       const imageElement = new Image();
       imageElement.src = selected.url;
       await new Promise<void>((resolve, reject) => {
@@ -277,6 +284,8 @@
       context.drawImage(imageElement, 0, 0);
       const source = context.getImageData(0, 0, selected.width, selected.height);
       const raster = createRaster(selected.width, selected.height, source.data);
+      processingStep = 1;
+      await new Promise<void>((resolve) => requestAnimationFrame(() => setTimeout(resolve, 0)));
       let processed = raster;
       if (kind === 'threshold') {
         const value = options as T41ThresholdOptions;
@@ -292,6 +301,7 @@
       }
       const output = new ImageData(processed.frames[0]!.data, processed.width, processed.height);
       context.putImageData(output, 0, 0);
+      processingStep = 2;
       const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));
       if (!blob) throw new Error('The browser could not encode the PNG.');
       outputBytes = new Uint8Array(await blob.arrayBuffer());
@@ -299,6 +309,7 @@
       outputUrl = URL.createObjectURL(blob);
       status = `${selected.width} × ${selected.height}`;
       published = publishResult(blob, { sourceName: `${kind}-result`, extension: 'png' });
+      processingStep = 3;
     } catch (cause) {
       error = cause instanceof Error ? cause.message : 'The local operation could not finish.';
       status = '';
@@ -411,6 +422,14 @@
   <button type="button" data-testid="p3-run" disabled={!selected || busy} onclick={run}
     >{busy ? t(copy.processing) : t(copy.apply)}</button
   >
+  <div bind:this={resultArea} aria-live="polite" data-testid="p3-progress">
+    {#if busy}
+      <p>{t(copy.processing)} ({Math.round((processingStep / 3) * 100)}%)</p>
+      <progress max="3" value={processingStep} aria-label={t(copy.processing)}></progress>
+    {:else if processingStep === 3 && !error}
+      <p>{t('Processing complete')} (100%)</p>
+    {/if}
+  </div>
   {#if error}<p role="alert" data-testid="p3-error">{t(error)}</p>{/if}
   {#if status && !busy}<p aria-live="polite" data-testid="p3-status">{status}</p>{/if}
   {#if outputUrl}

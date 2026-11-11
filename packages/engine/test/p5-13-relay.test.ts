@@ -349,19 +349,45 @@ describe('per-provider connection state', () => {
     expect(getConnectionPath('anthropic')).toBe('direct');
   });
 
-  test('nothing is persisted to web storage', () => {
-    setProviderRelay('anthropic', { relayUrl: RELAY, token: 's3cret' });
-    // This environment has no DOM storage at all. The point is that the module never reached for
-    // it: a value written to storage would need a storage object to write to, and any key it did
-    // use would still be readable here. Nothing is, because nothing was written.
-    expect((globalThis as { localStorage?: Storage }).localStorage).toBeUndefined();
-    expect((globalThis as { sessionStorage?: Storage }).sessionStorage).toBeUndefined();
+  test('relay settings persist in browser local storage and can be removed', () => {
+    const originalStorage = (globalThis as { localStorage?: Storage }).localStorage;
+    const values = new Map<string, string>();
+    const storage = {
+      getItem: (key: string) => values.get(key) ?? null,
+      setItem: (key: string, value: string) => values.set(key, value),
+      removeItem: (key: string) => values.delete(key),
+    } as Storage;
+    values.set(
+      'ctimg:provider-relays:v1',
+      JSON.stringify({ clipdrop: { relayUrl: 'https://stored.relay.example', token: 'existing' } }),
+    );
+    Object.defineProperty(globalThis, 'localStorage', {
+      configurable: true,
+      value: storage,
+    });
 
-    // And the settings survive only as long as the module does — the value is readable in memory,
-    // which is the entire intended lifetime.
-    expect(getRelayConfig('anthropic')?.token).toBe('s3cret');
-    clearAllProviderRelays();
-    expect(getRelayConfig('anthropic')).toBeUndefined();
+    try {
+      setProviderRelay('anthropic', { relayUrl: RELAY, token: 's3cret' });
+      const persisted = values.get('ctimg:provider-relays:v1') ?? '';
+      expect(persisted).toContain('s3cret');
+      expect(persisted).toContain('existing');
+      expect(getRelayConfig('anthropic')?.token).toBe('s3cret');
+
+      setProviderRelay('anthropic', undefined);
+      expect(values.get('ctimg:provider-relays:v1')).toContain('existing');
+      expect(getRelayConfig('anthropic')).toBeUndefined();
+      clearAllProviderRelays();
+      expect(values.has('ctimg:provider-relays:v1')).toBe(false);
+    } finally {
+      clearAllProviderRelays();
+      if (originalStorage === undefined)
+        delete (globalThis as { localStorage?: Storage }).localStorage;
+      else
+        Object.defineProperty(globalThis, 'localStorage', {
+          configurable: true,
+          value: originalStorage,
+        });
+    }
   });
 });
 

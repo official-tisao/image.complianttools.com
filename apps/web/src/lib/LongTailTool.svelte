@@ -99,6 +99,9 @@
   /** P6-03: the bytes behind `outputUrl`, kept for the clipboard write and the drag-out. */
   let published = $state<PublishedResult | null>(null);
   let busy = $state(false);
+  let processedCount = $state(0);
+  let completed = $state(false);
+  let resultArea = $state<HTMLElement>();
   let quality = $state(82);
   let targetKb = $state(200);
   let columns = $state(2);
@@ -283,6 +286,7 @@
         url: URL.createObjectURL(blob),
         bytes: blob.size,
       });
+      processedCount = outputs.length;
     }
     batchOutputs = outputs;
     status = t('longTail.batchReady', 'Processed {value} file(s) locally', outputs.length);
@@ -358,9 +362,13 @@
     status = '';
     error = '';
     busy = true;
+    completed = false;
+    processedCount = 0;
+    resultArea?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     // The previous result stops describing the screen as soon as a new run starts.
     published = null;
     try {
+      await new Promise<void>((resolve) => requestAnimationFrame(() => setTimeout(resolve, 0)));
       if (kind === 'spritesheet') await makeSpritesheet();
       else if (kind === 'html-to-image') await makeHtmlImage();
       else if (kind === 'compress-to-size') await makeTargetExport();
@@ -369,6 +377,7 @@
       else if (kind === 'recipe') makeRecipe();
       else if (kind === 'codegen') makeCodegen();
       else armWatch();
+      completed = true;
     } catch (cause) {
       error = cause instanceof Error ? cause.message : String(cause);
       published = null;
@@ -505,6 +514,22 @@
         : 'Run locally'}
   </button>
 
+  <div bind:this={resultArea} aria-live="polite" data-testid="long-tail-progress">
+    {#if busy}
+      <p>
+        {locale === 'ar' ? 'جارٍ العمل…' : 'Working…'}{#if kind === 'batch' && files.length}
+          ({Math.round((processedCount / files.length) * 100)}%){/if}
+      </p>
+      {#if kind === 'batch' && files.length}
+        <progress max={files.length} value={processedCount} aria-label="Processing files"
+        ></progress>
+      {:else}
+        <progress aria-label="Processing"></progress>
+      {/if}
+    {:else if completed && !error}
+      <p>{locale === 'ar' ? 'اكتملت المعالجة' : 'Processing complete'} (100%)</p>
+    {/if}
+  </div>
   {#if status}<p role="status" data-testid="long-tail-status">{status}</p>{/if}
   {#if error}<p role="alert" data-testid="long-tail-error">{error}</p>{/if}
   {#if outputUrl}

@@ -61,6 +61,7 @@ for (const [route, title] of [
     await expect(page.getByTestId('p3-run')).toBeEnabled();
     await page.getByTestId('p3-run').click();
     await expect(page.getByTestId('p3-preview')).toBeVisible();
+    await expect(page.getByTestId('p3-progress')).toContainText('100%');
     await expect(page.getByTestId('p3-preview')).toHaveJSProperty('naturalWidth', 4);
     const previewUrl = await page.getByTestId('p3-preview').getAttribute('src');
     expect(previewUrl).toMatch(/^blob:/u);

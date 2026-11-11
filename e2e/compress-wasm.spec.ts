@@ -78,6 +78,7 @@ test.describe('compress codec WASM delivery', () => {
         buffer: fixture,
       });
       await expect(page.getByTestId('compare-canvas')).toBeVisible({ timeout: 15_000 });
+      await expect(page.getByTestId('workspace-complete')).toContainText('100%');
       await expect(page.locator('.options-panel .error')).toHaveCount(0);
 
       const codecResponses = wasmResponses;

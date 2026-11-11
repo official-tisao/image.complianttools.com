@@ -233,7 +233,7 @@ export const LEDGER_STATUS = {
 /** README §17.5 — what the "your providers" area can and cannot show right now. */
 export const CONNECTIONS_STATUS = {
   implemented:
-    'Testing a connection, for real: every provider walkthrough has a Test connection button that runs a minimal probe against the provider and reports exactly what came back, including which specific thing went wrong when it did. Also whether each provider is being reached directly or through a relay you deployed — that choice is per-provider and is remembered for the session only, because a relay token authorises spending your quota.',
+    'Testing a connection, for real: every provider walkthrough has a Test connection button that runs a minimal probe against the provider and reports exactly what came back, including which specific thing went wrong when it did. Also whether each provider is being reached directly or through a relay you deployed — manually entered relay settings are per-provider; the one-click setup saves its relay URL and token in this browser so setup survives a reload.',
   notYet:
     'A saved list of connected providers is not built yet. There is no store that holds a credential, a confirmed-capability set, a last-used time, or a status flag per provider, so this page cannot list them, and it will not show a provider as connected when it has no way to know.',
   consequence:

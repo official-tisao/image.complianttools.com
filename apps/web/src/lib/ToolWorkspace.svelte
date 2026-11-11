@@ -46,6 +46,8 @@
   let outputBytes = $state(0);
   let filename = $state('');
   let busy = $state(false);
+  let processingStep = $state(0);
+  let workspaceSection = $state<HTMLElement>();
   let error = $state('');
   let latency = $state(0);
   let targetProgress = $state('');
@@ -328,9 +330,11 @@
   }
   async function processFile(file: File) {
     busy = true;
+    processingStep = 0;
     error = '';
     try {
       const image = decodedImage ?? (await decode(file));
+      processingStep = 1;
       decodedImage = image;
       void getProxy(image);
       const width = Number(values['resize.width']);
@@ -348,11 +352,13 @@
         },
       };
       const result = await workerProcess(image, recipe);
+      processingStep = 2;
       const selectedFormat = String(values['export.format']);
       const inputFormat = file.type === 'image/jpeg' ? 'jpeg' : file.type.slice('image/'.length);
       const format = (selectedFormat === 'same' ? inputFormat : selectedFormat) as
         'jpeg' | 'png' | 'webp';
       const bytes = await workerEncode(result, format, Number(values['export.quality']));
+      processingStep = 3;
       const blob = new Blob([bytes], { type: `image/${format}` });
       if (outputUrl) URL.revokeObjectURL(outputUrl);
       outputUrl = URL.createObjectURL(blob);
@@ -363,6 +369,7 @@
         sourceName: filename,
         extension: format,
       });
+      processingStep = 4;
     } catch (cause) {
       error = imageProcessingFailureMessage(cause, locale);
       // A failed run invalidates whatever is on screen. Leaving the previous result copyable
@@ -392,6 +399,7 @@
   async function choose(event: Event) {
     const file = (event.currentTarget as HTMLInputElement).files?.[0];
     if (!file) return;
+    workspaceSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     await adopt(file);
   }
   function download() {
@@ -456,8 +464,22 @@
       /></label
     >
   </section>
-  <section class="workspace" aria-busy={busy}>
+  <section bind:this={workspaceSection} class="workspace" aria-busy={busy}>
     <div class="canvas-panel">
+      {#if busy}
+        <div role="status" aria-live="polite" data-testid="workspace-processing">
+          {translate(locale, 'workspace.processing', 'Processing image')} ({processingStep * 25}%)
+          <progress
+            max="4"
+            value={processingStep}
+            aria-label={translate(locale, 'workspace.processing', 'Processing image')}
+          ></progress>
+        </div>
+      {:else if processingStep === 4 && !error}
+        <p role="status" data-testid="workspace-complete">
+          {translate(locale, 'workspace.complete', 'Processing complete')} (100%)
+        </p>
+      {/if}
       {#if sourceUrl && outputUrl}<CompareCanvas
           beforeUrl={sourceUrl}
           afterUrl={outputUrl}

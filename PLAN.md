@@ -841,6 +841,7 @@ Justification Register short.
 - [ ] Destination allowlist, origin allowlist, optional `RELAY_TOKEN`, stateless, no body/header logging
 - [ ] Deno Deploy / Vercel Edge / Netlify templates
 - [ ] `apps/relay/README.md`: one-click deploy, manual steps, verify, tear down, **and what the relay can and cannot see**
+- [x] `wrangler` 4.157.0 is pinned and licence-registered as build-only tooling for the optional browser-based relay installer; the browser runtime does not ship the CLI
 - **Spec:** README §15.3, §15.4 · **Done when:** a deployed relay makes a previously CORS-blocked provider work, and the UI shows which path the request took
 
 #### P5-14 · `/connect-ai` pages
@@ -849,6 +850,7 @@ Justification Register short.
 - [ ] Per-provider walkthroughs, all four steps, with the specific failure messages from §17.3
 - [ ] `/connect-ai/self-hosted` with **verified** per-OS CORS commands for Ollama/LM Studio/vLLM/LiteLLM
 - [ ] `/connect-ai/relay`, `/connect-ai/cost` (with the worked example), `/connect-ai/privacy`
+- [/] Optional `/connect-ai/relay/setup` installs a user-owned Cloudflare Worker through OAuth Authorization Code + PKCE. Before consent, the UI discloses that `workers-platform.write` is account-wide but used here only to create and enable the relay; no client secret ships, and the temporary access token is revoked and discarded after setup. Publisher registration/configuration of `PUBLIC_CLOUDFLARE_OAUTH_CLIENT_ID` and final page-level SPCC remain open.
 - [ ] Two distinct empty states (escalation vs AI-only) with the §17.7 copy rules
 - **Spec:** README §17 · **Done when:** every page passes SPCC; every self-hosted command verified against the current release
 
@@ -1266,6 +1268,7 @@ Every README change gets a row here, per §0.3. Newest first.
 
 | Date | README § | Change | PLAN action |
 | --- | --- | --- | --- |
+| 2026-11-09 | §15.3, §17, §25.3.4 | Documented the optional Cloudflare OAuth Authorization Code + PKCE setup flow, its account-wide Workers permission disclosure and temporary-token disposal, and registered the pinned build-only Wrangler CLI. | Added P5-13 tooling evidence and a partial P5-14 setup-flow item; publisher OAuth client registration/configuration and page-level SPCC remain open |
 | 2026-11-09 | §13.1.3, §13.1.4 | Clarified T67's implemented local canvas-padding path: it expands the canvas with a user-selected flat colour around the source image; it does not synthesize scene content. Provider `outpaint` remains unavailable until a registered adapter's `run()` produces and validates image output. | Reconciled the documentation without changing T67's partial status or clearing its STCC and model gates |
 | 2026-11-09 | §4.3, §4.7 | Updated T67's local path from the legacy inpaint-stub description to the implemented canvas-padding behavior: center the source on the requested larger canvas and fill added pixels with the selected colour. Clarified that AI outpainting remains unavailable without a verified provider implementation. | Recorded the implemented local behavior while leaving T67 route STCC and generative outpainting completion open |
 | 2026-09-22 | §13.1.3, §26 | Added measured P4-21 reports for T27 segment assist and the T67/T68/T69 cutout/fill paths, plus a register gate that checks all 21 corpus rows and their linked evidence. The selected T57 corpus remains the deterministic in-repository CC0 synthetic face suite for functional and edge-case tests only. Reconciled the current audit, STCC matrix, and P4-22 register audit; route-level criteria are traceable while real-photo quality, broad-device behavior, and model-host durability remain qualified. | Recorded the measured shortfalls and register reconciliation without upgrading AI-only or model-dependent claims | 

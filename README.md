@@ -2578,6 +2578,21 @@ is selected the user supplies the relay URL and optional token; the transport re
 runtime CSP `connect-src` (§16.4). The UI must always show which path a request took, so there is never
 ambiguity about where an image went.
 
+For browser-blocked providers, the `/connect-ai/relay/setup` flow can install the bundled Worker
+directly into the user's Cloudflare account using OAuth Authorization Code + PKCE. No Cloudflare
+client secret or user API token is shipped to the browser. The build requires the public
+`PUBLIC_CLOUDFLARE_OAUTH_CLIENT_ID` value after the publisher registers and verifies the OAuth app;
+without it, setup remains visibly unavailable and manual relay setup still works. The OAuth scopes
+request account listing and Workers platform write access on the account the user approves. The
+Workers permission is account-wide; this flow only uses it to install and enable the relay Worker,
+and the consent page tells users that before authorization.
+The authorization token is held only for setup; the app requests revocation and discards its local
+copy afterward. The generated relay URL and
+relay token are stored in that browser's local storage so the user does not repeat setup after a
+reload; they can be removed by switching that AI tool back to Direct or clearing the site's data.
+Provider keys, prompts, and images are not stored by this setup flow. During an AI request, the
+user's own Cloudflare Worker and the selected provider receive the request as described in §15.3.
+
 ---
 
 ## 16. Key storage and security model
@@ -3672,6 +3687,7 @@ unreviewed by being absent from both.
 | `dxf-parser` 1.1.2, transitive `loglevel` 1.9.2 | **MIT — verified 2026-08-22** | Browser-local DXF parsing; both installed manifests and bundled MIT licence files verified |
 | `onnxruntime-web` 1.30.0 | **MIT — verified 2026-09-19** | Lazy browser ONNX inference. WebGPU is attempted when available, with WASM fallback; the model loader must obtain consent and provide a same-origin cached model URL or bytes |
 | `tesseract.js` 7.0.0 | **Apache-2.0 — verified 2026-09-19** | Browser-local OCR engine; package and transitive dependencies are pinned and checked by `verify:licenses`. Language data is registered separately as model assets |
+| `wrangler` 4.157.0 | **MIT OR Apache-2.0 — verified 2026-11-09** | Cloudflare Worker development and deployment CLI used to build the optional relay installer; build-time only, not included in the browser runtime |
 | `pako` 1.0.11 | **MIT AND Zlib — verified 2026-08-18** | Deflate, pulled in by `utif`. Both terms of the conjunction are allowlisted |
 
 ##### Candidate register — not installed, licences unverified

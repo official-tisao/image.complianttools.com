@@ -85,6 +85,7 @@
       touches our servers would be worth nothing.
     </p>
     <div class="hero-actions">
+      <a class="button primary" href="/connect-ai/relay/setup">Set up a relay with Cloudflare</a>
       <a class="button primary" href="#visibility">What it can see</a>
       <a class="button" href="#deploy">Deploy one</a>
     </div>
@@ -186,17 +187,20 @@
     <h3 class="connect-h3">Us</h3>
     <p>
       Nothing. This site is statically hosted and has no endpoint that could receive your key, your
-      relay URL, or your requests. Your relay URL is held in your browser for the session and is not
-      written to storage.
+      relay URL, or your requests. The one-click setup keeps the relay URL and generated relay token
+      in this browser's local storage so the setup survives a reload. Switch the AI tool back to
+      Direct or clear this site's data to remove them. Provider API keys remain memory-only unless
+      you explicitly choose another storage option.
     </p>
   </section>
 
   <section class="connect-section" id="deploy" aria-labelledby="deploy-heading">
     <h2 id="deploy-heading">Deploying one</h2>
     <p class="connect-lede">
-      The relay ships in this project as a small Cloudflare Worker. You deploy it with your own
-      account; the one-click button opens Cloudflare’s deploy flow using the configuration in the
-      repository, which you can read before you click.
+      You can set it up without a command line: <a href="/connect-ai/relay/setup"
+        >connect your Cloudflare account and install the relay from this browser</a
+      >. The Worker runs in your account, and this site never receives your Cloudflare access token.
+      You can also deploy it manually below.
     </p>
 
     <pre class="connect-command"><code>npx wrangler deploy</code></pre>
@@ -215,8 +219,9 @@
     <div class="connect-note">
       <strong>Optional but recommended: a relay token</strong>
       A shared secret that every request must carry. It stops an origin you have not listed from using
-      your relay to spend your provider quota. Treat it like a password: it is held in your browser for
-      the session only, and it is not stored.
+      your relay to spend your provider quota. The one-click setup generates this secret and keeps it
+      in this browser's local storage and in the Worker secret binding. Manual setup can keep it in memory
+      instead.
     </div>
 
     <h3 class="connect-h3">Other platforms</h3>
@@ -242,8 +247,9 @@
       header at all means the request never reached the relay.
     </p>
     <p>
-      To remove it, delete the deployment from your hosting account. Nothing here keeps a reference
-      to it: the relay URL lives in your browser for the session and is gone when you close the tab.
+      To remove it, delete the Worker from your Cloudflare account and switch the AI tool back to
+      Direct (or clear this site's data). This site cannot delete a Worker on your behalf after
+      setup.
     </p>
   </section>
 

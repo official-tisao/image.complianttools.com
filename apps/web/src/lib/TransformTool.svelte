@@ -275,6 +275,8 @@
   let outputDimensions = $state<{ width: number; height: number }>();
   let decoded = $state<ImageData>();
   let busy = $state(false);
+  let processingStep = $state(0);
+  let resultArea = $state<HTMLElement>();
   let status = $state('');
   let error = $state('');
   let currentTask = 0;
@@ -521,6 +523,7 @@
     if (!decoded || !sourceFile) return;
     const task = ++currentTask;
     busy = true;
+    processingStep = 0;
     error = '';
     status = copy.processing;
     try {
@@ -531,8 +534,11 @@
         steps: [{ op, options: transformOptions() }],
         export: { format: 'png' },
       } as Recipe);
+      if (task !== currentTask) return;
+      processingStep = 1;
       const blob = await encode(result);
       if (task !== currentTask) return;
+      processingStep = 2;
       if (outputUrl) URL.revokeObjectURL(outputUrl);
       outputUrl = URL.createObjectURL(blob);
       outputDimensions = { width: result.width, height: result.height };
@@ -541,6 +547,7 @@
         sourceName: `${(sourceFile?.name ?? '').replace(/\.[^.]+$/u, '')}-${kind}`,
         extension: 'png',
       });
+      processingStep = 3;
     } catch (cause) {
       if (task === currentTask) {
         error = cause instanceof Error ? cause.message : String(cause);
@@ -624,7 +631,17 @@
     </label>
   </section>
   <section class="workspace" aria-busy={busy}>
-    <div class="canvas-panel">
+    <div bind:this={resultArea} class="canvas-panel">
+      {#if busy}
+        <div role="status" aria-live="polite" data-testid="transform-progress">
+          {copy.processing} ({Math.round((processingStep / 3) * 100)}%)
+          <progress max="3" value={processingStep} aria-label={copy.processing}></progress>
+        </div>
+      {:else if processingStep === 3 && !error}
+        <p role="status" data-testid="transform-complete">
+          {locale === 'ar' ? 'اكتملت المعالجة' : 'Processing complete'} (100%)
+        </p>
+      {/if}
       {#if sourceUrl && outputUrl}
         <CompareCanvas beforeUrl={sourceUrl} afterUrl={outputUrl} alt={copy.preview} {locale} />
       {:else}<div class="empty-canvas"><p>{copy.empty}</p></div>{/if}
@@ -651,7 +668,10 @@
         type="button"
         data-testid="transform-run"
         disabled={!decoded || busy}
-        onclick={() => void processImage()}>{copy.run}</button
+        onclick={() => {
+          resultArea?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          void processImage();
+        }}>{copy.run}</button
       >
       <button
         class="button primary"

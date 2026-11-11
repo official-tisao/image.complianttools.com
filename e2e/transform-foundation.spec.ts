@@ -25,6 +25,7 @@ for (const [route, heading] of routes) {
     await page.getByTestId('transform-file-input').setInputFiles(fixture);
     await expect(page.getByTestId('compare-canvas')).toBeVisible({ timeout: 15_000 });
     await expect(page.getByTestId('transform-output-dimensions')).toContainText('1 × 1 pixels');
+    await expect(page.getByTestId('transform-complete')).toContainText('100%');
     await expect(page.getByTestId('transform-download')).toBeEnabled();
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   });

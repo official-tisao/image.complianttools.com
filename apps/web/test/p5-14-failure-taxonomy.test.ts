@@ -209,6 +209,19 @@ test('the key-prefix hint names the actual prefix, from the descriptor', () => {
   assert.match(message.remedy, /sk-/);
 });
 
+test('an AI tool CORS failure can link straight to one-click relay setup', () => {
+  const message = failureMessage(
+    'cors-blocked',
+    DESCRIPTOR,
+    undefined,
+    '/connect-ai/relay/setup?tool=generate&return=%2Fai%2Fgenerate',
+  );
+  assert.equal(
+    message.actions.find((action) => action.label === 'Set up my relay')?.href,
+    '/connect-ai/relay/setup?tool=generate&return=%2Fai%2Fgenerate',
+  );
+});
+
 test('a descriptor with no secret field does not produce a dangling prefix hint', () => {
   const noSecret: ProviderDescriptor = {
     ...DESCRIPTOR,

@@ -13,6 +13,8 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | Package | Version | Licence | Project |
 | --- | --- | --- | --- |
 | `@axe-core/playwright` | `4.11.0` | MPL-2.0 | [source](https://github.com/dequelabs/axe-core-npm#readme) |
+| `@cloudflare/kv-asset-handler` | `0.5.0` | MIT OR Apache-2.0 | [source](https://github.com/cloudflare/workers-sdk#readme) |
+| `@cloudflare/unenv-preset` | `2.16.2` | MIT OR Apache-2.0 | [source](https://github.com/cloudflare/workers-sdk#readme) |
 | `@commitlint/config-conventional` | `21.2.0` | MIT | [source](https://commitlint.js.org/) |
 | `@commitlint/ensure` | `21.2.0` | MIT | [source](https://commitlint.js.org/) |
 | `@commitlint/is-ignored` | `21.2.0` | MIT | [source](https://commitlint.js.org/) |
@@ -23,6 +25,7 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `@commitlint/to-lines` | `21.0.1` | MIT | [source](https://commitlint.js.org/) |
 | `@commitlint/types` | `21.2.0` | MIT | [source](https://commitlint.js.org/) |
 | `@conventional-changelog/template` | `1.2.1` | MIT | [source](https://conventional-changelog.js.org/template/) |
+| `@cspotcode/source-map-support` | `0.8.1` | MIT | [source](https://github.com/cspotcode/node-source-map-support#readme) |
 | `@eslint-community/eslint-utils` | `4.10.1` | MIT | [source](https://github.com/eslint-community/eslint-utils#readme) |
 | `@eslint-community/regexpp` | `4.12.2` | MIT | [source](https://github.com/eslint-community/regexpp#readme) |
 | `@eslint/config-array` | `0.21.2` | Apache-2.0 | [source](https://github.com/eslint/rewrite/tree/main/packages/config-array#readme) |
@@ -42,10 +45,12 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `@humanfs/types` | `0.15.0` | Apache-2.0 | [source](https://github.com/humanwhocodes/humanfs#readme) |
 | `@humanwhocodes/module-importer` | `1.0.1` | Apache-2.0 | [source](https://github.com/humanwhocodes/module-importer#readme) |
 | `@humanwhocodes/retry` | `0.4.3` | Apache-2.0 | [source](https://github.com/humanwhocodes/retry#readme) |
+| `@img/colour` | `1.1.0` | MIT | [source](https://github.com/lovell/colour#readme) |
 | `@jridgewell/gen-mapping` | `0.3.13` | MIT | [source](https://github.com/jridgewell/sourcemaps/tree/main/packages/gen-mapping) |
 | `@jridgewell/remapping` | `2.3.5` | MIT | [source](https://github.com/jridgewell/sourcemaps/tree/main/packages/remapping) |
 | `@jridgewell/resolve-uri` | `3.1.2` | MIT | [source](https://github.com/jridgewell/resolve-uri#readme) |
 | `@jridgewell/sourcemap-codec` | `1.5.5` | MIT | [source](https://github.com/jridgewell/sourcemaps/tree/main/packages/sourcemap-codec) |
+| `@jridgewell/trace-mapping` | `0.3.9` | MIT | [source](https://github.com/jridgewell/sourcemaps/tree/main/packages/trace-mapping) |
 | `@jridgewell/trace-mapping` | `0.3.31` | MIT | [source](https://github.com/jridgewell/sourcemaps/tree/main/packages/trace-mapping) |
 | `@jsquash/avif` | `2.1.1` | Apache-2.0 | [source](https://github.com/jamsinclair/jSquash#readme) |
 | `@jsquash/jpeg` | `1.6.0` | Apache-2.0 | [source](https://github.com/jamsinclair/jSquash#readme) |
@@ -65,6 +70,9 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `@pdf-lib/upng` | `1.0.1` | MIT | [source](https://github.com/Hopding/upng#readme) |
 | `@playwright/test` | `1.62.1` | Apache-2.0 | [source](https://playwright.dev) |
 | `@polka/url` | `1.0.0-next.29` | MIT | [source](https://github.com/lukeed/polka#readme) |
+| `@poppinss/colors` | `4.1.6` | MIT | [source](https://github.com/poppinss/colors#readme) |
+| `@poppinss/dumper` | `0.6.5` | MIT | [source](https://github.com/poppinss/dumper#readme) |
+| `@poppinss/exception` | `1.2.3` | MIT | [source](https://github.com/poppinss/exception#readme) |
 | `@protobufjs/aspromise` | `1.1.2` | BSD-3-Clause | [source](https://github.com/dcodeIO/protobuf.js#readme) |
 | `@protobufjs/base64` | `1.1.2` | BSD-3-Clause | [source](https://github.com/dcodeIO/protobuf.js#readme) |
 | `@protobufjs/codegen` | `2.0.5` | BSD-3-Clause | [source](https://github.com/dcodeIO/protobuf.js#readme) |
@@ -84,7 +92,9 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `@sentry/types` | `7.120.4` | MIT | [source](https://github.com/getsentry/sentry-javascript/tree/master/packages/types) |
 | `@sentry/utils` | `7.120.4` | MIT | [source](https://github.com/getsentry/sentry-javascript/tree/master/packages/utils) |
 | `@simple-libs/stream-utils` | `2.0.0` | MIT | [source](https://github.com/TrigenSoftware/simple-libs/tree/main/packages/stream-utils#readme) |
+| `@sindresorhus/is` | `7.2.0` | MIT | [source](https://github.com/sindresorhus/is#readme) |
 | `@size-limit/file` | `13.0.3` | MIT | [source](https://github.com/ai/size-limit#readme) |
+| `@speed-highlight/core` | `1.2.24` | CC0-1.0 | [source](https://github.com/speed-highlight/core#readme) |
 | `@standard-schema/spec` | `1.1.0` | MIT | [source](https://standardschema.dev) |
 | `@sveltejs/acorn-typescript` | `1.0.12` | MIT | [source](https://github.com/sveltejs/acorn-typescript#readme) |
 | `@sveltejs/adapter-static` | `3.0.10` | MIT | [source](https://svelte.dev/docs/kit/adapter-static) |
@@ -150,6 +160,7 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `bare-url` | `2.5.1` | Apache-2.0 | [source](https://github.com/holepunchto/bare-url) |
 | `base64-js` | `1.5.1` | MIT | [source](https://github.com/beatgammit/base64-js) |
 | `basic-ftp` | `5.3.1` | MIT | [source](https://github.com/patrickjuchli/basic-ftp#readme) |
+| `blake3-wasm` | `2.1.5` | MIT | [source](https://github.com/connor4312/blake3#readme) |
 | `bmp-js` | `0.1.0` | MIT | [source](https://github.com/shaozilee/bmp-js#readme) |
 | `body-parser` | `1.20.6` | MIT | [source](https://github.com/expressjs/body-parser#readme) |
 | `brace-expansion` | `1.1.18` | MIT | [source](https://github.com/juliangruber/brace-expansion) |
@@ -191,6 +202,7 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `convert-source-map` | `2.0.0` | MIT | [source](https://github.com/thlorenz/convert-source-map) |
 | `cookie` | `0.6.0` | MIT | [source](https://github.com/jshttp/cookie#readme) |
 | `cookie` | `0.7.2` | MIT | [source](https://github.com/jshttp/cookie#readme) |
+| `cookie` | `1.1.1` | MIT | [source](https://github.com/jshttp/cookie#readme) |
 | `cookie-signature` | `1.0.7` | MIT | [source](https://github.com/visionmedia/node-cookie-signature#readme) |
 | `cross-spawn` | `7.0.6` | MIT | [source](https://github.com/moxystudio/node-cross-spawn) |
 | `crypto-random-string` | `2.0.0` | MIT | [source](https://github.com/sindresorhus/crypto-random-string#readme) |
@@ -219,6 +231,7 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `encodeurl` | `2.0.0` | MIT | [source](https://github.com/pillarjs/encodeurl#readme) |
 | `end-of-stream` | `1.4.5` | MIT | [source](https://github.com/mafintosh/end-of-stream) |
 | `enquirer` | `2.4.1` | MIT | [source](https://github.com/enquirer/enquirer) |
+| `error-stack-parser-es` | `1.0.5` | MIT | [source](https://github.com/antfu/error-stack-parser-es#readme) |
 | `es-define-property` | `1.0.1` | MIT | [source](https://github.com/ljharb/es-define-property#readme) |
 | `es-errors` | `1.3.0` | MIT | [source](https://github.com/ljharb/es-errors#readme) |
 | `es-module-lexer` | `2.3.1` | MIT | [source](https://github.com/guybedford/es-module-lexer#readme) |
@@ -374,6 +387,7 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `mime-db` | `1.54.0` | MIT | [source](https://github.com/jshttp/mime-db#readme) |
 | `mime-types` | `2.1.35` | MIT | [source](https://github.com/jshttp/mime-types#readme) |
 | `mimic-fn` | `1.2.0` | MIT | [source](https://github.com/sindresorhus/mimic-fn#readme) |
+| `miniflare` | `5.20261103.0-beta` | MIT | [source](https://github.com/cloudflare/workers-sdk/tree/main/packages/miniflare#readme) |
 | `minimatch` | `3.1.5` | ISC | [source](https://github.com/isaacs/minimatch#readme) |
 | `minimatch` | `9.0.9` | ISC | [source](https://github.com/isaacs/minimatch#readme) |
 | `minimist` | `1.2.8` | MIT | [source](https://github.com/minimistjs/minimist) |
@@ -423,6 +437,7 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `path-is-absolute` | `1.0.1` | MIT | [source](https://github.com/sindresorhus/path-is-absolute#readme) |
 | `path-key` | `3.1.1` | MIT | [source](https://github.com/sindresorhus/path-key#readme) |
 | `path-to-regexp` | `0.1.13` | MIT | [source](https://github.com/pillarjs/path-to-regexp#readme) |
+| `path-to-regexp` | `6.3.0` | MIT | [source](https://github.com/pillarjs/path-to-regexp#readme) |
 | `pathe` | `2.0.3` | MIT | [source](https://github.com/unjs/pathe#readme) |
 | `pdf-lib` | `1.17.1` | MIT | [source](https://pdf-lib.js.org) |
 | `pdfjs-dist` | `5.4.624` | Apache-2.0 | [source](https://mozilla.github.io/pdf.js/) |
@@ -481,6 +496,7 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `set-blocking` | `2.0.0` | ISC | [source](https://github.com/yargs/set-blocking#readme) |
 | `set-cookie-parser` | `2.7.2` | MIT | [source](https://github.com/nfriedly/set-cookie-parser) |
 | `setprototypeof` | `1.2.0` | ISC | [source](https://github.com/wesleytodd/setprototypeof) |
+| `sharp` | `0.35.5` | Apache-2.0 | [source](https://sharp.pixelplumbing.com) |
 | `shebang-command` | `2.0.0` | MIT | [source](https://github.com/kevva/shebang-command#readme) |
 | `shebang-regex` | `3.0.0` | MIT | [source](https://github.com/sindresorhus/shebang-regex#readme) |
 | `side-channel` | `1.1.1` | MIT | [source](https://github.com/ljharb/side-channel#readme) |
@@ -510,6 +526,7 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `strip-json-comments` | `3.1.1` | MIT | [source](https://github.com/sindresorhus/strip-json-comments#readme) |
 | `supports-color` | `5.5.0` | MIT | [source](https://github.com/chalk/supports-color#readme) |
 | `supports-color` | `7.2.0` | MIT | [source](https://github.com/chalk/supports-color#readme) |
+| `supports-color` | `10.2.2` | MIT | [source](https://github.com/chalk/supports-color#readme) |
 | `svelte` | `5.56.8` | MIT | [source](https://svelte.dev) |
 | `svelte-check` | `4.7.5` | MIT | [source](https://github.com/sveltejs/language-tools#readme) |
 | `svelte-eslint-parser` | `1.8.0` | MIT | [source](https://github.com/sveltejs/svelte-eslint-parser#readme) |
@@ -547,7 +564,9 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `typedarray-to-buffer` | `3.1.5` | MIT | [source](http://feross.org) |
 | `typescript` | `5.7.2` | Apache-2.0 | [source](https://www.typescriptlang.org/) |
 | `typescript-eslint` | `8.20.0` | MIT | [source](https://typescript-eslint.io/packages/typescript-eslint) |
+| `undici` | `7.30.1` | MIT | [source](https://undici.nodejs.org) |
 | `undici-types` | `8.3.0` | MIT | [source](https://undici.nodejs.org) |
+| `unenv` | `2.0.0-rc.24` | MIT | [source](https://github.com/unjs/unenv#readme) |
 | `unique-string` | `2.0.0` | MIT | [source](https://github.com/sindresorhus/unique-string#readme) |
 | `unpipe` | `1.0.0` | MIT | [source](https://github.com/stream-utils/unpipe#readme) |
 | `uri-js` | `4.4.1` | BSD-2-Clause | [source](https://github.com/garycourt/uri-js) |
@@ -569,11 +588,14 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `which-module` | `2.0.1` | ISC | [source](https://github.com/nexdrew/which-module#readme) |
 | `why-is-node-running` | `2.3.0` | MIT | [source](https://github.com/mafintosh/why-is-node-running) |
 | `word-wrap` | `1.2.5` | MIT | [source](https://github.com/jonschlinkert/word-wrap) |
+| `workerd` | `1.20261103.1` | Apache-2.0 | [source](https://github.com/cloudflare/workerd#readme) |
+| `wrangler` | `4.157.0` | MIT OR Apache-2.0 | [source](https://github.com/cloudflare/workers-sdk#readme) |
 | `wrap-ansi` | `6.2.0` | MIT | [source](https://github.com/chalk/wrap-ansi#readme) |
 | `wrap-ansi` | `7.0.0` | MIT | [source](https://github.com/chalk/wrap-ansi#readme) |
 | `wrappy` | `1.0.2` | ISC | [source](https://github.com/npm/wrappy) |
 | `write-file-atomic` | `3.0.3` | ISC | [source](https://github.com/npm/write-file-atomic) |
 | `ws` | `7.5.13` | MIT | [source](https://github.com/websockets/ws) |
+| `ws` | `8.21.0` | MIT | [source](https://github.com/websockets/ws) |
 | `ws` | `8.21.3` | MIT | [source](https://github.com/websockets/ws) |
 | `xdg-basedir` | `4.0.0` | MIT | [source](https://github.com/sindresorhus/xdg-basedir#readme) |
 | `y18n` | `4.0.3` | ISC | [source](https://github.com/yargs/y18n) |
@@ -586,6 +608,8 @@ The statement above is mandatory product documentation for the IJG-licensed port
 | `yargs-parser` | `21.1.1` | ISC | [source](https://github.com/yargs/yargs-parser#readme) |
 | `yauzl` | `2.10.0` | MIT | [source](https://github.com/thejoshwolfe/yauzl) |
 | `yocto-queue` | `0.1.0` | MIT | [source](https://github.com/sindresorhus/yocto-queue#readme) |
+| `youch` | `4.1.0-beta.10` | MIT | [source](https://github.com/poppinss/youch#readme) |
+| `youch-core` | `0.3.3` | MIT | [source](https://github.com/poppinss/youch-core#readme) |
 | `zimmerframe` | `1.1.4` | MIT | [source](https://github.com/sveltejs/zimmerframe#readme) |
 | `zlibjs` | `0.3.1` | MIT | [source](https://github.com/imaya/zlib.js) |
 | `zod` | `3.25.76` | MIT | [source](https://zod.dev) |
@@ -604,6 +628,7 @@ Package metadata is not treated as sufficient for WASM codecs. The verifier walk
 | `@jsquash/png` | `3.1.1` | Apache-2.0, BSD-3-Clause | `LICENSE`<br>`codec/LICENSE.codec.md` |
 | `@jsquash/webp` | `1.5.0` | Apache-2.0, BSD-3-Clause | `LICENSE`<br>`codec/LICENSE.codec.md` |
 | `@resvg/resvg-wasm` | `2.6.2` | MPL-2.0 | `README.md` |
+| `blake3-wasm` | `2.1.5` | MIT | `LICENSE` |
 | `onnxruntime-web` | `1.30.0` | MIT | `LICENSE`<br>`README.md` |
 | `pdfjs-dist` | `5.4.624` | Apache-2.0, BSD-3-Clause, MIT | `LICENSE`<br>`cmaps/LICENSE`<br>`iccs/LICENSE`<br>`standard_fonts/LICENSE_FOXIT`<br>`standard_fonts/LICENSE_LIBERATION`<br>`wasm/LICENSE_JBIG2`<br>`wasm/LICENSE_OPENJPEG`<br>`wasm/LICENSE_PDFJS_JBIG2`<br>`wasm/LICENSE_PDFJS_OPENJPEG`<br>`wasm/LICENSE_PDFJS_QCMS`<br>`wasm/LICENSE_QCMS` |
 | `playwright-core` | `1.62.1` | Apache-2.0 | `LICENSE`<br>`NOTICE` |
