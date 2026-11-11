@@ -243,7 +243,6 @@
   function chooseFiles(event: Event) {
     const picker = event.currentTarget as HTMLInputElement;
     const selected = Array.from(picker.files ?? []);
-    picker.value = '';
     if (!selected.length) return;
     task += 1;
     scanning = false;
@@ -563,22 +562,26 @@
     <h1>{copy.heading}</h1>
     <p>{copy.intro}</p>
     <p class="privacy-copy">{copy.privacy}</p>
-    <label class="file-entry t61-picker">
-      <span>{copy.select}</span>
-      <input
-        bind:this={input}
-        data-testid="t61-input"
-        type="file"
-        accept="image/png,image/jpeg,image/webp,image/gif"
-        multiple
-        aria-label={copy.input}
-        onchange={chooseFiles}
-        disabled={scanning}
-      />
-    </label>
+    <div class="file-entry t61-picker">
+      <label for="t61-input" class="input-wrapper">
+        <span>{copy.select}</span>
+        <input
+          id="t61-input"
+          bind:this={input}
+          class="t61-file-input"
+          type="file"
+          accept="image/png,image/jpeg,image/webp,image/gif"
+          multiple
+          aria-label={copy.input}
+          onchange={chooseFiles}
+          disabled={scanning}
+          data-testid="t61-input"
+        />
+      </label>
+    </div>
     <p class="t61-limits">{copy.limits}</p>
     {#if files.length}
-      <p data-testid="t61-selection">{files.length} · {formatBytes(totalBytes)}</p>
+      <p data-testid="t61-selection">{files.length} files selected · {formatBytes(totalBytes)}</p>
       <div class="t61-file-list" role="list" aria-label={copy.select}>
         {#each files as file, index (previews[index])}
           <div class="t61-file-preview" role="listitem">
@@ -791,6 +794,21 @@
     max-width: 620px;
     flex-wrap: wrap;
     justify-content: center;
+  }
+  .t61-picker input[type='file'] {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  .input-wrapper {
+    display: inline-block;
+    cursor: pointer;
   }
   .t61-picker input {
     max-width: 100%;
