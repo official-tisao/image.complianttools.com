@@ -3,6 +3,7 @@
   import '$lib/trustedTypes';
   import '../../../../packages/ui/src/tokens.css';
   import '../app.css';
+  import FeedbackWidget from '$lib/FeedbackWidget.svelte';
   let { children } = $props();
 
   let offline = $state(typeof navigator !== 'undefined' ? !navigator.onLine : false);
@@ -92,6 +93,9 @@
 </nav>
 <div id="main" tabindex="-1">
   {@render children()}
+  <section aria-labelledby="feedback-heading" class="feedback-section">
+    <FeedbackWidget productClass="imagetools" />
+  </section>
 </div>
 
 {#if updateReady}
