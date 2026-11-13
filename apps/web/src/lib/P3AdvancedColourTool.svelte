@@ -81,6 +81,7 @@
     faq3: 'Can I undo a result?',
     faq3Answer:
       'The source file is never changed. Choose it again or adjust the controls to produce a new preview.',
+    remove: 'Remove',
   } as const;
 
   const AR = {
@@ -125,6 +126,7 @@
     faq2Answer: 'نعم. تستخدم عناصر التحكم صيغًا ثابتة وبذرة لوحة ثابتة لإخراج قابل للتكرار.',
     faq3: 'هل يمكنني التراجع عن النتيجة؟',
     faq3Answer: 'لا يتغير الملف المصدر. اختره مجددًا أو عدّل عناصر التحكم لإنشاء معاينة جديدة.',
+    remove: 'إزالة',
   } as const;
 
   const pseudo = (value: string) =>
@@ -222,6 +224,16 @@
     input.value = '';
     if (!file) return;
     adopt(file);
+  }
+
+  function removeSourceFile() {
+    if (!sourceFile) return;
+    if (sourceUrl) URL.revokeObjectURL(sourceUrl);
+    sourceFile = undefined;
+    sourceUrl = '';
+    clearOutput();
+    error = '';
+    status = '';
   }
 
   async function decode(file: File): Promise<HTMLImageElement> {
@@ -400,6 +412,7 @@
   </header>
   <section class="controls" aria-label={pseudoIf(locale, 'Image controls')}>
     <label><span>{pseudoIf(locale, copy.choose)}</span><input data-testid="p3a-file-input" type="file" accept="image/png,image/jpeg,image/webp" onchange={choose} /></label>
+    <p class="file-status" data-testid="p3a-file-status">{#if sourceFile}<span>{sourceFile.name}</span><button data-testid="p3a-remove" class="remove" type="button" onclick={removeSourceFile}>{pseudoIf(locale, copy.remove)}</button>{:else}{pseudoIf(locale, copy.ready)}{/if}</p>
     <p class="help">{pseudoIf(locale, copy.chooseHelp)}</p>
     {#if kind === 'adjust'}
       <label><span>{pseudoIf(locale, copy.brightness)}: {brightness}</span><input data-testid="p3a-brightness" type="range" min="-100" max="100" bind:value={brightness} /></label>
@@ -463,6 +476,54 @@
   }
   input[type='file'] {
     font-weight: 400;
+  }
+  /*
+   * The selection state is shown by the adjacent p3a-file-status line, not by the native input:
+   * `choose` resets `input.value` so re-picking the same file works, which also resets the
+   * browser's intrinsic label to "No file chosen" even while a file remains selected. Hiding the
+   * intrinsic text (the input itself stays visible and clickable, which the E2E suite relies on)
+   * stops the control from contradicting the app state.
+   *
+   * `font-size: 0` is more reliable than `color: transparent` for hiding the native file input's
+   * "No file chosen" text across browsers, while keeping the ::file-selector-button readable.
+   */
+  input[type='file'] {
+    font-size: 0;
+  }
+  input[type='file']::file-selector-button {
+    font-size: 0.9rem;
+    color: #1c1a17;
+    background: #f2f2f2;
+    border: 1px solid #1c1a1733;
+    border-radius: 6px;
+    padding: 6px 12px;
+    margin-inline-end: 8px;
+    cursor: pointer;
+  }
+  .file-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin: 0;
+    color: #5c5a56;
+    font-size: 0.9rem;
+    min-height: 1.2rem;
+  }
+  .file-status > span {
+    color: #1c1a17;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+  button.remove {
+    padding: 2px 10px;
+    border: 1px solid #1c1a1733;
+    border-radius: 6px;
+    background: #fff;
+    color: #1c1a17;
+    font: inherit;
+    font-size: 0.85rem;
+    cursor: pointer;
   }
   input[type='range'] {
     accent-color: #165dff;
