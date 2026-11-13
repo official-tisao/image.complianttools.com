@@ -67,6 +67,21 @@ export default defineConfig(({ command, mode }) => ({
   server: {
     fs: { allow: [repositoryRoot] },
     headers: command === 'serve' ? isolationHeaders : {},
+    proxy: {
+      '/api/feedback': {
+        target: 'https://feedback.complianttools.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+        configure: (proxy) => {
+          proxy.proxyTimeout = 15000;
+          proxy.onError = (err, req, res) => {
+            console.error('API proxy error:', err);
+            res.writeHead(500, { 'Content-Type': 'text/plain' });
+            res.end('API proxy error');
+          };
+        },
+      },
+    },
   },
   preview: { headers: isolationHeaders },
   worker: mode === 'development' ? {} : { format: 'es' },
