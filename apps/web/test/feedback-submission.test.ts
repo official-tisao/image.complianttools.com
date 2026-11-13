@@ -165,8 +165,30 @@ test('submitFeedback: returns false on network error (mocked)', async () => {
   }
 });
 
+test('submitFeedback: returns false on CORS error (mocked TypeError)', async () => {
+  const originalFetch = globalThis.fetch;
+
+  // Simulate a CORS failure - browser throws TypeError when CORS headers missing
+  globalThis.fetch = async () => {
+    throw new TypeError('Failed to fetch');
+  };
+
+  try {
+    const payload: FeedbackPayload = {
+      'star-rating': 5,
+      'product-class': 'imagetools',
+      product: 'crop',
+      better: 'Add more formats',
+    };
+    const result = await submitFeedback(payload);
+    assert.equal(result, false);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test('FEEDBACK_ENDPOINT constant is correct', () => {
-  assert.equal(FEEDBACK_ENDPOINT, 'https://feedback.complianttools.com/feedback');
+  assert.equal(FEEDBACK_ENDPOINT, '/api/feedback');
 });
 
 // Tests for conditional field logic (extracted from FeedbackWidget for testability)

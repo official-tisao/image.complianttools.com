@@ -74,4 +74,4 @@ export function isValidEmail(value: string): boolean {
   }
 }
 
-export const FEEDBACK_ENDPOINT = 'https://feedback.complianttools.com/feedback';
+export const FEEDBACK_ENDPOINT = '/api/feedback';
