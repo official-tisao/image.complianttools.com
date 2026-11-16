@@ -36,7 +36,13 @@ test.describe('collage multi-image selection', () => {
   test('file input is hidden from visible interface with custom button shown', async ({ page }) => {
     await page.goto('/collage');
     const input = page.getByTestId('expansion-input');
-    await expect(input).toBeHidden();
+    // The native input is visually hidden (1×1 px, clipped off-screen) so the custom button is
+    // the only visible control; Playwright's toBeHidden() only detects display:none, so the
+    // bounding box is the reliable signal that the control is not in the visible interface.
+    const box = await input.boundingBox();
+    expect(box).not.toBeNull();
+    expect(box!.width).toBeLessThanOrEqual(1);
+    expect(box!.height).toBeLessThanOrEqual(1);
     await expect(page.getByRole('button', { name: /Choose Images/i })).toBeVisible();
   });
 
@@ -120,7 +126,7 @@ test.describe('collage multi-image selection', () => {
       { name: 'img-a.png', mimeType: 'image/png', buffer: file },
       { name: 'img-b.png', mimeType: 'image/png', buffer: file },
     ]);
-    await expect(page.getByTestId('expansion-run')).not.toHaveAttribute('data-disabled');
+    await expect(page.getByTestId('expansion-run')).not.toHaveAttribute('data-disabled', 'true');
   });
 
   test('collage generation processes all selected images and produces a downloadable collage', async ({

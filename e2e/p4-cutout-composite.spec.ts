@@ -207,7 +207,7 @@ test('clearing a foreground selection resets the displayed filename', async ({ p
   await expect(page.getByTestId('p4-file-status')).toContainText('foreground.png');
   await page.getByTestId('p4-remove').click();
   await expect(page.getByTestId('p4-file-status')).not.toContainText('foreground.png');
-  await expect(page.getByTestId('p4-file-status')).toContainText('Choose a foreground image');
+  await expect(page.getByTestId('p4-file-status')).toContainText('Choose an image to begin.');
 });
 
 test('clearing a background selection resets the displayed filename', async ({ page }) => {

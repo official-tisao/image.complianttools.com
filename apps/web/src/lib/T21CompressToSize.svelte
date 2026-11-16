@@ -709,6 +709,29 @@
   .t21-file-card > span:first-child {
     font-weight: 600;
   }
+  /*
+   * The selection state is shown by the adjacent .t21-selected span, not by the native input:
+   * `chooseImage` resets `input.value` so re-picking the same file works, which also resets the
+   * browser's intrinsic label to "No file chosen" even while a file remains selected. Hiding the
+   * intrinsic text (the input itself stays visible and clickable, which the E2E suite relies on)
+   * stops the control from contradicting the app state.
+   *
+   * `font-size: 0` is more reliable than `color: transparent` for hiding the native file input's
+   * "No file chosen" text across browsers, while keeping the ::file-selector-button readable.
+   */
+  .t21-file-card input[type='file'] {
+    font-size: 0;
+  }
+  .t21-file-card input[type='file']::file-selector-button {
+    font-size: 0.9rem;
+    color: #1c1a17;
+    background: #f2f2f2;
+    border: 1px solid #1c1a1733;
+    border-radius: 6px;
+    padding: 6px 12px;
+    margin-inline-end: 8px;
+    cursor: pointer;
+  }
   .t21-file-card input {
     max-width: 100%;
   }
