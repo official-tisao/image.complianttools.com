@@ -83,6 +83,7 @@
   let columns = $state(2);
   let rows = $state(2);
   let gap = $state(8);
+  let background = $state('#ffffff');
   let sourceName = $state('image');
 
   function fileCountText(files: readonly File[]): string {
@@ -163,7 +164,7 @@
           images: decoded,
           columns,
           gap,
-          background: '#ffffff',
+          background,
         });
         await publish(merged, 'collage.png');
       } else if (kind === 'split-image') {
@@ -287,6 +288,12 @@
   {#if kind === 'collage' || kind === 'split-image'}<div class="controls">
       <label>Columns <input type="number" min="1" max="16" bind:value={columns} /></label
       >{#if kind === 'collage'}<label>Gap <input type="number" min="0" bind:value={gap} /></label
+        ><label
+          >Background <input
+            data-testid="collage-background"
+            type="color"
+            bind:value={background}
+          /></label
         >{:else}<label>Rows <input type="number" min="1" max="16" bind:value={rows} /></label>{/if}
     </div>{/if}
   <button

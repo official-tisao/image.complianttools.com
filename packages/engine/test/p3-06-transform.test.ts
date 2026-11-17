@@ -63,6 +63,42 @@ describe('P3-06 T35 Collage', () => {
     expect(out.width).toBeGreaterThan(4);
     expect(out.height).toBeGreaterThan(4);
   });
+
+  it('applies the selected background colour to uncovered output pixels', () => {
+    const img = createRaster(4, 4, new Uint8ClampedArray(4 * 4 * 4).fill(200));
+    const out = makeCollage(img, {
+      mode: 'grid',
+      columns: 2,
+      rows: 2,
+      gap: 0,
+      background: '#ff0000',
+      images: [img, img],
+    });
+    // 2x2 grid of 4x4 images with 0 gap is 8x8. Only 2 images fill cells (0,0) and (1,0);
+    // cell (0,1) at pixel (x=0, y=4) is uncovered and shows the background colour.
+    const data = out.frames[0]!.data;
+    const idx = (4 * out.width + 0) * 4;
+    expect(data[idx]).toBe(255); // R
+    expect(data[idx + 1]).toBe(0); // G
+    expect(data[idx + 2]).toBe(0); // B
+    expect(data[idx + 3]).toBe(255); // A
+  });
+
+  it('defaults to a white background when none is provided', () => {
+    const img = createRaster(4, 4, new Uint8ClampedArray(4 * 4 * 4).fill(200));
+    const out = makeCollage(img, {
+      mode: 'grid',
+      columns: 2,
+      rows: 2,
+      gap: 0,
+      images: [img, img],
+    });
+    const data = out.frames[0]!.data;
+    const idx = (4 * out.width + 0) * 4;
+    expect(data[idx]).toBe(255);
+    expect(data[idx + 1]).toBe(255);
+    expect(data[idx + 2]).toBe(255);
+  });
 });
 
 describe('P3-06 T36 Split/Tile', () => {
